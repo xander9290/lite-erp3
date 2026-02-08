@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "bootswatch/dist/superhero/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
   title: "LITE ERP3",
@@ -15,6 +18,7 @@ export default function RootLayout({
     <html lang="es">
       <body>
         {children}
+        <Toaster />
       </body>
     </html>
   );
