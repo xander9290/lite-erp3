@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Partner {
+  id    String  @id @default(cuid())
+  name  String
+  email String?
+
+  User User? @relation("PartnerRelated")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model User {
+  id    String @id @default(cuid())
+  login String @unique
+
+  partnerId String   @unique @map("partner_id")
+  partner   Partner? @relation("PartnerRelated", fields: [partnerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
