@@ -1,20 +1,37 @@
-import { useRef } from "react";
+"use client";
+
+import { useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { Session } from "next-auth";
 
-export function sessionStore() {
-  const { data: session } = useSession();
-  const snapshot = useRef<{
-    user: Session["user"] | undefined;
-    uid: string | undefined;
-  } | null>(null);
+export function useAuth() {
+  const { data: session, status } = useSession();
 
-  if (!snapshot.current && session) {
-    snapshot.current = {
-      user: session.user || undefined,
-      uid: session.user?.id || undefined,
+  const auth = useMemo(() => {
+    const user = session?.user;
+    const uid = user?.id;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const roles = (user as any)?.roles ?? [];
+
+    const hasRole = (role: string) => {
+      return roles.includes(role);
     };
-  }
 
-  return snapshot.current;
+    const hasAnyRole = (roleList: string[]) => {
+      return roleList.some((r) => roles.includes(r));
+    };
+
+    return {
+      session,
+      user,
+      uid,
+      roles,
+      isAuthenticated: !!session,
+      isLoading: status === "loading",
+      isAdmin: roles.includes("admin"),
+      hasRole,
+      hasAnyRole,
+    };
+  }, [session, status]);
+
+  return auth;
 }

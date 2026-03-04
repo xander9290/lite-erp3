@@ -23,6 +23,7 @@ model Partner {
 
 model User {
   id        String    @id @default(cuid())
+  name      String    @default("user")
   login     String    @unique
   password  String
   lastLogin DateTime? @map("last_login")

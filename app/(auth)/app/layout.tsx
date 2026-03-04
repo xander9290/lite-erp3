@@ -1,3 +1,5 @@
+import TopNav from "@/components/navigation/TopNav";
+import { ModalProvider } from "@/contexts/ModalContext";
 import { SessionProvider } from "next-auth/react";
 
 function AppLayout({
@@ -7,11 +9,14 @@ function AppLayout({
 }>) {
   return (
     <SessionProvider>
-      <div className="d-flex flex-column vh-100">
-        <main className="container-fluid flex-fill overflow-hidden">
-          {children}
-        </main>
-      </div>
+      <ModalProvider>
+        <div className="d-flex flex-column vh-100">
+          <TopNav />
+          <main className="container-fluid flex-fill overflow-hidden">
+            {children}
+          </main>
+        </div>
+      </ModalProvider>
     </SessionProvider>
   );
 }
