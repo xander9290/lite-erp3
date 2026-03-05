@@ -113,7 +113,7 @@ function TopNavItems() {
           </>
         }
       >
-        <NavDropdown.Item as={Link} href="/app/users?view_type=form&id=null">
+        <NavDropdown.Item as={Link} href="/app/users?view_type=list&id=null">
           <i className="bi bi-person-fill me-1"></i>
           <span>Usuarios</span>
         </NavDropdown.Item>

@@ -41,6 +41,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Contraseña incorrecta");
         }
 
+        await prisma.user.update({
+          where: {
+            id: findUser.id,
+          },
+          data: {
+            lastLogin: new Date(),
+          },
+        });
+
         user = {
           id: findUser.id,
           name: findUser.Partner?.name,

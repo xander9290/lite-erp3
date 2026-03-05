@@ -3,6 +3,7 @@ import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
 
 const UsersFormView = lazy(() => import("./views/UsersFormView"));
+const UsersListView = lazy(() => import("./views/UsersListView"));
 
 async function PageUsers({
   searchParams,
@@ -12,7 +13,11 @@ async function PageUsers({
   const { id, view_type: viewType } = await searchParams;
 
   if (viewType === "list") {
-    return <h2>List View</h2>;
+    return (
+      <Suspense fallback={<LoadingPage />}>
+        <UsersListView />
+      </Suspense>
+    );
   } else if (viewType === "form") {
     return (
       <Suspense fallback={<LoadingPage />}>

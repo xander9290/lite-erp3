@@ -1,20 +1,11 @@
 import prisma from "@/app/libs/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-const allowedModels = ["user", "partner"];
-// 🔥 luego esto puede salir dinámicamente
-
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ model: string }> },
 ) {
   const { model } = await context.params;
-
-  console.log(model);
-
-  if (!allowedModels.includes(model)) {
-    return NextResponse.json({ error: "Model not allowed" }, { status: 400 });
-  }
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
