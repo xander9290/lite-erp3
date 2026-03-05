@@ -23,7 +23,7 @@ import {
   FieldRelation,
   FieldRelationTags,
 } from "@/components/templates/fields";
-import { createUser, getUserById } from "../actions/actions";
+import { createUser, getUserById, updateUser } from "../actions/actions";
 import toast from "react-hot-toast";
 
 function UsersFormView({ id }: { id: string | null }) {
@@ -47,6 +47,11 @@ function UsersFormView({ id }: { id: string | null }) {
       router.replace(`/app/users?view_type=form&id=${res.data?.id}`);
       toast.success(res.message);
     } else {
+      const res = await updateUser({ id, ...data });
+      if (!res.success) return modalError("Error al editar usuario");
+
+      getUser();
+      toast.success(res.message);
     }
   };
 

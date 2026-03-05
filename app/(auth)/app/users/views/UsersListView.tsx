@@ -6,7 +6,7 @@ import TableTemplate, {
 import { UserWithProps } from "../actions/actions";
 import { getByPath } from "@/app/libs/getByPath";
 import { formatDate } from "date-fns";
-import { Badge } from "react-bootstrap";
+import { Badge, Form } from "react-bootstrap";
 
 function UsersListView() {
   const columns: TableTemplateColumn<UserWithProps>[] = [
@@ -30,6 +30,17 @@ function UsersListView() {
       accessor: (u) => getByPath(u, "Partner.email"),
       filterable: true,
       type: "string",
+    },
+    {
+      key: "active",
+      label: "Activo",
+      accessor: (u) => (u.active ? "Sí" : "No"),
+      render: (u) => (
+        <div className="text-center">
+          <Form.Switch defaultChecked={u.active} disabled />
+        </div>
+      ),
+      type: "boolean",
     },
     {
       key: "lastLogin",
