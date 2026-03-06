@@ -23,10 +23,21 @@ import {
   FieldRelation,
   FieldRelationTags,
 } from "@/components/templates/fields";
-import { createUser, getUserById, updateUser } from "../actions/actions";
+import {
+  createUser,
+  getUserById,
+  updateUser,
+  UserWithProps,
+} from "../actions/actions";
 import toast from "react-hot-toast";
 
-function UsersFormView({ id }: { id: string | null }) {
+function UsersFormView({
+  id,
+  user,
+}: {
+  id: string | null;
+  user: UserWithProps | null;
+}) {
   const methods = useForm<userSchemaType>({
     resolver: zodResolver(userSchema),
     defaultValues: userSchemaDefault,
@@ -40,6 +51,7 @@ function UsersFormView({ id }: { id: string | null }) {
   const { modalError } = useModals();
 
   const onSubmit: SubmitHandler<userSchemaType> = async (data) => {
+    console.log(data);
     if (id && id === "null") {
       const res = await createUser(data);
       if (!res.success) return modalError(res.message);
@@ -48,9 +60,9 @@ function UsersFormView({ id }: { id: string | null }) {
       toast.success(res.message);
     } else {
       const res = await updateUser({ id, ...data });
-      if (!res.success) return modalError("Error al editar usuario");
+      if (!res.success) return modalError(res.message);
 
-      getUser();
+      router.refresh();
       toast.success(res.message);
     }
   };
@@ -61,14 +73,14 @@ function UsersFormView({ id }: { id: string | null }) {
     }
   };
 
-  const getUser = async () => {
-    const res = await getUserById({ id });
-    if (!res) {
+  useEffect(() => {
+    if (!user) {
       const record: userSchemaType = {
         name: "",
         login: "",
         email: "",
         active: false,
+        managerId: null,
         lastLogin: null,
         createdAt: null,
         updatedAt: null,
@@ -77,22 +89,19 @@ function UsersFormView({ id }: { id: string | null }) {
       originalValuesRef.current = record;
     } else {
       const record: userSchemaType = {
-        name: res.Partner?.name || "",
-        login: res.login,
-        email: res.Partner?.email || "",
-        active: res.active,
-        lastLogin: res.lastLogin,
-        createdAt: res.createdAt,
-        updatedAt: res.updatedAt,
+        name: user.Partner?.name || "",
+        login: user.login,
+        email: user.Partner?.email || "",
+        active: user.active,
+        managerId: user.managerId,
+        lastLogin: user.lastLogin,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       };
       reset(record);
       originalValuesRef.current = record;
     }
-  };
-
-  useEffect(() => {
-    getUser();
-  }, [id]);
+  }, [user]);
 
   return (
     <FormView
@@ -108,7 +117,22 @@ function UsersFormView({ id }: { id: string | null }) {
         <FieldEntry name="email" type="email" label="Correo" />
         <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
-      <FormBook dKey="otherInfo">
+      <FormBook dKey="team">
+        <FormPage eventKey="team" title="Equipo">
+          <PageSheet>
+            <FormViewGroup>
+              <FieldRelation
+                name="managerId"
+                model="user"
+                label="Gerente"
+                domain={[
+                  ["active", "=", true],
+                  ["id", "!=", id],
+                ]}
+              />
+            </FormViewGroup>
+          </PageSheet>
+        </FormPage>
         <FormPage eventKey="otherInfo" title="Otra información">
           <PageSheet>
             <FormViewGroup>

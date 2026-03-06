@@ -6,6 +6,9 @@ import { Partner, User } from "@/generated/prisma/client";
 
 export interface UserWithProps extends User {
   Partner: Partner | null;
+  Manager: {
+    Partner: Partner | null;
+  } | null;
 }
 
 export async function getUserById({
@@ -20,6 +23,11 @@ export async function getUserById({
       where: { id },
       include: {
         Partner: true,
+        Manager: {
+          include: {
+            Partner: true,
+          },
+        },
       },
     });
 
@@ -61,6 +69,9 @@ export async function createUser({
       },
       include: {
         Partner: true,
+        Manager: {
+          include: { Partner: true },
+        },
       },
     });
 
@@ -88,15 +99,23 @@ export async function updateUser({
   email,
   login,
   active,
+  managerId,
 }: {
   id: string | null;
   name: string;
   email: string;
   login: string;
   active: boolean;
+  managerId: string | null;
 }): Promise<ActionResponse<UserWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
+
+    const getManager = await getUserById({ id: managerId });
+    if (getManager && !getManager.active)
+      throw new Error(
+        "El usuario designado como gerente no es un usuario activo.",
+      );
 
     const updatedUser = await prisma.user.update({
       where: {
@@ -112,9 +131,15 @@ export async function updateUser({
             email,
           },
         },
+        Manager: managerId
+          ? { connect: { id: managerId } }
+          : { disconnect: true },
       },
       include: {
         Partner: true,
+        Manager: {
+          include: { Partner: true },
+        },
       },
     });
 

@@ -217,11 +217,9 @@ export function FormView<T extends FieldValues>({
 
 export function FormViewGroup({
   invisible,
-  label,
   children,
   readonly,
 }: {
-  label?: string;
   className?: string;
   invisible?: boolean;
   children: React.ReactNode;
@@ -231,17 +229,17 @@ export function FormViewGroup({
 
   return (
     <Col md="6">
-      <fieldset className="p-2 rounded" disabled={readonly}>
-        {label ? (
+      <fieldset className="p-2 mt-1 rounded" disabled={readonly}>
+        {/* {label ? (
           <legend
-            className="fw-bolder text-uppercase mx-2 mb-4"
+            className="fw-bolder text-uppercase mx-1 mb-3"
             style={{ fontSize: "1rem" }}
           >
             {label}
           </legend>
         ) : (
-          <div style={{ marginBottom: "40px" }}></div>
-        )}
+          <div style={{ marginBottom: "36px" }}></div>
+        )} */}
         {children}
       </fieldset>
     </Col>

@@ -43,6 +43,11 @@ function UsersListView() {
       type: "boolean",
     },
     {
+      key: "Manager.Partner.name",
+      label: "Gerente",
+      accessor: (u) => getByPath(u, "Manager.Partner.name"),
+    },
+    {
       key: "lastLogin",
       label: "Última conexión",
       accessor: (u) => u.lastLogin,
@@ -66,6 +71,7 @@ function UsersListView() {
       getRowId={(u) => u.id}
       pageSize={80}
       viewForm="/app/users?view_type=form"
+      defaultOrder="Partner.name asc"
     />
   );
 }

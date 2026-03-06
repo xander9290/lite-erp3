@@ -47,19 +47,16 @@ function toDatetimeLocalValue(value: unknown): string {
   return format(d, "yyyy-MM-dd'T'HH:mm");
 }
 
-// Convierte "YYYY-MM-DD" (local) a ISO UTC
 function dateInputToISO(value: string): string {
   if (!value) return "";
-  // Fuerza medianoche local para evitar "Invalid Date"
   const d = new Date(`${value}T00:00`);
   if (isNaN(d.getTime())) return "";
   return d.toISOString();
 }
 
-// Convierte "YYYY-MM-DDTHH:mm" (local) a ISO UTC
 function datetimeLocalToISO(value: string): string {
   if (!value) return "";
-  const d = new Date(value); // local
+  const d = new Date(value);
   if (isNaN(d.getTime())) return "";
   return d.toISOString();
 }
@@ -97,7 +94,7 @@ export function FieldEntry({
             <Form.Control
               className={`${className ?? ""} ${type === "password" ? "text-center" : ""} ${
                 !inline ? "border-bottom" : ""
-              } shadow-none rounded-0 border-0`}
+              } shadow-none rounded-0 border-0 w-100 p-0`}
               id={name}
               title={name}
               type={type}
@@ -105,8 +102,7 @@ export function FieldEntry({
               readOnly={readonly}
               disabled={isSubmitting}
               value={inputValue}
-              size="sm"
-              min={min as any}
+              min={min}
               autoComplete="off"
               autoFocus={autoFocus}
               onChange={(e) => {
@@ -121,7 +117,6 @@ export function FieldEntry({
                 }
 
                 if (type === "datetime-local") {
-                  // Guardar ISO UTC (recomendado para Prisma DateTime)
                   const iso = datetimeLocalToISO(raw);
                   field.onChange(iso);
                   onChange?.(iso);
@@ -129,7 +124,6 @@ export function FieldEntry({
                 }
 
                 if (type === "date") {
-                  // Guardar ISO UTC (medianoche local -> ISO)
                   const iso = dateInputToISO(raw);
                   field.onChange(iso);
                   onChange?.(iso);
@@ -159,10 +153,19 @@ export function FieldEntry({
 
   return (
     <Form.Group className="mb-3">
-      <Form.Label htmlFor={name} className="fw-semibold m-0 p-0">
-        {label}
-      </Form.Label>
-      {input}
+      <div className="d-flex flex-column align-items-sm-end gap-0 flex-sm-row">
+        <Form.Label
+          htmlFor={name}
+          className="fw-semibold m-0 p-0 flex-shrink-0 "
+          style={{ width: 100 }}
+        >
+          {label}
+        </Form.Label>
+
+        <div className="flex-grow-1" style={{ minWidth: 0 }}>
+          {input}
+        </div>
+      </div>
     </Form.Group>
   );
 }

@@ -11,8 +11,7 @@ export type TableTemplateColumn<T> = {
   label: string;
   type?: "string" | "number" | "date" | "boolean";
   filterable?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  accessor: (row: T) => any;
+  accessor: (row: T) => unknown;
   render?: (row: T, index: number) => React.ReactNode;
   groupFormat?: string;
 };
@@ -25,13 +24,13 @@ type TableApiResponse<T> = {
 };
 
 type TableProps<T> = {
-  model: string; // 👈 nuevo
+  model: string;
   columns: TableTemplateColumn<T>[];
   getRowId: (row: T) => string | number;
   onSelectionChange?: (ids: Array<string | number>) => void;
   viewForm?: string;
-
-  pageSize?: number; // opcional
+  pageSize?: number;
+  defaultOrder?: string; // 👈 nuevo, ejemplo: "name desc" o "createdAt asc"
 };
 
 function useDebouncedValue<T>(value: T, delay = 300) {
@@ -45,6 +44,24 @@ function useDebouncedValue<T>(value: T, delay = 300) {
   return debounced;
 }
 
+function parseDefaultOrder(defaultOrder?: string): {
+  key: string | null;
+  direction: "asc" | "desc";
+} {
+  if (!defaultOrder?.trim()) {
+    return { key: null, direction: "asc" };
+  }
+
+  const parts = defaultOrder.trim().split(/\s+/);
+  const key = parts[0] ?? null;
+  const rawDirection = (parts[1] ?? "asc").toLowerCase();
+
+  return {
+    key,
+    direction: rawDirection === "desc" ? "desc" : "asc",
+  };
+}
+
 export default function TableTemplate<T>({
   model,
   columns,
@@ -52,9 +69,10 @@ export default function TableTemplate<T>({
   onSelectionChange,
   viewForm,
   pageSize: pageSizeProp,
+  defaultOrder, // 👈 nuevo
 }: TableProps<T>) {
   const router = useRouter();
-  //   const access = useAccess();
+  // const access = useAccess();
 
   const [filters, setFilters] = useState<Record<string, string>>({});
   const debouncedFilters = useDebouncedValue(filters, 350);
@@ -62,7 +80,7 @@ export default function TableTemplate<T>({
   const [sortConfig, setSortConfig] = useState<{
     key: string | null;
     direction: "asc" | "desc";
-  }>({ key: null, direction: "asc" });
+  }>(() => parseDefaultOrder(defaultOrder));
 
   const [groupBy, setGroupBy] = useState<string | null>(null);
 
@@ -83,26 +101,28 @@ export default function TableTemplate<T>({
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // Notificar cambios de selección
   useEffect(() => {
     onSelectionChange?.(selectedIds);
   }, [selectedIds, onSelectionChange]);
 
+  useEffect(() => {
+    setSortConfig(parseDefaultOrder(defaultOrder));
+    setPage(1);
+  }, [defaultOrder]);
+
   const visibleColumns = useMemo(() => {
     return columns.filter((col) => {
-      //   const fieldAccess = access?.find((f) => f.fieldName === col.key);
-      //   return !fieldAccess?.invisible;
+      // const fieldAccess = access?.find((f) => f.fieldName === col.key);
+      // return !fieldAccess?.invisible;
+      return true;
     });
   }, [columns]);
 
-  // fields que pedimos al API: claves visibles + id (por si no viene)
   const fieldsParam = useMemo(() => {
     const keys = new Set<string>();
 
-    // incluye todas las columnas (con relaciones tipo "company.name" también)
     for (const c of columns) keys.add(c.key);
 
-    // asegura id
     keys.add("id");
 
     return Array.from(keys).join(",");
@@ -110,8 +130,6 @@ export default function TableTemplate<T>({
 
   const buildUrl = useMemo(() => {
     const url = new URL(`/api/tables/${model}`, window.location.origin);
-
-    console.log(url);
 
     url.searchParams.set("page", String(page));
     url.searchParams.set("pageSize", String(pageSize));
@@ -122,7 +140,6 @@ export default function TableTemplate<T>({
       url.searchParams.set("sortDir", sortConfig.direction);
     }
 
-    // mandamos todos los filtros (aunque haya columnas no visibles, no pasa nada)
     url.searchParams.set("filters", JSON.stringify(debouncedFilters));
 
     return url.toString();
@@ -136,7 +153,6 @@ export default function TableTemplate<T>({
     debouncedFilters,
   ]);
 
-  // Fetch server-side
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -157,9 +173,9 @@ export default function TableTemplate<T>({
         setRows(json.rows ?? []);
         setTotal(json.total ?? 0);
       })
-      .catch((e) => {
-        if (e?.name === "AbortError") return;
-        setError(e?.message ?? "Error loading table");
+      .catch((e: unknown) => {
+        if (e instanceof Error && e.name === "AbortError") return;
+        setError(e instanceof Error ? e.message : "Error loading table");
         setRows([]);
         setTotal(0);
       })
@@ -181,7 +197,6 @@ export default function TableTemplate<T>({
     setPage(1);
   };
 
-  // Grouping (client-side sobre la página actual; si quieres grouping global real, hay que hacerlo en server)
   const groupedData = useMemo(() => {
     if (!groupBy) return { null: rows };
 
@@ -192,11 +207,11 @@ export default function TableTemplate<T>({
       let val = col.accessor(row);
 
       if (col.type === "date" && val) {
-        const d = new Date(val);
+        const d = new Date(String(val));
         if (!isNaN(d.getTime())) val = format(d, col.groupFormat || "yyyy-MM");
       }
 
-      const key = val ?? "Sin valor";
+      const key = String(val ?? "Sin valor");
       if (!groups[key]) groups[key] = [];
       groups[key].push(row);
       return groups;
@@ -204,7 +219,6 @@ export default function TableTemplate<T>({
   }, [rows, groupBy, columns]);
 
   const paginatedData = useMemo(() => {
-    // ya viene paginado del server. Si está agrupado, devolvemos el grouping de la página.
     return groupedData;
   }, [groupedData]);
 
@@ -215,18 +229,18 @@ export default function TableTemplate<T>({
     } else {
       setGroupBy(key);
 
-      // inicializa los grupos como colapsados=true (igual que tu lógica original)
       const col = columns.find((c) => c.key === key);
       if (!col) return;
 
       const groups = rows.reduce<Record<string, boolean>>((acc, row) => {
         let val = col.accessor(row);
         if (col.type === "date" && val) {
-          const d = new Date(val);
-          if (!isNaN(d.getTime()))
+          const d = new Date(String(val));
+          if (!isNaN(d.getTime())) {
             val = format(d, col.groupFormat || "yyyy-MM");
+          }
         }
-        acc[val ?? "Sin valor"] = true;
+        acc[String(val ?? "Sin valor")] = true;
         return acc;
       }, {});
       setCollapsedGroups(groups);
@@ -243,7 +257,6 @@ export default function TableTemplate<T>({
     );
   };
 
-  // Selección “todo” solo filas visibles (en pantalla) y no colapsadas
   const allVisibleIds = Object.entries(paginatedData)
     .filter(([group]) => !(collapsedGroups[group] ?? false))
     .flatMap(([_, rws]) => rws.map(getRowId));
@@ -290,12 +303,7 @@ export default function TableTemplate<T>({
               />
             </th>
 
-            {columns.map((col) => {
-              //   const fieldAccess = access?.find(
-              //     (field) => field.fieldName === col.key,
-              //   );
-              //   if (fieldAccess?.invisible) return null;
-
+            {visibleColumns.map((col) => {
               return (
                 <th
                   key={col.key}
@@ -355,7 +363,7 @@ export default function TableTemplate<T>({
                     onClick={() => toggleGroupCollapse(group)}
                     className="border-bottom"
                   >
-                    <td colSpan={columns.length + 1} valign="middle">
+                    <td colSpan={visibleColumns.length + 1} valign="middle">
                       {columns.find((c) => c.key === groupBy)?.label}: {group} (
                       {groupRows.length}){" "}
                       <i
@@ -392,12 +400,7 @@ export default function TableTemplate<T>({
                           />
                         </td>
 
-                        {columns.map((col, index) => {
-                          //   const fieldAccess = access?.find(
-                          //     (field) => field.fieldName === col.key,
-                          //   );
-                          //   if (fieldAccess?.invisible) return null;
-
+                        {visibleColumns.map((col, index) => {
                           return (
                             <td
                               key={col.key}
@@ -420,7 +423,7 @@ export default function TableTemplate<T>({
 
         <tfoot className="sticky-bottom">
           <tr style={{ display: total >= pageSize ? "table-row" : "none" }}>
-            <td colSpan={columns.length + 1}>
+            <td colSpan={visibleColumns.length + 1}>
               {!groupBy && (
                 <div className="d-flex justify-content-end align-items-center gap-2 sticky-top">
                   <span className="text-muted small">
