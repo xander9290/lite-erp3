@@ -31,6 +31,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Usuario no encontrado");
         }
 
+        await prisma.user.update({
+          where: { id: findUser.id },
+          data: {
+            lastLogin: new Date(),
+          },
+        });
+
         const hashedPassword = findUser.password;
         const validatePassword = await bcrypt.compare(
           password as string,

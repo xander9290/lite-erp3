@@ -1,24 +1,24 @@
-import { z } from "zod";
+import { email, z } from "zod";
 
 export const userSchema = z.object({
   name: z.string().min(1, "Nombre es requerido"),
   login: z.string().min(1, "Usuario es requerido"),
+  email: z.string(),
   lastLogin: z.date().nullable(),
   active: z.boolean(),
-  userId: z.string().min(1, "Usuario es requerido"),
-  userIds: z.array(z.string()).min(1, "Debes relacionar usuarios"),
+  managerId: z.string().nullable(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
 });
 
-export type userSchemaType = z.infer<typeof userSchema>;
+export type UserSchemaType = z.infer<typeof userSchema>;
 
-export const userSchemaDefault: userSchemaType = {
+export const userSchemaDefault: UserSchemaType = {
   name: "",
   login: "",
-  userId: "",
-  userIds: [],
+  email: "",
   active: true,
+  managerId: null,
   lastLogin: null,
   createdAt: null,
   updatedAt: null,

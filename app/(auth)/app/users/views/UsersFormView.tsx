@@ -2,11 +2,17 @@
 
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { FormView, FormViewGroup } from "@/components/templates/FormView";
+import {
+  FormBook,
+  FormPage,
+  FormView,
+  FormViewGroup,
+  PageSheet,
+} from "@/components/templates/FormView";
 import {
   userSchema,
   userSchemaDefault,
-  userSchemaType,
+  UserSchemaType,
 } from "../schemas/user.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef } from "react";
@@ -15,24 +21,50 @@ import {
   FieldBoolean,
   FieldEntry,
   FieldRelation,
-  FieldRelationTags,
 } from "@/components/templates/fields";
+import { createUser, updateUser, UserWithProps } from "../actions/user-actions";
+import toast from "react-hot-toast";
 
-function UsersFormView({ id }: { id: string | null }) {
-  const methods = useForm<userSchemaType>({
+function UsersFormView({
+  id,
+  user,
+}: {
+  id: string | null;
+  user: UserWithProps | null;
+}) {
+  const methods = useForm<UserSchemaType>({
     resolver: zodResolver(userSchema),
     defaultValues: userSchemaDefault,
   });
 
   const { reset } = methods;
 
-  const originalValuesRef = useRef<userSchemaType | null>(null);
+  const originalValuesRef = useRef<UserSchemaType | null>(null);
   const router = useRouter();
 
   const { modalError } = useModals();
 
-  const onSubmit: SubmitHandler<userSchemaType> = async (data) => {
+  const onSubmit: SubmitHandler<UserSchemaType> = async (data) => {
     console.log(data);
+    if (id && id === "null") {
+      const res = await createUser(data);
+      if (!res.success) {
+        modalError(res.message);
+        return;
+      }
+
+      router.replace(`/app/users?view_type=form&id=${res.data?.id}`);
+      toast.success(res.message);
+    } else {
+      const res = await updateUser({ id: id, ...data });
+      if (!res.success) {
+        modalError(res.message);
+        return;
+      }
+
+      router.refresh();
+      toast.success(res.message);
+    }
   };
 
   const handleReverse = () => {
@@ -42,10 +74,37 @@ function UsersFormView({ id }: { id: string | null }) {
   };
 
   useEffect(() => {
-    if (id && id !== "null") {
-      modalError("No hay ID");
+    if (!user) {
+      const values: UserSchemaType = {
+        name: "",
+        login: "",
+        email: "",
+        active: false,
+        managerId: null,
+        createdAt: null,
+        lastLogin: null,
+        updatedAt: null,
+      };
+
+      reset(values);
+      originalValuesRef.current = values;
+      return;
     }
-  }, [id]);
+
+    const values: UserSchemaType = {
+      name: user.Partner?.name || "",
+      login: user.login,
+      email: user.Partner?.email || "",
+      active: user.active,
+      managerId: user.managerId,
+      createdAt: user.createdAt,
+      lastLogin: user.lastLogin,
+      updatedAt: user.updatedAt,
+    };
+
+    reset(values);
+    originalValuesRef.current = values;
+  }, [user, reset]);
 
   return (
     <FormView
@@ -56,8 +115,48 @@ function UsersFormView({ id }: { id: string | null }) {
       id={id}
     >
       <FormViewGroup>
-        <h2>Fields</h2>
+        <FieldEntry name="name" label="Nombre" />
+        <FieldEntry name="login" label="Usuario" />
+        <FieldEntry name="email" type="email" label="Correo" />
+        <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
+      <FormViewGroup>
+        <FieldRelation
+          name="managerId"
+          model="user"
+          label="Gerente"
+          domain={[
+            ["id", "!=", id],
+            ["active", "=", true],
+          ]}
+        />
+      </FormViewGroup>
+      <FormBook dKey="otherInfo">
+        <FormPage eventKey="otherInfo" title="Otra información">
+          <PageSheet>
+            <FormViewGroup>
+              <FieldEntry
+                name="lastLogin"
+                type="datetime-local"
+                label="Última conexión"
+                readonly
+              />
+              <FieldEntry
+                name="updatedAt"
+                type="datetime-local"
+                label="Última actualización"
+                readonly
+              />
+              <FieldEntry
+                name="createdAt"
+                type="datetime-local"
+                label="Fecha de creación"
+                readonly
+              />
+            </FormViewGroup>
+          </PageSheet>
+        </FormPage>
+      </FormBook>
     </FormView>
   );
 }

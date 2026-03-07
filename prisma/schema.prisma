@@ -27,13 +27,40 @@ model User {
   login     String    @unique
   password  String
   lastLogin DateTime? @map("last_login")
-  active    Boolean   @default(false)
+  active    Boolean   @default(true)
+
+  managerId   String? @map("manager_id")
+  Manager     User?   @relation("ManagerUserRelation", fields: [managerId], references: [id], onDelete: Cascade)
+  TeamMembers User[]  @relation("ManagerUserRelation")
 
   partnerId String?  @unique @map("partner_id")
   Partner   Partner? @relation("PartnerUserRelated", fields: [partnerId], references: [id], onDelete: Cascade)
+
+  Group   Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId String? @map("group_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+model Group {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  active Boolean @default(true)
+
+  Users User[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("groups")
+}
+
+model Tag {
+  id   String @id @default(cuid())
+  name String @unique
+
+  @@map("tags")
 }

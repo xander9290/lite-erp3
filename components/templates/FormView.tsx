@@ -86,6 +86,7 @@ export function FormView<T extends FieldValues>({
                     type="button"
                     onClick={() => router.replace(cleanUrl)}
                     className="fw-semibold"
+                    size="sm"
                   >
                     Nuevo
                   </Button>
@@ -95,6 +96,8 @@ export function FormView<T extends FieldValues>({
                   type="button"
                   disabled={!isDirty}
                   onClick={handleSubmit(onSubmit)}
+                  size="sm"
+                  variant="none"
                 >
                   {isSubmitting ? (
                     <Spinner size="sm" animation="border" />
@@ -108,6 +111,8 @@ export function FormView<T extends FieldValues>({
                   onClick={reverse}
                   disabled={!isDirty}
                   title="Deshacer cambios"
+                  size="sm"
+                  variant="none"
                 >
                   <i className="bi bi-arrow-counterclockwise"></i>
                 </Button>
@@ -151,7 +156,12 @@ export function FormView<T extends FieldValues>({
                 </DropdownButton>
               </div>
 
-              <Button onClick={() => router.back()} disabled={isDirty}>
+              <Button
+                size="sm"
+                variant="none"
+                onClick={() => router.back()}
+                disabled={isDirty}
+              >
                 <i className="bi bi-arrow-left"></i>
               </Button>
             </div>
@@ -217,11 +227,9 @@ export function FormView<T extends FieldValues>({
 
 export function FormViewGroup({
   invisible,
-  label,
   children,
   readonly,
 }: {
-  label?: string;
   className?: string;
   invisible?: boolean;
   children: React.ReactNode;
@@ -231,17 +239,17 @@ export function FormViewGroup({
 
   return (
     <Col md="6">
-      <fieldset className="p-2 rounded" disabled={readonly}>
-        {label ? (
+      <fieldset className="p-2 mt-1 rounded" disabled={readonly}>
+        {/* {label ? (
           <legend
-            className="fw-bolder text-uppercase mx-2 mb-4"
+            className="fw-bolder text-uppercase mx-1 mb-3"
             style={{ fontSize: "1rem" }}
           >
             {label}
           </legend>
         ) : (
-          <div style={{ marginBottom: "40px" }}></div>
-        )}
+          <div style={{ marginBottom: "36px" }}></div>
+        )} */}
         {children}
       </fieldset>
     </Col>

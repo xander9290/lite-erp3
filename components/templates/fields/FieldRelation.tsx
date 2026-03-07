@@ -2,18 +2,33 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useController, useFormContext } from "react-hook-form";
-import { Form, Dropdown, Spinner } from "react-bootstrap";
+import { Form, Dropdown, Spinner, Button } from "react-bootstrap";
 
 export interface Many2OneOption {
   id: number | string;
   name?: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 
+export type DomainOperator =
+  | "="
+  | "!="
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "in"
+  | "notIn"
+  | ">"
+  | ">="
+  | "<"
+  | "<=";
+
+export type DomainItem = [field: string, operator: DomainOperator, value: any];
+export type Domain = DomainItem[];
+
 interface Many2oneFieldProps {
   name: string;
-  model: string; // 👈 NUEVO
+  model: string;
   label?: string;
   readonly?: boolean;
   invisible?: boolean;
@@ -21,6 +36,7 @@ interface Many2oneFieldProps {
   className?: string;
   autoFocus?: boolean;
   ponChange?: (value: Many2OneOption) => void;
+  domain?: Domain;
 }
 
 export function FieldRelation({
@@ -33,6 +49,7 @@ export function FieldRelation({
   className,
   autoFocus,
   ponChange,
+  domain,
 }: Many2oneFieldProps) {
   const { control } = useFormContext();
 
@@ -50,13 +67,14 @@ export function FieldRelation({
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  /* ---------------- Fetch API ---------------- */
+  const serializedDomain = JSON.stringify(domain ?? []);
 
   const fetchOptions = useCallback(
     async (search: string) => {
       if (abortRef.current) {
-        abortRef.current.abort(); // 👈 cancelamos la anterior
+        abortRef.current.abort();
       }
 
       const controller = new AbortController();
@@ -65,14 +83,18 @@ export function FieldRelation({
       setLoading(true);
 
       try {
-        const res = await fetch(
-          `/api/m2o/${model}?search=${encodeURIComponent(search)}&limit=8`,
-          { signal: controller.signal },
-        );
+        const params = new URLSearchParams({
+          search,
+          limit: "8",
+          domain: serializedDomain,
+        });
+
+        const res = await fetch(`/api/m2o/${model}?${params.toString()}`, {
+          signal: controller.signal,
+        });
 
         const data = await res.json();
-        setOptions(data);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setOptions(Array.isArray(data) ? data : []);
       } catch (err: any) {
         if (err.name !== "AbortError") {
           console.error(err);
@@ -81,18 +103,13 @@ export function FieldRelation({
         setLoading(false);
       }
     },
-    [model],
+    [model, serializedDomain],
   );
-
-  /* ---------------- Debounce ---------------- */
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (query.length < 2) {
-      setOptions([]);
-      return;
-    }
+    if (!isOpen) return;
 
     debounceRef.current = setTimeout(() => {
       fetchOptions(query);
@@ -101,9 +118,7 @@ export function FieldRelation({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, fetchOptions]);
-
-  /* ---------------- Resolver valor inicial por ID ---------------- */
+  }, [query, fetchOptions, isOpen]);
 
   useEffect(() => {
     if (value === null || value === undefined || value === "") {
@@ -113,27 +128,28 @@ export function FieldRelation({
 
     const resolveInitial = async () => {
       try {
-        const res = await fetch(`/api/m2o/${model}?id=${value}`);
+        const params = new URLSearchParams({
+          id: String(value),
+          domain: serializedDomain,
+        });
+
+        const res = await fetch(`/api/m2o/${model}?${params.toString()}`);
         const data = await res.json();
-        setQuery(data.name ?? "");
+        setQuery(data?.name ?? "");
       } catch (err) {
         console.error(err);
       }
     };
 
     resolveInitial();
-  }, [value, model]);
-
-  /* ---------------- Selección ---------------- */
+  }, [value, model, serializedDomain]);
 
   const handleSelect = (option: Many2OneOption) => {
     onChange(option.id);
-    if (ponChange) ponChange(option);
-    setQuery(option.name ?? "");
+    ponChange?.(option);
+    setQuery(option.displayName ?? option.name ?? "");
     setIsOpen(false);
   };
-
-  /* ---------------- Click fuera ---------------- */
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -148,9 +164,6 @@ export function FieldRelation({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  /* ---------------- Input ---------------- */
-
-  //   atajos de teclado
   useEffect(() => {
     setHighlightedIndex(0);
   }, [options]);
@@ -181,34 +194,56 @@ export function FieldRelation({
     }
   };
 
+  const handleOff = () => {
+    setQuery("");
+    setIsOpen(true);
+    onChange(null);
+    inputRef.current?.focus();
+  };
+
+  if (invisible) return null;
+
   const input = (
     <>
-      <Form.Control
-        type="text"
-        value={query}
-        onChange={(e) => {
-          const newValue = String(e.target.value);
-          setQuery(newValue);
-          setIsOpen(true);
+      <div className="d-flex">
+        <Form.Control
+          type="text"
+          value={query}
+          ref={inputRef}
+          onChange={(e) => {
+            const newValue = String(e.target.value);
+            setQuery(newValue);
+            setIsOpen(true);
 
-          // 👇 Si el usuario borra todo, limpiamos el ID real
-          if (newValue.trim() === "") {
-            onChange("");
-          }
-        }}
-        onFocus={() => setIsOpen(true)}
-        autoComplete="off"
-        isInvalid={!!error}
-        readOnly={readonly}
-        size="sm"
-        autoFocus={autoFocus}
-        className={`border-0 ${
-          !inline && "border-bottom"
-        } shadow-none rounded-0 ${className}`}
-        onKeyDown={handleKeyDown}
-      />
+            if (newValue.trim() === "") {
+              onChange(null);
+            }
+          }}
+          onFocus={() => {
+            setIsOpen(true);
+            fetchOptions(query.trim());
+          }}
+          autoComplete="off"
+          isInvalid={!!error}
+          readOnly={readonly}
+          autoFocus={autoFocus}
+          className={`border-0 p-0 w-100 ${!inline ? "border-bottom" : ""} shadow-none rounded-0 ${className ?? ""}`}
+          onKeyDown={handleKeyDown}
+        />
+        {!inline && (
+          <Button
+            size="sm"
+            variant="none"
+            onClick={handleOff}
+            title="Desplegar"
+            disabled={readonly}
+          >
+            <i className="bi bi-power"></i>
+          </Button>
+        )}
+      </div>
 
-      {loading && <Spinner animation="border" size="sm" />}
+      {/* {loading && <Spinner animation="border" size="sm" />} */}
 
       <Form.Control.Feedback type="invalid">
         {error?.message}
@@ -246,8 +281,17 @@ export function FieldRelation({
 
   return (
     <Form.Group ref={containerRef} className="mb-3">
-      <Form.Label className="fw-semibold m-0">{label}</Form.Label>
-      {input}
+      <div className="d-flex flex-column align-items-sm-end gap-0 flex-sm-row">
+        <Form.Label
+          className="fw-semibold m-0 p-0 flex-shrink-0"
+          style={{ width: 100 }}
+        >
+          {label}
+        </Form.Label>
+        <div className="flex-grow-1" style={{ minWidth: 0 }}>
+          {input}
+        </div>
+      </div>
     </Form.Group>
   );
 }
