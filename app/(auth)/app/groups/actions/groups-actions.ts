@@ -4,6 +4,7 @@ import type { Group } from "@/generated/prisma/client";
 import { UserWithProps } from "../../users/actions/user-actions";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
+import { sessionStore } from "@/app/libs/sessionStore";
 
 export interface GroupWithProps extends Group {
   Users: UserWithProps[];
@@ -23,7 +24,6 @@ export async function getGroupById({
         Users: {
           include: {
             Partner: true,
-            Manager: true,
             Group: true,
           },
         },
@@ -49,6 +49,8 @@ export async function createGroup({
   users: string[];
 }): Promise<ActionResponse<GroupWithProps>> {
   try {
+    const { uid } = await sessionStore();
+
     const newGroup = await prisma.group.create({
       data: {
         name,
@@ -56,12 +58,12 @@ export async function createGroup({
         Users: {
           connect: users.map((u) => ({ id: u })),
         },
+        createdUid: uid || "",
       },
       include: {
         Users: {
           include: {
             Partner: true,
-            Manager: true,
             Group: true,
           },
         },
@@ -113,7 +115,6 @@ export async function updateGroup({
         Users: {
           include: {
             Partner: true,
-            Manager: true,
             Group: true,
           },
         },

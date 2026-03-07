@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Table, Form, Button, Spinner } from "react-bootstrap";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
-// import { useAccess } from "@/context/AccessContext";
 
 export type TableTemplateColumn<T> = {
   key: string;
@@ -23,6 +22,22 @@ type TableApiResponse<T> = {
   pageSize: number;
 };
 
+export type DomainOperator =
+  | "="
+  | "!="
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "in"
+  | "notIn"
+  | ">"
+  | ">="
+  | "<"
+  | "<=";
+
+export type DomainItem = [field: string, operator: DomainOperator, value: any];
+export type Domain = DomainItem[];
+
 type TableProps<T> = {
   model: string;
   columns: TableTemplateColumn<T>[];
@@ -30,7 +45,8 @@ type TableProps<T> = {
   onSelectionChange?: (ids: Array<string | number>) => void;
   viewForm?: string;
   pageSize?: number;
-  defaultOrder?: string; // 👈 nuevo, ejemplo: "name desc" o "createdAt asc"
+  defaultOrder?: string;
+  domain?: Domain;
 };
 
 function useDebouncedValue<T>(value: T, delay = 300) {
@@ -69,10 +85,10 @@ export default function TableTemplate<T>({
   onSelectionChange,
   viewForm,
   pageSize: pageSizeProp,
-  defaultOrder, // 👈 nuevo
+  defaultOrder,
+  domain,
 }: TableProps<T>) {
   const router = useRouter();
-  // const access = useAccess();
 
   const [filters, setFilters] = useState<Record<string, string>>({});
   const debouncedFilters = useDebouncedValue(filters, 350);
@@ -110,12 +126,12 @@ export default function TableTemplate<T>({
     setPage(1);
   }, [defaultOrder]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [JSON.stringify(domain)]);
+
   const visibleColumns = useMemo(() => {
-    return columns.filter((col) => {
-      // const fieldAccess = access?.find((f) => f.fieldName === col.key);
-      // return !fieldAccess?.invisible;
-      return true;
-    });
+    return columns.filter(() => true);
   }, [columns]);
 
   const fieldsParam = useMemo(() => {
@@ -128,21 +144,27 @@ export default function TableTemplate<T>({
     return Array.from(keys).join(",");
   }, [columns]);
 
-  const buildUrl = useMemo(() => {
-    const url = new URL(`/api/tables/${model}`, window.location.origin);
+  const serializedDomain = useMemo(
+    () => JSON.stringify(domain ?? []),
+    [domain],
+  );
 
-    url.searchParams.set("page", String(page));
-    url.searchParams.set("pageSize", String(pageSize));
-    url.searchParams.set("fields", fieldsParam);
+  const buildUrl = useMemo(() => {
+    const params = new URLSearchParams();
+
+    params.set("page", String(page));
+    params.set("pageSize", String(pageSize));
+    params.set("fields", fieldsParam);
 
     if (sortConfig.key) {
-      url.searchParams.set("sortKey", sortConfig.key);
-      url.searchParams.set("sortDir", sortConfig.direction);
+      params.set("sortKey", sortConfig.key);
+      params.set("sortDir", sortConfig.direction);
     }
 
-    url.searchParams.set("filters", JSON.stringify(debouncedFilters));
+    params.set("filters", JSON.stringify(debouncedFilters));
+    params.set("domain", serializedDomain);
 
-    return url.toString();
+    return `/api/tables/${model}?${params.toString()}`;
   }, [
     model,
     page,
@@ -151,6 +173,7 @@ export default function TableTemplate<T>({
     sortConfig.key,
     sortConfig.direction,
     debouncedFilters,
+    serializedDomain,
   ]);
 
   useEffect(() => {
@@ -286,7 +309,7 @@ export default function TableTemplate<T>({
 
       {error && <div className="text-danger small mb-2">{error}</div>}
 
-      <Table borderless hover style={{ fontSize: "0.9rem" }}>
+      <Table borderless hover striped>
         <thead className="sticky-top" style={{ zIndex: 1 }}>
           <tr>
             <th

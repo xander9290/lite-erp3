@@ -80,10 +80,11 @@ function UsersFormView({
         login: "",
         email: "",
         active: false,
-        managerId: null,
         createdAt: null,
         lastLogin: null,
+        groupId: null,
         updatedAt: null,
+        createdUid: null,
       };
 
       reset(values);
@@ -96,10 +97,11 @@ function UsersFormView({
       login: user.login,
       email: user.Partner?.email || "",
       active: user.active,
-      managerId: user.managerId,
       createdAt: user.createdAt,
       lastLogin: user.lastLogin,
+      groupId: user.groupId,
       updatedAt: user.updatedAt,
+      createdUid: user.createdUid,
     };
 
     reset(values);
@@ -121,15 +123,7 @@ function UsersFormView({
         <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
       <FormViewGroup>
-        <FieldRelation
-          name="managerId"
-          model="user"
-          label="Gerente"
-          domain={[
-            ["id", "!=", id],
-            ["active", "=", true],
-          ]}
-        />
+        <FieldRelation model="group" name="groupId" label="Grupo" />
       </FormViewGroup>
       <FormBook dKey="otherInfo">
         <FormPage eventKey="otherInfo" title="Otra información">
@@ -151,6 +145,12 @@ function UsersFormView({
                 name="createdAt"
                 type="datetime-local"
                 label="Fecha de creación"
+                readonly
+              />
+              <FieldRelation
+                name="createdUid"
+                model="user"
+                label="Creado por"
                 readonly
               />
             </FormViewGroup>

@@ -2,22 +2,35 @@
 
 import React, {
   useState,
-  useMemo,
   useRef,
   useEffect,
-  CSSProperties,
   useCallback,
+  useMemo,
 } from "react";
 import { useController, useFormContext } from "react-hook-form";
-import { Form, Dropdown, Badge, Spinner } from "react-bootstrap";
+import { Form, Dropdown, Badge } from "react-bootstrap";
 
 export interface Many2ManyOption {
-  id: string; // cuid
+  id: string;
   name?: string | null;
-  displayName?: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
+
+export type DomainOperator =
+  | "="
+  | "!="
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "in"
+  | "notIn"
+  | ">"
+  | ">="
+  | "<"
+  | "<=";
+
+export type DomainItem = [field: string, operator: DomainOperator, value: any];
+export type Domain = DomainItem[];
 
 interface Props {
   name: string;
@@ -27,6 +40,7 @@ interface Props {
   className?: string;
   required?: boolean;
   invisible?: boolean;
+  domain?: Domain;
 }
 
 export function FieldRelationTags({
@@ -37,6 +51,7 @@ export function FieldRelationTags({
   className,
   required,
   invisible,
+  domain,
 }: Props) {
   const { control } = useFormContext();
 
@@ -45,23 +60,8 @@ export function FieldRelationTags({
     fieldState: { error },
   } = useController({ name, control });
 
-  //   const access = useAccess();
-  //   const fieldAccess = access?.find((f) => f.fieldName === name);
-
-  //   const styleProps: CSSProperties = {
-  //     pointerEvents: fieldAccess?.readonly ? "none" : "auto",
-  //   };
-
-  /* ============================================================
-     1️⃣ RHF VALUE (ids[])
-     ============================================================ */
-
-  const value = field.value as string[] | undefined;
+  const value = (field.value as string[] | undefined) ?? [];
   const setValue = field.onChange;
-
-  /* ============================================================
-     2️⃣ UI STATE
-     ============================================================ */
 
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<Many2ManyOption[]>([]);
@@ -75,32 +75,40 @@ export function FieldRelationTags({
   const abortRef = useRef<AbortController | null>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  /* ============================================================
-     3️⃣ Resolver IDs → Objetos
-     ============================================================ */
+  const serializedDomain = useMemo(
+    () => JSON.stringify(domain ?? []),
+    [domain],
+  );
 
   useEffect(() => {
-    if (!value || value.length === 0) {
+    if (value.length === 0) {
       setSelectedObjects([]);
       return;
     }
 
     const resolve = async () => {
       try {
-        const res = await fetch(`/api/m2o/${model}?ids=${value?.join(",")}`);
+        const params = new URLSearchParams({
+          ids: value.join(","),
+          domain: serializedDomain,
+        });
+
+        const res = await fetch(`/api/m2m/${model}?${params.toString()}`);
         const data = await res.json();
-        setSelectedObjects(data);
+        const safeData = Array.isArray(data) ? data : [];
+
+        const sorted = value
+          .map((id) => safeData.find((item: Many2ManyOption) => item.id === id))
+          .filter(Boolean) as Many2ManyOption[];
+
+        setSelectedObjects(sorted);
       } catch (err) {
         console.error(err);
       }
     };
 
     resolve();
-  }, [value, model]);
-
-  /* ============================================================
-     4️⃣ Fetch options dinámico
-     ============================================================ */
+  }, [value, model, serializedDomain]);
 
   const fetchOptions = useCallback(
     async (search: string) => {
@@ -112,40 +120,38 @@ export function FieldRelationTags({
       setLoading(true);
 
       try {
-        const res = await fetch(
-          `/api/m2o/${model}?search=${encodeURIComponent(search)}&limit=10`,
-          { signal: controller.signal },
-        );
+        const params = new URLSearchParams({
+          search,
+          limit: "10",
+          domain: serializedDomain,
+          excludeIds: value.join(","),
+        });
+
+        const res = await fetch(`/api/m2o/${model}?${params.toString()}`, {
+          signal: controller.signal,
+        });
 
         const data = await res.json();
+        const safeData = Array.isArray(data) ? data : [];
 
-        // excluir ya seleccionados
-        const filtered = data.filter(
-          (opt: Many2ManyOption) => !value?.includes(opt.id),
+        const filtered = safeData.filter(
+          (opt: Many2ManyOption) => !value.includes(opt.id),
         );
 
         setOptions(filtered);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         if (err.name !== "AbortError") console.error(err);
       } finally {
         setLoading(false);
       }
     },
-    [model, value],
+    [model, value, serializedDomain],
   );
-
-  /* ============================================================
-     5️⃣ Debounce
-     ============================================================ */
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (query.length < 2) {
-      setOptions([]);
-      return;
-    }
+    if (!isOpen || disabled) return;
 
     debounceRef.current = setTimeout(() => {
       fetchOptions(query);
@@ -154,14 +160,16 @@ export function FieldRelationTags({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, fetchOptions]);
-
-  /* ============================================================
-     6️⃣ Seleccionar
-     ============================================================ */
+  }, [query, fetchOptions, isOpen, disabled]);
 
   const handleSelect = (option: Many2ManyOption) => {
-    setValue([...(value || []), option.id]);
+    if (value.includes(option.id)) {
+      setIsOpen(false);
+      setQuery("");
+      return;
+    }
+
+    setValue([...value, option.id]);
     setQuery("");
     setIsOpen(false);
     setHighlightedIndex(0);
@@ -169,17 +177,9 @@ export function FieldRelationTags({
     requestAnimationFrame(() => inputRef.current?.focus());
   };
 
-  /* ============================================================
-     7️⃣ Eliminar
-     ============================================================ */
-
   const handleRemove = (id: string) => {
-    setValue(value?.filter((v) => v !== id));
+    setValue(value.filter((v) => v !== id));
   };
-
-  /* ============================================================
-     8️⃣ Teclado
-     ============================================================ */
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isOpen || options.length === 0) return;
@@ -205,11 +205,12 @@ export function FieldRelationTags({
     if (e.key === "Escape") {
       setIsOpen(false);
     }
-  };
 
-  /* ============================================================
-     9️⃣ Click fuera
-     ============================================================ */
+    if (e.key === "Backspace" && query === "" && value.length > 0) {
+      e.preventDefault();
+      handleRemove(value[value.length - 1]);
+    }
+  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -225,11 +226,11 @@ export function FieldRelationTags({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  //   if (invisible || fieldAccess?.invisible) return null;
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [options]);
 
-  /* ============================================================
-     🔟 Render
-     ============================================================ */
+  if (invisible) return null;
 
   return (
     <div ref={containerRef} className={className}>
@@ -248,18 +249,28 @@ export function FieldRelationTags({
         {selectedObjects.map((opt) => (
           <Badge
             key={opt.id}
-            bg="secondary"
+            bg="primary"
             className="d-flex align-items-center gap-1 px-2 py-1"
           >
             <span>{opt.displayName ?? opt.name}</span>
+
             {!disabled && (
-              <span
-                role="button"
-                onClick={() => handleRemove(opt.id)}
-                className="ms-1"
+              <button
+                type="button"
+                className="btn btn-sm p-0 ms-1 border-0 bg-transparent text-white lh-1"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleRemove(opt.id);
+                }}
+                aria-label={`Quitar ${opt.displayName ?? opt.name ?? opt.id}`}
               >
                 ×
-              </span>
+              </button>
             )}
           </Badge>
         ))}
@@ -273,16 +284,18 @@ export function FieldRelationTags({
               setQuery(e.target.value);
               setIsOpen(true);
             }}
-            onFocus={() => setIsOpen(true)}
+            onFocus={() => {
+              setIsOpen(true);
+              fetchOptions(query.trim());
+            }}
             onKeyDown={handleKeyDown}
             size="sm"
             className="border-0 border-bottom shadow-none flex-grow-1 rounded-0"
             style={{ minWidth: "120px" }}
+            autoComplete="off"
           />
         )}
       </div>
-
-      {loading && <Spinner size="sm" />}
 
       {error && (
         <div className="text-danger mt-1" style={{ fontSize: "0.85rem" }}>
@@ -304,7 +317,10 @@ export function FieldRelationTags({
               <Dropdown.Item
                 key={option.id}
                 active={index === highlightedIndex}
-                onMouseDown={() => handleSelect(option)}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleSelect(option);
+                }}
                 className="text-wrap border-bottom"
               >
                 {option.displayName ?? option.name}

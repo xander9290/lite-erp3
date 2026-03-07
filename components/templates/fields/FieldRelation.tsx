@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useController, useFormContext } from "react-hook-form";
-import { Form, Dropdown, Spinner, Button } from "react-bootstrap";
+import { Form, Dropdown, Button } from "react-bootstrap";
 
 export interface Many2OneOption {
   id: number | string;
@@ -220,6 +220,7 @@ export function FieldRelation({
             }
           }}
           onFocus={() => {
+            if (readonly) return;
             setIsOpen(true);
             fetchOptions(query.trim());
           }}

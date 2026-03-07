@@ -6,7 +6,8 @@ export const userSchema = z.object({
   email: z.string(),
   lastLogin: z.date().nullable(),
   active: z.boolean(),
-  managerId: z.string().nullable(),
+  groupId: z.string().nullable(),
+  createdUid: z.string().nullable(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
 });
@@ -18,8 +19,9 @@ export const userSchemaDefault: UserSchemaType = {
   login: "",
   email: "",
   active: true,
-  managerId: null,
   lastLogin: null,
+  groupId: null,
+  createdUid: null,
   createdAt: null,
   updatedAt: null,
 };

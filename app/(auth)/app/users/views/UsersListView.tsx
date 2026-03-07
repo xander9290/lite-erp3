@@ -8,8 +8,11 @@ import { Badge } from "react-bootstrap";
 import { formatDate } from "date-fns";
 import ListView from "@/components/templates/ListView";
 import { getByPath } from "@/app/libs/getByPath";
+import { useAuth } from "@/hooks/sessionStore";
 
 function UsersListView() {
+  const { uid } = useAuth();
+
   const columns: TableTemplateColumn<UserWithProps>[] = [
     {
       key: "Partner.name",
@@ -29,13 +32,6 @@ function UsersListView() {
       key: "Partner.email",
       label: "Correo",
       accessor: (u) => getByPath(u, "Partner.email"),
-      filterable: true,
-      type: "string",
-    },
-    {
-      key: "Manager.name",
-      label: "Gerente",
-      accessor: (u) => getByPath(u, "Manager.name"),
       filterable: true,
       type: "string",
     },
@@ -79,6 +75,7 @@ function UsersListView() {
           viewForm="/app/users?view_type=form"
           pageSize={20}
           defaultOrder="name asc"
+          domain={[["name", "!=", "bot"]]}
         />
       </ListView.Body>
     </ListView>

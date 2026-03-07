@@ -16,8 +16,16 @@ import {
   FormView,
   FormViewGroup,
 } from "@/components/templates/FormView";
-import { createGroup, GroupWithProps } from "../actions/groups-actions";
-import { FieldBoolean, FieldEntry } from "@/components/templates/fields";
+import {
+  createGroup,
+  GroupWithProps,
+  updateGroup,
+} from "../actions/groups-actions";
+import {
+  FieldBoolean,
+  FieldEntry,
+  FieldRelationTags,
+} from "@/components/templates/fields";
 import toast from "react-hot-toast";
 
 function GroupFormView({
@@ -42,7 +50,7 @@ function GroupFormView({
     if (id && id === "null") {
       const res = await createGroup({
         ...data,
-        users: data.Users.map((u) => u.id),
+        users: data.users.map((u) => u),
       });
 
       if (!res.success) return modalError(res.message);
@@ -50,6 +58,12 @@ function GroupFormView({
       router.replace(`/app/groups?view_type=form&id=${res.data?.id}`);
       toast.success(res.message);
     } else {
+      const res = await updateGroup({ id, ...data });
+
+      if (!res.success) return modalError(res.message);
+
+      router.refresh();
+      toast.success(res.message);
     }
   };
 
@@ -64,7 +78,7 @@ function GroupFormView({
       const values: GroupSchemaType = {
         name: "",
         active: true,
-        Users: [],
+        users: [],
         createdAt: null,
         updatedAt: null,
       };
@@ -74,10 +88,7 @@ function GroupFormView({
       const values: GroupSchemaType = {
         name: group.name,
         active: group.active,
-        Users: group.Users.map((u) => ({
-          id: u.id,
-          name: u.Partner?.name || "",
-        })),
+        users: group.Users.map((u) => u.id) ?? [],
         createdAt: group.createdAt,
         updatedAt: group.updatedAt,
       };
@@ -98,12 +109,17 @@ function GroupFormView({
         <FieldEntry name="name" label="Nombre" />
         <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
+      <FormViewGroup>
+        <FieldRelationTags
+          model="user"
+          label="Usuarios"
+          name="users"
+          domain={[["name", "!=", "bot"]]}
+        />
+      </FormViewGroup>
       <FormBook dKey="groupLine">
         <FormPage eventKey="groupLine" title="Accesos">
           <h3>Accesos</h3>
-        </FormPage>
-        <FormPage eventKey="Users" title="Usuarios">
-          <h3>Usuarios</h3>
         </FormPage>
       </FormBook>
     </FormView>

@@ -14,8 +14,9 @@ model Partner {
 
   User User? @relation("PartnerUserRelated")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdUid String   @map("created_uid")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@index([name])
   @@map("partners")
@@ -23,15 +24,11 @@ model Partner {
 
 model User {
   id        String    @id @default(cuid())
-  name      String    @default("user")
+  name      String
   login     String    @unique
   password  String
   lastLogin DateTime? @map("last_login")
   active    Boolean   @default(true)
-
-  managerId   String? @map("manager_id")
-  Manager     User?   @relation("ManagerUserRelation", fields: [managerId], references: [id], onDelete: Cascade)
-  TeamMembers User[]  @relation("ManagerUserRelation")
 
   partnerId String?  @unique @map("partner_id")
   Partner   Partner? @relation("PartnerUserRelated", fields: [partnerId], references: [id], onDelete: Cascade)
@@ -39,8 +36,9 @@ model User {
   Group   Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId String? @map("group_id")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdUid String   @map("created_uid")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("users")
 }
@@ -52,8 +50,9 @@ model Group {
 
   Users User[]
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdUid String   @map("created_uid")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("groups")
 }

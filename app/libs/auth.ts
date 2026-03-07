@@ -31,13 +31,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Usuario no encontrado");
         }
 
-        await prisma.user.update({
-          where: { id: findUser.id },
-          data: {
-            lastLogin: new Date(),
-          },
-        });
-
         const hashedPassword = findUser.password;
         const validatePassword = await bcrypt.compare(
           password as string,
@@ -47,6 +40,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!validatePassword) {
           throw new Error("Contraseña incorrecta");
         }
+
+        await prisma.user.update({
+          where: { id: findUser.id },
+          data: {
+            lastLogin: new Date(),
+          },
+        });
 
         user = {
           id: findUser.id,
