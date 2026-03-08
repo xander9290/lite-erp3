@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Button, Dropdown, Stack } from "react-bootstrap";
 import Clock from "./Clock";
 import { useAuth } from "@/hooks/sessionStore";
+import Image from "next/image";
 
 function TopNavUser() {
   const { user } = useAuth();
@@ -40,6 +41,14 @@ function TopNavUser() {
           variant="light"
           className="border-0 d-flex gap-2 align-items-center"
         >
+          <Image
+            width={25}
+            height={25}
+            unoptimized
+            src={user?.image ?? "/images/avatar_default.svg"}
+            alt=""
+            className="rounded"
+          />
           <strong>
             <small>{user?.name}</small>
           </strong>

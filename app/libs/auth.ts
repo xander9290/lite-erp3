@@ -51,6 +51,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         user = {
           id: findUser.id,
           name: findUser.Partner?.name,
+          image: findUser.Partner?.imageUrl,
         };
 
         return user;
@@ -70,11 +71,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
         token.name = user.name;
+        token.picture = user.image;
       }
 
       if (trigger === "update" && session.user) {
         token.id = session.user.id;
         token.name = session.user.name;
+        token.picture = session.user.image;
       }
 
       return token;
@@ -83,6 +86,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.name = token.name as string;
+        session.user.image = token.picture as string;
       }
       return session;
     },
