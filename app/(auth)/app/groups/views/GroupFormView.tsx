@@ -8,7 +8,7 @@ import {
   groupSchemaDefault,
   GroupSchemaType,
 } from "../schemas/group.schema";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useModals } from "@/contexts/ModalContext";
 import {
   FormBook,
@@ -73,7 +73,7 @@ function GroupFormView({
     }
   };
 
-  useEffect(() => {
+  const setGroup = useCallback(() => {
     if (!group) {
       const values: GroupSchemaType = {
         name: "",
@@ -95,7 +95,11 @@ function GroupFormView({
       reset(values);
       originalValuesRef.current = values;
     }
-  }, [group]);
+  }, [group, reset]);
+
+  useEffect(() => {
+    setGroup();
+  }, [setGroup]);
 
   return (
     <FormView

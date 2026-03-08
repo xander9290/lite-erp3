@@ -29,7 +29,6 @@ export function FieldImage({
   width,
   height,
   remove = true,
-  editable = true,
   invisible,
   readOnly,
   inline,
@@ -209,6 +208,8 @@ export function FieldImage({
       {error && <p className="text-danger small mt-1">{error.message}</p>}
     </>
   );
+
+  if (invisible) return null;
 
   /* ---------------- Layout ---------------- */
   if (inline) {

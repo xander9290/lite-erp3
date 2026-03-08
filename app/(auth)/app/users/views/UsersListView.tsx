@@ -8,12 +8,9 @@ import { Badge } from "react-bootstrap";
 import { formatDate } from "date-fns";
 import ListView from "@/components/templates/ListView";
 import { getByPath } from "@/app/libs/getByPath";
-import { useAuth } from "@/hooks/sessionStore";
 import { WidgetAvatar } from "@/components/templates/fields";
 
 function UsersListView() {
-  const { uid } = useAuth();
-
   const columns: TableTemplateColumn<UserWithProps>[] = [
     {
       key: "Partner.name",

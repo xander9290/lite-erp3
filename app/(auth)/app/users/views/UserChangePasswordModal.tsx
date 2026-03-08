@@ -3,7 +3,7 @@
 import { ModalBasicProps } from "@/app/libs/definitions";
 import { useForm, SubmitHandler, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Form, Modal } from "react-bootstrap";
+import { Form, Modal } from "react-bootstrap";
 import {
   userPasswordSchema,
   userPasswordSchemaDefault,
