@@ -40,7 +40,9 @@ function TopNavUser() {
           variant="light"
           className="border-0 d-flex gap-2 align-items-center"
         >
-          <strong>{user?.name}</strong>
+          <strong>
+            <small>{user?.name}</small>
+          </strong>
         </Dropdown.Toggle>
         <Dropdown.Menu>
           <Dropdown.Item onClick={() => signOut()}>

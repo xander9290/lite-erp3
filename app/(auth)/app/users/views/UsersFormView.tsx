@@ -15,15 +15,17 @@ import {
   UserSchemaType,
 } from "../schemas/user.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useModals } from "@/contexts/ModalContext";
 import {
   FieldBoolean,
   FieldEntry,
+  FieldImage,
   FieldRelation,
 } from "@/components/templates/fields";
 import { createUser, updateUser, UserWithProps } from "../actions/user-actions";
 import toast from "react-hot-toast";
+import UserChangePasswordModal from "./UserChangePasswordModal";
 
 function UsersFormView({
   id,
@@ -43,6 +45,8 @@ function UsersFormView({
   const router = useRouter();
 
   const { modalError } = useModals();
+
+  const [changePasswordModal, setChangePasswordModal] = useState(false);
 
   const onSubmit: SubmitHandler<UserSchemaType> = async (data) => {
     console.log(data);
@@ -79,6 +83,7 @@ function UsersFormView({
         name: "",
         login: "",
         email: "",
+        imageUrl: null,
         active: false,
         createdAt: null,
         lastLogin: null,
@@ -96,6 +101,7 @@ function UsersFormView({
       name: user.Partner?.name || "",
       login: user.login,
       email: user.Partner?.email || "",
+      imageUrl: user.Partner?.imageUrl || null,
       active: user.active,
       createdAt: user.createdAt,
       lastLogin: user.lastLogin,
@@ -109,55 +115,78 @@ function UsersFormView({
   }, [user, reset]);
 
   return (
-    <FormView
-      cleanUrl="/app/users?view_type=form&id=null"
-      reverse={handleReverse}
-      onSubmit={onSubmit}
-      methods={methods}
-      id={id}
-    >
-      <FormViewGroup>
-        <FieldEntry name="name" label="Nombre" />
-        <FieldEntry name="login" label="Usuario" />
-        <FieldEntry name="email" type="email" label="Correo" />
-        <FieldBoolean name="active" label="Activo" />
-      </FormViewGroup>
-      <FormViewGroup>
-        <FieldRelation model="group" name="groupId" label="Grupo" />
-      </FormViewGroup>
-      <FormBook dKey="otherInfo">
-        <FormPage eventKey="otherInfo" title="Otra información">
-          <PageSheet>
-            <FormViewGroup>
-              <FieldEntry
-                name="lastLogin"
-                type="datetime-local"
-                label="Última conexión"
-                readonly
-              />
-              <FieldEntry
-                name="updatedAt"
-                type="datetime-local"
-                label="Última actualización"
-                readonly
-              />
-              <FieldEntry
-                name="createdAt"
-                type="datetime-local"
-                label="Fecha de creación"
-                readonly
-              />
-              <FieldRelation
-                name="createdUid"
-                model="user"
-                label="Creado por"
-                readonly
-              />
-            </FormViewGroup>
-          </PageSheet>
-        </FormPage>
-      </FormBook>
-    </FormView>
+    <>
+      <FormView
+        cleanUrl="/app/users?view_type=form&id=null"
+        reverse={handleReverse}
+        onSubmit={onSubmit}
+        methods={methods}
+        id={id}
+        actions={[
+          {
+            action: () => setChangePasswordModal(!changePasswordModal),
+            fieldName: "",
+            string: "Cambiar contraseña",
+            variant: "info",
+          },
+        ]}
+      >
+        <FormViewGroup>
+          <FieldEntry name="name" label="Nombre" />
+          <FieldEntry name="login" label="Usuario" />
+          <FieldEntry name="email" type="email" label="Correo" />
+          <FieldBoolean name="active" label="Activo" />
+        </FormViewGroup>
+        <FormViewGroup>
+          <FieldImage
+            name="imageUrl"
+            folder="users"
+            height={150}
+            width={150}
+            editable
+            remove
+          />
+          <FieldRelation model="group" name="groupId" label="Grupo" />
+        </FormViewGroup>
+        <FormBook dKey="otherInfo">
+          <FormPage eventKey="otherInfo" title="Otra información">
+            <PageSheet>
+              <FormViewGroup>
+                <FieldEntry
+                  name="lastLogin"
+                  type="datetime-local"
+                  label="Última conexión"
+                  readonly
+                />
+                <FieldEntry
+                  name="updatedAt"
+                  type="datetime-local"
+                  label="Última actualización"
+                  readonly
+                />
+                <FieldEntry
+                  name="createdAt"
+                  type="datetime-local"
+                  label="Fecha de creación"
+                  readonly
+                />
+                <FieldRelation
+                  name="createdUid"
+                  model="user"
+                  label="Creado por"
+                  readonly
+                />
+              </FormViewGroup>
+            </PageSheet>
+          </FormPage>
+        </FormBook>
+      </FormView>
+      <UserChangePasswordModal
+        show={changePasswordModal}
+        onHide={() => setChangePasswordModal(!changePasswordModal)}
+        id={id}
+      />
+    </>
   );
 }
 

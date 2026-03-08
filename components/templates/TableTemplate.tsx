@@ -176,33 +176,71 @@ export default function TableTemplate<T>({
     serializedDomain,
   ]);
 
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
+  // useEffect(() => {
+  //   // eslint-disable-next-line react-hooks/set-state-in-effect
+  //   setLoading(true);
+  //   // eslint-disable-next-line react-hooks/set-state-in-effect
+  //   setError(null);
 
-    abortRef.current?.abort();
+  //   abortRef.current?.abort();
+  //   const ac = new AbortController();
+  //   abortRef.current = ac;
+
+  //   fetch(buildUrl, { signal: ac.signal })
+  //     .then(async (res) => {
+  //       if (!res.ok) {
+  //         const msg = await res.text().catch(() => "");
+  //         throw new Error(msg || `HTTP ${res.status}`);
+  //       }
+  //       return res.json() as Promise<TableApiResponse<T>>;
+  //     })
+  //     .then((json) => {
+  //       setRows(json.rows ?? []);
+  //       setTotal(json.total ?? 0);
+  //     })
+  //     .catch((e: unknown) => {
+  //       if (e instanceof Error && e.name === "AbortError") return;
+  //       setError(e instanceof Error ? e.message : "Error loading table");
+  //       setRows([]);
+  //       setTotal(0);
+  //     })
+  //     .finally(() => setLoading(false));
+  // }, [buildUrl]);
+
+  useEffect(() => {
     const ac = new AbortController();
     abortRef.current = ac;
 
-    fetch(buildUrl, { signal: ac.signal })
-      .then(async (res) => {
+    setLoading(true);
+    setError(null);
+
+    const load = async () => {
+      try {
+        const res = await fetch(buildUrl, { signal: ac.signal });
+
         if (!res.ok) {
           const msg = await res.text().catch(() => "");
           throw new Error(msg || `HTTP ${res.status}`);
         }
-        return res.json() as Promise<TableApiResponse<T>>;
-      })
-      .then((json) => {
+
+        const json: TableApiResponse<T> = await res.json();
+
         setRows(json.rows ?? []);
         setTotal(json.total ?? 0);
-      })
-      .catch((e: unknown) => {
+      } catch (e) {
         if (e instanceof Error && e.name === "AbortError") return;
+
         setError(e instanceof Error ? e.message : "Error loading table");
         setRows([]);
         setTotal(0);
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => ac.abort();
   }, [buildUrl]);
 
   const handleFilterChange = (key: string, value: string) => {

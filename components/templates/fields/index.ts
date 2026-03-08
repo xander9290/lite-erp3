@@ -1,6 +1,9 @@
-export { FieldEntry } from "./FieldEntry";
-export { FieldSelect } from "./FieldSelect";
-export { FieldBoolean } from "./FieldBoolean";
-export { FieldRelation } from "./FieldRelation";
 export { FieldRelationTags } from "./FieldRelationTags";
+export { FieldRelation } from "./FieldRelation";
+export { FieldBoolean } from "./FieldBoolean";
+export { WidgetAvatar } from "./WidgetAvatar";
+export { FieldSelect } from "./FieldSelect";
+export { FieldSubmit } from "./FieldSubmit";
+export { FieldImage } from "./FieldImage";
+export { FieldEntry } from "./FieldEntry";
 export { FieldTags } from "./FieldTags";

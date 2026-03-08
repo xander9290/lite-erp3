@@ -51,10 +51,15 @@ export function FieldTags({
     [value],
   );
 
-  const selectedTags = useMemo(
-    () => options.filter((o) => selectedIds.includes(o.id)),
-    [options, selectedIds],
-  );
+  // const selectedTags = useMemo(
+  //   () => options.filter((o) => selectedIds.includes(o.id)),
+  //   [options, selectedIds],
+  // );
+
+  const selectedTags = useMemo(() => {
+    const set = new Set(selectedIds);
+    return options.filter((o) => set.has(o.id));
+  }, [options, selectedIds]);
 
   const filteredOptions = useMemo(() => {
     const selectedSet = new Set(selectedIds);
@@ -132,7 +137,11 @@ export function FieldTags({
     if (e.key === "Enter") {
       e.preventDefault();
       const tag = filteredOptions[highlightedIndex];
-      tag ? handleSelect(tag) : await handleCreateTag(query.trim());
+      if (tag) {
+        handleSelect(tag);
+      } else {
+        await handleCreateTag(query.trim());
+      }
     }
 
     if (e.key === "Escape") {
@@ -208,7 +217,7 @@ export function FieldTags({
     </>
   );
 
-  if (invisible) return;
+  if (invisible) return null;
 
   /* ---------------- Layout ---------------- */
   if (inline) {

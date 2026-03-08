@@ -23,8 +23,6 @@ export async function createTag({
       message: "Se ha creado la etiqueta",
       data: newTag,
     };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.log(error);
     return {
@@ -39,8 +37,6 @@ export async function fetchTags(): Promise<Tag[]> {
     const tags = await prisma.tag.findMany({ take: 5 });
 
     return tags;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.log(error);
     return [];

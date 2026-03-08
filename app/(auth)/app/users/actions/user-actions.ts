@@ -4,6 +4,7 @@ import { ActionResponse } from "@/app/libs/definitions";
 import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { type User, type Partner, Group } from "@/generated/prisma/client";
+import bcrypt from "bcryptjs";
 
 export interface UserWithProps extends User {
   Partner: Partner | null;
@@ -29,7 +30,6 @@ export async function getUserById({
     });
 
     return user;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.log(error);
     return null;
@@ -42,12 +42,14 @@ export async function createUser({
   email,
   active,
   groupId,
+  imageUrl,
 }: {
   name: string;
   login: string;
   email: string;
   active: boolean;
   groupId: string | null;
+  imageUrl: string | null;
 }): Promise<ActionResponse<UserWithProps>> {
   try {
     const { uid } = await sessionStore();
@@ -65,6 +67,7 @@ export async function createUser({
           create: {
             name,
             email,
+            imageUrl,
             createdUid: uid || "",
           },
         },
@@ -84,8 +87,6 @@ export async function createUser({
       message: "Se ha creado el usuario",
       data: newUser,
     };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.log(error);
     return {
@@ -102,6 +103,7 @@ export async function updateUser({
   email,
   active,
   groupId,
+  imageUrl,
 }: {
   id: string | null;
   name: string;
@@ -109,6 +111,7 @@ export async function updateUser({
   email: string;
   active: boolean;
   groupId: string | null;
+  imageUrl: string | null;
 }): Promise<ActionResponse<UserWithProps>> {
   try {
     if (!id) throw new Error("ID user is undefined");
@@ -124,6 +127,7 @@ export async function updateUser({
           update: {
             name,
             email,
+            imageUrl,
           },
         },
       },
@@ -138,8 +142,41 @@ export async function updateUser({
       message: "Se ha modificado el usuario",
       data: updatedUser,
     };
+  } catch (error: any) {
+    console.log(error);
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
+}
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function updatePassword({
+  id,
+  password,
+}: {
+  id: string | null;
+  password: string;
+}): Promise<ActionResponse<boolean>> {
+  try {
+    if (!id) throw new Error("ID not defined");
+
+    const hashedPswd = await bcrypt.hash(password, 10);
+
+    const changedPassword = await prisma.user.update({
+      where: { id },
+      data: {
+        password: hashedPswd,
+      },
+    });
+
+    if (!changedPassword) throw new Error("Error al cambiar la contraseña");
+
+    return {
+      success: true,
+      message: "La contraseña se ha cambiado",
+      data: true,
+    };
   } catch (error: any) {
     console.log(error);
     return {

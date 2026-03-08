@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { useFormContext, Controller } from "react-hook-form";
 import { Form } from "react-bootstrap";
 import { round } from "@/app/libs/helpers";
@@ -16,7 +15,6 @@ interface FieldEntryProps {
   className?: string;
   type?: React.HTMLInputTypeAttribute;
   min?: string | number;
-  autoFocus?: boolean;
 }
 
 function toDateInputValue(value: unknown): string {
@@ -71,7 +69,6 @@ export function FieldEntry({
   className,
   type = "text",
   min,
-  autoFocus,
 }: FieldEntryProps) {
   const { control } = useFormContext();
 
@@ -99,12 +96,11 @@ export function FieldEntry({
               title={name}
               type={type}
               isInvalid={!!fieldState.error}
-              readOnly={readonly}
-              disabled={isSubmitting}
+              readOnly={readonly || isSubmitting}
+              // disabled={isSubmitting}
               value={inputValue}
               min={min}
               autoComplete="off"
-              autoFocus={autoFocus}
               onChange={(e) => {
                 const raw = e.target.value;
 

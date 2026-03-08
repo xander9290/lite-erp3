@@ -130,6 +130,7 @@ export function FormView<T extends FieldValues>({
                       disabled={action.readonly}
                       title={action.fieldName}
                       className="fw-semibold"
+                      size="sm"
                     >
                       {action.string}
                     </Button>

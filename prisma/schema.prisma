@@ -8,9 +8,12 @@ datasource db {
 }
 
 model Partner {
-  id    String  @id @default(cuid())
-  name  String
-  email String?
+  id       String  @id @default(cuid())
+  name     String
+  email    String?
+  imageUrl String?
+
+  displayType PartnerDisplayType @default(INTERNAL) @map("display_type")
 
   User User? @relation("PartnerUserRelated")
 
@@ -20,6 +23,14 @@ model Partner {
 
   @@index([name])
   @@map("partners")
+}
+
+enum PartnerDisplayType {
+  INTERNAL
+  CUSTOMER
+  SUPPLIER
+  CONTACT
+  DELIVERY
 }
 
 model User {

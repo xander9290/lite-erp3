@@ -31,8 +31,6 @@ export async function getGroupById({
     });
 
     return group;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.log(error);
     return null;
@@ -77,8 +75,6 @@ export async function createGroup({
       success: true,
       data: newGroup,
     };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.log(error);
     return {
@@ -128,8 +124,6 @@ export async function updateGroup({
       success: true,
       data: updatedGroup,
     };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.log(error);
     return {

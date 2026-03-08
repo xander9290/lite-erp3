@@ -9,6 +9,7 @@ import { formatDate } from "date-fns";
 import ListView from "@/components/templates/ListView";
 import { getByPath } from "@/app/libs/getByPath";
 import { useAuth } from "@/hooks/sessionStore";
+import { WidgetAvatar } from "@/components/templates/fields";
 
 function UsersListView() {
   const { uid } = useAuth();
@@ -22,11 +23,30 @@ function UsersListView() {
       type: "string",
     },
     {
+      key: "Partner.imageUrl",
+      label: "Avatar",
+      accessor: (u) => getByPath(u, "Partner.imageUrl"),
+      render: (u) => (
+        <div className="text-end">
+          <span onClick={(e) => e.stopPropagation()}>
+            <WidgetAvatar imageUrl={u.Partner?.imageUrl || null} />
+          </span>
+        </div>
+      ),
+    },
+    {
       key: "login",
       label: "Usuario",
       accessor: (u) => u.login,
       filterable: true,
       type: "string",
+    },
+    {
+      key: "Group.name",
+      label: "Grupo",
+      accessor: (u) => getByPath(u, "Group.name"),
+      type: "string",
+      filterable: true,
     },
     {
       key: "Partner.email",
@@ -50,15 +70,17 @@ function UsersListView() {
     {
       key: "lastLogin",
       label: "Última conexión",
-      accessor: (u) => u.lastLogin,
-      type: "date",
-      render: (u) => {
-        if (!u.lastLogin) {
-          return <Badge bg="warning">Nunca</Badge>;
-        }
-        return formatDate(u.lastLogin, "dd/MM/yyyy hh:mm");
-      },
-      groupFormat: "dd/MM",
+      accessor: (u) =>
+        u.lastLogin ? formatDate(u.lastLogin, "dd/MM/yyyy HH:mm") : null,
+      render: (u) => (
+        <div className="text-center">
+          {u.lastLogin ? (
+            formatDate(u.lastLogin, "dd/MM/yyyy HH:mm")
+          ) : (
+            <Badge bg="danger">Nunca</Badge>
+          )}
+        </div>
+      ),
     },
   ];
   return (

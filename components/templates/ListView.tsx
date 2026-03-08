@@ -103,7 +103,6 @@ type ListViewProps = {
     | ReactElement<HeaderProps, typeof Header>
     | ReactElement<BodyProps, typeof Body>
     | ReactElement<FooterProps, typeof Footer>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     | ReactElement<any>[];
 };
 
