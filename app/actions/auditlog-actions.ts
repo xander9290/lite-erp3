@@ -23,13 +23,15 @@ export async function createAuditlog({
 }): Promise<ActionResponse<AuditLogWithProps | null>> {
   try {
     const { uid } = await sessionStore();
+    if (!uid) throw new Error("ID SESSION NOT DEFINED");
+
     const newAuditlog = await prisma.auditlog.create({
       data: {
         entityType,
         entityId,
         action,
         log,
-        User: uid ? { connect: { id: uid } } : { disconnect: true },
+        User: { connect: { id: uid } },
       },
       include: {
         User: {
