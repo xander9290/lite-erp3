@@ -34,24 +34,78 @@ const SENSITIVE_FIELD_DENYLIST = [
   "twoFactorSecret",
 ];
 
-function isSafeKey(key: string) {
-  return /^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)*$/.test(key);
-}
+type PathPart = {
+  key: string;
+  isArray: boolean;
+};
 
-function splitPath(key: string) {
+function splitPath(key: string): PathPart[] {
   return key
     .split(".")
     .map((s) => s.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((segment) => {
+      const isArray = segment.endsWith("[]");
+      return {
+        key: isArray ? segment.slice(0, -2) : segment,
+        isArray,
+      };
+    })
+    .filter((p) => p.key);
 }
 
-function containsDeniedSegment(path: string[]) {
+function isSafeKey(key: string) {
+  return /^[A-Za-z0-9_]+(\[\])?(\.[A-Za-z0-9_]+(\[\])?)*$/.test(key);
+}
+
+function containsDeniedSegment(path: PathPart[]) {
   return path.some((seg) =>
-    SENSITIVE_FIELD_DENYLIST.some((d) => seg.toLowerCase() === d.toLowerCase()),
+    SENSITIVE_FIELD_DENYLIST.some(
+      (d) => seg.key.toLowerCase() === d.toLowerCase(),
+    ),
   );
 }
 
-function buildSelectFromFieldPaths(fieldPaths: string[][]): any {
+// function splitPath(key: string) {
+//   return key
+//     .split(".")
+//     .map((s) => s.trim())
+//     .filter(Boolean);
+// }
+
+// function containsDeniedSegment(path: string[]) {
+//   return path.some((seg) =>
+//     SENSITIVE_FIELD_DENYLIST.some((d) => seg.toLowerCase() === d.toLowerCase()),
+//   );
+// }
+
+// function buildSelectFromFieldPaths(fieldPaths: string[][]): any {
+//   const select: any = {};
+
+//   for (const path of fieldPaths) {
+//     if (!path.length) continue;
+
+//     let cursor = select;
+
+//     for (let i = 0; i < path.length; i++) {
+//       const part = path[i];
+//       const isLast = i === path.length - 1;
+
+//       if (isLast) {
+//         cursor[part] = true;
+//       } else {
+//         cursor[part] = cursor[part] ?? { select: {} };
+//         cursor = cursor[part].select;
+//       }
+//     }
+//   }
+
+//   if (!select.id) select.id = true;
+
+//   return select;
+// }
+
+function buildSelectFromFieldPaths(fieldPaths: PathPart[][]): any {
   const select: any = {};
 
   for (const path of fieldPaths) {
@@ -60,7 +114,7 @@ function buildSelectFromFieldPaths(fieldPaths: string[][]): any {
     let cursor = select;
 
     for (let i = 0; i < path.length; i++) {
-      const part = path[i];
+      const part = path[i].key;
       const isLast = i === path.length - 1;
 
       if (isLast) {
@@ -77,17 +131,49 @@ function buildSelectFromFieldPaths(fieldPaths: string[][]): any {
   return select;
 }
 
-function buildNestedWhere(path: string[], leafCondition: any) {
+// function buildNestedWhere(path: string[], leafCondition: any) {
+//   return path.reduceRight((acc, part, idx) => {
+//     if (idx === path.length - 1) return { [part]: leafCondition };
+//     return { [part]: acc };
+//   }, {});
+// }
+
+function buildNestedWhere(path: PathPart[], leafCondition: any): any {
   return path.reduceRight((acc, part, idx) => {
-    if (idx === path.length - 1) return { [part]: leafCondition };
-    return { [part]: acc };
+    if (idx === path.length - 1) {
+      return { [part.key]: leafCondition };
+    }
+
+    if (part.isArray) {
+      return { [part.key]: { some: acc } };
+    }
+
+    return { [part.key]: acc };
   }, {});
 }
 
-function buildNestedOrderBy(path: string[], dir: SortDir): any {
+// function buildNestedOrderBy(path: string[], dir: SortDir): any {
+//   return path.reduceRight((acc, part, idx) => {
+//     if (idx === path.length - 1) return { [part]: dir };
+//     return { [part]: acc };
+//   }, {});
+// }
+
+function buildNestedOrderBy(path: PathPart[], dir: SortDir): any {
+  const hasArray = path.some((p) => p.isArray);
+
+  if (hasArray) {
+    const last = path[path.length - 1];
+    if (last?.key === "_count" && path.length >= 2) {
+      const rel = path[path.length - 2];
+      return { [rel.key]: { _count: dir } };
+    }
+    return undefined;
+  }
+
   return path.reduceRight((acc, part, idx) => {
-    if (idx === path.length - 1) return { [part]: dir };
-    return { [part]: acc };
+    if (idx === path.length - 1) return { [part.key]: dir };
+    return { [part.key]: acc };
   }, {});
 }
 
@@ -264,6 +350,12 @@ export async function GET(
   }
 
   const domain = parseDomain(searchParams.get("domain"));
+
+  // const fieldPaths = requestedFields
+  //   .filter(isSafeKey)
+  //   .map(splitPath)
+  //   .filter((p) => p.length > 0 && p.length <= MAX_PATH_DEPTH)
+  //   .filter((p) => !containsDeniedSegment(p));
 
   const fieldPaths = requestedFields
     .filter(isSafeKey)

@@ -1,7 +1,7 @@
 "use server";
 
 import type { Group } from "@/generated/prisma/client";
-import { UserWithProps } from "../../users/actions/user-actions";
+import { getUserById, UserWithProps } from "../../users/actions/user-actions";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
 import { sessionStore } from "@/app/libs/sessionStore";
@@ -105,6 +105,14 @@ export async function updateGroup({
 }): Promise<ActionResponse<GroupWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
+
+    for (const user of users) {
+      const getUser = await getUserById({ id: user });
+      if (getUser && getUser?.groupId !== null && getUser.groupId !== id)
+        throw new Error(
+          `El usuario ${getUser?.Partner?.name} ya se encuentra asociado al grupo ${getUser?.Group?.name}. Es necesario removerlo del grupo para ser reasignado a ${name}.`,
+        );
+    }
 
     const updatedGroup = await prisma.group.update({
       where: { id },

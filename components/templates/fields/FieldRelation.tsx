@@ -60,7 +60,6 @@ export function FieldRelation({
 
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<Many2OneOption[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
 
@@ -80,8 +79,6 @@ export function FieldRelation({
       const controller = new AbortController();
       abortRef.current = controller;
 
-      setLoading(true);
-
       try {
         const params = new URLSearchParams({
           search,
@@ -99,8 +96,6 @@ export function FieldRelation({
         if (err.name !== "AbortError") {
           console.error(err);
         }
-      } finally {
-        setLoading(false);
       }
     },
     [model, serializedDomain],

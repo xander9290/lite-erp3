@@ -18,21 +18,22 @@ function GroupListView() {
       filterable: true,
     },
     {
-      key: "Users",
+      key: "Users[].name",
       label: "Usuarios",
-      accessor: (g) => g.Users.length,
+      accessor: (g) => g.Users?.map((u) => u.name).join(", ") ?? "",
       render: (g) => (
         <div onClick={(e) => e.stopPropagation()}>
-          <Form.Select size="sm">
-            <option>{g.Users.length}</option>
-            {g.Users.map((u) => (
+          <Form.Select size="sm" className="border-0">
+            <option>{g.Users?.length}</option>
+            {g.Users?.map((u) => (
               <option key={u.id} value={u.id}>
-                [{u.login}] {u.name}
+                {u.name}
               </option>
             ))}
           </Form.Select>
         </div>
       ),
+      filterable: true,
     },
     {
       key: "createdAt",
