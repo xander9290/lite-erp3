@@ -5,6 +5,7 @@ import { UserWithProps } from "../../users/actions/user-actions";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
 import { sessionStore } from "@/app/libs/sessionStore";
+import { createAuditlog } from "@/app/actions/auditlog-actions";
 
 export interface GroupWithProps extends Group {
   Users: UserWithProps[];
@@ -70,8 +71,15 @@ export async function createGroup({
 
     if (!newGroup) throw new Error("No fue posible crear el grupo");
 
+    await createAuditlog({
+      action: "create",
+      entityId: newGroup.id,
+      entityType: "groups",
+      log: "Creó el registro",
+    });
+
     return {
-      message: "El group ha sido creado",
+      message: "El grupo ha sido creado",
       success: true,
       data: newGroup,
     };
@@ -117,10 +125,17 @@ export async function updateGroup({
       },
     });
 
-    if (!updateGroup) throw new Error("No fue posible editar el grupo");
+    if (!updatedGroup) throw new Error("No fue posible editar el grupo");
+
+    await createAuditlog({
+      action: "update",
+      entityId: updatedGroup.id,
+      entityType: "groups",
+      log: "Modificó el registro",
+    });
 
     return {
-      message: "El group ha sido creado",
+      message: "El grupo ha sido modificado",
       success: true,
       data: updatedGroup,
     };

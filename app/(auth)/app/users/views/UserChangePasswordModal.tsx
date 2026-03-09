@@ -54,7 +54,7 @@ function UserChangePasswordModal({
       <Modal.Header closeButton>Cambiar contraseña</Modal.Header>
       <Modal.Body>
         <FormProvider {...methods}>
-          <Form onSubmit={handleSubmit(onSubmit)}>
+          <Form onSubmit={handleSubmit(onSubmit)} noValidate>
             <FieldEntry name="password1" type="password" label="Contraseña" />
             <FieldEntry name="password2" type="password" label="Confirmar" />
             <div className="text-end">

@@ -1,10 +1,15 @@
 "use server";
 
+import { createAuditlog } from "@/app/actions/auditlog-actions";
 import { ActionResponse } from "@/app/libs/definitions";
 import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { type User, type Partner, Group } from "@/generated/prisma/client";
 import bcrypt from "bcryptjs";
+
+export interface UserWithPartner extends User {
+  Partner: Partner | null;
+}
 
 export interface UserWithProps extends User {
   Partner: Partner | null;
@@ -78,7 +83,6 @@ export async function createUser({
 }): Promise<ActionResponse<UserWithProps>> {
   try {
     const { uid } = await sessionStore();
-    console.log("-Creación de usuario");
 
     const newUser = await prisma.user.create({
       data: {
@@ -106,6 +110,13 @@ export async function createUser({
     if (!newUser) {
       throw new Error("Error al crear usuario");
     }
+
+    await createAuditlog({
+      action: "create",
+      entityId: newUser.id,
+      entityType: "users",
+      log: "Creó el registro",
+    });
 
     return {
       success: true,
@@ -162,6 +173,15 @@ export async function updateUser({
       },
     });
 
+    if (!updatedUser) throw new Error("No fue posible editar el usuario");
+
+    await createAuditlog({
+      action: "update",
+      entityId: updatedUser.id,
+      entityType: "users",
+      log: "Modificó el registro",
+    });
+
     return {
       success: true,
       message: "Se ha modificado el usuario",
@@ -196,6 +216,13 @@ export async function updatePassword({
     });
 
     if (!changedPassword) throw new Error("Error al cambiar la contraseña");
+
+    await createAuditlog({
+      action: "update",
+      entityId: id,
+      entityType: "users",
+      log: "Cambió la contraseña",
+    });
 
     return {
       success: true,

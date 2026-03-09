@@ -47,11 +47,38 @@ model User {
   Group   Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId String? @map("group_id")
 
+  Auditlogs Auditlog[] @relation("UserAuditlogRel")
+
   createdUid String   @map("created_uid")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+model Auditlog {
+  id         String          @id @default(cuid())
+  action     AuditlogActions
+  entityType String          @map("entity_type")
+  entityId   String          @map("entity_id")
+  log        String
+
+  userId String @map("user_id")
+  User   User   @relation("UserAuditlogRel", fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([entityType, entityId, createdAt])
+  @@index([userId])
+  @@map("auditlogs")
+}
+
+enum AuditlogActions {
+  create
+  update
+  read
+  delete
 }
 
 model Group {

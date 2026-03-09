@@ -122,6 +122,7 @@ function UsersFormView({
         onSubmit={onSubmit}
         methods={methods}
         id={id}
+        auditLog="users"
         actions={[
           {
             action: () => setChangePasswordModal(!changePasswordModal),

@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { ButtonVariant } from "react-bootstrap/esm/types";
 import NotFound from "@/app/not-found";
 import { Suspense } from "react";
+import AuditLogViewer from "./AuditLogViewer";
 
 type TFormActions = {
   string: React.ReactElement | string;
@@ -47,7 +48,7 @@ type FormViewProps<T extends FieldValues> = {
   actions?: TFormActions[];
   formStates?: TFormState[];
   state?: string;
-  modelThread?: string;
+  auditLog?: string;
 };
 
 export function FormView<T extends FieldValues>({
@@ -60,6 +61,7 @@ export function FormView<T extends FieldValues>({
   actions,
   formStates,
   state,
+  auditLog = "null",
 }: FormViewProps<T>) {
   const {
     handleSubmit,
@@ -75,7 +77,7 @@ export function FormView<T extends FieldValues>({
 
   return (
     <Row className="h-100 overflow-auto">
-      <Col xs="12" md="8" className="h-100">
+      <Col xs="12" md="8" className="h-100 px-0">
         <FormProvider {...methods}>
           <Form noValidate className="card d-flex flex-column h-100 border-0">
             <div className="card-header d-flex justify-content-between align-items-center border-0">
@@ -215,12 +217,12 @@ export function FormView<T extends FieldValues>({
         </FormProvider>
       </Col>
       {/* ================= THREAD PANEL ================= */}
-      <Col xs="12" md="4" className="h-100 mt-3 mt-md-0">
-        {/* {modelThread && (
+      <Col xs="12" md="4" className="h-100 mt-3 mt-md-0 px-0">
+        {auditLog && (
           <Suspense fallback={<Spinner animation="border" size="sm" />}>
-            <ThreadTemplate entityId={id} entityName={modelThread} />
+            <AuditLogViewer entityId={id} entityType={auditLog} />
           </Suspense>
-        )} */}
+        )}
       </Col>
     </Row>
   );

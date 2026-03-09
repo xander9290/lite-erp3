@@ -4,6 +4,7 @@ import { useFormContext, Controller } from "react-hook-form";
 import { Form } from "react-bootstrap";
 import { round } from "@/app/libs/helpers";
 import { format } from "date-fns";
+import { ElementType } from "react";
 
 interface FieldEntryProps {
   name: string;
@@ -15,6 +16,11 @@ interface FieldEntryProps {
   className?: string;
   type?: React.HTMLInputTypeAttribute;
   min?: string | number;
+  placeholder?: string;
+  as?: ElementType;
+  cols?: number;
+  rows?: number;
+  autoFocus?: boolean;
 }
 
 function toDateInputValue(value: unknown): string {
@@ -69,6 +75,11 @@ export function FieldEntry({
   className,
   type = "text",
   min,
+  placeholder,
+  as,
+  cols,
+  rows,
+  autoFocus,
 }: FieldEntryProps) {
   const { control } = useFormContext();
 
@@ -94,13 +105,18 @@ export function FieldEntry({
               } shadow-none rounded-0 border-0 w-100 p-0`}
               id={name}
               title={name}
+              as={as}
               type={type}
               isInvalid={!!fieldState.error}
+              placeholder={placeholder}
               readOnly={readonly || isSubmitting}
               // disabled={isSubmitting}
               value={inputValue}
               min={min}
+              rows={rows}
+              cols={cols}
               autoComplete="off"
+              autoFocus={autoFocus}
               onChange={(e) => {
                 const raw = e.target.value;
 
