@@ -3,7 +3,7 @@
 import TableTemplate, {
   TableTemplateColumn,
 } from "@/components/templates/TableTemplate";
-import { UserWithProps } from "../actions/user-actions";
+import { type UserWithProps } from "../actions/user-actions";
 import { Badge } from "react-bootstrap";
 import { formatDate } from "date-fns";
 import ListView from "@/components/templates/ListView";
@@ -20,23 +20,19 @@ function UsersListView() {
       type: "string",
     },
     {
-      key: "Partner.imageUrl",
-      label: "Avatar",
-      accessor: (u) => getByPath(u, "Partner.imageUrl"),
-      render: (u) => (
-        <div className="text-end">
-          <span onClick={(e) => e.stopPropagation()}>
-            <WidgetAvatar imageUrl={u.Partner?.imageUrl || null} />
-          </span>
-        </div>
-      ),
-    },
-    {
       key: "login",
       label: "Usuario",
       accessor: (u) => u.login,
       filterable: true,
       type: "string",
+      render: (u) => (
+        <div className="d-flex flex-row align-items-center gap-2">
+          <span onClick={(e) => e.stopPropagation()}>
+            <WidgetAvatar id={u.id} />
+          </span>
+          <span>{u.login}</span>
+        </div>
+      ),
     },
     {
       key: "Group.name",

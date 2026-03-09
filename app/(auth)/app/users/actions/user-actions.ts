@@ -36,6 +36,31 @@ export async function getUserById({
   }
 }
 
+export async function getUserByLogin({
+  login,
+}: {
+  login: string;
+}): Promise<UserWithProps | null> {
+  try {
+    if (!login) {
+      throw new Error("user login undefined");
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { login },
+      include: {
+        Partner: true,
+        Group: true,
+      },
+    });
+
+    return user;
+  } catch (error: any) {
+    console.log(error);
+    return null;
+  }
+}
+
 export async function createUser({
   name,
   login,
