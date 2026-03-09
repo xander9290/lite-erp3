@@ -108,7 +108,7 @@ export async function updateGroup({
 
     for (const user of users) {
       const getUser = await getUserById({ id: user });
-      if (getUser && getUser?.groupId !== null)
+      if (getUser && getUser?.groupId !== null && getUser.groupId !== id)
         throw new Error(
           `El usuario ${getUser?.Partner?.name} ya se encuentra asociado al grupo ${getUser?.Group?.name}. Es necesario removerlo del grupo para ser reasignado a ${name}.`,
         );
