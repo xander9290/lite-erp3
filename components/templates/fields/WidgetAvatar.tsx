@@ -32,8 +32,8 @@ export function WidgetAvatar({
         title={name}
         unoptimized
         src={imageUrl ?? "/images/avatar_default.svg"}
-        width={35}
-        height={35}
+        width={32}
+        height={32}
         alt="imageAvatar"
         className="rounded"
       />

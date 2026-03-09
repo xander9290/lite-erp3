@@ -26,7 +26,7 @@ function UsersListView() {
       filterable: true,
       type: "string",
       render: (u) => (
-        <div className="d-flex flex-row align-items-center gap-2">
+        <div className="d-flex flex-row align-items-end gap-2">
           <span onClick={(e) => e.stopPropagation()}>
             <WidgetAvatar id={u.id} />
           </span>

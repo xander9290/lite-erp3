@@ -347,7 +347,7 @@ export default function TableTemplate<T>({
 
       {error && <div className="text-danger small mb-2">{error}</div>}
 
-      <Table borderless hover striped>
+      <Table borderless hover striped size="sm">
         <thead className="sticky-top" style={{ zIndex: 1 }}>
           <tr>
             <th
