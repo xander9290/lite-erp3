@@ -107,6 +107,7 @@ function GroupFormView({
       reverse={handleReverse}
       onSubmit={onSubmit}
       methods={methods}
+      auditLog="groups"
       id={id}
     >
       <FormViewGroup>
