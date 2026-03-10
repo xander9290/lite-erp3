@@ -125,11 +125,11 @@ function TopNavItems() {
           <i className="bi bi-buildings me-1"></i>
           <span>Empresas</span>
         </NavDropdown.Item>
-        <NavDropdown.Item>
+        <NavDropdown.Item as={Link} href="/app/models?view_type=list&id=null">
           <i className="bi bi-database-fill me-1"></i>
           <span>Modelos</span>
         </NavDropdown.Item>
-        <NavDropdown.Item>
+        <NavDropdown.Item as={Link} href="/app/fields?view_type=list&id=null">
           <i className="bi bi-list-columns-reverse me-1"></i>{" "}
           <span>Campos</span>
         </NavDropdown.Item>
