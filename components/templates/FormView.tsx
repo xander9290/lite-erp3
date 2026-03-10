@@ -79,7 +79,11 @@ export function FormView<T extends FieldValues>({
     <Row className="h-100 overflow-auto">
       <Col xs="12" md="8" className="h-100 px-0">
         <FormProvider {...methods}>
-          <Form noValidate className="card d-flex flex-column h-100 border-0">
+          <Form
+            noValidate
+            className="card d-flex flex-column h-100 border-0"
+            style={{ fontSize: "0.9rem" }}
+          >
             <div className="card-header d-flex justify-content-between align-items-center border-0">
               {/* BOTONES DE FORMULARIO */}
               <div className="d-flex align-items-center gap-1">

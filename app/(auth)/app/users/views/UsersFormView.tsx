@@ -142,8 +142,8 @@ function UsersFormView({
           <FieldImage
             name="imageUrl"
             folder="users"
-            height={150}
-            width={150}
+            height={125}
+            width={125}
             editable
             remove
           />

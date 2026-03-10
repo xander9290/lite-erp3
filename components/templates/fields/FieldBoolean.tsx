@@ -37,6 +37,7 @@ export function FieldBoolean({
           checked={!!field.value}
           onChange={(e) => field.onChange(e.target.checked)}
           onBlur={field.onBlur}
+          style={{ fontSize: "0.9rem" }}
         />
       )}
     />

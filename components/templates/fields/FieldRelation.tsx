@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useController, useFormContext } from "react-hook-form";
-import { Form, Dropdown, Button } from "react-bootstrap";
+import { Form, Dropdown, Button, Spinner } from "react-bootstrap";
 
 export interface Many2OneOption {
   id: number | string;
@@ -62,6 +62,7 @@ export function FieldRelation({
   const [options, setOptions] = useState<Many2OneOption[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -78,6 +79,8 @@ export function FieldRelation({
 
       const controller = new AbortController();
       abortRef.current = controller;
+
+      setLoading(true);
 
       try {
         const params = new URLSearchParams({
@@ -96,6 +99,8 @@ export function FieldRelation({
         if (err.name !== "AbortError") {
           console.error(err);
         }
+      } finally {
+        setLoading(false);
       }
     },
     [model, serializedDomain],
@@ -225,6 +230,7 @@ export function FieldRelation({
           autoFocus={autoFocus}
           className={`border-0 p-0 w-100 ${!inline ? "border-bottom" : ""} shadow-none rounded-0 ${className ?? ""}`}
           onKeyDown={handleKeyDown}
+          style={{ fontSize: "0.9rem" }}
         />
         {!inline && (
           <Button
@@ -246,25 +252,39 @@ export function FieldRelation({
       </Form.Control.Feedback>
 
       {isOpen && options.length > 0 && !readonly && (
-        <Dropdown show className="w-100">
+        <Dropdown show>
           <Dropdown.Menu
-            className="p-0 w-100"
+            className="p-0 w-auto mt-1"
             style={{
               maxHeight: 200,
               overflowY: "auto",
               zIndex: 1050,
             }}
           >
-            {options.map((opt, index) => (
-              <Dropdown.Item
-                key={opt.id}
-                active={index === highlightedIndex}
-                onMouseDown={() => handleSelect(opt)}
-                className="text-wrap border-bottom"
+            {loading ? (
+              <div className="d-flex justify-content-center align-items-center p-3">
+                <Spinner animation="border" size="sm" />
+              </div>
+            ) : options.length > 0 ? (
+              options.map((opt, index) => (
+                <Dropdown.Item
+                  key={opt.id}
+                  active={index === highlightedIndex}
+                  onMouseDown={() => handleSelect(opt)}
+                  className="text-wrap p-1"
+                  style={{ fontSize: "0.9rem" }}
+                >
+                  {opt.name}
+                </Dropdown.Item>
+              ))
+            ) : (
+              <div
+                className="px-3 py-2 text-muted"
+                style={{ fontSize: "0.9rem" }}
               >
-                {opt.displayName ?? opt.name}
-              </Dropdown.Item>
-            ))}
+                Sin resultados
+              </div>
+            )}
           </Dropdown.Menu>
         </Dropdown>
       )}

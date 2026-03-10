@@ -116,6 +116,7 @@ export function FieldEntry({
               rows={rows}
               cols={cols}
               autoComplete="off"
+              style={{ fontSize: "0.9rem" }}
               autoFocus={autoFocus}
               onChange={(e) => {
                 const raw = e.target.value;
