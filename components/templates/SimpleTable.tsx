@@ -1,7 +1,6 @@
 "use client";
 
 import { Button, Table } from "react-bootstrap";
-import { FieldArrayMethodProps } from "react-hook-form";
 
 type STHeader = {
   string: React.ReactNode;

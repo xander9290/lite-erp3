@@ -19,7 +19,7 @@ import {
 import { useRouter } from "next/navigation";
 import { ButtonVariant } from "react-bootstrap/esm/types";
 import NotFound from "@/app/not-found";
-import { act, Suspense } from "react";
+import { Suspense } from "react";
 import AuditLogViewer from "./AuditLogViewer";
 
 type TFormActions = {

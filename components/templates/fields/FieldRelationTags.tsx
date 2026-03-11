@@ -66,7 +66,6 @@ export function FieldRelationTags({
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<Many2ManyOption[]>([]);
   const [selectedObjects, setSelectedObjects] = useState<Many2ManyOption[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
 
@@ -117,8 +116,6 @@ export function FieldRelationTags({
       const controller = new AbortController();
       abortRef.current = controller;
 
-      setLoading(true);
-
       try {
         const params = new URLSearchParams({
           search,
@@ -142,7 +139,6 @@ export function FieldRelationTags({
       } catch (err: any) {
         if (err.name !== "AbortError") console.error(err);
       } finally {
-        setLoading(false);
       }
     },
     [model, value, serializedDomain],

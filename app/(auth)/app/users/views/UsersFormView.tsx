@@ -26,7 +26,6 @@ import {
 import { createUser, updateUser, UserWithProps } from "../actions/user-actions";
 import toast from "react-hot-toast";
 import UserChangePasswordModal from "./UserChangePasswordModal";
-import { GroupWithProps } from "../../groups/actions/groups-actions";
 
 function UsersFormView({
   id,

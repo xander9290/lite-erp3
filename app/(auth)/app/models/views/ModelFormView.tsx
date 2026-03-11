@@ -29,7 +29,6 @@ import {
   FieldOption,
   SelectOption,
 } from "@/components/templates/fields/FielOption";
-import { Many2ManyOption } from "@/components/templates/fields/FieldRelationTags";
 
 function ModelFormView({
   id,
