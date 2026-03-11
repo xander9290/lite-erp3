@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, SubmitHandler } from "react-hook-form";
+import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import {
@@ -15,6 +15,7 @@ import {
   FormPage,
   FormView,
   FormViewGroup,
+  PageSheet,
 } from "@/components/templates/FormView";
 import {
   createGroup,
@@ -24,9 +25,12 @@ import {
 import {
   FieldBoolean,
   FieldEntry,
+  FieldRelation,
   FieldRelationTags,
 } from "@/components/templates/fields";
 import toast from "react-hot-toast";
+import SimpleTable from "@/components/templates/SimpleTable";
+import { Button } from "react-bootstrap";
 
 function GroupFormView({
   id,
@@ -38,6 +42,13 @@ function GroupFormView({
   const methods = useForm<GroupSchemaType>({
     resolver: zodResolver(groupSchema),
     defaultValues: groupSchemaDefault,
+  });
+
+  const { control } = methods;
+
+  const { append, fields, remove } = useFieldArray({
+    control,
+    name: "lines",
   });
 
   const { reset } = methods;
@@ -79,6 +90,7 @@ function GroupFormView({
         name: "",
         active: true,
         users: [],
+        lines: [],
         createdAt: null,
         updatedAt: null,
       };
@@ -89,6 +101,16 @@ function GroupFormView({
         name: group.name,
         active: group.active,
         users: group.Users.map((u) => u.id) ?? [],
+        lines:
+          group.GroupLines.map((line) => ({
+            id: line.id,
+            fieldId: line.fieldId,
+            invisible: line.invisible,
+            required: line.required,
+            readonly: line.readonly,
+            notCreate: line.notCreate,
+            notEdit: line.notEdit,
+          })) || [],
         createdAt: group.createdAt,
         updatedAt: group.updatedAt,
       };
@@ -124,7 +146,88 @@ function GroupFormView({
       </FormViewGroup>
       <FormBook dKey="groupLine">
         <FormPage eventKey="groupLine" title="Accesos">
-          <h3>Accesos</h3>
+          <PageSheet name="groupLines">
+            <SimpleTable
+              data={fields}
+              headers={[
+                { string: "Campo" },
+                { string: "Invisble" },
+                { string: "Requerido" },
+                { string: "Solo lectura" },
+                { string: "No crear" },
+                { string: "No editar" },
+                {
+                  string: <i className="bi bi-trash"></i>,
+                  className: "text-center",
+                },
+              ]}
+              renderRow={(row, index) => (
+                <tr key={row.id} className="border-0 border-bottom">
+                  <td valign="middle" className="p-0">
+                    <FieldRelation
+                      inline
+                      model="modelField"
+                      name={`lines.${index}.fieldId`}
+                    />
+                  </td>
+                  <td valign="middle" className="p-0 text-center">
+                    <FieldBoolean
+                      type="checkbox"
+                      inline
+                      name={`lines.${index}.invisible`}
+                    />
+                  </td>
+                  <td valign="middle" className="p-0 text-center">
+                    <FieldBoolean
+                      type="checkbox"
+                      inline
+                      name={`lines.${index}.required`}
+                    />
+                  </td>
+                  <td valign="middle" className="p-0 text-center">
+                    <FieldBoolean
+                      type="checkbox"
+                      inline
+                      name={`lines.${index}.readonly`}
+                    />
+                  </td>
+                  <td valign="middle" className="p-0 text-center">
+                    <FieldBoolean
+                      type="checkbox"
+                      inline
+                      name={`lines.${index}.notCreate`}
+                    />
+                  </td>
+                  <td valign="middle" className="p-0 text-center">
+                    <FieldBoolean
+                      type="checkbox"
+                      inline
+                      name={`lines.${index}.notEdit`}
+                    />
+                  </td>
+                  <td className="text-center p-0" valign="middle">
+                    <Button
+                      size="sm"
+                      variant="link"
+                      onClick={() => remove(index)}
+                    >
+                      <i className="bi bi-trash"></i>
+                    </Button>
+                  </td>
+                </tr>
+              )}
+              action={() =>
+                append({
+                  fieldId: "",
+                  invisible: false,
+                  required: false,
+                  readonly: false,
+                  notCreate: false,
+                  notEdit: false,
+                })
+              }
+            />
+          </PageSheet>
         </FormPage>
       </FormBook>
     </FormView>
