@@ -1,4 +1,10 @@
 import NotFound from "@/app/not-found";
+import { lazy, Suspense } from "react";
+import { getModelById } from "./actions/model-actions";
+import LoadingPage from "@/app/loading-page";
+
+const ModelListView = lazy(() => import("./views/ModelListView"));
+const ModelFormView = lazy(() => import("./views/ModelFormView"));
 
 async function PageModels({
   searchParams,
@@ -7,10 +13,16 @@ async function PageModels({
 }) {
   const { view_type: viewType, id } = await searchParams;
 
+  const entity = id && id !== "null" ? await getModelById({ id }) : null;
+
   if (viewType === "list") {
-    return <h3>List View</h3>;
+    return <ModelListView />;
   } else if (viewType === "form") {
-    return <h3>Form View</h3>;
+    return (
+      <Suspense fallback={<LoadingPage />}>
+        <ModelFormView id={id} entity={entity} />
+      </Suspense>
+    );
   } else {
     return <NotFound />;
   }

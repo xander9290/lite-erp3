@@ -177,7 +177,7 @@ export function FieldOption<T extends Many2OneOption>({
         disabled={disabled}
         readOnly={readonly}
         autoFocus={autoFocus}
-        className={`border-0 ${!inline ? "border-bottom" : ""} shadow-none rounded-0 p-0 ${className}`}
+        className={`border-0 ${!inline ? "border-bottom p-0" : ""} shadow-none rounded-0 ${className}`}
       />
 
       <Form.Control.Feedback type="invalid">
@@ -187,7 +187,7 @@ export function FieldOption<T extends Many2OneOption>({
       {isOpen && !readonly && !disabled && filteredOptions.length > 0 && (
         <Dropdown show className="w-100">
           <Dropdown.Menu
-            className="p-0 w-auto"
+            className="p-0 w-auto z-1000"
             style={{
               maxHeight: 200,
               overflowY: "auto",

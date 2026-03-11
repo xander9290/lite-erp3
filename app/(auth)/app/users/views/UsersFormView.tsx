@@ -129,7 +129,7 @@ function UsersFormView({
             fieldName: "",
             string: "Cambiar contraseña",
             variant: "info",
-            invisible: id === "null",
+            invisible: !id || id === "null",
           },
         ]}
       >

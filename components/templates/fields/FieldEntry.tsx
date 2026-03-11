@@ -101,8 +101,8 @@ export function FieldEntry({
           <>
             <Form.Control
               className={`${className ?? ""} ${type === "password" ? "text-center" : ""} ${
-                !inline ? "border-bottom" : ""
-              } shadow-none rounded-0 border-0 w-100 p-0`}
+                !inline ? "border-bottom p-0" : ""
+              } shadow-none rounded-0 border-0 w-100`}
               id={name}
               title={name}
               as={as}
