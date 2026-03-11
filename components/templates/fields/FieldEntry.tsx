@@ -101,8 +101,8 @@ export function FieldEntry({
           <>
             <Form.Control
               className={`${className ?? ""} ${type === "password" ? "text-center" : ""} ${
-                !inline ? "border-bottom" : ""
-              } shadow-none rounded-0 border-0 w-100 p-0`}
+                !inline ? "border-bottom p-0" : ""
+              } shadow-none rounded-0 border-0 w-100`}
               id={name}
               title={name}
               as={as}
@@ -116,6 +116,7 @@ export function FieldEntry({
               rows={rows}
               cols={cols}
               autoComplete="off"
+              style={{ fontSize: "0.9rem" }}
               autoFocus={autoFocus}
               onChange={(e) => {
                 const raw = e.target.value;
@@ -164,7 +165,7 @@ export function FieldEntry({
   }
 
   return (
-    <Form.Group className="mb-3">
+    <Form.Group className="mb-3" title={name}>
       <div className="d-flex flex-column align-items-sm-end gap-0 flex-sm-row">
         <Form.Label
           htmlFor={name}

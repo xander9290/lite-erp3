@@ -4,7 +4,6 @@ import {
   type UseFormReturn,
 } from "react-hook-form";
 import {
-  Alert,
   Button,
   ButtonGroup,
   Col,
@@ -79,7 +78,11 @@ export function FormView<T extends FieldValues>({
     <Row className="h-100 overflow-auto">
       <Col xs="12" md="8" className="h-100 px-0">
         <FormProvider {...methods}>
-          <Form noValidate className="card d-flex flex-column h-100 border-0">
+          <Form
+            noValidate
+            className="card d-flex flex-column h-100 border-0"
+            style={{ fontSize: "0.9rem" }}
+          >
             <div className="card-header d-flex justify-content-between align-items-center border-0">
               {/* BOTONES DE FORMULARIO */}
               <div className="d-flex align-items-center gap-1">
@@ -123,6 +126,7 @@ export function FormView<T extends FieldValues>({
               {/* BOTONES VISTA ESCRITORIO */}
               <div className="d-none d-md-flex gap-1 align-items-center">
                 {actions?.map((action, index) => {
+                  if (action.invisible) return null;
                   return (
                     <Button
                       key={`${action.string}-${index}`}
@@ -144,6 +148,7 @@ export function FormView<T extends FieldValues>({
               <div className="d-flex d-md-none">
                 <DropdownButton variant="light" title="Acciones" align="end">
                   {actions?.map((action, index) => {
+                    if (action.invisible) return null;
                     return (
                       <Dropdown.Item
                         key={`${action.string}-${index}`}
@@ -316,6 +321,8 @@ export const PageSheet = ({
   invisible?: boolean;
   readonly?: boolean;
 }) => {
+  if (invisible) return null;
+
   return (
     <Row
       style={{

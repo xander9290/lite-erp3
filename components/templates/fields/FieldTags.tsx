@@ -164,6 +164,7 @@ export function FieldTags({
             pill
             bg="secondary"
             className="d-flex align-items-center gap-1 px-2 py-1"
+            style={{ fontSize: "0.9rem" }}
           >
             <span>{tag.name}</span>
             <span
@@ -190,6 +191,7 @@ export function FieldTags({
         disabled={disabled}
         size="sm"
         className="shadow-none border-0 border-bottom flex-grow-1 rounded-0"
+        style={{ fontSize: "0.9rem" }}
       />
 
       {error && <div className="text-danger small mt-1">{error.message}</div>}
@@ -207,6 +209,7 @@ export function FieldTags({
                 active={index === highlightedIndex}
                 onMouseDown={() => handleSelect(tag)}
                 className="text-wrap border-bottom"
+                style={{ fontSize: "0.9rem" }}
               >
                 {tag.name}
               </Dropdown.Item>

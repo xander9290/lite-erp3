@@ -2,11 +2,12 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useController, useFormContext } from "react-hook-form";
-import { Form, Dropdown, Button } from "react-bootstrap";
+import { Form, Dropdown, Button, Spinner } from "react-bootstrap";
 
 export interface Many2OneOption {
   id: number | string;
   name?: string | null;
+  displayName?: string | null;
   [key: string]: any;
 }
 
@@ -26,7 +27,7 @@ export type DomainOperator =
 export type DomainItem = [field: string, operator: DomainOperator, value: any];
 export type Domain = DomainItem[];
 
-interface Many2oneFieldProps {
+interface Many2oneFieldProps<T extends Many2OneOption> {
   name: string;
   model: string;
   label?: string;
@@ -35,11 +36,11 @@ interface Many2oneFieldProps {
   inline?: boolean;
   className?: string;
   autoFocus?: boolean;
-  ponChange?: (value: Many2OneOption) => void;
+  ponChange?: (value: Many2OneOption["id"] | null, record: T | null) => void;
   domain?: Domain;
 }
 
-export function FieldRelation({
+export function FieldRelation<T extends Many2OneOption>({
   name,
   model,
   label,
@@ -50,7 +51,7 @@ export function FieldRelation({
   autoFocus,
   ponChange,
   domain,
-}: Many2oneFieldProps) {
+}: Many2oneFieldProps<T>) {
   const { control } = useFormContext();
 
   const {
@@ -59,9 +60,10 @@ export function FieldRelation({
   } = useController({ name, control });
 
   const [query, setQuery] = useState("");
-  const [options, setOptions] = useState<Many2OneOption[]>([]);
+  const [options, setOptions] = useState<T[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -79,6 +81,8 @@ export function FieldRelation({
       const controller = new AbortController();
       abortRef.current = controller;
 
+      setLoading(true);
+
       try {
         const params = new URLSearchParams({
           search,
@@ -91,11 +95,13 @@ export function FieldRelation({
         });
 
         const data = await res.json();
-        setOptions(Array.isArray(data) ? data : []);
+        setOptions(Array.isArray(data) ? (data as T[]) : []);
       } catch (err: any) {
         if (err.name !== "AbortError") {
           console.error(err);
         }
+      } finally {
+        setLoading(false);
       }
     },
     [model, serializedDomain],
@@ -130,7 +136,7 @@ export function FieldRelation({
 
         const res = await fetch(`/api/m2o/${model}?${params.toString()}`);
         const data = await res.json();
-        setQuery(data?.name ?? "");
+        setQuery(data?.displayName ?? data?.name ?? "");
       } catch (err) {
         console.error(err);
       }
@@ -139,10 +145,10 @@ export function FieldRelation({
     resolveInitial();
   }, [value, model, serializedDomain]);
 
-  const handleSelect = (option: Many2OneOption) => {
-    onChange(option.id);
-    ponChange?.(option);
-    setQuery(option.displayName ?? option.name ?? "");
+  const handleSelect = (record: T) => {
+    onChange(record.id);
+    ponChange?.(record.id, record);
+    setQuery(record.displayName ?? record.name ?? "");
     setIsOpen(false);
   };
 
@@ -155,6 +161,7 @@ export function FieldRelation({
         setIsOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
@@ -171,17 +178,20 @@ export function FieldRelation({
       setHighlightedIndex((prev) =>
         prev + 1 < options.length ? prev + 1 : prev,
       );
+      return;
     }
 
     if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+      return;
     }
 
     if (e.key === "Enter") {
       e.preventDefault();
       const selected = options[highlightedIndex];
       if (selected) handleSelect(selected);
+      return;
     }
 
     if (e.key === "Escape") {
@@ -191,8 +201,10 @@ export function FieldRelation({
 
   const handleOff = () => {
     setQuery("");
+    setOptions([]);
     setIsOpen(true);
     onChange(null);
+    ponChange?.(null, null);
     inputRef.current?.focus();
   };
 
@@ -212,6 +224,7 @@ export function FieldRelation({
 
             if (newValue.trim() === "") {
               onChange(null);
+              ponChange?.(null, null);
             }
           }}
           onFocus={() => {
@@ -225,6 +238,7 @@ export function FieldRelation({
           autoFocus={autoFocus}
           className={`border-0 p-0 w-100 ${!inline ? "border-bottom" : ""} shadow-none rounded-0 ${className ?? ""}`}
           onKeyDown={handleKeyDown}
+          style={{ fontSize: "0.9rem" }}
         />
         {!inline && (
           <Button
@@ -239,32 +253,47 @@ export function FieldRelation({
         )}
       </div>
 
-      {/* {loading && <Spinner animation="border" size="sm" />} */}
-
       <Form.Control.Feedback type="invalid">
         {error?.message}
       </Form.Control.Feedback>
 
-      {isOpen && options.length > 0 && !readonly && (
-        <Dropdown show className="w-100">
+      {isOpen && !readonly && (
+        <Dropdown show>
           <Dropdown.Menu
-            className="p-0 w-100"
+            className="p-0 w-auto mt-1"
             style={{
               maxHeight: 200,
               overflowY: "auto",
               zIndex: 1050,
             }}
           >
-            {options.map((opt, index) => (
-              <Dropdown.Item
-                key={opt.id}
-                active={index === highlightedIndex}
-                onMouseDown={() => handleSelect(opt)}
-                className="text-wrap border-bottom"
+            {loading ? (
+              <div className="d-flex justify-content-center align-items-center p-3">
+                <Spinner animation="border" size="sm" />
+              </div>
+            ) : options.length > 0 ? (
+              options.map((opt, index) => (
+                <Dropdown.Item
+                  key={opt.id}
+                  active={index === highlightedIndex}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleSelect(opt);
+                  }}
+                  className="text-wrap p-1"
+                  style={{ fontSize: "0.9rem" }}
+                >
+                  {opt.displayName ?? opt.name}
+                </Dropdown.Item>
+              ))
+            ) : (
+              <div
+                className="px-3 py-2 text-muted"
+                style={{ fontSize: "0.9rem" }}
               >
-                {opt.displayName ?? opt.name}
-              </Dropdown.Item>
-            ))}
+                Sin resultados
+              </div>
+            )}
           </Dropdown.Menu>
         </Dropdown>
       )}
@@ -276,7 +305,7 @@ export function FieldRelation({
   }
 
   return (
-    <Form.Group ref={containerRef} className="mb-3">
+    <Form.Group ref={containerRef} className="mb-3" title={name}>
       <div className="d-flex flex-column align-items-sm-end gap-0 flex-sm-row">
         <Form.Label
           className="fw-semibold m-0 p-0 flex-shrink-0"

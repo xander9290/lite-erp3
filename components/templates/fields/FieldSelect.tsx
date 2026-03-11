@@ -54,10 +54,15 @@ export function FieldSelect({
                   field.onChange(val);
                   onChange?.(val);
                 }}
+                style={{ fontSize: "0.9rem" }}
               >
                 <option value=""></option>
                 {options.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
+                  <option
+                    key={opt.value}
+                    value={opt.value}
+                    style={{ fontSize: "0.9rem" }}
+                  >
                     {opt.label}
                   </option>
                 ))}

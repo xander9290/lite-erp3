@@ -81,8 +81,6 @@ function Header({ children, formView, title, actions }: HeaderProps) {
 }
 
 function Body({ children }: BodyProps) {
-  const router = useRouter();
-
   return (
     <Card.Body className="p-0 flex-fill overflow-auto">{children}</Card.Body>
   );

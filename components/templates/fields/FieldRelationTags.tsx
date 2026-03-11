@@ -66,7 +66,6 @@ export function FieldRelationTags({
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<Many2ManyOption[]>([]);
   const [selectedObjects, setSelectedObjects] = useState<Many2ManyOption[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
 
@@ -117,8 +116,6 @@ export function FieldRelationTags({
       const controller = new AbortController();
       abortRef.current = controller;
 
-      setLoading(true);
-
       try {
         const params = new URLSearchParams({
           search,
@@ -142,7 +139,6 @@ export function FieldRelationTags({
       } catch (err: any) {
         if (err.name !== "AbortError") console.error(err);
       } finally {
-        setLoading(false);
       }
     },
     [model, value, serializedDomain],
@@ -291,7 +287,7 @@ export function FieldRelationTags({
             onKeyDown={handleKeyDown}
             size="sm"
             className="border-0 border-bottom shadow-none flex-grow-1 rounded-0"
-            style={{ minWidth: "120px" }}
+            style={{ minWidth: "120px", fontSize: "0.9rem" }}
             autoComplete="off"
           />
         )}
@@ -304,11 +300,10 @@ export function FieldRelationTags({
       )}
 
       {isOpen && options.length > 0 && (
-        <Dropdown show className="w-100">
+        <Dropdown show className="">
           <Dropdown.Menu
-            className="p-0"
+            className="p-0 w-auto"
             style={{
-              width: "100%",
               maxHeight: "200px",
               overflowY: "auto",
             }}
@@ -321,7 +316,8 @@ export function FieldRelationTags({
                   e.preventDefault();
                   handleSelect(option);
                 }}
-                className="text-wrap border-bottom"
+                className="text-wrap"
+                style={{ fontSize: "0.9rem" }}
               >
                 {option.displayName ?? option.name}
               </Dropdown.Item>
