@@ -26,7 +26,7 @@ function GroupListView() {
           <Form.Select size="sm" className="border-0">
             <option>{g.Users?.length}</option>
             {g.Users?.map((u) => (
-              <option key={u.id} value={u.id}>
+              <option key={u.id || Date.now()} value={u.id}>
                 {u.name}
               </option>
             ))}

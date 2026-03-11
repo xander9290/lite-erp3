@@ -20,7 +20,7 @@ import {
 import { useRouter } from "next/navigation";
 import { ButtonVariant } from "react-bootstrap/esm/types";
 import NotFound from "@/app/not-found";
-import { Suspense } from "react";
+import { act, Suspense } from "react";
 import AuditLogViewer from "./AuditLogViewer";
 
 type TFormActions = {
@@ -127,6 +127,7 @@ export function FormView<T extends FieldValues>({
               {/* BOTONES VISTA ESCRITORIO */}
               <div className="d-none d-md-flex gap-1 align-items-center">
                 {actions?.map((action, index) => {
+                  if (action.invisible) return null;
                   return (
                     <Button
                       key={`${action.string}-${index}`}
@@ -148,6 +149,7 @@ export function FormView<T extends FieldValues>({
               <div className="d-flex d-md-none">
                 <DropdownButton variant="light" title="Acciones" align="end">
                   {actions?.map((action, index) => {
+                    if (action.invisible) return null;
                     return (
                       <Dropdown.Item
                         key={`${action.string}-${index}`}
