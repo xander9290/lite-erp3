@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+import { createPortal } from "react-dom";
 import { useController, useFormContext } from "react-hook-form";
 import { Form, Dropdown, Button, Spinner } from "react-bootstrap";
 
@@ -40,6 +47,12 @@ interface Many2oneFieldProps<T extends Many2OneOption> {
   domain?: Domain;
 }
 
+interface MenuPosition {
+  top: number;
+  left: number;
+  width: number;
+}
+
 export function FieldRelation<T extends Many2OneOption>({
   name,
   model,
@@ -64,6 +77,12 @@ export function FieldRelation<T extends Many2OneOption>({
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition>({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
 
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -71,6 +90,18 @@ export function FieldRelation<T extends Many2OneOption>({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const serializedDomain = JSON.stringify(domain ?? []);
+
+  const updateMenuPosition = useCallback(() => {
+    if (!inputRef.current) return;
+
+    const rect = inputRef.current.getBoundingClientRect();
+
+    setMenuPosition({
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+    });
+  }, []);
 
   const fetchOptions = useCallback(
     async (search: string) => {
@@ -106,6 +137,10 @@ export function FieldRelation<T extends Many2OneOption>({
     },
     [model, serializedDomain],
   );
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -154,10 +189,9 @@ export function FieldRelation<T extends Many2OneOption>({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
+      const target = e.target as Node;
+
+      if (containerRef.current && !containerRef.current.contains(target)) {
         setIsOpen(false);
       }
     };
@@ -169,6 +203,28 @@ export function FieldRelation<T extends Many2OneOption>({
   useEffect(() => {
     setHighlightedIndex(0);
   }, [options]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    updateMenuPosition();
+
+    const handleScroll = () => {
+      updateMenuPosition();
+    };
+
+    const handleResize = () => {
+      updateMenuPosition();
+    };
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", handleScroll, true);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [isOpen, updateMenuPosition]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isOpen || options.length === 0) return;
@@ -206,65 +262,30 @@ export function FieldRelation<T extends Many2OneOption>({
     onChange(null);
     ponChange?.(null, null);
     inputRef.current?.focus();
+    requestAnimationFrame(updateMenuPosition);
   };
 
-  if (invisible) return null;
+  const dropdownMenu = useMemo(() => {
+    if (!mounted || !isOpen || readonly) return null;
 
-  const input = (
-    <>
-      <div className="d-flex">
-        <Form.Control
-          type="text"
-          value={query}
-          ref={inputRef}
-          onChange={(e) => {
-            const newValue = String(e.target.value);
-            setQuery(newValue);
-            setIsOpen(true);
-
-            if (newValue.trim() === "") {
-              onChange(null);
-              ponChange?.(null, null);
-            }
-          }}
-          onFocus={() => {
-            if (readonly) return;
-            setIsOpen(true);
-            fetchOptions(query.trim());
-          }}
-          autoComplete="off"
-          isInvalid={!!error}
-          readOnly={readonly}
-          autoFocus={autoFocus}
-          className={`border-0 p-0 w-100 ${!inline ? "border-bottom" : ""} shadow-none rounded-0 ${className ?? ""}`}
-          onKeyDown={handleKeyDown}
-          style={{ fontSize: "0.9rem" }}
-        />
-        {!inline && (
-          <Button
-            size="sm"
-            variant="none"
-            onClick={handleOff}
-            title="Desplegar"
-            disabled={readonly}
-          >
-            <i className="bi bi-power"></i>
-          </Button>
-        )}
-      </div>
-
-      <Form.Control.Feedback type="invalid">
-        {error?.message}
-      </Form.Control.Feedback>
-
-      {isOpen && !readonly && (
-        <Dropdown show>
+    return createPortal(
+      <div
+        style={{
+          position: "fixed",
+          top: menuPosition.top,
+          left: menuPosition.left,
+          width: menuPosition.width,
+          zIndex: 9999,
+        }}
+      >
+        <Dropdown show className="w-100">
           <Dropdown.Menu
-            className="p-0 w-auto mt-1"
+            show
+            className="p-0 w-auto mt-0"
             style={{
               maxHeight: 200,
               overflowY: "auto",
-              zIndex: 1050,
+              zIndex: 9999,
             }}
           >
             {loading ? (
@@ -296,7 +317,73 @@ export function FieldRelation<T extends Many2OneOption>({
             )}
           </Dropdown.Menu>
         </Dropdown>
-      )}
+      </div>,
+      document.body,
+    );
+  }, [
+    mounted,
+    isOpen,
+    readonly,
+    menuPosition.top,
+    menuPosition.left,
+    menuPosition.width,
+    loading,
+    options,
+    highlightedIndex,
+  ]);
+
+  if (invisible) return null;
+
+  const input = (
+    <>
+      <div className="d-flex">
+        <Form.Control
+          type="text"
+          value={query}
+          ref={inputRef}
+          onChange={(e) => {
+            const newValue = String(e.target.value);
+            setQuery(newValue);
+            setIsOpen(true);
+            requestAnimationFrame(updateMenuPosition);
+
+            if (newValue.trim() === "") {
+              onChange(null);
+              ponChange?.(null, null);
+            }
+          }}
+          onFocus={() => {
+            if (readonly) return;
+            setIsOpen(true);
+            fetchOptions(query.trim());
+            requestAnimationFrame(updateMenuPosition);
+          }}
+          autoComplete="off"
+          isInvalid={!!error}
+          readOnly={readonly}
+          autoFocus={autoFocus}
+          className={`border-0 w-100 ${!inline ? "border-bottom p-0" : ""} shadow-none rounded-0 ${className ?? ""}`}
+          onKeyDown={handleKeyDown}
+          style={{ fontSize: "0.9rem" }}
+        />
+        {!inline && (
+          <Button
+            size="sm"
+            variant="none"
+            onClick={handleOff}
+            title="Desplegar"
+            disabled={readonly}
+          >
+            <i className="bi bi-power"></i>
+          </Button>
+        )}
+      </div>
+
+      <Form.Control.Feedback type="invalid">
+        {error?.message}
+      </Form.Control.Feedback>
+
+      {dropdownMenu}
     </>
   );
 

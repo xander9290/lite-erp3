@@ -53,7 +53,7 @@ export default function SimpleTable<T>({
                 size="sm"
                 variant="link"
                 onClick={action}
-                className="border-0 text-decoration-none"
+                className="border-0 text-decoration-none shadow-none"
               >
                 Agregar
               </Button>

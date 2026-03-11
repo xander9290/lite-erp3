@@ -7,12 +7,14 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import { createPortal } from "react-dom";
 import { useController, useFormContext } from "react-hook-form";
 import { Form, Dropdown, Badge } from "react-bootstrap";
 
 export interface Many2ManyOption {
   id: string;
   name?: string | null;
+  displayName?: string | null;
   [key: string]: any;
 }
 
@@ -43,6 +45,12 @@ interface Props {
   domain?: Domain;
 }
 
+interface MenuPosition {
+  top: number;
+  left: number;
+  width: number;
+}
+
 export function FieldRelationTags({
   name,
   model,
@@ -68,6 +76,12 @@ export function FieldRelationTags({
   const [selectedObjects, setSelectedObjects] = useState<Many2ManyOption[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition>({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -78,6 +92,22 @@ export function FieldRelationTags({
     () => JSON.stringify(domain ?? []),
     [domain],
   );
+
+  const updateMenuPosition = useCallback(() => {
+    if (!inputRef.current) return;
+
+    const rect = inputRef.current.getBoundingClientRect();
+
+    setMenuPosition({
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+    });
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (value.length === 0) {
@@ -138,7 +168,6 @@ export function FieldRelationTags({
         setOptions(filtered);
       } catch (err: any) {
         if (err.name !== "AbortError") console.error(err);
-      } finally {
       }
     },
     [model, value, serializedDomain],
@@ -185,21 +214,25 @@ export function FieldRelationTags({
       setHighlightedIndex((prev) =>
         prev + 1 < options.length ? prev + 1 : prev,
       );
+      return;
     }
 
     if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+      return;
     }
 
     if (e.key === "Enter") {
       e.preventDefault();
       const option = options[highlightedIndex];
       if (option) handleSelect(option);
+      return;
     }
 
     if (e.key === "Escape") {
       setIsOpen(false);
+      return;
     }
 
     if (e.key === "Backspace" && query === "" && value.length > 0) {
@@ -210,10 +243,9 @@ export function FieldRelationTags({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
+      const target = e.target as Node;
+
+      if (containerRef.current && !containerRef.current.contains(target)) {
         setIsOpen(false);
       }
     };
@@ -226,7 +258,72 @@ export function FieldRelationTags({
     setHighlightedIndex(0);
   }, [options]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    updateMenuPosition();
+
+    const handleScroll = () => {
+      updateMenuPosition();
+    };
+
+    const handleResize = () => {
+      updateMenuPosition();
+    };
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", handleScroll, true);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [isOpen, updateMenuPosition]);
+
   if (invisible) return null;
+
+  const dropdownMenu =
+    mounted && isOpen && options.length > 0
+      ? createPortal(
+          <div
+            style={{
+              position: "fixed",
+              top: menuPosition.top,
+              left: menuPosition.left,
+              width: menuPosition.width,
+              zIndex: 9999,
+            }}
+          >
+            <Dropdown show className="w-100">
+              <Dropdown.Menu
+                show
+                className="p-0 w-auto"
+                style={{
+                  maxHeight: "200px",
+                  overflowY: "auto",
+                  zIndex: 9999,
+                }}
+              >
+                {options.map((option, index) => (
+                  <Dropdown.Item
+                    key={option.id}
+                    active={index === highlightedIndex}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelect(option);
+                    }}
+                    className="text-wrap"
+                    style={{ fontSize: "0.9rem" }}
+                  >
+                    {option.displayName ?? option.name}
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <div ref={containerRef} className={className}>
@@ -279,10 +376,17 @@ export function FieldRelationTags({
             onChange={(e) => {
               setQuery(e.target.value);
               setIsOpen(true);
+              requestAnimationFrame(updateMenuPosition);
             }}
             onFocus={() => {
               setIsOpen(true);
               fetchOptions(query.trim());
+              requestAnimationFrame(updateMenuPosition);
+            }}
+            onClick={() => {
+              setIsOpen(true);
+              fetchOptions(query.trim());
+              requestAnimationFrame(updateMenuPosition);
             }}
             onKeyDown={handleKeyDown}
             size="sm"
@@ -299,32 +403,7 @@ export function FieldRelationTags({
         </div>
       )}
 
-      {isOpen && options.length > 0 && (
-        <Dropdown show className="">
-          <Dropdown.Menu
-            className="p-0 w-auto"
-            style={{
-              maxHeight: "200px",
-              overflowY: "auto",
-            }}
-          >
-            {options.map((option, index) => (
-              <Dropdown.Item
-                key={option.id}
-                active={index === highlightedIndex}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  handleSelect(option);
-                }}
-                className="text-wrap"
-                style={{ fontSize: "0.9rem" }}
-              >
-                {option.displayName ?? option.name}
-              </Dropdown.Item>
-            ))}
-          </Dropdown.Menu>
-        </Dropdown>
-      )}
+      {dropdownMenu}
     </div>
   );
 }

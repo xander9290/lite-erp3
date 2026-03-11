@@ -4,6 +4,17 @@ export const groupSchema = z.object({
   name: z.string().min(1, "Nombre es requerido"),
   active: z.boolean(),
   users: z.array(z.string()),
+  lines: z.array(
+    z.object({
+      id: z.string().optional(),
+      fieldId: z.string().nullable(),
+      invisible: z.boolean(),
+      required: z.boolean(),
+      readonly: z.boolean(),
+      notCreate: z.boolean(),
+      notEdit: z.boolean(),
+    }),
+  ),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
 });
@@ -14,6 +25,7 @@ export const groupSchemaDefault: GroupSchemaType = {
   name: "",
   active: true,
   users: [],
+  lines: [],
   createdAt: null,
   updatedAt: null,
 };

@@ -154,10 +154,7 @@ export async function GET(
 
   const searchWhere = search.trim()
     ? {
-        OR: [
-          { name: { contains: search, mode: "insensitive" } },
-          { displayName: { contains: search, mode: "insensitive" } },
-        ],
+        OR: [{ name: { contains: search, mode: "insensitive" } }],
       }
     : undefined;
 
