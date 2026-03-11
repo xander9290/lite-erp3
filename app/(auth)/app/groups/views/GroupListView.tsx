@@ -25,9 +25,31 @@ function GroupListView() {
         <div onClick={(e) => e.stopPropagation()}>
           <Form.Select size="sm" className="border-0">
             <option>{g.Users?.length}</option>
-            {g.Users?.map((u) => (
-              <option key={u.id || Date.now()} value={u.id}>
+            {g.Users?.map((u, i) => (
+              <option key={`user-${i}-${u.name}`} value={u.name}>
                 {u.name}
+              </option>
+            ))}
+          </Form.Select>
+        </div>
+      ),
+      filterable: true,
+    },
+    {
+      key: "GroupLines[].fieldName",
+      label: "Campos",
+      accessor: (g) =>
+        g.GroupLines?.map((line) => line.fieldName).join(", ") ?? "",
+      render: (g) => (
+        <div onClick={(e) => e.stopPropagation()}>
+          <Form.Select size="sm" className="border-0">
+            <option>{g.GroupLines?.length}</option>
+            {g.GroupLines?.map((line, i) => (
+              <option
+                key={`line-${i}-${line.fieldName}`}
+                value={line.fieldName}
+              >
+                {`${line.fieldName}`}
               </option>
             ))}
           </Form.Select>

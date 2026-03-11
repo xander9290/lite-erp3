@@ -39,8 +39,8 @@ function ModelListView() {
         <div onClick={(e) => e.stopPropagation()}>
           <Form.Select size="sm" className="border-0">
             <option>{m.ModelFields?.length}</option>
-            {m.ModelFields?.map((f) => (
-              <option key={f.id || Date.now()} value={f.id}>
+            {m.ModelFields?.map((f, i) => (
+              <option key={`field-${i}-${f.name}`} value={f.name}>
                 {f.name}
               </option>
             ))}
