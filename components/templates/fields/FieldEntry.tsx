@@ -165,7 +165,7 @@ export function FieldEntry({
   }
 
   return (
-    <Form.Group className="mb-3">
+    <Form.Group className="mb-3" title={name}>
       <div className="d-flex flex-column align-items-sm-end gap-0 flex-sm-row">
         <Form.Label
           htmlFor={name}

@@ -63,7 +63,7 @@ export async function createModel({
             data: lines.map((line) => ({
               label: line.label,
               description: line.description,
-              name: `[${label}] ${line.description}`,
+              name: `[${label}] ${line.label}`,
               active: line.active,
               fieldType: line.fieldType,
               createdUid: uid || "",

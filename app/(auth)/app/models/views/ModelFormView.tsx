@@ -25,7 +25,10 @@ import { FieldBoolean, FieldEntry } from "@/components/templates/fields";
 import toast from "react-hot-toast";
 import SimpleTable from "@/components/templates/SimpleTable";
 import { Button } from "react-bootstrap";
-import { FieldOption } from "@/components/templates/fields/FielOption";
+import {
+  FieldOption,
+  SelectOption,
+} from "@/components/templates/fields/FielOption";
 import { Many2ManyOption } from "@/components/templates/fields/FieldRelationTags";
 
 function ModelFormView({
@@ -47,15 +50,15 @@ function ModelFormView({
     name: "lines",
   });
 
-  const fieldTypes: Many2ManyOption[] = [
-    { id: "string", name: "string" },
-    { id: "number", name: "number" },
-    { id: "relation", name: "relation" },
-    { id: "action", name: "action" },
-    { id: "link", name: "link" },
-    { id: "boolean", name: "boolean" },
-    { id: "date", name: "date" },
-    { id: "datetime", name: "datetime" },
+  const fieldTypes: SelectOption[] = [
+    { value: "string", option: "string" },
+    { value: "number", option: "number" },
+    { value: "relation", option: "relation" },
+    { value: "action", option: "action" },
+    { value: "link", option: "link" },
+    { value: "boolean", option: "boolean" },
+    { value: "date", option: "date" },
+    { value: "datetime", option: "datetime" },
   ];
 
   const originalValuesRef = useRef<ModelSchemaType | null>(null);
@@ -138,9 +141,9 @@ function ModelFormView({
               data={fields}
               headers={[
                 { string: "Nombre" },
+                { string: "Tipo" },
                 { string: "Etiqueta" },
                 { string: "Descripción" },
-                { string: "Tipo" },
                 { string: "Activo" },
                 {
                   string: <i className="bi bi-trash"></i>,
@@ -149,26 +152,26 @@ function ModelFormView({
               ]}
               renderRow={(row, index) => (
                 <tr key={row.id} className="border-0 border-bottom">
-                  <td valign="middle">
+                  <td valign="middle" className="p-0">
                     <FieldEntry inline name={`lines.${index}.name`} readonly />
                   </td>
-                  <td valign="middle">
-                    <FieldEntry inline name={`lines.${index}.label`} />
-                  </td>
-                  <td valign="middle">
-                    <FieldEntry inline name={`lines.${index}.description`} />
-                  </td>
-                  <td valign="middle">
+                  <td valign="middle" className="p-0">
                     <FieldOption
                       inline
                       name={`lines.${index}.fieldType`}
                       options={fieldTypes}
                     />
                   </td>
-                  <td valign="middle" className="text-center">
+                  <td valign="middle" className="p-0">
+                    <FieldEntry inline name={`lines.${index}.label`} />
+                  </td>
+                  <td valign="middle" className="p-0">
+                    <FieldEntry inline name={`lines.${index}.description`} />
+                  </td>
+                  <td valign="middle" className="text-center p-0">
                     <FieldBoolean inline name={`lines.${index}.active`} />
                   </td>
-                  <td className="text-center" valign="middle">
+                  <td className="text-center p-0" valign="middle">
                     <Button
                       size="sm"
                       variant="link"
@@ -179,21 +182,14 @@ function ModelFormView({
                   </td>
                 </tr>
               )}
-              action={
-                <Button
-                  size="sm"
-                  variant="link"
-                  onClick={() =>
-                    append({
-                      label: "",
-                      description: "",
-                      active: false,
-                      fieldType: "string",
-                    })
-                  }
-                >
-                  Agregar
-                </Button>
+              action={() =>
+                append({
+                  name: "",
+                  label: "",
+                  description: "",
+                  active: true,
+                  fieldType: "string",
+                })
               }
             />
           </PageSheet>

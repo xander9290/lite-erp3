@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useController, useFormContext } from "react-hook-form";
 import { Dropdown, Form } from "react-bootstrap";
 
-export interface Many2OneOption {
-  id: number | string;
-  name?: string | null;
-  displayName?: string | null;
+export interface SelectOption {
+  value: number | string;
+  option: string;
   [key: string]: any;
 }
 
-interface Many2oneFieldProps<T extends Many2OneOption> {
+interface FieldOptionProps<T extends SelectOption> {
   name: string;
   label?: string;
   options: T[] | null;
@@ -20,11 +20,17 @@ interface Many2oneFieldProps<T extends Many2OneOption> {
   inline?: boolean;
   className?: string;
   autoFocus?: boolean;
-  ponChange?: (value: T) => void;
+  onOptionChange?: (value: T) => void;
   disabled?: boolean;
 }
 
-export function FieldOption<T extends Many2OneOption>({
+interface MenuPosition {
+  top: number;
+  left: number;
+  width: number;
+}
+
+export function FieldOption<T extends SelectOption>({
   name,
   label,
   options,
@@ -33,9 +39,9 @@ export function FieldOption<T extends Many2OneOption>({
   inline = false,
   className = "",
   autoFocus = false,
-  ponChange,
+  onOptionChange,
   disabled,
-}: Many2oneFieldProps<T>) {
+}: FieldOptionProps<T>) {
   const { control } = useFormContext();
 
   const {
@@ -43,16 +49,26 @@ export function FieldOption<T extends Many2OneOption>({
     fieldState: { error },
   } = useController({ name, control });
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition>({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
+  const [mounted, setMounted] = useState(false);
 
-  const normalizedOptions = options ?? [];
+  const normalizedOptions = useMemo(() => options ?? [], [options]);
 
-  const getOptionLabel = (option?: Many2OneOption | null) =>
-    option?.displayName ?? option?.name ?? "";
+  const getOptionLabel = (option?: SelectOption | null) => option?.option ?? "";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (value === null || value === undefined || value === "") {
@@ -65,19 +81,33 @@ export function FieldOption<T extends Many2OneOption>({
       return;
     }
 
-    const selected = normalizedOptions.find((opt) => opt.id === value);
+    const selected = normalizedOptions.find((opt) => opt.value === value);
     setQuery(getOptionLabel(selected));
   }, [value, normalizedOptions]);
 
-  const filteredOptions = normalizedOptions
-    .filter((opt) =>
-      getOptionLabel(opt).toLowerCase().includes(query.trim().toLowerCase()),
-    )
-    .slice(0, 8);
+  const filteredOptions = useMemo(() => {
+    const search = query.trim().toLowerCase();
+
+    return normalizedOptions
+      .filter((opt) => getOptionLabel(opt).toLowerCase().includes(search))
+      .slice(0, 8);
+  }, [normalizedOptions, query]);
+
+  const updateMenuPosition = () => {
+    if (!inputRef.current) return;
+
+    const rect = inputRef.current.getBoundingClientRect();
+
+    setMenuPosition({
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+    });
+  };
 
   const handleSelect = (option: T) => {
-    onChange(option.id);
-    ponChange?.(option);
+    onChange(option.value);
+    onOptionChange?.(option);
     setQuery(getOptionLabel(option));
     setIsOpen(false);
     setHighlightedIndex(0);
@@ -103,10 +133,9 @@ export function FieldOption<T extends Many2OneOption>({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node;
+
+      if (containerRef.current && !containerRef.current.contains(target)) {
         setIsOpen(false);
       }
     };
@@ -118,6 +147,28 @@ export function FieldOption<T extends Many2OneOption>({
   useEffect(() => {
     setHighlightedIndex(0);
   }, [query]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    updateMenuPosition();
+
+    const handleScroll = () => {
+      updateMenuPosition();
+    };
+
+    const handleResize = () => {
+      updateMenuPosition();
+    };
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", handleScroll, true);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [isOpen]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isOpen) return;
@@ -152,20 +203,68 @@ export function FieldOption<T extends Many2OneOption>({
 
   if (invisible) return null;
 
+  const dropdownMenu =
+    mounted && isOpen && !readonly && !disabled && filteredOptions.length > 0
+      ? createPortal(
+          <div
+            style={{
+              position: "fixed",
+              top: menuPosition.top,
+              left: menuPosition.left,
+              width: menuPosition.width,
+              zIndex: 9999,
+            }}
+          >
+            <Dropdown show className="w-100">
+              <Dropdown.Menu
+                show
+                className="p-0 w-auto"
+                style={{
+                  maxHeight: 200,
+                  overflowY: "auto",
+                  fontSize: "0.9rem",
+                  zIndex: 9999,
+                }}
+              >
+                {filteredOptions.map((opt, index) => (
+                  <Dropdown.Item
+                    key={opt.value}
+                    active={index === highlightedIndex}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelect(opt);
+                    }}
+                    className="text-wrap border-bottom"
+                  >
+                    {getOptionLabel(opt)}
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
+          </div>,
+          document.body,
+        )
+      : null;
+
   const input = (
     <>
       <Form.Control
-        ref={ref}
+        ref={(element) => {
+          ref(element);
+          inputRef.current = element;
+        }}
         type="text"
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
           setIsOpen(true);
+          requestAnimationFrame(updateMenuPosition);
         }}
         onFocus={() => {
           if (readonly || disabled) return;
           setIsOpen(true);
           setHighlightedIndex(0);
+          requestAnimationFrame(updateMenuPosition);
         }}
         onBlur={() => {
           handleBlur();
@@ -184,30 +283,7 @@ export function FieldOption<T extends Many2OneOption>({
         {error?.message}
       </Form.Control.Feedback>
 
-      {isOpen && !readonly && !disabled && filteredOptions.length > 0 && (
-        <Dropdown show className="w-100">
-          <Dropdown.Menu
-            className="p-0 w-auto z-1000"
-            style={{
-              maxHeight: 200,
-              overflowY: "auto",
-              zIndex: 1050,
-              fontSize: "0.9rem",
-            }}
-          >
-            {filteredOptions.map((opt, index) => (
-              <Dropdown.Item
-                key={opt.id}
-                active={index === highlightedIndex}
-                onMouseDown={() => handleSelect(opt)}
-                className="text-wrap border-bottom"
-              >
-                {getOptionLabel(opt)}
-              </Dropdown.Item>
-            ))}
-          </Dropdown.Menu>
-        </Dropdown>
-      )}
+      {dropdownMenu}
     </>
   );
 
@@ -220,7 +296,12 @@ export function FieldOption<T extends Many2OneOption>({
   }
 
   return (
-    <Form.Group ref={containerRef} className="mb-3">
+    <Form.Group
+      className="mb-3"
+      ref={(element) => {
+        containerRef.current = element as HTMLDivElement | null;
+      }}
+    >
       <Form.Label className="fw-semibold m-0">{label}</Form.Label>
       {input}
     </Form.Group>

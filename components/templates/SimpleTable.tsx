@@ -1,6 +1,7 @@
 "use client";
 
-import { Table } from "react-bootstrap";
+import { Button, Table } from "react-bootstrap";
+import { FieldArrayMethodProps } from "react-hook-form";
 
 type STHeader = {
   string: React.ReactNode;
@@ -12,11 +13,11 @@ type SimpleTableTemplateProps<T> = {
   headers: STHeader[];
   data: T[];
   renderRow: (item: T, index: number) => React.ReactNode; // aquí decides la clase de <td>
-  action?: React.ReactNode;
+  action?: () => void;
   className?: string;
 };
 
-function SimpleTable<T>({
+export default function SimpleTable<T>({
   headers,
   data,
   renderRow,
@@ -47,9 +48,16 @@ function SimpleTable<T>({
             <td
               valign="middle"
               colSpan={headers.length + 1}
-              className="border-bottom"
+              className="border-0 p-0"
             >
-              {action}
+              <Button
+                size="sm"
+                variant="link"
+                onClick={action}
+                className="border-0 text-decoration-none"
+              >
+                Agregar
+              </Button>
             </td>
           </tr>
         )}
@@ -57,5 +65,3 @@ function SimpleTable<T>({
     </Table>
   );
 }
-
-export default SimpleTable;

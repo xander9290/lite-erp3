@@ -321,6 +321,8 @@ export const PageSheet = ({
   invisible?: boolean;
   readonly?: boolean;
 }) => {
+  if (invisible) return null;
+
   return (
     <Row
       style={{
