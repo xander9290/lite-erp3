@@ -152,7 +152,7 @@ function UsersFormView({
         </FormViewGroup>
         <FormBook dKey="otherInfo">
           <FormPage eventKey="otherInfo" title="Otra información">
-            <PageSheet>
+            <PageSheet name="otherInfo">
               <FormViewGroup>
                 <FieldEntry
                   name="lastLogin"

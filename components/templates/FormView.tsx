@@ -312,12 +312,12 @@ export const FormPage = ({
 
 export const PageSheet = ({
   children,
-  fieldName,
+  name,
   invisible,
   readonly,
 }: {
   children: React.ReactNode;
-  fieldName?: string;
+  name?: string;
   invisible?: boolean;
   readonly?: boolean;
 }) => {
@@ -328,7 +328,7 @@ export const PageSheet = ({
       style={{
         minHeight: "300px",
       }}
-      title={fieldName}
+      title={name}
     >
       <div
         className="m-0 p-0 overflow-auto"
