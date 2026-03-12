@@ -4,7 +4,12 @@ import { createAuditlog } from "@/app/actions/auditlog-actions";
 import { ActionResponse } from "@/app/libs/definitions";
 import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
-import { type User, type Partner, Group } from "@/generated/prisma/client";
+import type {
+  User,
+  Partner,
+  Group,
+  GroupLine,
+} from "@/generated/prisma/client";
 import bcrypt from "bcryptjs";
 
 export interface UserWithPartner extends User {
@@ -235,5 +240,30 @@ export async function updatePassword({
       success: false,
       message: error.message,
     };
+  }
+}
+
+export async function getUserAccess({
+  id,
+}: {
+  id: string | null;
+}): Promise<GroupLine[]> {
+  try {
+    if (!id) throw new Error("ID NOT DEFINED");
+
+    const access = await prisma.groupLine.findMany({
+      where: {
+        Group: {
+          Users: {
+            some: { id },
+          },
+        },
+      },
+    });
+
+    return access;
+  } catch (error: any) {
+    console.log(error);
+    return [];
   }
 }

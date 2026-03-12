@@ -2,6 +2,8 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import prisma from "./prisma";
 import bcrypt from "bcryptjs";
+import { getUserAccess } from "../(auth)/app/users/actions/user-actions";
+import type { GroupLine } from "@/generated/prisma/client";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -41,6 +43,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Contraseña incorrecta");
         }
 
+        const access = await getUserAccess({ id: findUser.id });
+
         await prisma.user.update({
           where: { id: findUser.id },
           data: {
@@ -52,6 +56,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: findUser.id,
           name: findUser.Partner?.name,
           image: findUser.Partner?.imageUrl,
+          access,
         };
 
         return user;
@@ -72,12 +77,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.name = user.name;
         token.picture = user.image;
+        token.access = user.access;
       }
 
       if (trigger === "update" && session.user) {
         token.id = session.user.id;
         token.name = session.user.name;
         token.picture = session.user.image;
+        token.access = session.user.access;
       }
 
       return token;
@@ -87,6 +94,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string;
         session.user.name = token.name as string;
         session.user.image = token.picture as string;
+        session.user.access = token.access as GroupLine[];
       }
       return session;
     },

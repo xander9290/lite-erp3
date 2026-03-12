@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { GroupLine } from "@/generated/prisma/client";
 
 export function useAuth() {
   const { data: session, status } = useSession();
@@ -10,6 +11,7 @@ export function useAuth() {
     const user = session?.user;
     const uid = user?.id;
     const roles = (user as any)?.roles ?? [];
+    const access = session?.user.access || [];
 
     const hasRole = (role: string) => {
       return roles.includes(role);
@@ -29,6 +31,7 @@ export function useAuth() {
       isAdmin: roles.includes("admin"),
       hasRole,
       hasAnyRole,
+      access,
     };
   }, [session, status]);
 

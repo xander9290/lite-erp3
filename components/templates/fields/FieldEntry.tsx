@@ -5,6 +5,7 @@ import { Form, FloatingLabel } from "react-bootstrap";
 import { round } from "@/app/libs/helpers";
 import { format } from "date-fns";
 import { ElementType } from "react";
+import { useAccess } from "@/contexts/AccessContext";
 
 interface FieldEntryProps {
   name: string;
@@ -83,7 +84,13 @@ export function FieldEntry({
 }: FieldEntryProps) {
   const { control } = useFormContext();
 
+  const fieldAccess = useAccess();
+  const access = fieldAccess.find((acc) => acc.fieldName === name);
+
+  console.log(fieldAccess);
+
   if (invisible) return null;
+  if (access && access.invisible) return null;
 
   return (
     <Controller
@@ -120,6 +127,7 @@ export function FieldEntry({
             isInvalid={!!fieldState.error}
             placeholder={effectivePlaceholder}
             readOnly={readonly || isSubmitting}
+            disabled={access?.readonly}
             value={inputValue}
             min={min}
             rows={isTextarea ? rows : undefined}
@@ -130,6 +138,7 @@ export function FieldEntry({
               resize: isTextarea ? "none" : undefined,
             }}
             autoFocus={autoFocus}
+            required={access?.required}
             onChange={(e) => {
               const el = e.target as HTMLInputElement | HTMLTextAreaElement;
 
