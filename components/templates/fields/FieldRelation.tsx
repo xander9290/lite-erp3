@@ -388,25 +388,10 @@ export function FieldRelation<T extends Many2OneOption>({
         isInvalid={!!error}
         readOnly={readonly}
         autoFocus={autoFocus}
-        className={`w-100 shadow-none px-1 rounded-end-0 ${className ?? ""} ${inline ? "border-0" : ""}`}
+        className={`w-100 shadow-none px-1 rounded-end-0 ${className ?? ""} ${inline ? "border-0" : "bg-body-tertiary"}`}
         onKeyDown={handleKeyDown}
         style={{ fontSize: "0.9rem" }}
       />
-
-      {!inline && (
-        <Button
-          size="sm"
-          variant="light"
-          onClick={handleOff}
-          title="Desplegar"
-          disabled={readonly}
-          className="flex-shrink-0 rounded-start-0 border-start-0"
-          style={{ minWidth: 42 }}
-        >
-          <i className="bi bi-power"></i>
-        </Button>
-      )}
-
       {dropdownMenu}
     </>
   );
@@ -429,6 +414,19 @@ export function FieldRelation<T extends Many2OneOption>({
         >
           {input}
         </FloatingLabel>
+        {!inline && (
+          <Button
+            size="sm"
+            variant="light"
+            onClick={handleOff}
+            title="Desplegar"
+            disabled={readonly}
+            className="flex-shrink-0 rounded-start-0 border-start-0"
+            style={{ minWidth: 42 }}
+          >
+            <i className="bi bi-power"></i>
+          </Button>
+        )}
       </div>
       <Form.Control.Feedback type="invalid" className={error ? "d-block" : ""}>
         {error?.message}

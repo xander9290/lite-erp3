@@ -21,7 +21,11 @@ import {
   ModelWithProps,
   updateModel,
 } from "../actions/model-actions";
-import { FieldBoolean, FieldEntry } from "@/components/templates/fields";
+import {
+  FieldBoolean,
+  FieldEntry,
+  FieldSelect,
+} from "@/components/templates/fields";
 import toast from "react-hot-toast";
 import { Col } from "react-bootstrap";
 import {
@@ -49,15 +53,15 @@ function ModelFormView({
     name: "lines",
   });
 
-  const fieldTypes: SelectOption[] = [
-    { value: "string", option: "string" },
-    { value: "number", option: "number" },
-    { value: "relation", option: "relation" },
-    { value: "action", option: "action" },
-    { value: "link", option: "link" },
-    { value: "boolean", option: "boolean" },
-    { value: "date", option: "date" },
-    { value: "datetime", option: "datetime" },
+  const fieldTypes = [
+    { value: "string", label: "string" },
+    { value: "number", label: "number" },
+    { value: "relation", label: "relation" },
+    { value: "action", label: "action" },
+    { value: "link", label: "link" },
+    { value: "boolean", label: "boolean" },
+    { value: "date", label: "date" },
+    { value: "datetime", label: "datetime" },
   ];
 
   const originalValuesRef = useRef<ModelSchemaType | null>(null);
@@ -162,10 +166,15 @@ function ModelFormView({
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index}>
-                      <FieldOption
+                      {/* <FieldOption
                         inline
                         name={`lines.${index}.fieldType`}
                         options={fieldTypes}
+                      /> */}
+                      <FieldSelect
+                        name={`lines.${index}.fieldType`}
+                        options={fieldTypes}
+                        inline
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index}>

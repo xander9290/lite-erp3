@@ -63,7 +63,11 @@ export function FieldSelect({
           >
             <option value=""></option>
             {options.map((opt) => (
-              <option key={opt.value} value={String(opt.value)}>
+              <option
+                key={opt.value}
+                value={String(opt.value)}
+                className="bg-body-tertiary"
+              >
                 {opt.label}
               </option>
             ))}
