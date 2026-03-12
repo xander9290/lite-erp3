@@ -276,7 +276,7 @@ export function FieldOption<T extends SelectOption>({
         disabled={disabled}
         readOnly={readonly}
         autoFocus={autoFocus}
-        className={`border-0 ${!inline ? "border-bottom p-0" : ""} shadow-none rounded-0 ${className}`}
+        className={`border-0 w-auto ${!inline ? "border-bottom p-0" : ""} shadow-none rounded-0 ${className}`}
       />
 
       <Form.Control.Feedback type="invalid">
@@ -289,7 +289,7 @@ export function FieldOption<T extends SelectOption>({
 
   if (inline) {
     return (
-      <div ref={containerRef} title={name} className="p-0 m-0">
+      <div ref={containerRef} title={name} className="p-0 m-0 w-auto">
         {input}
       </div>
     );

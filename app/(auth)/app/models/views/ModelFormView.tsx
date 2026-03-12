@@ -24,7 +24,7 @@ import {
 import { FieldBoolean, FieldEntry } from "@/components/templates/fields";
 import toast from "react-hot-toast";
 import SimpleTable from "@/components/templates/SimpleTable";
-import { Button } from "react-bootstrap";
+import { Button, Col } from "react-bootstrap";
 import {
   FieldOption,
   SelectOption,
@@ -136,61 +136,67 @@ function ModelFormView({
       <FormBook dKey="modelFields">
         <FormPage title="Campos" eventKey="modelFields">
           <PageSheet>
-            <SimpleTable
-              data={fields}
-              headers={[
-                { string: "Nombre" },
-                { string: "Tipo" },
-                { string: "Etiqueta" },
-                { string: "Descripción" },
-                { string: "Activo" },
-                {
-                  string: <i className="bi bi-trash"></i>,
-                  className: "text-center",
-                },
-              ]}
-              renderRow={(row, index) => (
-                <tr key={row.id} className="border-0 border-bottom">
-                  <td valign="middle" className="p-0">
-                    <FieldEntry inline name={`lines.${index}.name`} readonly />
-                  </td>
-                  <td valign="middle" className="p-0">
-                    <FieldOption
-                      inline
-                      name={`lines.${index}.fieldType`}
-                      options={fieldTypes}
-                    />
-                  </td>
-                  <td valign="middle" className="p-0">
-                    <FieldEntry inline name={`lines.${index}.label`} />
-                  </td>
-                  <td valign="middle" className="p-0">
-                    <FieldEntry inline name={`lines.${index}.description`} />
-                  </td>
-                  <td valign="middle" className="text-center p-0">
-                    <FieldBoolean inline name={`lines.${index}.active`} />
-                  </td>
-                  <td className="text-center p-0" valign="middle">
-                    <Button
-                      size="sm"
-                      variant="link"
-                      onClick={() => remove(index)}
-                    >
-                      <i className="bi bi-trash"></i>
-                    </Button>
-                  </td>
-                </tr>
-              )}
-              action={() =>
-                append({
-                  name: "",
-                  label: "",
-                  description: "",
-                  active: true,
-                  fieldType: "string",
-                })
-              }
-            />
+            <Col md="12" className="p-0 m-0 overflow-auto">
+              <SimpleTable
+                data={fields}
+                headers={[
+                  { string: "Nombre" },
+                  { string: "Tipo", width: 100 },
+                  { string: "Etiqueta" },
+                  { string: "Descripción" },
+                  { string: "Activo" },
+                  {
+                    string: <i className="bi bi-trash"></i>,
+                    className: "text-center",
+                  },
+                ]}
+                renderRow={(row, index) => (
+                  <tr key={row.id} className="border-0 border-bottom">
+                    <td valign="middle" className="p-0">
+                      <FieldEntry
+                        inline
+                        name={`lines.${index}.name`}
+                        readonly
+                      />
+                    </td>
+                    <td valign="middle" className="p-0">
+                      <FieldOption
+                        inline
+                        name={`lines.${index}.fieldType`}
+                        options={fieldTypes}
+                      />
+                    </td>
+                    <td valign="middle" className="p-0">
+                      <FieldEntry inline name={`lines.${index}.label`} />
+                    </td>
+                    <td valign="middle" className="p-0">
+                      <FieldEntry inline name={`lines.${index}.description`} />
+                    </td>
+                    <td valign="middle" className="text-center p-0">
+                      <FieldBoolean inline name={`lines.${index}.active`} />
+                    </td>
+                    <td className="text-center p-0" valign="middle">
+                      <Button
+                        size="sm"
+                        variant="link"
+                        onClick={() => remove(index)}
+                      >
+                        <i className="bi bi-trash"></i>
+                      </Button>
+                    </td>
+                  </tr>
+                )}
+                action={() =>
+                  append({
+                    name: "",
+                    label: "",
+                    description: "",
+                    active: true,
+                    fieldType: "string",
+                  })
+                }
+              />
+            </Col>
           </PageSheet>
         </FormPage>
       </FormBook>

@@ -329,16 +329,9 @@ export const PageSheet = ({
         minHeight: "300px",
       }}
       title={name}
+      className="overflow-auto"
     >
-      <div
-        className="m-0 p-0 overflow-auto"
-        style={{
-          pointerEvents: readonly ? "none" : "auto",
-          minHeight: "300px",
-        }}
-      >
-        {children}
-      </div>
+      {children}
     </Row>
   );
 };

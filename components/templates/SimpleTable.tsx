@@ -30,7 +30,7 @@ export default function SimpleTable<T>({
           {headers.map((header, idx) => (
             <th
               key={idx}
-              className={`${header.className} border-end text-nowrap`}
+              className={`${header.className} border-end`}
               style={{ minWidth: `${header.width}px` }}
             >
               {header.string}
