@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useController, useFormContext } from "react-hook-form";
-import { Dropdown, Form } from "react-bootstrap";
+import { Dropdown, Form, FloatingLabel } from "react-bootstrap";
 
 export interface SelectOption {
   value: number | string;
@@ -28,6 +28,8 @@ interface MenuPosition {
   top: number;
   left: number;
   width: number;
+  maxHeight: number;
+  direction: "down" | "up";
 }
 
 export function FieldOption<T extends SelectOption>({
@@ -50,7 +52,7 @@ export function FieldOption<T extends SelectOption>({
   } = useController({ name, control });
 
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -59,12 +61,22 @@ export function FieldOption<T extends SelectOption>({
     top: 0,
     left: 0,
     width: 0,
+    maxHeight: 200,
+    direction: "down",
   });
   const [mounted, setMounted] = useState(false);
 
   const normalizedOptions = useMemo(() => options ?? [], [options]);
 
   const getOptionLabel = (option?: SelectOption | null) => option?.option ?? "";
+
+  const autoResize = (element?: HTMLTextAreaElement | null) => {
+    const el = element ?? inputRef.current;
+    if (!el) return;
+
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -85,6 +97,10 @@ export function FieldOption<T extends SelectOption>({
     setQuery(getOptionLabel(selected));
   }, [value, normalizedOptions]);
 
+  useEffect(() => {
+    autoResize();
+  }, [query]);
+
   const filteredOptions = useMemo(() => {
     const search = query.trim().toLowerCase();
 
@@ -97,11 +113,30 @@ export function FieldOption<T extends SelectOption>({
     if (!inputRef.current) return;
 
     const rect = inputRef.current.getBoundingClientRect();
+    const gap = 4;
+    const viewportPadding = 8;
+    const preferredHeight = 200;
+
+    const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
+    const spaceAbove = rect.top - viewportPadding;
+
+    const openDown = spaceBelow >= preferredHeight || spaceBelow >= spaceAbove;
+
+    const maxHeight = Math.max(
+      80,
+      Math.min(preferredHeight, openDown ? spaceBelow - gap : spaceAbove - gap),
+    );
+
+    const top = openDown
+      ? rect.bottom + gap
+      : Math.max(viewportPadding, rect.top - gap - maxHeight);
 
     setMenuPosition({
-      top: rect.bottom + 4,
+      top,
       left: rect.left,
       width: rect.width,
+      maxHeight,
+      direction: openDown ? "down" : "up",
     });
   };
 
@@ -111,6 +146,11 @@ export function FieldOption<T extends SelectOption>({
     setQuery(getOptionLabel(option));
     setIsOpen(false);
     setHighlightedIndex(0);
+
+    requestAnimationFrame(() => {
+      autoResize();
+      updateMenuPosition();
+    });
   };
 
   const handleBlur = () => {
@@ -159,6 +199,7 @@ export function FieldOption<T extends SelectOption>({
 
     const handleResize = () => {
       updateMenuPosition();
+      autoResize();
     };
 
     window.addEventListener("resize", handleResize);
@@ -168,9 +209,9 @@ export function FieldOption<T extends SelectOption>({
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", handleScroll, true);
     };
-  }, [isOpen]);
+  }, [isOpen, query]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!isOpen) return;
 
     if (e.key === "ArrowDown") {
@@ -203,6 +244,9 @@ export function FieldOption<T extends SelectOption>({
 
   if (invisible) return null;
 
+  const floatingText = label ?? name;
+  const placeholder = label ?? name;
+
   const dropdownMenu =
     mounted && isOpen && !readonly && !disabled && filteredOptions.length > 0
       ? createPortal(
@@ -218,12 +262,16 @@ export function FieldOption<T extends SelectOption>({
             <Dropdown show className="w-100">
               <Dropdown.Menu
                 show
-                className="p-0 w-auto"
+                className="p-0 w-100"
                 style={{
-                  maxHeight: 200,
+                  maxHeight: menuPosition.maxHeight,
                   overflowY: "auto",
                   fontSize: "0.9rem",
                   zIndex: 9999,
+                  boxShadow:
+                    menuPosition.direction === "up"
+                      ? "0 -0.5rem 1rem rgba(0,0,0,0.15)"
+                      : "0 0.5rem 1rem rgba(0,0,0,0.15)",
                 }}
               >
                 {filteredOptions.map((opt, index) => (
@@ -249,22 +297,34 @@ export function FieldOption<T extends SelectOption>({
   const input = (
     <>
       <Form.Control
+        as="textarea"
+        rows={1}
+        name={name}
+        placeholder={placeholder}
         ref={(element) => {
           ref(element);
           inputRef.current = element;
+          if (element) {
+            requestAnimationFrame(() => autoResize(element));
+          }
         }}
-        type="text"
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
           setIsOpen(true);
+
+          autoResize(e.target as HTMLTextAreaElement);
           requestAnimationFrame(updateMenuPosition);
         }}
         onFocus={() => {
           if (readonly || disabled) return;
           setIsOpen(true);
           setHighlightedIndex(0);
-          requestAnimationFrame(updateMenuPosition);
+
+          requestAnimationFrame(() => {
+            autoResize();
+            updateMenuPosition();
+          });
         }}
         onBlur={() => {
           handleBlur();
@@ -276,12 +336,13 @@ export function FieldOption<T extends SelectOption>({
         disabled={disabled}
         readOnly={readonly}
         autoFocus={autoFocus}
-        className={`border-0 w-auto ${!inline ? "border-bottom p-0" : ""} shadow-none rounded-0 ${className}`}
+        className={`w-100 shadow-none overflow-hidden ${className} ${inline ? "border-0" : ""}`}
+        style={{
+          fontSize: "0.9rem",
+          resize: "none",
+          minHeight: "unset",
+        }}
       />
-
-      <Form.Control.Feedback type="invalid">
-        {error?.message}
-      </Form.Control.Feedback>
 
       {dropdownMenu}
     </>
@@ -289,21 +350,29 @@ export function FieldOption<T extends SelectOption>({
 
   if (inline) {
     return (
-      <div ref={containerRef} title={name} className="p-0 m-0 w-auto">
+      <div ref={containerRef} title={name} className="p-0 m-0 w-100">
         {input}
       </div>
     );
   }
 
   return (
-    <Form.Group
+    <div
       className="mb-3"
       ref={(element) => {
-        containerRef.current = element as HTMLDivElement | null;
+        containerRef.current = element;
       }}
+      title={name}
     >
-      <Form.Label className="fw-semibold m-0">{label}</Form.Label>
-      {input}
-    </Form.Group>
+      <FloatingLabel controlId={name} label={floatingText} className="w-100">
+        {input}
+        <Form.Control.Feedback
+          type="invalid"
+          className={error ? "d-block" : ""}
+        >
+          {error?.message}
+        </Form.Control.Feedback>
+      </FloatingLabel>
+    </div>
   );
 }

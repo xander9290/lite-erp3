@@ -339,6 +339,33 @@ export function FieldRelationTags({
         style={{ minHeight: "38px" }}
         onClick={() => inputRef.current?.focus()}
       >
+        {!disabled && (
+          <Form.Control
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setIsOpen(true);
+              requestAnimationFrame(updateMenuPosition);
+            }}
+            onFocus={() => {
+              setIsOpen(true);
+              fetchOptions(query.trim());
+              requestAnimationFrame(updateMenuPosition);
+            }}
+            onClick={() => {
+              setIsOpen(true);
+              fetchOptions(query.trim());
+              requestAnimationFrame(updateMenuPosition);
+            }}
+            onKeyDown={handleKeyDown}
+            size="sm"
+            className="border-0 border-bottom shadow-none flex-grow-1 rounded-0"
+            style={{ minWidth: "120px", fontSize: "0.9rem" }}
+            autoComplete="off"
+          />
+        )}
         {selectedObjects.map((opt) => (
           <Badge
             key={opt.id}
@@ -367,34 +394,6 @@ export function FieldRelationTags({
             )}
           </Badge>
         ))}
-
-        {!disabled && (
-          <Form.Control
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setIsOpen(true);
-              requestAnimationFrame(updateMenuPosition);
-            }}
-            onFocus={() => {
-              setIsOpen(true);
-              fetchOptions(query.trim());
-              requestAnimationFrame(updateMenuPosition);
-            }}
-            onClick={() => {
-              setIsOpen(true);
-              fetchOptions(query.trim());
-              requestAnimationFrame(updateMenuPosition);
-            }}
-            onKeyDown={handleKeyDown}
-            size="sm"
-            className="border-0 border-bottom shadow-none flex-grow-1 rounded-0"
-            style={{ minWidth: "120px", fontSize: "0.9rem" }}
-            autoComplete="off"
-          />
-        )}
       </div>
 
       {error && (

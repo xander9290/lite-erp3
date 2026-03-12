@@ -1,1 +1,11 @@
+.table-hover tbody tr:hover td {
+  background-color: var(--bs-table-hover-bg);
+}
 
+.table-hover tbody tr > td {
+  background-color: transparent;
+}
+
+.table-hover tbody tr td {
+  transition: background-color 0.08s linear;
+}

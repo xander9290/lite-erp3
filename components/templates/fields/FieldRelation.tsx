@@ -9,7 +9,13 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { useController, useFormContext } from "react-hook-form";
-import { Form, Dropdown, Button, Spinner } from "react-bootstrap";
+import {
+  Form,
+  Dropdown,
+  Button,
+  Spinner,
+  FloatingLabel,
+} from "react-bootstrap";
 
 export interface Many2OneOption {
   id: number | string;
@@ -45,6 +51,7 @@ interface Many2oneFieldProps<T extends Many2OneOption> {
   autoFocus?: boolean;
   ponChange?: (value: Many2OneOption["id"] | null, record: T | null) => void;
   domain?: Domain;
+  placeholder?: string;
 }
 
 interface MenuPosition {
@@ -64,11 +71,12 @@ export function FieldRelation<T extends Many2OneOption>({
   autoFocus,
   ponChange,
   domain,
+  placeholder,
 }: Many2oneFieldProps<T>) {
   const { control } = useFormContext();
 
   const {
-    field: { value, onChange },
+    field: { value, onChange, onBlur },
     fieldState: { error },
   } = useController({ name, control });
 
@@ -180,12 +188,15 @@ export function FieldRelation<T extends Many2OneOption>({
     resolveInitial();
   }, [value, model, serializedDomain]);
 
-  const handleSelect = (record: T) => {
-    onChange(record.id);
-    ponChange?.(record.id, record);
-    setQuery(record.displayName ?? record.name ?? "");
-    setIsOpen(false);
-  };
+  const handleSelect = useCallback(
+    (record: T) => {
+      onChange(record.id);
+      ponChange?.(record.id, record);
+      setQuery(record.displayName ?? record.name ?? "");
+      setIsOpen(false);
+    },
+    [onChange, ponChange],
+  );
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -226,8 +237,18 @@ export function FieldRelation<T extends Many2OneOption>({
     };
   }, [isOpen, updateMenuPosition]);
 
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) abortRef.current.abort();
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!isOpen || options.length === 0) return;
+    if (!isOpen || options.length === 0) {
+      if (e.key === "Escape") setIsOpen(false);
+      return;
+    }
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -330,80 +351,88 @@ export function FieldRelation<T extends Many2OneOption>({
     loading,
     options,
     highlightedIndex,
+    handleSelect,
   ]);
 
   if (invisible) return null;
 
+  const floatingText = label ?? name;
+
   const input = (
     <>
-      <div className="d-flex">
-        <Form.Control
-          type="text"
-          value={query}
-          ref={inputRef}
-          onChange={(e) => {
-            const newValue = String(e.target.value);
-            setQuery(newValue);
-            setIsOpen(true);
-            requestAnimationFrame(updateMenuPosition);
+      <Form.Control
+        type="text"
+        name={name}
+        value={query}
+        ref={inputRef}
+        placeholder={placeholder}
+        onChange={(e) => {
+          const newValue = String(e.target.value);
+          setQuery(newValue);
+          setIsOpen(true);
+          requestAnimationFrame(updateMenuPosition);
 
-            if (newValue.trim() === "") {
-              onChange(null);
-              ponChange?.(null, null);
-            }
-          }}
-          onFocus={() => {
-            if (readonly) return;
-            setIsOpen(true);
-            fetchOptions(query.trim());
-            requestAnimationFrame(updateMenuPosition);
-          }}
-          autoComplete="off"
-          isInvalid={!!error}
-          readOnly={readonly}
-          autoFocus={autoFocus}
-          className={`border-0 w-100 ${!inline ? "border-bottom p-0" : ""} shadow-none rounded-0 ${className ?? ""}`}
-          onKeyDown={handleKeyDown}
-          style={{ fontSize: "0.9rem" }}
-        />
-        {!inline && (
-          <Button
-            size="sm"
-            variant="none"
-            onClick={handleOff}
-            title="Desplegar"
-            disabled={readonly}
-          >
-            <i className="bi bi-power"></i>
-          </Button>
-        )}
-      </div>
+          if (newValue.trim() === "") {
+            onChange(null);
+            ponChange?.(null, null);
+          }
+        }}
+        onFocus={() => {
+          if (readonly) return;
+          setIsOpen(true);
+          fetchOptions(query.trim());
+          requestAnimationFrame(updateMenuPosition);
+        }}
+        onBlur={onBlur}
+        autoComplete="off"
+        isInvalid={!!error}
+        readOnly={readonly}
+        autoFocus={autoFocus}
+        className={`w-100 shadow-none px-1 rounded-end-0 ${className ?? ""} ${inline ? "border-0" : ""}`}
+        onKeyDown={handleKeyDown}
+        style={{ fontSize: "0.9rem" }}
+      />
 
-      <Form.Control.Feedback type="invalid">
-        {error?.message}
-      </Form.Control.Feedback>
+      {!inline && (
+        <Button
+          size="sm"
+          variant="light"
+          onClick={handleOff}
+          title="Desplegar"
+          disabled={readonly}
+          className="flex-shrink-0 rounded-start-0 border-start-0"
+          style={{ minWidth: 42 }}
+        >
+          <i className="bi bi-power"></i>
+        </Button>
+      )}
 
       {dropdownMenu}
     </>
   );
 
   if (inline) {
-    return <div ref={containerRef}>{input}</div>;
+    return (
+      <div ref={containerRef} title={name} className="m-0 p-0">
+        {input}
+      </div>
+    );
   }
 
   return (
-    <Form.Group ref={containerRef} className="mb-3" title={name}>
-      <div className="d-flex flex-column align-items-sm-end gap-0 flex-sm-row">
-        <Form.Label
-          className="fw-semibold m-0 p-0 flex-shrink-0"
-          style={{ width: 100 }}
+    <div ref={containerRef} className="mb-3" title={name}>
+      <div className="d-flex align-items-stretch">
+        <FloatingLabel
+          controlId={name}
+          label={floatingText}
+          className="flex-grow-1 fs-6 fw-semibold"
         >
-          {label}
-        </Form.Label>
-        <div className="flex-grow-1" style={{ minWidth: 0 }}>
           {input}
-        </div>
+        </FloatingLabel>
       </div>
-    </Form.Group>
+      <Form.Control.Feedback type="invalid" className={error ? "d-block" : ""}>
+        {error?.message}
+      </Form.Control.Feedback>
+    </div>
   );
 }

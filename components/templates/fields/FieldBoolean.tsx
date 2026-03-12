@@ -44,7 +44,11 @@ export function FieldBoolean({
   );
 
   if (inline) {
-    return <div title={name}>{input}</div>;
+    return (
+      <div title={name} className="p-0 m-0">
+        {input}
+      </div>
+    );
   }
 
   return (

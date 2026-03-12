@@ -29,8 +29,8 @@ import {
   FieldRelationTags,
 } from "@/components/templates/fields";
 import toast from "react-hot-toast";
-import SimpleTable from "@/components/templates/SimpleTable";
-import { Button } from "react-bootstrap";
+import { Col } from "react-bootstrap";
+import { SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
 
 function GroupFormView({
   id,
@@ -147,86 +147,117 @@ function GroupFormView({
       <FormBook dKey="groupLine">
         <FormPage eventKey="groupLine" title="Accesos">
           <PageSheet name="groupLines">
-            <SimpleTable
-              data={fields}
-              headers={[
-                { string: "Campo" },
-                { string: "Invisble" },
-                { string: "Requerido" },
-                { string: "Solo lectura" },
-                { string: "No crear" },
-                { string: "No editar" },
-                {
-                  string: <i className="bi bi-trash"></i>,
-                  className: "text-center",
-                },
-              ]}
-              renderRow={(row, index) => (
-                <tr key={row.id} className="border-0 border-bottom">
-                  <td valign="middle" className="p-0">
-                    <FieldRelation
-                      inline
-                      model="modelField"
-                      name={`lines.${index}.fieldId`}
+            <Col className="p-0">
+              <SimpleTable
+                data={fields}
+                headers={[
+                  {
+                    string: "Campo",
+                    name: "fieldId",
+                    width: 200,
+                    minWidth: 100,
+                  },
+                  {
+                    string: "Invisible",
+                    name: "invisible",
+                    width: 50,
+                    minWidth: 45,
+                  },
+                  {
+                    string: "Requerido",
+                    name: "required",
+                    width: 50,
+                    minWidth: 45,
+                  },
+                  {
+                    string: "Solo lectura",
+                    name: "readonly",
+                    width: 50,
+                    minWidth: 45,
+                  },
+                  {
+                    string: "No crear",
+                    name: "notCreate",
+                    width: 50,
+                    minWidth: 45,
+                  },
+                  {
+                    string: "No editar",
+                    name: "notEdit",
+                    width: 50,
+                    minWidth: 45,
+                  },
+                  {
+                    string: <i className="bi bi-trash"></i>,
+                    className: "text-center",
+                    width: 35,
+                    minWidth: 30,
+                  },
+                ]}
+                renderRow={(row, index) => (
+                  <tr key={row.id} className="border-0 border-bottom">
+                    <SimpleTD colIdx={index}>
+                      <FieldRelation
+                        inline
+                        model="modelField"
+                        name={`lines.${index}.fieldId`}
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index}>
+                      <FieldBoolean
+                        type="checkbox"
+                        inline
+                        name={`lines.${index}.invisible`}
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index}>
+                      <FieldBoolean
+                        type="checkbox"
+                        inline
+                        name={`lines.${index}.required`}
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index}>
+                      <FieldBoolean
+                        type="checkbox"
+                        inline
+                        name={`lines.${index}.readonly`}
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index}>
+                      <FieldBoolean
+                        type="checkbox"
+                        inline
+                        name={`lines.${index}.notCreate`}
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index}>
+                      <FieldBoolean
+                        type="checkbox"
+                        inline
+                        name={`lines.${index}.notEdit`}
+                      />
+                    </SimpleTD>
+                    <SimpleTD
+                      remove
+                      colIdx={index}
+                      action={() => remove(index)}
+                      contentPosition="text-center"
                     />
-                  </td>
-                  <td valign="middle" className="p-0 text-center">
-                    <FieldBoolean
-                      type="checkbox"
-                      inline
-                      name={`lines.${index}.invisible`}
-                    />
-                  </td>
-                  <td valign="middle" className="p-0 text-center">
-                    <FieldBoolean
-                      type="checkbox"
-                      inline
-                      name={`lines.${index}.required`}
-                    />
-                  </td>
-                  <td valign="middle" className="p-0 text-center">
-                    <FieldBoolean
-                      type="checkbox"
-                      inline
-                      name={`lines.${index}.readonly`}
-                    />
-                  </td>
-                  <td valign="middle" className="p-0 text-center">
-                    <FieldBoolean
-                      type="checkbox"
-                      inline
-                      name={`lines.${index}.notCreate`}
-                    />
-                  </td>
-                  <td valign="middle" className="p-0 text-center">
-                    <FieldBoolean
-                      type="checkbox"
-                      inline
-                      name={`lines.${index}.notEdit`}
-                    />
-                  </td>
-                  <td className="text-center p-0" valign="middle">
-                    <Button
-                      size="sm"
-                      variant="link"
-                      onClick={() => remove(index)}
-                    >
-                      <i className="bi bi-trash"></i>
-                    </Button>
-                  </td>
-                </tr>
-              )}
-              action={() =>
-                append({
-                  fieldId: "",
-                  invisible: false,
-                  required: false,
-                  readonly: false,
-                  notCreate: false,
-                  notEdit: false,
-                })
-              }
-            />
+                  </tr>
+                )}
+                action={() =>
+                  append({
+                    fieldId: "",
+                    invisible: false,
+                    required: false,
+                    readonly: false,
+                    notCreate: false,
+                    notEdit: false,
+                  })
+                }
+              />
+            </Col>
           </PageSheet>
         </FormPage>
       </FormBook>

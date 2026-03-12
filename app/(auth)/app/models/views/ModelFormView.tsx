@@ -23,12 +23,12 @@ import {
 } from "../actions/model-actions";
 import { FieldBoolean, FieldEntry } from "@/components/templates/fields";
 import toast from "react-hot-toast";
-import SimpleTable from "@/components/templates/SimpleTable";
-import { Button, Col } from "react-bootstrap";
+import { Col } from "react-bootstrap";
 import {
   FieldOption,
   SelectOption,
 } from "@/components/templates/fields/FielOption";
+import { SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
 
 function ModelFormView({
   id,
@@ -140,50 +140,48 @@ function ModelFormView({
               <SimpleTable
                 data={fields}
                 headers={[
-                  { string: "Nombre" },
-                  { string: "Tipo", width: 100 },
-                  { string: "Etiqueta" },
-                  { string: "Descripción" },
-                  { string: "Activo" },
+                  { string: "Nombre", width: 260, minWidth: 230 },
+                  { string: "Tipo", width: 75, minWidth: 75 },
+                  { string: "Etiqueta", width: 230, minWidth: 170 },
+                  { string: "Descripción", width: 260, minWidth: 195 },
+                  { string: "Activo", width: 35, minWidth: 35 },
                   {
                     string: <i className="bi bi-trash"></i>,
                     className: "text-center",
+                    width: 25,
+                    minWidth: 25,
                   },
                 ]}
                 renderRow={(row, index) => (
                   <tr key={row.id} className="border-0 border-bottom">
-                    <td valign="middle" className="p-0">
+                    <SimpleTD colIdx={index}>
                       <FieldEntry
                         inline
                         name={`lines.${index}.name`}
                         readonly
                       />
-                    </td>
-                    <td valign="middle" className="p-0">
+                    </SimpleTD>
+                    <SimpleTD colIdx={index}>
                       <FieldOption
                         inline
                         name={`lines.${index}.fieldType`}
                         options={fieldTypes}
                       />
-                    </td>
-                    <td valign="middle" className="p-0">
+                    </SimpleTD>
+                    <SimpleTD colIdx={index}>
                       <FieldEntry inline name={`lines.${index}.label`} />
-                    </td>
-                    <td valign="middle" className="p-0">
+                    </SimpleTD>
+                    <SimpleTD colIdx={index}>
                       <FieldEntry inline name={`lines.${index}.description`} />
-                    </td>
-                    <td valign="middle" className="text-center p-0">
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} contentPosition="text-center">
                       <FieldBoolean inline name={`lines.${index}.active`} />
-                    </td>
-                    <td className="text-center p-0" valign="middle">
-                      <Button
-                        size="sm"
-                        variant="link"
-                        onClick={() => remove(index)}
-                      >
-                        <i className="bi bi-trash"></i>
-                      </Button>
-                    </td>
+                    </SimpleTD>
+                    <SimpleTD
+                      colIdx={index}
+                      remove
+                      action={() => remove(index)}
+                    />
                   </tr>
                 )}
                 action={() =>

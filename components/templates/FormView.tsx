@@ -247,7 +247,10 @@ export function FormViewGroup({
 
   return (
     <Col md="6">
-      <fieldset className="p-2 mt-1 rounded" disabled={readonly}>
+      <fieldset
+        className="p-2 mt-1 rounded bg-body-tertiary"
+        disabled={readonly}
+      >
         {/* {label ? (
           <legend
             className="fw-bolder text-uppercase mx-1 mb-3"
@@ -314,7 +317,6 @@ export const PageSheet = ({
   children,
   name,
   invisible,
-  readonly,
 }: {
   children: React.ReactNode;
   name?: string;
@@ -326,7 +328,7 @@ export const PageSheet = ({
   return (
     <Row
       style={{
-        minHeight: "300px",
+        maxHeight: "100%",
       }}
       title={name}
       className="overflow-auto"

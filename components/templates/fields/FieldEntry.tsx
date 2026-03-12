@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormContext, Controller } from "react-hook-form";
-import { Form } from "react-bootstrap";
+import { Form, FloatingLabel } from "react-bootstrap";
 import { round } from "@/app/libs/helpers";
 import { format } from "date-fns";
 import { ElementType } from "react";
@@ -78,14 +78,14 @@ export function FieldEntry({
   placeholder,
   as,
   cols,
-  rows,
+  rows = 1,
   autoFocus,
 }: FieldEntryProps) {
   const { control } = useFormContext();
 
   if (invisible) return null;
 
-  const input = (
+  return (
     <Controller
       name={name}
       control={control}
@@ -97,88 +97,97 @@ export function FieldEntry({
               ? toDateInputValue(field.value)
               : (field.value ?? "");
 
+        const floatingText = label ?? placeholder ?? name;
+        const effectivePlaceholder = placeholder ?? floatingText;
+
+        const isTextarea = as != null ? as === "textarea" : type === "text";
+
+        const input = (
+          <Form.Control
+            ref={(el: HTMLInputElement | HTMLTextAreaElement | null) => {
+              if (el && el.tagName === "TEXTAREA") {
+                el.style.height = "auto";
+                el.style.height = `${el.scrollHeight}px`;
+              }
+            }}
+            className={`${className ?? ""} ${
+              type === "password" ? "text-center" : ""
+            } shadow-none w-100 overflow-hidden px-1 ${inline ? "border-0" : ""}`}
+            id={name}
+            title={name}
+            as={as ?? (type === "text" ? "textarea" : undefined)}
+            type={type}
+            isInvalid={!!fieldState.error}
+            placeholder={effectivePlaceholder}
+            readOnly={readonly || isSubmitting}
+            value={inputValue}
+            min={min}
+            rows={isTextarea ? rows : undefined}
+            cols={cols}
+            autoComplete="off"
+            style={{
+              fontSize: "0.9rem",
+              resize: isTextarea ? "none" : undefined,
+            }}
+            autoFocus={autoFocus}
+            onChange={(e) => {
+              const el = e.target as HTMLInputElement | HTMLTextAreaElement;
+
+              if (el.tagName === "TEXTAREA") {
+                el.style.height = "auto";
+                el.style.height = `${el.scrollHeight}px`;
+              }
+
+              const raw = el.value;
+
+              if (type === "number") {
+                const n = Number(raw);
+                const rounded = Number.isFinite(n) ? round(n, 2) : raw;
+                field.onChange(rounded);
+                onChange?.(String(rounded));
+                return;
+              }
+
+              if (type === "datetime-local") {
+                const iso = datetimeLocalToISO(raw);
+                field.onChange(iso);
+                onChange?.(iso);
+                return;
+              }
+
+              if (type === "date") {
+                const iso = dateInputToISO(raw);
+                field.onChange(iso);
+                onChange?.(iso);
+                return;
+              }
+
+              field.onChange(raw);
+              onChange?.(raw);
+            }}
+            onBlur={field.onBlur}
+            name={field.name}
+          />
+        );
+
+        if (inline) {
+          return (
+            <div title={name} className="p-0 m-0 w-100">
+              {input}
+            </div>
+          );
+        }
         return (
-          <>
-            <Form.Control
-              className={`${className ?? ""} ${type === "password" ? "text-center" : ""} ${
-                !inline ? "border-bottom p-0" : ""
-              } shadow-none rounded-0 border-0 w-100`}
-              id={name}
-              title={name}
-              as={as}
-              type={type}
-              isInvalid={!!fieldState.error}
-              placeholder={placeholder}
-              readOnly={readonly || isSubmitting}
-              // disabled={isSubmitting}
-              value={inputValue}
-              min={min}
-              rows={rows}
-              cols={cols}
-              autoComplete="off"
-              style={{ fontSize: "0.9rem" }}
-              autoFocus={autoFocus}
-              onChange={(e) => {
-                const raw = e.target.value;
-
-                if (type === "number") {
-                  const n = Number(raw);
-                  const rounded = Number.isFinite(n) ? round(n, 2) : raw;
-                  field.onChange(rounded);
-                  onChange?.(String(rounded));
-                  return;
-                }
-
-                if (type === "datetime-local") {
-                  const iso = datetimeLocalToISO(raw);
-                  field.onChange(iso);
-                  onChange?.(iso);
-                  return;
-                }
-
-                if (type === "date") {
-                  const iso = dateInputToISO(raw);
-                  field.onChange(iso);
-                  onChange?.(iso);
-                  return;
-                }
-
-                field.onChange(raw);
-                onChange?.(raw);
-              }}
-            />
-            <Form.Control.Feedback type="invalid">
-              {fieldState.error?.message}
-            </Form.Control.Feedback>
-          </>
+          <div title={name} className={inline ? "m-0 p-0" : "mb-1"}>
+            <FloatingLabel label={floatingText} className="w-100 fs-6 fw-bold">
+              {input}
+              <Form.Control.Feedback type="invalid">
+                {fieldState.error?.message}
+              </Form.Control.Feedback>
+            </FloatingLabel>
+          </div>
         );
       }}
     />
-  );
-
-  if (inline) {
-    return (
-      <div title={name} className="m-0 p-0">
-        {input}
-      </div>
-    );
-  }
-
-  return (
-    <Form.Group className="mb-3" title={name}>
-      <div className="d-flex flex-column align-items-sm-end gap-0 flex-sm-row">
-        <Form.Label
-          htmlFor={name}
-          className="fw-semibold m-0 p-0 flex-shrink-0"
-          style={{ width: 100 }}
-        >
-          {label}
-        </Form.Label>
-
-        <div className="flex-grow-1" style={{ minWidth: 0 }}>
-          {input}
-        </div>
-      </div>
-    </Form.Group>
   );
 }
