@@ -39,13 +39,10 @@ function AccessProviderInner({ children }: { children: ReactNode }) {
   useEffect(() => {
     const entityType = pathName.split("/")[2];
 
-    console.log(entityType);
-    console.log(acc);
-
     const getAccess = acc.filter((acc) => acc.entityType === entityType);
 
     setAccess(getAccess || []);
-  }, [pathName]);
+  }, [pathName, acc]);
 
   return (
     <AccessContext.Provider value={{ access }}>
@@ -57,11 +54,19 @@ function AccessProviderInner({ children }: { children: ReactNode }) {
 /**
  * Hook para obtener access filtrado por entityName
  */
-export const useAccess = (): GroupLine[] => {
+export const useAccess = ({
+  fieldName,
+}: {
+  fieldName: string;
+}): GroupLine | undefined => {
   const context = useContext(AccessContext);
   if (!context) {
     throw new Error("useAccess debe usarse dentro de AccessProvider");
   }
 
-  return context.access;
+  const fieldAccessProps = context.access.find(
+    (acc) => acc.fieldName === fieldName,
+  );
+
+  return fieldAccessProps;
 };

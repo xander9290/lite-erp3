@@ -21,6 +21,7 @@ import { ButtonVariant } from "react-bootstrap/esm/types";
 import NotFound from "@/app/not-found";
 import { Suspense } from "react";
 import AuditLogViewer from "./AuditLogViewer";
+import { useAuth } from "@/hooks/sessionStore";
 
 type TFormActions = {
   string: React.ReactElement | string;
@@ -68,11 +69,15 @@ export function FormView<T extends FieldValues>({
     getValues,
   } = methods;
 
-  const router = useRouter();
-
   if (!id || id === "") {
     return <NotFound />;
   }
+
+  const router = useRouter();
+  const modelName = cleanUrl.split("?")[0].split("/")[2] + "Model";
+
+  const { access } = useAuth();
+  const modelAccess = access.filter((acc) => acc.fieldName === modelName);
 
   return (
     <Row className="h-100 overflow-auto">
@@ -92,6 +97,7 @@ export function FormView<T extends FieldValues>({
                     onClick={() => router.replace(cleanUrl)}
                     className="fw-semibold"
                     size="sm"
+                    disabled={modelAccess[0]?.notCreate}
                   >
                     Nuevo
                   </Button>
@@ -99,7 +105,7 @@ export function FormView<T extends FieldValues>({
 
                 <Button
                   type="button"
-                  disabled={!isDirty}
+                  disabled={!isDirty || modelAccess[0]?.notEdit}
                   onClick={handleSubmit(onSubmit)}
                   size="sm"
                   variant="none"
@@ -126,6 +132,10 @@ export function FormView<T extends FieldValues>({
               {/* BOTONES VISTA ESCRITORIO */}
               <div className="d-none d-md-flex gap-1 align-items-center">
                 {actions?.map((action, index) => {
+                  const actionAccess = access.filter(
+                    (acc) => acc.fieldName === action.fieldName,
+                  );
+                  if (actionAccess[0]?.invisible) return null;
                   if (action.invisible) return null;
                   return (
                     <Button
@@ -148,6 +158,10 @@ export function FormView<T extends FieldValues>({
               <div className="d-flex d-md-none">
                 <DropdownButton variant="light" title="Acciones" align="end">
                   {actions?.map((action, index) => {
+                    const actionAccess = access.filter(
+                      (acc) => acc.fieldName === action.fieldName,
+                    );
+                    if (actionAccess[0]?.invisible) return null;
                     if (action.invisible) return null;
                     return (
                       <Dropdown.Item

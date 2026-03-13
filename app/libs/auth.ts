@@ -2,7 +2,6 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import prisma from "./prisma";
 import bcrypt from "bcryptjs";
-import { getUserAccess } from "../(auth)/app/users/actions/user-actions";
 import type { GroupLine } from "@/generated/prisma/client";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -26,6 +25,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: { login: login as string },
           include: {
             Partner: true,
+            Group: {
+              include: {
+                GroupLines: true,
+              },
+            },
           },
         });
 
@@ -43,7 +47,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Contraseña incorrecta");
         }
 
-        const access = await getUserAccess({ id: findUser.id });
+        console.log(findUser.Group?.GroupLines);
 
         await prisma.user.update({
           where: { id: findUser.id },
@@ -56,7 +60,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: findUser.id,
           name: findUser.Partner?.name,
           image: findUser.Partner?.imageUrl,
-          access,
+          access: findUser.Group?.GroupLines || [],
         };
 
         return user;

@@ -195,7 +195,7 @@ export function SimpleTable<T>({
         {colgroup}
 
         <thead className="">
-          <tr className="border-end border-bottom table-active sticky-top">
+          <tr className="border-end border-bottom table-active">
             {headers.map((header, idx) => (
               <th
                 key={idx}

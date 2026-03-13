@@ -84,18 +84,26 @@ export function FieldEntry({
 }: FieldEntryProps) {
   const { control } = useFormContext();
 
-  const fieldAccess = useAccess();
-  const access = fieldAccess.find((acc) => acc.fieldName === name);
-
-  console.log(fieldAccess);
+  const access = useAccess({ fieldName: name });
 
   if (invisible) return null;
-  if (access && access.invisible) return null;
+  if (access && access.invisible) return;
+
+  const rules = {
+    validate: (value: any) => {
+      console.log(value);
+      if (access?.required && (value === "" || value == null)) {
+        return "Este campo es requerido";
+      }
+      return true;
+    },
+  };
 
   return (
     <Controller
       name={name}
       control={control}
+      rules={rules}
       render={({ field, fieldState, formState: { isSubmitting } }) => {
         const inputValue =
           type === "datetime-local"
@@ -105,7 +113,7 @@ export function FieldEntry({
               : (field.value ?? "");
 
         const floatingText = label ?? placeholder ?? name;
-        const effectivePlaceholder = placeholder ?? floatingText;
+        const effectivePlaceholder = placeholder;
 
         const isTextarea = as != null ? as === "textarea" : type === "text";
 
@@ -126,8 +134,7 @@ export function FieldEntry({
             type={type}
             isInvalid={!!fieldState.error}
             placeholder={effectivePlaceholder}
-            readOnly={readonly || isSubmitting}
-            disabled={access?.readonly}
+            readOnly={readonly || isSubmitting || access?.readonly}
             value={inputValue}
             min={min}
             rows={isTextarea ? rows : undefined}
@@ -138,7 +145,6 @@ export function FieldEntry({
               resize: isTextarea ? "none" : undefined,
             }}
             autoFocus={autoFocus}
-            required={access?.required}
             onChange={(e) => {
               const el = e.target as HTMLInputElement | HTMLTextAreaElement;
 
