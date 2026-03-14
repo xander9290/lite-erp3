@@ -10,6 +10,7 @@ import React, {
 import { createPortal } from "react-dom";
 import { useController, useFormContext } from "react-hook-form";
 import { Form, Dropdown, Badge } from "react-bootstrap";
+import { useAccess } from "@/contexts/AccessContext";
 
 export interface Many2ManyOption {
   id: string;
@@ -61,11 +62,14 @@ export function FieldRelationTags({
   invisible,
   domain,
 }: Props) {
+  const access = useAccess({ fieldName: name });
+
   const { control } = useFormContext();
 
   const {
     field,
     fieldState: { error },
+    formState: { isSubmitting },
   } = useController({ name, control });
 
   const value = (field.value as string[] | undefined) ?? [];
@@ -281,6 +285,7 @@ export function FieldRelationTags({
   }, [isOpen, updateMenuPosition]);
 
   if (invisible) return null;
+  if (access?.invisible) return null;
 
   const dropdownMenu =
     mounted && isOpen && options.length > 0
@@ -328,7 +333,7 @@ export function FieldRelationTags({
   return (
     <div ref={containerRef} className={className}>
       {label && (
-        <Form.Label className="fw-semibold">
+        <Form.Label className="fw-semibold" title={name}>
           {label}
           {required && <span className="text-danger ms-1">*</span>}
         </Form.Label>
@@ -344,17 +349,21 @@ export function FieldRelationTags({
             ref={inputRef}
             type="text"
             value={query}
+            readOnly={isSubmitting || access?.readonly}
             onChange={(e) => {
+              if (access?.readonly) return null;
               setQuery(e.target.value);
               setIsOpen(true);
               requestAnimationFrame(updateMenuPosition);
             }}
             onFocus={() => {
+              if (access?.readonly) return null;
               setIsOpen(true);
               fetchOptions(query.trim());
               requestAnimationFrame(updateMenuPosition);
             }}
             onClick={() => {
+              if (access?.readonly) return null;
               setIsOpen(true);
               fetchOptions(query.trim());
               requestAnimationFrame(updateMenuPosition);
@@ -383,11 +392,12 @@ export function FieldRelationTags({
                   e.stopPropagation();
                 }}
                 onClick={(e) => {
+                  if (isSubmitting || access?.readonly) return null;
                   e.preventDefault();
                   e.stopPropagation();
                   handleRemove(opt.id);
                 }}
-                aria-label={`Quitar ${opt.displayName ?? opt.name ?? opt.id}`}
+                aria-label={`Quitar ${opt.name ?? opt.id}`}
               >
                 ×
               </button>

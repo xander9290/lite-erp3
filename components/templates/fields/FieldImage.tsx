@@ -8,6 +8,7 @@ import Cropper from "react-easy-crop";
 import { useController, useFormContext } from "react-hook-form";
 import { createImage, deleteImage } from "@/app/actions/image-actions";
 import { useModals } from "@/contexts/ModalContext";
+import { useAccess } from "@/contexts/AccessContext";
 
 interface ImageFieldProps {
   name: string;
@@ -19,6 +20,7 @@ interface ImageFieldProps {
   editable?: boolean;
   invisible?: boolean;
   readOnly?: boolean;
+  disabled?: boolean;
   inline?: boolean;
 }
 
@@ -32,13 +34,17 @@ export function FieldImage({
   invisible,
   readOnly,
   inline,
+  disabled,
 }: ImageFieldProps) {
+  const access = useAccess({ fieldName: name });
+
   const { control } = useFormContext();
   const { modalError } = useModals();
 
   const {
     field: { value, onChange },
     fieldState: { error },
+    formState: { isSubmitting },
   } = useController({ name, control });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -158,7 +164,8 @@ export function FieldImage({
       <div
         role="button"
         onClick={() => {
-          if (!readOnly) fileInputRef.current?.click();
+          if (readOnly || isSubmitting || access?.readonly) return null;
+          fileInputRef.current?.click();
         }}
         className="position-relative d-inline-block"
         title={name}
@@ -202,6 +209,8 @@ export function FieldImage({
           accept="image/*"
           onChange={handleImage}
           className="d-none"
+          readOnly={readOnly || isSubmitting || access?.readonly}
+          disabled={disabled}
         />
       </div>
 
@@ -210,6 +219,7 @@ export function FieldImage({
   );
 
   if (invisible) return null;
+  if (access?.invisible) return null;
 
   /* ---------------- Layout ---------------- */
   if (inline) {

@@ -2,6 +2,7 @@
 
 import { useFormContext, Controller } from "react-hook-form";
 import { Form, FloatingLabel } from "react-bootstrap";
+import { useAccess } from "@/contexts/AccessContext";
 
 interface FieldSelectProps {
   name: string;
@@ -24,6 +25,8 @@ export function FieldSelect({
   className,
   options,
 }: FieldSelectProps) {
+  const access = useAccess({ fieldName: name });
+
   const { control } = useFormContext();
 
   if (!options) {
@@ -31,6 +34,7 @@ export function FieldSelect({
   }
 
   if (invisible) return null;
+  if (access?.invisible) return null;
 
   const floatingText = label ?? name;
 
@@ -38,7 +42,7 @@ export function FieldSelect({
     <Controller
       name={name}
       control={control}
-      render={({ field, fieldState }) => {
+      render={({ field, fieldState, formState: { isSubmitting } }) => {
         const selectControl = (
           <Form.Select
             {...field}
@@ -47,7 +51,7 @@ export function FieldSelect({
             isInvalid={!!fieldState.error}
             value={field.value ?? ""}
             autoComplete="off"
-            disabled={disabled}
+            disabled={isSubmitting || disabled || access?.readonly}
             className={`shadow-none w-100 ${inline ? "border-0 bg-transparent rounded-0 p-0" : ""} ${className ?? ""}`}
             onChange={(e) => {
               const raw = e.target.value;

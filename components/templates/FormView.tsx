@@ -4,6 +4,7 @@ import {
   type UseFormReturn,
 } from "react-hook-form";
 import {
+  Alert,
   Button,
   ButtonGroup,
   Col,
@@ -77,7 +78,19 @@ export function FormView<T extends FieldValues>({
   const modelName = cleanUrl.split("?")[0].split("/")[2] + "Model";
 
   const { access } = useAuth();
-  const modelAccess = access.filter((acc) => acc.fieldName === modelName);
+  const modelAccess = access.find((acc) => acc.fieldName === modelName);
+
+  if (modelAccess?.invisible) {
+    return (
+      <Row className="h-100 justify-content-center">
+        <Col xs="12" md="6" className="h-100 px-0 mt-5">
+          <Alert variant="warning">
+            <h2 className="text-center">ACCESO DENEGADO</h2>
+          </Alert>
+        </Col>
+      </Row>
+    );
+  }
 
   return (
     <Row className="h-100 overflow-auto">
@@ -97,7 +110,7 @@ export function FormView<T extends FieldValues>({
                     onClick={() => router.replace(cleanUrl)}
                     className="fw-semibold"
                     size="sm"
-                    disabled={modelAccess[0]?.notCreate}
+                    disabled={modelAccess?.notCreate}
                   >
                     Nuevo
                   </Button>
@@ -105,7 +118,7 @@ export function FormView<T extends FieldValues>({
 
                 <Button
                   type="button"
-                  disabled={!isDirty || modelAccess[0]?.notEdit}
+                  disabled={!isDirty || modelAccess?.notEdit}
                   onClick={handleSubmit(onSubmit)}
                   size="sm"
                   variant="none"
@@ -261,10 +274,7 @@ export function FormViewGroup({
 
   return (
     <Col md="6">
-      <fieldset
-        className="p-2 mt-1 rounded bg-body-tertiary"
-        disabled={readonly}
-      >
+      <fieldset className="p-2 mt-1 rounded" disabled={readonly}>
         {/* {label ? (
           <legend
             className="fw-bolder text-uppercase mx-1 mb-3"

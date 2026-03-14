@@ -50,7 +50,7 @@ function ModelListView() {
     },
   ];
   return (
-    <ListView>
+    <ListView model="models">
       <ListView.Header
         title="Modelos"
         formView="/app/models?view_type=form&id=null"

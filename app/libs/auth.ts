@@ -26,6 +26,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           include: {
             Partner: true,
             Group: {
+              where: {
+                active: true,
+              },
               include: {
                 GroupLines: true,
               },

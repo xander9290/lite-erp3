@@ -77,7 +77,7 @@ function UsersListView() {
     },
   ];
   return (
-    <ListView>
+    <ListView model="users">
       <ListView.Header
         title="Usuarios"
         formView="/app/users?view_type=form&id=null"

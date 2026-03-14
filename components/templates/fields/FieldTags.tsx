@@ -7,6 +7,7 @@ import {
   fetchTags,
   createTag as createTagAction,
 } from "@/app/actions/tag-actions";
+import { useAccess } from "@/contexts/AccessContext";
 
 interface TagOption {
   id: string;
@@ -21,6 +22,7 @@ interface Many2manyTagsFieldProps {
   invisible?: boolean;
   disabled?: boolean;
   inline?: boolean;
+  readOnly?: boolean;
 }
 
 export function FieldTags({
@@ -30,12 +32,16 @@ export function FieldTags({
   invisible,
   disabled,
   inline,
+  readOnly,
 }: Many2manyTagsFieldProps) {
+  const access = useAccess({ fieldName: name });
+
   const { control } = useFormContext();
 
   const {
     field: { value, onChange },
     fieldState: { error },
+    formState: { isSubmitting },
   } = useController({ name, control });
 
   const [query, setQuery] = useState("");
@@ -183,6 +189,7 @@ export function FieldTags({
         type="text"
         value={query}
         onChange={(e) => {
+          if (isSubmitting || readOnly || access?.readonly) return null;
           setQuery(e.target.value);
           setIsOpen(true);
         }}
@@ -192,6 +199,7 @@ export function FieldTags({
         size="sm"
         className="shadow-none border-0 border-bottom flex-grow-1 rounded-0"
         style={{ fontSize: "0.9rem" }}
+        readOnly={isSubmitting || readOnly || access?.readonly}
       />
 
       {error && <div className="text-danger small mt-1">{error.message}</div>}
@@ -221,9 +229,10 @@ export function FieldTags({
   );
 
   if (invisible) return null;
+  if (access?.invisible) return null;
 
-  /* ---------------- Layout ---------------- */
   if (inline) {
+    /* ---------------- Layout ---------------- */
     return (
       <div ref={containerRef} className={className} title={name}>
         {content}

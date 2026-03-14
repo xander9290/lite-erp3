@@ -1,6 +1,7 @@
 import { useFormContext, Controller } from "react-hook-form";
 import { Form } from "react-bootstrap";
 import { FormCheckType } from "react-bootstrap/esm/FormCheck";
+import { useAccess } from "@/contexts/AccessContext";
 
 interface FieldBooleanProps {
   label?: string;
@@ -9,6 +10,7 @@ interface FieldBooleanProps {
   readonly?: boolean;
   invisible?: boolean;
   inline?: boolean;
+  disabled?: boolean;
 }
 
 export function FieldBoolean({
@@ -18,10 +20,14 @@ export function FieldBoolean({
   readonly,
   invisible,
   inline,
+  disabled,
 }: FieldBooleanProps) {
   const { control } = useFormContext();
 
+  const access = useAccess({ fieldName: name });
+
   if (invisible) return null;
+  if (access?.invisible) return null;
 
   const input = (
     <Controller
@@ -32,8 +38,7 @@ export function FieldBoolean({
           type={type}
           title={name}
           label={label}
-          disabled={isSubmitting}
-          readOnly={readonly}
+          disabled={disabled || isSubmitting || readonly || access?.readonly}
           checked={!!field.value}
           onChange={(e) => field.onChange(e.target.checked)}
           onBlur={field.onBlur}

@@ -67,7 +67,7 @@ function GroupListView() {
     },
   ];
   return (
-    <ListView>
+    <ListView model="groups">
       <ListView.Header
         title="Grupos"
         formView="/app/groups?view_type=form&id=null"

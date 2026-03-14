@@ -1,4 +1,5 @@
 "use client";
+import { useAccess } from "@/contexts/AccessContext";
 import { Button, Spinner } from "react-bootstrap";
 import { useFormContext, Controller } from "react-hook-form";
 
@@ -13,9 +14,12 @@ export function FieldSubmit({
   disabled?: boolean;
   invisible?: boolean;
 }) {
+  const access = useAccess({ fieldName: name });
+
   const { control } = useFormContext();
 
   if (invisible) return null;
+  if (access?.invisible) return null;
 
   return (
     <Controller
@@ -23,7 +27,12 @@ export function FieldSubmit({
       control={control}
       render={({ formState: { isSubmitting } }) => {
         return (
-          <Button size="sm" type="submit" disabled={disabled || isSubmitting}>
+          <Button
+            size="sm"
+            type="submit"
+            title={name}
+            disabled={disabled || isSubmitting || access?.readonly}
+          >
             {isSubmitting ? (
               <Spinner animation="border" size="sm" />
             ) : (

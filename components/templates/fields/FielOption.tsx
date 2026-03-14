@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useController, useFormContext } from "react-hook-form";
 import { Dropdown, Form, FloatingLabel } from "react-bootstrap";
+import { useAccess } from "@/contexts/AccessContext";
 
 export interface SelectOption {
   value: number | string;
@@ -15,7 +16,7 @@ interface FieldOptionProps<T extends SelectOption> {
   name: string;
   label?: string;
   options: T[] | null;
-  readonly?: boolean;
+  readOnly?: boolean;
   invisible?: boolean;
   inline?: boolean;
   className?: string;
@@ -36,7 +37,7 @@ export function FieldOption<T extends SelectOption>({
   name,
   label,
   options,
-  readonly = false,
+  readOnly = false,
   invisible = false,
   inline = false,
   className = "",
@@ -44,11 +45,14 @@ export function FieldOption<T extends SelectOption>({
   onOptionChange,
   disabled,
 }: FieldOptionProps<T>) {
+  const access = useAccess({ fieldName: name });
+
   const { control } = useFormContext();
 
   const {
     field: { value, onChange, onBlur, ref },
     fieldState: { error },
+    formState: { isSubmitting },
   } = useController({ name, control });
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -243,12 +247,13 @@ export function FieldOption<T extends SelectOption>({
   };
 
   if (invisible) return null;
+  if (access?.invisible) return null;
 
   const floatingText = label ?? name;
   const placeholder = label ?? name;
 
   const dropdownMenu =
-    mounted && isOpen && !readonly && !disabled && filteredOptions.length > 0
+    mounted && isOpen && !readOnly && !disabled && filteredOptions.length > 0
       ? createPortal(
           <div
             style={{
@@ -317,7 +322,7 @@ export function FieldOption<T extends SelectOption>({
           requestAnimationFrame(updateMenuPosition);
         }}
         onFocus={() => {
-          if (readonly || disabled) return;
+          if (disabled || readOnly || access?.readonly) return;
           setIsOpen(true);
           setHighlightedIndex(0);
 
@@ -334,7 +339,7 @@ export function FieldOption<T extends SelectOption>({
         autoComplete="off"
         isInvalid={!!error}
         disabled={disabled}
-        readOnly={readonly}
+        readOnly={isSubmitting || readOnly || access?.readonly}
         autoFocus={autoFocus}
         className={`w-100 shadow-none overflow-hidden ${className} ${inline ? "border-0" : ""}`}
         style={{

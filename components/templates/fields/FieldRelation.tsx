@@ -16,6 +16,7 @@ import {
   Spinner,
   FloatingLabel,
 } from "react-bootstrap";
+import { useAccess } from "@/contexts/AccessContext";
 
 export interface Many2OneOption {
   id: number | string;
@@ -58,6 +59,7 @@ interface MenuPosition {
   top: number;
   left: number;
   width: number;
+  maxHeight: number;
 }
 
 export function FieldRelation<T extends Many2OneOption>({
@@ -73,6 +75,8 @@ export function FieldRelation<T extends Many2OneOption>({
   domain,
   placeholder,
 }: Many2oneFieldProps<T>) {
+  const access = useAccess({ fieldName: name });
+
   const { control } = useFormContext();
 
   const {
@@ -90,6 +94,7 @@ export function FieldRelation<T extends Many2OneOption>({
     top: 0,
     left: 0,
     width: 0,
+    maxHeight: 0,
   });
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -104,10 +109,25 @@ export function FieldRelation<T extends Many2OneOption>({
 
     const rect = inputRef.current.getBoundingClientRect();
 
+    const viewportHeight = window.innerHeight;
+    const dropdownHeight = 220; // altura aproximada del dropdown
+
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    const openUpwards = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+
+    const top = openUpwards ? rect.top - dropdownHeight - 4 : rect.bottom + 4;
+
+    const maxHeight = openUpwards
+      ? rect.top - 10
+      : viewportHeight - rect.bottom - 10;
+
     setMenuPosition({
-      top: rect.bottom + 4,
+      top,
       left: rect.left,
       width: rect.width,
+      maxHeight,
     });
   }, []);
 
@@ -286,8 +306,15 @@ export function FieldRelation<T extends Many2OneOption>({
     requestAnimationFrame(updateMenuPosition);
   };
 
+  const openDropdown = useCallback(() => {
+    if (readonly || access?.readonly) return;
+    setIsOpen(true);
+    fetchOptions(query.trim());
+    requestAnimationFrame(updateMenuPosition);
+  }, [readonly, access?.readonly, fetchOptions, query, updateMenuPosition]);
+
   const dropdownMenu = useMemo(() => {
-    if (!mounted || !isOpen || readonly) return null;
+    if (!mounted || !isOpen || readonly || access?.readonly) return null;
 
     return createPortal(
       <div
@@ -345,6 +372,7 @@ export function FieldRelation<T extends Many2OneOption>({
     mounted,
     isOpen,
     readonly,
+    access?.readonly,
     menuPosition.top,
     menuPosition.left,
     menuPosition.width,
@@ -355,6 +383,7 @@ export function FieldRelation<T extends Many2OneOption>({
   ]);
 
   if (invisible) return null;
+  if (access?.invisible) return null;
 
   const floatingText = label ?? name;
 
@@ -377,16 +406,12 @@ export function FieldRelation<T extends Many2OneOption>({
             ponChange?.(null, null);
           }
         }}
-        onFocus={() => {
-          if (readonly) return;
-          setIsOpen(true);
-          fetchOptions(query.trim());
-          requestAnimationFrame(updateMenuPosition);
-        }}
+        onFocus={openDropdown}
+        onClick={openDropdown}
         onBlur={onBlur}
         autoComplete="off"
         isInvalid={!!error}
-        readOnly={readonly}
+        readOnly={readonly || access?.readonly}
         autoFocus={autoFocus}
         className={`w-100 shadow-none px-1 rounded-end-0 ${className ?? ""} ${inline ? "border-0" : "bg-body-tertiary"}`}
         onKeyDown={handleKeyDown}
@@ -420,7 +445,7 @@ export function FieldRelation<T extends Many2OneOption>({
             variant="light"
             onClick={handleOff}
             title="Desplegar"
-            disabled={readonly}
+            disabled={readonly || access?.readonly}
             className="flex-shrink-0 rounded-start-0 border-start-0"
             style={{ minWidth: 42 }}
           >
