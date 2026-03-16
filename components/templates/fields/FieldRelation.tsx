@@ -11,6 +11,8 @@ import { createPortal } from "react-dom";
 import { useController, useFormContext } from "react-hook-form";
 import { Form, Dropdown, Button, FloatingLabel } from "react-bootstrap";
 import { useAccess } from "@/contexts/AccessContext";
+import { TableTemplateColumn } from "../TableTemplate";
+import RelationSearchModal from "../RelationSearchModal";
 
 export interface Many2OneOption {
   id: number | string;
@@ -37,15 +39,21 @@ export type Domain = DomainItem[];
 interface Many2oneFieldProps<T extends Many2OneOption> {
   name: string;
   model: string;
+
   label?: string;
   readonly?: boolean;
   invisible?: boolean;
   inline?: boolean;
   className?: string;
   autoFocus?: boolean;
+
   ponChange?: (value: Many2OneOption["id"] | null, record: T | null) => void;
+
   domain?: Domain;
   placeholder?: string;
+
+  searchColumns?: TableTemplateColumn<T>[];
+  searchPageSize?: number;
 }
 
 interface MenuPosition {
@@ -67,6 +75,7 @@ export function FieldRelation<T extends Many2OneOption>({
   ponChange,
   domain,
   placeholder,
+  searchColumns,
 }: Many2oneFieldProps<T>) {
   const access = useAccess({ fieldName: name });
 
@@ -89,6 +98,7 @@ export function FieldRelation<T extends Many2OneOption>({
     width: 0,
     maxHeight: 0,
   });
+  const [showSearchModal, setShowSearchModal] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -343,6 +353,19 @@ export function FieldRelation<T extends Many2OneOption>({
                 {opt.displayName ?? opt.name}
               </Dropdown.Item>
             ))}
+            {searchColumns && (
+              <Dropdown.Item
+                className="text-primary"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setIsOpen(false);
+                  console.log("Modal activado");
+                  setShowSearchModal(true);
+                }}
+              >
+                <small>Buscar más..</small>
+              </Dropdown.Item>
+            )}
           </Dropdown.Menu>
         </Dropdown>
       </div>,
@@ -398,6 +421,19 @@ export function FieldRelation<T extends Many2OneOption>({
         style={{ fontSize: "0.9rem" }}
       />
       {dropdownMenu}
+      {searchColumns && (
+        <RelationSearchModal
+          show={showSearchModal}
+          onHide={() => setShowSearchModal(false)}
+          model={model}
+          columns={searchColumns}
+          domain={domain}
+          onSelect={(record) => {
+            handleSelect(record);
+            setShowSearchModal(false);
+          }}
+        />
+      )}
     </>
   );
 

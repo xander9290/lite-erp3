@@ -49,6 +49,7 @@ type TableProps<T> = {
   pageSize?: number;
   defaultOrder?: string;
   domain?: Domain;
+  onRowClick?: (row: T) => void;
 };
 
 function useDebouncedValue<T>(value: T, delay = 300) {
@@ -89,6 +90,7 @@ export default function TableTemplate<T>({
   pageSize: pageSizeProp,
   defaultOrder,
   domain,
+  onRowClick,
 }: TableProps<T>) {
   const router = useRouter();
 
@@ -422,6 +424,10 @@ export default function TableTemplate<T>({
                         key={id}
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (onRowClick) {
+                            onRowClick(row);
+                            return;
+                          }
                           if (viewForm) router.push(`${viewForm}&id=${id}`);
                         }}
                         style={{ cursor: "pointer" }}

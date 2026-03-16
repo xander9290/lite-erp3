@@ -147,7 +147,21 @@ function UsersFormView({
             editable
             remove
           />
-          <FieldRelation model="group" name="groupId" label="Grupo" />
+          <FieldRelation
+            model="group"
+            name="groupId"
+            label="Grupo"
+            searchPageSize={25}
+            searchColumns={[
+              {
+                key: "name",
+                label: "Nombre",
+                accessor: (r) => r.name,
+                filterable: true,
+                type: "string",
+              },
+            ]}
+          />
         </FormViewGroup>
         <FormBook dKey="otherInfo">
           <FormPage eventKey="otherInfo" title="Otra información">

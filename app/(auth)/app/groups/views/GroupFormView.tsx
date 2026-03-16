@@ -207,6 +207,36 @@ function GroupFormView({
                           inline
                           model="modelField"
                           name={`lines.${index}.fieldId`}
+                          searchColumns={[
+                            {
+                              key: "name",
+                              label: "Nombre",
+                              accessor: (r) => r.name,
+                              filterable: true,
+                              type: "string",
+                            },
+                            {
+                              key: "label",
+                              label: "Etiqueta",
+                              accessor: (r) => r.label,
+                              filterable: true,
+                              type: "string",
+                            },
+                            {
+                              key: "description",
+                              label: "Descripción",
+                              accessor: (r) => r.description,
+                              filterable: true,
+                              type: "string",
+                            },
+                            {
+                              key: "Model.name",
+                              label: "Modelo",
+                              accessor: (r) => r.Model?.name,
+                              filterable: true,
+                              type: "string",
+                            },
+                          ]}
                         />
                       </SimpleTD>
                       <SimpleTD name="lineInvisible" colIdx={index}>
