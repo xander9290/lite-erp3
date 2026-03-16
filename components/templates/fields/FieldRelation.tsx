@@ -9,19 +9,12 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { useController, useFormContext } from "react-hook-form";
-import {
-  Form,
-  Dropdown,
-  Button,
-  Spinner,
-  FloatingLabel,
-} from "react-bootstrap";
+import { Form, Dropdown, Button, FloatingLabel } from "react-bootstrap";
 import { useAccess } from "@/contexts/AccessContext";
 
 export interface Many2OneOption {
   id: number | string;
   name?: string | null;
-  displayName?: string | null;
   [key: string]: any;
 }
 
@@ -145,7 +138,7 @@ export function FieldRelation<T extends Many2OneOption>({
       try {
         const params = new URLSearchParams({
           search,
-          limit: "8",
+          limit: "5",
           domain: serializedDomain,
         });
 
@@ -199,7 +192,7 @@ export function FieldRelation<T extends Many2OneOption>({
 
         const res = await fetch(`/api/m2o/${model}?${params.toString()}`);
         const data = await res.json();
-        setQuery(data?.displayName ?? data?.name ?? "");
+        setQuery(data?.name ?? "");
       } catch (err) {
         console.error(err);
       }
@@ -336,33 +329,20 @@ export function FieldRelation<T extends Many2OneOption>({
               zIndex: 9999,
             }}
           >
-            {loading ? (
-              <div className="d-flex justify-content-center align-items-center p-3">
-                <Spinner animation="border" size="sm" />
-              </div>
-            ) : options.length > 0 ? (
-              options.map((opt, index) => (
-                <Dropdown.Item
-                  key={opt.id}
-                  active={index === highlightedIndex}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    handleSelect(opt);
-                  }}
-                  className="text-wrap p-1"
-                  style={{ fontSize: "0.9rem" }}
-                >
-                  {opt.displayName ?? opt.name}
-                </Dropdown.Item>
-              ))
-            ) : (
-              <div
-                className="px-3 py-2 text-muted"
+            {options.map((opt, index) => (
+              <Dropdown.Item
+                key={opt.id}
+                active={index === highlightedIndex}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleSelect(opt);
+                }}
+                className="text-wrap p-1"
                 style={{ fontSize: "0.9rem" }}
               >
-                Sin resultados
-              </div>
-            )}
+                {opt.displayName ?? opt.name}
+              </Dropdown.Item>
+            ))}
           </Dropdown.Menu>
         </Dropdown>
       </div>,

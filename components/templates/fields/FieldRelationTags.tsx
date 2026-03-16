@@ -153,7 +153,7 @@ export function FieldRelationTags({
       try {
         const params = new URLSearchParams({
           search,
-          limit: "10",
+          limit: "5",
           domain: serializedDomain,
           excludeIds: value.join(","),
         });

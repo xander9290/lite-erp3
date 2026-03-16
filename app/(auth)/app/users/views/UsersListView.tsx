@@ -15,6 +15,7 @@ function UsersListView() {
     {
       key: "Partner.name",
       label: "Nombre",
+      fieldName: "name",
       accessor: (u) => u.Partner?.name,
       filterable: true,
       type: "string",
@@ -22,6 +23,7 @@ function UsersListView() {
     {
       key: "login",
       label: "Usuario",
+      fieldName: "login",
       accessor: (u) => u.login,
       filterable: true,
       type: "string",
@@ -37,6 +39,7 @@ function UsersListView() {
     {
       key: "Group.name",
       label: "Grupo",
+      fieldName: "groupId",
       accessor: (u) => getByPath(u, "Group.name"),
       type: "string",
       filterable: true,
@@ -44,6 +47,7 @@ function UsersListView() {
     {
       key: "Partner.email",
       label: "Correo",
+      fieldName: "email",
       accessor: (u) => getByPath(u, "Partner.email"),
       filterable: true,
       type: "string",
@@ -51,6 +55,7 @@ function UsersListView() {
     {
       key: "active",
       label: "Activo",
+      fieldName: "active",
       accessor: (u) => (u.active ? "Sí" : "No"),
       render: (u) => (
         <div className="text-center">
@@ -63,6 +68,7 @@ function UsersListView() {
     {
       key: "lastLogin",
       label: "Última conexión",
+      fieldName: "lastLogin",
       accessor: (u) =>
         u.lastLogin ? formatDate(u.lastLogin, "dd/MM/yyyy HH:mm") : null,
       render: (u) => (

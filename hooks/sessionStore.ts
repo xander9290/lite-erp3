@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { GroupLine } from "@/generated/prisma/client";
 
 export function useAuth() {
   const { data: session, status } = useSession();

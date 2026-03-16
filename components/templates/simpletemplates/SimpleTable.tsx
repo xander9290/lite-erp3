@@ -166,14 +166,16 @@ export function SimpleTable<T>({
   const colgroup = useMemo(
     () => (
       <colgroup>
-        {headers.map((_, index) => (
-          <col
-            key={index}
-            style={{
-              width: `${columnWidths[index]}px`,
-            }}
-          />
-        ))}
+        {headers.map((_, index) => {
+          return (
+            <col
+              key={index}
+              style={{
+                width: `${columnWidths[index]}px`,
+              }}
+            />
+          );
+        })}
       </colgroup>
     ),
     [headers, columnWidths],
@@ -194,60 +196,62 @@ export function SimpleTable<T>({
       >
         {colgroup}
 
-        <thead className="">
+        <thead>
           <tr className="border-end border-bottom table-active">
-            {headers.map((header, idx) => (
-              <th
-                key={idx}
-                data-column-index={idx}
-                className={`${header.className ?? ""} border-end position-relative`}
-                style={{
-                  minWidth: `${header.minWidth ?? 60}px`,
-                  width: `${columnWidths[idx]}px`,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-                title={header.name}
-              >
-                <div className="position-relative w-100">
-                  <span
-                    className="d-block text-truncate pe-2"
-                    style={{ width: "100%" }}
-                  >
-                    {header.string}
-                  </span>
+            {headers.map((header, idx) => {
+              return (
+                <th
+                  key={idx}
+                  data-column-index={idx}
+                  className={`${header.className ?? ""} border-end position-relative`}
+                  style={{
+                    minWidth: `${header.minWidth ?? 60}px`,
+                    width: `${columnWidths[idx]}px`,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                  title={header.name}
+                >
+                  <div className="position-relative w-100">
+                    <span
+                      className="d-block text-truncate pe-2"
+                      style={{ width: "100%" }}
+                    >
+                      {header.string}
+                    </span>
 
-                  {resizable && idx < headers.length - 1 && (
-                    <div
-                      onMouseDown={(event) => startResize(event, idx)}
-                      onDoubleClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        autoFitColumn(idx);
-                      }}
-                      title="Arrastra para redimensionar. Doble click para autoajustar."
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        right: -4,
-                        width: 8,
-                        height: "100%",
-                        cursor: "col-resize",
-                        zIndex: 10,
-                      }}
-                    />
-                  )}
-                </div>
-              </th>
-            ))}
+                    {resizable && idx < headers.length - 1 && (
+                      <div
+                        onMouseDown={(event) => startResize(event, idx)}
+                        onDoubleClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          autoFitColumn(idx);
+                        }}
+                        title="Arrastra para redimensionar. Doble click para autoajustar."
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          right: -4,
+                          width: 8,
+                          height: "100%",
+                          cursor: "col-resize",
+                          zIndex: 10,
+                        }}
+                      />
+                    )}
+                  </div>
+                </th>
+              );
+            })}
           </tr>
         </thead>
 
         <tbody>
-          {data.length > 0
-            ? data.map((item, index) => renderRow(item, index))
-            : null}
+          {data.map((item, index) => {
+            return renderRow(item, index);
+          })}
 
           {action && (
             <tr>

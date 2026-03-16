@@ -29,10 +29,10 @@ import {
 import toast from "react-hot-toast";
 import { Col } from "react-bootstrap";
 import {
-  FieldOption,
-  SelectOption,
-} from "@/components/templates/fields/FielOption";
-import { SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
+  BtnDeleteLine,
+  SimpleTable,
+  SimpleTD,
+} from "@/components/templates/simpletemplates";
 
 function ModelFormView({
   id,
@@ -144,53 +144,76 @@ function ModelFormView({
               <SimpleTable
                 data={fields}
                 headers={[
-                  { string: "Nombre", width: 260, minWidth: 230 },
-                  { string: "Tipo", width: 75, minWidth: 75 },
-                  { string: "Etiqueta", width: 230, minWidth: 170 },
-                  { string: "Descripción", width: 260, minWidth: 195 },
-                  { string: "Activo", width: 35, minWidth: 35 },
+                  {
+                    string: "Nombre",
+                    width: 260,
+                    minWidth: 230,
+                    name: "lineName",
+                  },
+                  {
+                    string: "Tipo",
+                    width: 75,
+                    minWidth: 75,
+                    name: "lineFieldType",
+                  },
+                  {
+                    string: "Etiqueta",
+                    width: 230,
+                    minWidth: 170,
+                    name: "lineLabel",
+                  },
+                  {
+                    string: "Descripción",
+                    width: 260,
+                    minWidth: 195,
+                    name: "lineDescription",
+                  },
+                  {
+                    string: "Activo",
+                    width: 35,
+                    minWidth: 35,
+                    name: "lineActive",
+                  },
                   {
                     string: <i className="bi bi-trash"></i>,
                     className: "text-center",
                     width: 25,
                     minWidth: 25,
+                    name: "lineDelete",
                   },
                 ]}
                 renderRow={(row, index) => (
                   <tr key={row.id} className="border-0 border-bottom">
-                    <SimpleTD colIdx={index}>
+                    <SimpleTD name="lineName" colIdx={index}>
                       <FieldEntry
                         inline
                         name={`lines.${index}.name`}
                         readonly
                       />
                     </SimpleTD>
-                    <SimpleTD colIdx={index}>
-                      {/* <FieldOption
-                        inline
-                        name={`lines.${index}.fieldType`}
-                        options={fieldTypes}
-                      /> */}
+                    <SimpleTD name="lineFieldType" colIdx={index}>
                       <FieldSelect
                         name={`lines.${index}.fieldType`}
                         options={fieldTypes}
                         inline
                       />
                     </SimpleTD>
-                    <SimpleTD colIdx={index}>
+                    <SimpleTD name="lineLabel" colIdx={index}>
                       <FieldEntry inline name={`lines.${index}.label`} />
                     </SimpleTD>
-                    <SimpleTD colIdx={index}>
+                    <SimpleTD name="lineDescription" colIdx={index}>
                       <FieldEntry inline name={`lines.${index}.description`} />
                     </SimpleTD>
-                    <SimpleTD colIdx={index} contentPosition="text-center">
+                    <SimpleTD
+                      name="lineActive"
+                      colIdx={index}
+                      contentPosition="text-center"
+                    >
                       <FieldBoolean inline name={`lines.${index}.active`} />
                     </SimpleTD>
-                    <SimpleTD
-                      colIdx={index}
-                      remove
-                      action={() => remove(index)}
-                    />
+                    <SimpleTD name="lineDelete" colIdx={index}>
+                      <BtnDeleteLine action={() => remove(index)} />
+                    </SimpleTD>
                   </tr>
                 )}
                 action={() =>

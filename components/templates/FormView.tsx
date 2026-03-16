@@ -23,6 +23,7 @@ import NotFound from "@/app/not-found";
 import { Suspense } from "react";
 import AuditLogViewer from "./AuditLogViewer";
 import { useAuth } from "@/hooks/sessionStore";
+import { useAccess } from "@/contexts/AccessContext";
 
 type TFormActions = {
   string: React.ReactElement | string;
@@ -69,15 +70,14 @@ export function FormView<T extends FieldValues>({
     formState: { isSubmitting, isDirty },
     getValues,
   } = methods;
+  const { access } = useAuth();
+  const router = useRouter();
 
   if (!id || id === "") {
     return <NotFound />;
   }
 
-  const router = useRouter();
   const modelName = cleanUrl.split("?")[0].split("/")[2] + "Model";
-
-  const { access } = useAuth();
   const modelAccess = access.find((acc) => acc.fieldName === modelName);
 
   if (modelAccess?.invisible) {
@@ -347,12 +347,16 @@ export const PageSheet = ({
   invisible?: boolean;
   readonly?: boolean;
 }) => {
+  const access = useAccess({ fieldName: name || "" });
+
   if (invisible) return null;
+  if (access?.invisible) return null;
 
   return (
     <Row
       style={{
         maxHeight: "100%",
+        pointerEvents: access?.readonly ? "none" : "auto",
       }}
       title={name}
       className="overflow-auto"

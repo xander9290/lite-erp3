@@ -136,8 +136,8 @@ model Model {
 
 model ModelField {
   id          String    @id @default(cuid())
-  name        String    @unique // [label] description
-  label       String    @unique
+  name        String // [label] description
+  label       String
   description String
   fieldType   FieldType @map("field_type")
   active      Boolean   @default(false)
@@ -149,6 +149,7 @@ model ModelField {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  @@index([name])
   @@map("model_fields")
 }
 

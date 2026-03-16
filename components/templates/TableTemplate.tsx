@@ -4,9 +4,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Table, Form, Button, Spinner } from "react-bootstrap";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/sessionStore";
 
 export type TableTemplateColumn<T> = {
   key: string;
+  fieldName?: string;
   label: string;
   type?: "string" | "number" | "date" | "boolean";
   filterable?: boolean;
@@ -89,6 +91,10 @@ export default function TableTemplate<T>({
   domain,
 }: TableProps<T>) {
   const router = useRouter();
+
+  const modelName = viewForm?.split("?")[0].split("/")[2];
+  const { access } = useAuth();
+  const accesProps = access.filter((acc) => acc.entityType === modelName);
 
   const [filters, setFilters] = useState<Record<string, string>>({});
   const debouncedFilters = useDebouncedValue(filters, 350);
@@ -175,37 +181,6 @@ export default function TableTemplate<T>({
     debouncedFilters,
     serializedDomain,
   ]);
-
-  // useEffect(() => {
-  //   // eslint-disable-next-line react-hooks/set-state-in-effect
-  //   setLoading(true);
-  //   // eslint-disable-next-line react-hooks/set-state-in-effect
-  //   setError(null);
-
-  //   abortRef.current?.abort();
-  //   const ac = new AbortController();
-  //   abortRef.current = ac;
-
-  //   fetch(buildUrl, { signal: ac.signal })
-  //     .then(async (res) => {
-  //       if (!res.ok) {
-  //         const msg = await res.text().catch(() => "");
-  //         throw new Error(msg || `HTTP ${res.status}`);
-  //       }
-  //       return res.json() as Promise<TableApiResponse<T>>;
-  //     })
-  //     .then((json) => {
-  //       setRows(json.rows ?? []);
-  //       setTotal(json.total ?? 0);
-  //     })
-  //     .catch((e: unknown) => {
-  //       if (e instanceof Error && e.name === "AbortError") return;
-  //       setError(e instanceof Error ? e.message : "Error loading table");
-  //       setRows([]);
-  //       setTotal(0);
-  //     })
-  //     .finally(() => setLoading(false));
-  // }, [buildUrl]);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -365,6 +340,10 @@ export default function TableTemplate<T>({
             </th>
 
             {visibleColumns.map((col) => {
+              const fieldAccess = accesProps.find(
+                (acc) => acc.fieldName === col.fieldName,
+              );
+              if (fieldAccess?.invisible) return null;
               return (
                 <th
                   key={col.key}
@@ -386,10 +365,10 @@ export default function TableTemplate<T>({
                           handleFilterChange(col.key, e.target.value)
                         }
                         className="fw-bolder"
-                        title={col.key}
+                        title={col.fieldName}
                       />
                     ) : (
-                      <span title={col.key}>{col.label}</span>
+                      <span title={col.fieldName}>{col.fieldName}</span>
                     )}
 
                     <i
@@ -462,6 +441,10 @@ export default function TableTemplate<T>({
                         </td>
 
                         {visibleColumns.map((col, index) => {
+                          const fieldAccess = accesProps.find(
+                            (acc) => acc.fieldName === col.fieldName,
+                          );
+                          if (fieldAccess?.invisible) return null;
                           return (
                             <td
                               key={col.key}

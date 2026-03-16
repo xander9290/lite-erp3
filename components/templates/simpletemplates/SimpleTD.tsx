@@ -1,40 +1,21 @@
 "use client";
 
-import { Button } from "react-bootstrap";
+import { useAccess } from "@/contexts/AccessContext";
 
 export function SimpleTD({
   children,
   colIdx,
-  remove,
-  action,
   contentPosition = "text-start",
+  name,
 }: {
   children?: React.ReactNode;
   colIdx: number;
-  remove?: boolean;
-  action?: () => void;
   contentPosition?: "text-start" | "text-center" | "text-end";
+  name: string;
 }) {
-  if (remove) {
-    if (!action)
-      throw new Error("La función acción de eliminar se debe declarar");
-    return (
-      <td
-        valign="middle"
-        className={`p-0 border-end text-truncate ${contentPosition}`}
-        style={{
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
-        data-column-index={colIdx}
-      >
-        <Button size="sm" variant="link" onClick={action}>
-          <i className="bi bi-trash"></i>
-        </Button>
-      </td>
-    );
-  } else {
+  const access = useAccess({ fieldName: name });
+
+  if (access?.invisible)
     return (
       <td
         valign="middle"
@@ -45,11 +26,24 @@ export function SimpleTD({
           textOverflow: "ellipsis",
         }}
         data-column-index={colIdx}
-      >
-        {children}
-      </td>
+      ></td>
     );
-  }
+
+  return (
+    <td
+      title={name}
+      valign="middle"
+      className={`p-0 text-truncate ${contentPosition}`}
+      style={{
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+      }}
+      data-column-index={colIdx}
+    >
+      {children}
+    </td>
+  );
 }
 
 export default SimpleTD;

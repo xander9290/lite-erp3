@@ -1,5 +1,5 @@
 import type { GroupLine } from "@prisma/client";
-import NextAuth, { DefaultSession, DefaultUser } from "next-auth";
+import { DefaultSession, DefaultUser } from "next-auth";
 
 declare module "next-auth" {
   // 👇 Extender la interfaz User

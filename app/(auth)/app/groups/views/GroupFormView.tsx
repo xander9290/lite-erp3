@@ -30,7 +30,11 @@ import {
 } from "@/components/templates/fields";
 import toast from "react-hot-toast";
 import { Col } from "react-bootstrap";
-import { SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
+import {
+  BtnDeleteLine,
+  SimpleTable,
+  SimpleTD,
+} from "@/components/templates/simpletemplates";
 
 function GroupFormView({
   id,
@@ -177,7 +181,7 @@ function GroupFormView({
                   },
                   {
                     string: "No crear",
-                    name: "notCreate",
+                    name: "lineNotCreate",
                     width: 50,
                     minWidth: 45,
                   },
@@ -192,60 +196,64 @@ function GroupFormView({
                     className: "text-center",
                     width: 35,
                     minWidth: 30,
+                    name: "lineDelete",
                   },
                 ]}
-                renderRow={(row, index) => (
-                  <tr key={row.id} className="border-0 border-bottom">
-                    <SimpleTD colIdx={index}>
-                      <FieldRelation
-                        inline
-                        model="modelField"
-                        name={`lines.${index}.fieldId`}
-                      />
-                    </SimpleTD>
-                    <SimpleTD colIdx={index}>
-                      <FieldBoolean
-                        type="checkbox"
-                        inline
-                        name={`lines.${index}.invisible`}
-                      />
-                    </SimpleTD>
-                    <SimpleTD colIdx={index}>
-                      <FieldBoolean
-                        type="checkbox"
-                        inline
-                        name={`lines.${index}.required`}
-                      />
-                    </SimpleTD>
-                    <SimpleTD colIdx={index}>
-                      <FieldBoolean
-                        type="checkbox"
-                        inline
-                        name={`lines.${index}.readonly`}
-                      />
-                    </SimpleTD>
-                    <SimpleTD colIdx={index}>
-                      <FieldBoolean
-                        type="checkbox"
-                        inline
-                        name={`lines.${index}.notCreate`}
-                      />
-                    </SimpleTD>
-                    <SimpleTD colIdx={index}>
-                      <FieldBoolean
-                        type="checkbox"
-                        inline
-                        name={`lines.${index}.notEdit`}
-                      />
-                    </SimpleTD>
-                    <SimpleTD
-                      remove
-                      colIdx={index}
-                      action={() => remove(index)}
-                      contentPosition="text-center"
-                    />
-                  </tr>
-                )}
+                renderRow={(row, index) => {
+                  return (
+                    <tr key={row.id} className="border-0 border-bottom">
+                      <SimpleTD name="lineField" colIdx={index}>
+                        <FieldRelation
+                          inline
+                          model="modelField"
+                          name={`lines.${index}.fieldId`}
+                        />
+                      </SimpleTD>
+                      <SimpleTD name="lineInvisible" colIdx={index}>
+                        <FieldBoolean
+                          type="checkbox"
+                          inline
+                          name={`lines.${index}.invisible`}
+                        />
+                      </SimpleTD>
+                      <SimpleTD name="lineRequired" colIdx={index}>
+                        <FieldBoolean
+                          type="checkbox"
+                          inline
+                          name={`lines.${index}.required`}
+                        />
+                      </SimpleTD>
+                      <SimpleTD name="lineReadonly" colIdx={index}>
+                        <FieldBoolean
+                          type="checkbox"
+                          inline
+                          name={`lines.${index}.readonly`}
+                        />
+                      </SimpleTD>
+                      <SimpleTD name="lineNotCreate" colIdx={index}>
+                        <FieldBoolean
+                          type="checkbox"
+                          inline
+                          name={`lines.${index}.notCreate`}
+                        />
+                      </SimpleTD>
+                      <SimpleTD name="lineNotEdit" colIdx={index}>
+                        <FieldBoolean
+                          type="checkbox"
+                          inline
+                          name={`lines.${index}.notEdit`}
+                        />
+                      </SimpleTD>
+                      <SimpleTD
+                        name="lineDelete"
+                        colIdx={index}
+                        contentPosition="text-center"
+                      >
+                        <BtnDeleteLine action={() => remove(index)} />
+                      </SimpleTD>
+                    </tr>
+                  );
+                }}
                 action={() =>
                   append({
                     fieldId: "",

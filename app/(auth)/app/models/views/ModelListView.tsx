@@ -12,6 +12,7 @@ function ModelListView() {
     {
       key: "name",
       label: "Nombre",
+      fieldName: "name",
       accessor: (m) => m.name,
       filterable: true,
       type: "string",
@@ -19,6 +20,7 @@ function ModelListView() {
     {
       key: "label",
       label: "Etiqueta",
+      fieldName: "label",
       accessor: (m) => m.label,
       filterable: true,
       type: "string",
@@ -26,6 +28,7 @@ function ModelListView() {
     {
       key: "description",
       label: "Descripción",
+      fieldName: "description",
       accessor: (m) => m.description,
       filterable: true,
       type: "string",
@@ -33,6 +36,7 @@ function ModelListView() {
     {
       key: "ModelFields[].name",
       label: "Campos",
+      fieldName: "fields",
       accessor: (m) => m.ModelFields?.map((u) => u.name).join(", ") ?? "",
       filterable: true,
       render: (m) => (

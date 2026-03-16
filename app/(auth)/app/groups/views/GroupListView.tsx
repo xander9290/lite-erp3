@@ -13,6 +13,7 @@ function GroupListView() {
     {
       key: "name",
       label: "Nombre",
+      fieldName: "name",
       accessor: (g) => g.name,
       type: "string",
       filterable: true,
@@ -20,6 +21,7 @@ function GroupListView() {
     {
       key: "Users[].name",
       label: "Usuarios",
+      fieldName: "users",
       accessor: (g) => g.Users?.map((u) => u.name).join(", ") ?? "",
       render: (g) => (
         <div onClick={(e) => e.stopPropagation()}>
@@ -38,6 +40,7 @@ function GroupListView() {
     {
       key: "GroupLines[].fieldName",
       label: "Campos",
+      fieldName: "lines",
       accessor: (g) =>
         g.GroupLines?.map((line) => line.fieldName).join(", ") ?? "",
       render: (g) => (
@@ -60,6 +63,7 @@ function GroupListView() {
     {
       key: "createdAt",
       label: "Creación",
+      fieldName: "createdAt",
       accessor: (g) =>
         g.createdAt ? formatDate(g.createdAt, "dd/MM/yyyy HH:mm") : null,
       type: "date",
