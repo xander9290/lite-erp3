@@ -67,6 +67,8 @@ export function FieldImage({
   const handleRemoveImage = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
 
+    if (access?.readonly) return false;
+
     const toastId = toast.loading("Eliminando imagen...");
     const res = await deleteImage(imageSource || "");
 
@@ -185,7 +187,7 @@ export function FieldImage({
           }}
         />
 
-        {imageSource && remove && !readOnly && (
+        {imageSource && remove && (
           <button
             type="button"
             onClick={handleRemoveImage}
@@ -198,6 +200,7 @@ export function FieldImage({
               padding: 0,
               fontSize: "0.75rem",
             }}
+            disabled={disabled}
           >
             <i className="bi bi-trash-fill" />
           </button>
