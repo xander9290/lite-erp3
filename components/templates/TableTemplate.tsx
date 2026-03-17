@@ -297,7 +297,10 @@ export default function TableTemplate<T>({
 
   const allVisibleIds = Object.entries(paginatedData)
     .filter(([group]) => !(collapsedGroups[group] ?? false))
-    .flatMap(([_, rws]) => rws.map(getRowId));
+    .flatMap(([_, rws]) => {
+      console.log(_);
+      return rws.map(getRowId);
+    });
 
   const handleSelectAll = (checked: boolean) => {
     const visibleIds = allVisibleIds;

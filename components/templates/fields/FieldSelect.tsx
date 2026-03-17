@@ -97,11 +97,11 @@ export function FieldSelect({
         }
 
         return (
-          <div title={name} className="mb-3">
+          <div title={name} className="mb-1">
             <FloatingLabel
               controlId={name}
               label={floatingText}
-              className="w-100"
+              className="w-100 fs-6 fw-bold"
             >
               {selectControl}
             </FloatingLabel>

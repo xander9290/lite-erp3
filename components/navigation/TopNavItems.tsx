@@ -300,14 +300,14 @@ function TopNavItems() {
         <NavDropdown.Item
           title="settingsFieldsMenu"
           as={Link}
-          href="/app/fields?view_type=list&id=null"
+          href="/app/model_fields?view_type=list&id=null"
           disabled={
             fieldsAccess.find(
               (field) => field.fieldName === "settingsFieldsMenu",
             )?.invisible
           }
         >
-          <i className="bi bi-list-columns-reverse me-1"></i>{" "}
+          <i className="bi bi-list-columns-reverse me-1"></i>
           <span>Campos</span>
         </NavDropdown.Item>
       </NavDropdown>
