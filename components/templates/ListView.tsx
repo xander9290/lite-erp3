@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/sessionStore";
 
 type HeaderActionProps = {
+  name: string;
   string: React.ReactNode;
   action: () => void;
 };
@@ -38,7 +39,6 @@ function Header({ children, formView, title, actions }: HeaderProps) {
 
   const modelName = formView?.split("?")[0].split("/")[2] + "Model";
   const modelAccess = access.find((acc) => acc.fieldName === modelName);
-
   return (
     <Card.Header>
       <Container fluid>
@@ -59,16 +59,20 @@ function Header({ children, formView, title, actions }: HeaderProps) {
                   variant="none"
                   title={<i className="bi bi-gear-fill"></i>}
                   as={ButtonGroup}
+                  size="sm"
                 >
-                  {actions.map((action, index) => (
-                    <Dropdown.Item
-                      key={`action-list-${index}`}
-                      onClick={() => action.action()}
-                      eventKey={index}
-                    >
-                      {action.string}
-                    </Dropdown.Item>
-                  ))}
+                  {actions.map((action, index) => {
+                    return (
+                      <Dropdown.Item
+                        key={`action-list-${index}`}
+                        onClick={() => action.action()}
+                        eventKey={index}
+                        title={action.name}
+                      >
+                        {action.string}
+                      </Dropdown.Item>
+                    );
+                  })}
                 </DropdownButton>
               )}
             </div>

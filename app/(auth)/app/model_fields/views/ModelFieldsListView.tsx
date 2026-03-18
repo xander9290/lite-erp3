@@ -4,9 +4,19 @@ import ListView from "@/components/templates/ListView";
 import TableTemplate, {
   TableTemplateColumn,
 } from "@/components/templates/TableTemplate";
-import { ModelFieldWithProps } from "../actions/fields-actions";
+import {
+  deleteModelFields,
+  ModelFieldWithProps,
+} from "../actions/fields-actions";
+import { useState } from "react";
+import { useModals } from "@/contexts/ModalContext";
+import toast from "react-hot-toast";
 
 function ModelFieldsListView() {
+  const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
+
+  const { modalError, modalConfirm } = useModals();
+
   const columns: TableTemplateColumn<ModelFieldWithProps>[] = [
     {
       key: "name",
@@ -30,18 +40,44 @@ function ModelFieldsListView() {
       filterable: true,
     },
   ];
+
+  const handleDeleteRecord = () => {
+    if (selectedIds.length < 1)
+      return modalError("No hay registros seleccionados");
+
+    modalConfirm("Confirma la accion", async () => {
+      const res = await deleteModelFields({ ids: selectedIds });
+      if (!res.success) return modalError(res.message);
+      toast.success(res.message);
+    });
+  };
+
   return (
     <ListView model="modelField">
       <ListView.Header
-        title="Campos"
         formView="/app/model_fields?view_type=form&id=null"
+        title="Campos"
+        actions={[
+          {
+            string: (
+              <>
+                <i className="bi bi-trash me-2"></i>
+                <span>Eliminar</span>
+              </>
+            ),
+            action: handleDeleteRecord,
+            name: "deleteRecord",
+          },
+        ]}
       />
       <ListView.Body>
         <TableTemplate
-          columns={columns}
+          viewForm="/app/model_fields?view_type=form"
           getRowId={(r) => r.id}
           model="modelField"
-          viewForm="/app/model_fields?view_type=form"
+          columns={columns}
+          pageSize={20}
+          onSelectionChange={setSelectedIds}
         />
       </ListView.Body>
     </ListView>

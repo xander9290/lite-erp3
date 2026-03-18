@@ -31,7 +31,9 @@ function ConfirmModal({ show, onHide, string, action }: ModalBasicProps) {
         <Button variant="dark" onClick={onHide}>
           Cancelar
         </Button>
-        <Button onClick={handleAccept}>Aceptar</Button>
+        <Button size="sm" onClick={handleAccept}>
+          Aceptar
+        </Button>
       </Modal.Footer>
     </Modal>
   );

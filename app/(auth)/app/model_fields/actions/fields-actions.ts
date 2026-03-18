@@ -129,3 +129,41 @@ export async function updateModelField({
     };
   }
 }
+
+export async function deleteModelFields({
+  ids,
+}: {
+  ids: string[];
+}): Promise<ActionResponse<boolean>> {
+  try {
+    const hasGroups = await prisma.group.findFirst({
+      where: {
+        GroupLines: {
+          some: {
+            fieldId: { in: ids },
+          },
+        },
+      },
+    });
+
+    if (hasGroups)
+      throw new Error("No es posible eliminar registros con grupos asociados");
+
+    await prisma.modelField.deleteMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+
+    return {
+      success: true,
+      message: "Se han eliminado los registros",
+    };
+  } catch (error: any) {
+    console.log(error);
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
+}

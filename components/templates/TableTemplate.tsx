@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Table, Form, Button, Spinner } from "react-bootstrap";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/sessionStore";
+import useSWR from "swr";
 
 export type TableTemplateColumn<T> = {
   key: string;
@@ -43,8 +44,8 @@ export type Domain = DomainItem[];
 type TableProps<T> = {
   model: string;
   columns: TableTemplateColumn<T>[];
-  getRowId: (row: T) => string | number;
-  onSelectionChange?: (ids: Array<string | number>) => void;
+  getRowId: (row: T) => string;
+  onSelectionChange?: (ids: Array<string>) => void;
   viewForm?: string;
   pageSize?: number;
   defaultOrder?: string;
@@ -81,13 +82,24 @@ function parseDefaultOrder(defaultOrder?: string): {
   };
 }
 
+const fetcher = async <T,>(url: string): Promise<TableApiResponse<T>> => {
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "");
+    throw new Error(msg || `HTTP ${res.status}`);
+  }
+
+  return res.json();
+};
+
 export default function TableTemplate<T>({
   model,
   columns,
   getRowId,
   onSelectionChange,
   viewForm,
-  pageSize: pageSizeProp,
+  pageSize: pageSizeProp = 20,
   defaultOrder,
   domain,
   onRowClick,
@@ -108,22 +120,13 @@ export default function TableTemplate<T>({
 
   const [groupBy, setGroupBy] = useState<string | null>(null);
 
-  const [selectedIds, setSelectedIds] = useState<Array<string | number>>([]);
+  const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
   const [collapsedGroups, setCollapsedGroups] = useState<
     Record<string, boolean>
   >({});
 
   const [page, setPage] = useState(1);
-  const pageSize = pageSizeProp ?? 20;
-
-  const [rows, setRows] = useState<T[]>([]);
-  const [total, setTotal] = useState(0);
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const abortRef = useRef<AbortController | null>(null);
+  const pageSize = pageSizeProp;
 
   useEffect(() => {
     onSelectionChange?.(selectedIds);
@@ -184,41 +187,19 @@ export default function TableTemplate<T>({
     serializedDomain,
   ]);
 
-  useEffect(() => {
-    const ac = new AbortController();
-    abortRef.current = ac;
+  const { data, error, isLoading } = useSWR<TableApiResponse<T>>(
+    buildUrl,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      keepPreviousData: true,
+    },
+  );
 
-    setLoading(true);
-    setError(null);
-
-    const load = async () => {
-      try {
-        const res = await fetch(buildUrl, { signal: ac.signal });
-
-        if (!res.ok) {
-          const msg = await res.text().catch(() => "");
-          throw new Error(msg || `HTTP ${res.status}`);
-        }
-
-        const json: TableApiResponse<T> = await res.json();
-
-        setRows(json.rows ?? []);
-        setTotal(json.total ?? 0);
-      } catch (e) {
-        if (e instanceof Error && e.name === "AbortError") return;
-
-        setError(e instanceof Error ? e.message : "Error loading table");
-        setRows([]);
-        setTotal(0);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
-
-    return () => ac.abort();
-  }, [buildUrl]);
+  const rows = data?.rows ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -289,7 +270,7 @@ export default function TableTemplate<T>({
     setCollapsedGroups((prev) => ({ ...prev, [group]: !prev[group] }));
   };
 
-  const handleRowSelect = (id: string | number, checked: boolean) => {
+  const handleRowSelect = (id: string, checked: boolean) => {
     setSelectedIds((prev) =>
       checked ? [...prev, id] : prev.filter((x) => x !== id),
     );
@@ -315,7 +296,7 @@ export default function TableTemplate<T>({
 
   return (
     <div className="position-relative">
-      {loading && (
+      {isLoading && (
         <div
           className="position-absolute end-0 top-0 me-2 mt-2 d-flex align-items-center gap-2 text-muted"
           style={{ zIndex: 5 }}
@@ -325,7 +306,7 @@ export default function TableTemplate<T>({
         </div>
       )}
 
-      {error && <div className="text-danger small mb-2">{error}</div>}
+      {error && <div className="text-danger small mb-2">{error.message}</div>}
 
       <Table borderless hover size="sm" style={{ fontSize: "0.9rem" }}>
         <thead className="sticky-top" style={{ zIndex: 1 }}>
@@ -485,14 +466,14 @@ export default function TableTemplate<T>({
                   <div className="d-flex gap-2">
                     <Button
                       size="sm"
-                      disabled={page === 1 || loading}
+                      disabled={page === 1 || isLoading}
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                     >
                       <i className="bi bi-rewind-fill"></i>
                     </Button>
                     <Button
                       size="sm"
-                      disabled={page === totalPages || loading}
+                      disabled={page === totalPages || isLoading}
                       onClick={() =>
                         setPage((p) => Math.min(totalPages, p + 1))
                       }
