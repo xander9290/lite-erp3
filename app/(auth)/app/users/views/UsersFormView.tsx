@@ -139,14 +139,7 @@ function UsersFormView({
           <FieldBoolean name="active" label="Activo" />
         </FormViewGroup>
         <FormViewGroup>
-          <FieldImage
-            name="imageUrl"
-            folder="users"
-            height={120}
-            width={120}
-            editable
-            remove
-          />
+          <FieldImage name="imageUrl" folder="users" editable remove />
           <FieldRelation
             model="group"
             name="groupId"

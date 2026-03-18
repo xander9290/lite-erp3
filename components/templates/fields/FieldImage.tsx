@@ -14,8 +14,8 @@ interface ImageFieldProps {
   name: string;
   label?: string;
   folder: string | null;
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
   remove?: boolean;
   editable?: boolean;
   invisible?: boolean;
@@ -183,8 +183,8 @@ export function FieldImage({
           className="img-fluid rounded"
           style={{
             objectFit: "cover",
-            width: `${width}px`,
-            height: `${height}px`,
+            width: `${width ?? 120}px`,
+            height: `${height ?? 120}px`,
             cursor: readOnly ? "default" : "pointer",
           }}
         />
