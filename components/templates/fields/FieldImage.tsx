@@ -22,19 +22,21 @@ interface ImageFieldProps {
   readOnly?: boolean;
   disabled?: boolean;
   inline?: boolean;
+  aling?: "start" | "center" | "end";
 }
 
 export function FieldImage({
   name,
   label,
   folder,
-  width,
-  height,
+  width = 120,
+  height = 120,
   remove = true,
   invisible,
   readOnly,
   inline,
   disabled,
+  aling = "center",
 }: ImageFieldProps) {
   const access = useAccess({ fieldName: name });
 
@@ -230,11 +232,11 @@ export function FieldImage({
   }
 
   return (
-    <Form.Group className="mb-4 d-flex align-items-center gap-2">
+    <Form.Group className={`mb-1 d-flex justify-content-${aling}`}>
       {label && (
         <Form.Label className="fw-semibold m-0 w-25">{label}</Form.Label>
       )}
-      <div className="w-75 text-center">{imageUI}</div>
+      <div>{imageUI}</div>
 
       {/* Cropper modal */}
       <Modal show={showCropper} onHide={() => setShowCropper(false)} centered>
