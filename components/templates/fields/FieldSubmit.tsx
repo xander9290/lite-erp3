@@ -8,11 +8,13 @@ export function FieldSubmit({
   label,
   disabled,
   invisible,
+  feedback,
 }: {
   name: string;
   label: string;
   disabled?: boolean;
   invisible?: boolean;
+  feedback?: string;
 }) {
   const access = useAccess({ fieldName: name });
 
@@ -34,7 +36,10 @@ export function FieldSubmit({
             disabled={disabled || isSubmitting || access?.readonly}
           >
             {isSubmitting ? (
-              <Spinner animation="border" size="sm" />
+              <>
+                <Spinner size="sm" animation="border" />
+                <span className="ms-2">{feedback ?? label}</span>
+              </>
             ) : (
               <span className="fw-semibold">{label}</span>
             )}

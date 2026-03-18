@@ -116,9 +116,7 @@ function FieldInput({
       }}
       className={`${className ?? ""} ${
         type === "password" ? "text-center" : ""
-      } shadow-none w-100 overflow-hidden px-1 ${
-        inline ? "border-0" : "bg-body-tertiary"
-      }`}
+      } shadow-none w-100 overflow-hidden px-1 ${inline ? "border-0" : ""}`}
       id={name}
       title={name}
       as={as ?? (type === "text" ? "textarea" : undefined)}

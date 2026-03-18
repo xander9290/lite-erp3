@@ -416,7 +416,7 @@ export function FieldRelation<T extends Many2OneOption>({
         isInvalid={!!error}
         readOnly={readonly || access?.readonly}
         autoFocus={autoFocus}
-        className={`w-100 shadow-none px-1 rounded-end-0 ${className ?? ""} ${inline ? "border-0" : "bg-body-tertiary"}`}
+        className={`w-100 shadow-none px-1 rounded-end-0 ${className ?? ""} ${inline ? "border-0" : ""}`}
         onKeyDown={handleKeyDown}
         style={{ fontSize: "0.9rem" }}
       />
