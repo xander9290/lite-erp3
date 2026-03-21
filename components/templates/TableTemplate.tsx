@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Table, Form, Button, Spinner } from "react-bootstrap";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
-// import { useAccess } from "@/context/AccessContext";
+import { useAuth } from "@/hooks/sessionStore";
+import useSWR from "swr";
 
 export type TableTemplateColumn<T> = {
   key: string;
+  fieldName?: string;
   label: string;
   type?: "string" | "number" | "date" | "boolean";
   filterable?: boolean;
@@ -23,14 +25,32 @@ type TableApiResponse<T> = {
   pageSize: number;
 };
 
+export type DomainOperator =
+  | "="
+  | "!="
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "in"
+  | "notIn"
+  | ">"
+  | ">="
+  | "<"
+  | "<=";
+
+export type DomainItem = [field: string, operator: DomainOperator, value: any];
+export type Domain = DomainItem[];
+
 type TableProps<T> = {
   model: string;
   columns: TableTemplateColumn<T>[];
-  getRowId: (row: T) => string | number;
-  onSelectionChange?: (ids: Array<string | number>) => void;
+  getRowId: (row: T) => string;
+  onSelectionChange?: (ids: Array<string>) => void;
   viewForm?: string;
   pageSize?: number;
-  defaultOrder?: string; // 👈 nuevo, ejemplo: "name desc" o "createdAt asc"
+  defaultOrder?: string;
+  domain?: Domain;
+  onRowClick?: (row: T) => void;
 };
 
 function useDebouncedValue<T>(value: T, delay = 300) {
@@ -62,17 +82,33 @@ function parseDefaultOrder(defaultOrder?: string): {
   };
 }
 
+const fetcher = async <T,>(url: string): Promise<TableApiResponse<T>> => {
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "");
+    throw new Error(msg || `HTTP ${res.status}`);
+  }
+
+  return res.json();
+};
+
 export default function TableTemplate<T>({
   model,
   columns,
   getRowId,
   onSelectionChange,
   viewForm,
-  pageSize: pageSizeProp,
-  defaultOrder, // 👈 nuevo
+  pageSize: pageSizeProp = 20,
+  defaultOrder,
+  domain,
+  onRowClick,
 }: TableProps<T>) {
   const router = useRouter();
-  // const access = useAccess();
+
+  const modelName = viewForm?.split("?")[0].split("/")[2];
+  const { access } = useAuth();
+  const accesProps = access.filter((acc) => acc.entityType === modelName);
 
   const [filters, setFilters] = useState<Record<string, string>>({});
   const debouncedFilters = useDebouncedValue(filters, 350);
@@ -84,22 +120,13 @@ export default function TableTemplate<T>({
 
   const [groupBy, setGroupBy] = useState<string | null>(null);
 
-  const [selectedIds, setSelectedIds] = useState<Array<string | number>>([]);
+  const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
   const [collapsedGroups, setCollapsedGroups] = useState<
     Record<string, boolean>
   >({});
 
   const [page, setPage] = useState(1);
-  const pageSize = pageSizeProp ?? 20;
-
-  const [rows, setRows] = useState<T[]>([]);
-  const [total, setTotal] = useState(0);
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const abortRef = useRef<AbortController | null>(null);
+  const pageSize = pageSizeProp;
 
   useEffect(() => {
     onSelectionChange?.(selectedIds);
@@ -110,12 +137,12 @@ export default function TableTemplate<T>({
     setPage(1);
   }, [defaultOrder]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [JSON.stringify(domain)]);
+
   const visibleColumns = useMemo(() => {
-    return columns.filter((col) => {
-      // const fieldAccess = access?.find((f) => f.fieldName === col.key);
-      // return !fieldAccess?.invisible;
-      return true;
-    });
+    return columns.filter(() => true);
   }, [columns]);
 
   const fieldsParam = useMemo(() => {
@@ -128,21 +155,27 @@ export default function TableTemplate<T>({
     return Array.from(keys).join(",");
   }, [columns]);
 
-  const buildUrl = useMemo(() => {
-    const url = new URL(`/api/tables/${model}`, window.location.origin);
+  const serializedDomain = useMemo(
+    () => JSON.stringify(domain ?? []),
+    [domain],
+  );
 
-    url.searchParams.set("page", String(page));
-    url.searchParams.set("pageSize", String(pageSize));
-    url.searchParams.set("fields", fieldsParam);
+  const buildUrl = useMemo(() => {
+    const params = new URLSearchParams();
+
+    params.set("page", String(page));
+    params.set("pageSize", String(pageSize));
+    params.set("fields", fieldsParam);
 
     if (sortConfig.key) {
-      url.searchParams.set("sortKey", sortConfig.key);
-      url.searchParams.set("sortDir", sortConfig.direction);
+      params.set("sortKey", sortConfig.key);
+      params.set("sortDir", sortConfig.direction);
     }
 
-    url.searchParams.set("filters", JSON.stringify(debouncedFilters));
+    params.set("filters", JSON.stringify(debouncedFilters));
+    params.set("domain", serializedDomain);
 
-    return url.toString();
+    return `/api/tables/${model}?${params.toString()}`;
   }, [
     model,
     page,
@@ -151,36 +184,22 @@ export default function TableTemplate<T>({
     sortConfig.key,
     sortConfig.direction,
     debouncedFilters,
+    serializedDomain,
   ]);
 
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
+  const { data, error, isLoading } = useSWR<TableApiResponse<T>>(
+    buildUrl,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      keepPreviousData: true,
+    },
+  );
 
-    abortRef.current?.abort();
-    const ac = new AbortController();
-    abortRef.current = ac;
-
-    fetch(buildUrl, { signal: ac.signal })
-      .then(async (res) => {
-        if (!res.ok) {
-          const msg = await res.text().catch(() => "");
-          throw new Error(msg || `HTTP ${res.status}`);
-        }
-        return res.json() as Promise<TableApiResponse<T>>;
-      })
-      .then((json) => {
-        setRows(json.rows ?? []);
-        setTotal(json.total ?? 0);
-      })
-      .catch((e: unknown) => {
-        if (e instanceof Error && e.name === "AbortError") return;
-        setError(e instanceof Error ? e.message : "Error loading table");
-        setRows([]);
-        setTotal(0);
-      })
-      .finally(() => setLoading(false));
-  }, [buildUrl]);
+  const rows = data?.rows ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -251,7 +270,7 @@ export default function TableTemplate<T>({
     setCollapsedGroups((prev) => ({ ...prev, [group]: !prev[group] }));
   };
 
-  const handleRowSelect = (id: string | number, checked: boolean) => {
+  const handleRowSelect = (id: string, checked: boolean) => {
     setSelectedIds((prev) =>
       checked ? [...prev, id] : prev.filter((x) => x !== id),
     );
@@ -259,7 +278,10 @@ export default function TableTemplate<T>({
 
   const allVisibleIds = Object.entries(paginatedData)
     .filter(([group]) => !(collapsedGroups[group] ?? false))
-    .flatMap(([_, rws]) => rws.map(getRowId));
+    .flatMap(([_, rws]) => {
+      console.log(_);
+      return rws.map(getRowId);
+    });
 
   const handleSelectAll = (checked: boolean) => {
     const visibleIds = allVisibleIds;
@@ -274,7 +296,7 @@ export default function TableTemplate<T>({
 
   return (
     <div className="position-relative">
-      {loading && (
+      {isLoading && (
         <div
           className="position-absolute end-0 top-0 me-2 mt-2 d-flex align-items-center gap-2 text-muted"
           style={{ zIndex: 5 }}
@@ -284,9 +306,9 @@ export default function TableTemplate<T>({
         </div>
       )}
 
-      {error && <div className="text-danger small mb-2">{error}</div>}
+      {error && <div className="text-danger small mb-2">{error.message}</div>}
 
-      <Table borderless hover style={{ fontSize: "0.9rem" }}>
+      <Table borderless hover size="sm" style={{ fontSize: "0.9rem" }}>
         <thead className="sticky-top" style={{ zIndex: 1 }}>
           <tr>
             <th
@@ -304,6 +326,10 @@ export default function TableTemplate<T>({
             </th>
 
             {visibleColumns.map((col) => {
+              const fieldAccess = accesProps.find(
+                (acc) => acc.fieldName === col.fieldName,
+              );
+              if (fieldAccess?.invisible) return null;
               return (
                 <th
                   key={col.key}
@@ -325,10 +351,10 @@ export default function TableTemplate<T>({
                           handleFilterChange(col.key, e.target.value)
                         }
                         className="fw-bolder"
-                        title={col.key}
+                        title={col.fieldName}
                       />
                     ) : (
-                      <span title={col.key}>{col.label}</span>
+                      <span title={col.fieldName}>{col.fieldName}</span>
                     )}
 
                     <i
@@ -382,6 +408,10 @@ export default function TableTemplate<T>({
                         key={id}
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (onRowClick) {
+                            onRowClick(row);
+                            return;
+                          }
                           if (viewForm) router.push(`${viewForm}&id=${id}`);
                         }}
                         style={{ cursor: "pointer" }}
@@ -401,6 +431,10 @@ export default function TableTemplate<T>({
                         </td>
 
                         {visibleColumns.map((col, index) => {
+                          const fieldAccess = accesProps.find(
+                            (acc) => acc.fieldName === col.fieldName,
+                          );
+                          if (fieldAccess?.invisible) return null;
                           return (
                             <td
                               key={col.key}
@@ -432,14 +466,14 @@ export default function TableTemplate<T>({
                   <div className="d-flex gap-2">
                     <Button
                       size="sm"
-                      disabled={page === 1 || loading}
+                      disabled={page === 1 || isLoading}
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                     >
                       <i className="bi bi-rewind-fill"></i>
                     </Button>
                     <Button
                       size="sm"
-                      disabled={page === totalPages || loading}
+                      disabled={page === totalPages || isLoading}
                       onClick={() =>
                         setPage((p) => Math.min(totalPages, p + 1))
                       }

@@ -1,10 +1,12 @@
 "use client";
 
-import React from "react";
 import { useFormContext, Controller } from "react-hook-form";
-import { Form } from "react-bootstrap";
+import { Form, FloatingLabel } from "react-bootstrap";
 import { round } from "@/app/libs/helpers";
 import { format } from "date-fns";
+import { ElementType, useEffect } from "react";
+import { useAccess } from "@/contexts/AccessContext";
+import toast from "react-hot-toast";
 
 interface FieldEntryProps {
   name: string;
@@ -16,6 +18,10 @@ interface FieldEntryProps {
   className?: string;
   type?: React.HTMLInputTypeAttribute;
   min?: string | number;
+  placeholder?: string;
+  as?: ElementType;
+  cols?: number;
+  rows?: number;
   autoFocus?: boolean;
 }
 
@@ -61,6 +67,114 @@ function datetimeLocalToISO(value: string): string {
   return d.toISOString();
 }
 
+/**
+ * 🔥 Componente aislado para manejar efectos (toast)
+ */
+function FieldInput({
+  field,
+  fieldState,
+  name,
+  type,
+  placeholder,
+  readonly,
+  isSubmitting,
+  access,
+  inline,
+  className,
+  min,
+  rows,
+  cols,
+  autoFocus,
+  onChange,
+  as,
+}: any) {
+  useEffect(() => {
+    if (fieldState.error?.message) {
+      toast.error(fieldState.error.message, {
+        id: name, // evita duplicados
+        position: "top-right",
+      });
+    }
+  }, [fieldState.error?.message, name]);
+
+  const inputValue =
+    type === "datetime-local"
+      ? toDatetimeLocalValue(field.value)
+      : type === "date"
+        ? toDateInputValue(field.value)
+        : (field.value ?? "");
+
+  const isTextarea = as != null ? as === "textarea" : type === "text";
+
+  return (
+    <Form.Control
+      ref={(el: HTMLInputElement | HTMLTextAreaElement | null) => {
+        if (el && el.tagName === "TEXTAREA") {
+          el.style.height = "auto";
+          el.style.height = `${el.scrollHeight}px`;
+        }
+      }}
+      className={`${className ?? ""} ${
+        type === "password" ? "text-center" : ""
+      } shadow-none w-100 overflow-hidden px-1 ${inline ? "border-0" : ""}`}
+      id={name}
+      title={name}
+      as={as ?? (type === "text" ? "textarea" : undefined)}
+      type={type}
+      isInvalid={!!fieldState.error}
+      placeholder={placeholder}
+      readOnly={readonly || isSubmitting || access?.readonly}
+      value={inputValue}
+      min={min}
+      rows={isTextarea ? rows : undefined}
+      cols={cols}
+      autoComplete="off"
+      style={{
+        fontSize: "0.9rem",
+        resize: isTextarea ? "none" : undefined,
+      }}
+      autoFocus={autoFocus}
+      onChange={(e) => {
+        const el = e.target as HTMLInputElement | HTMLTextAreaElement;
+
+        if (el.tagName === "TEXTAREA") {
+          el.style.height = "auto";
+          el.style.height = `${el.scrollHeight}px`;
+        }
+
+        const raw = el.value;
+
+        if (type === "number") {
+          const n = Number(raw);
+          const rounded = Number.isFinite(n) ? round(n, 2) : raw;
+          field.onChange(rounded);
+          onChange?.(String(rounded));
+          return;
+        }
+
+        if (type === "datetime-local") {
+          const iso = datetimeLocalToISO(raw);
+          field.onChange(iso);
+          onChange?.(iso);
+          return;
+        }
+
+        if (type === "date") {
+          const iso = dateInputToISO(raw);
+          field.onChange(iso);
+          onChange?.(iso);
+          return;
+        }
+
+        field.onChange(raw);
+        onChange?.(raw);
+      }}
+      onBlur={field.onBlur}
+      name={field.name}
+    />
+  );
+}
+
 export function FieldEntry({
   name,
   label,
@@ -71,101 +185,67 @@ export function FieldEntry({
   className,
   type = "text",
   min,
+  placeholder,
+  as,
+  cols,
+  rows = 1,
   autoFocus,
 }: FieldEntryProps) {
   const { control } = useFormContext();
+  const access = useAccess({ fieldName: name });
 
-  if (invisible) return null;
+  if (invisible || access?.invisible) return null;
 
-  const input = (
+  const rules = {
+    validate: (value: any) => {
+      if (access?.required && (value === "" || value == null)) {
+        return "Este campo es requerido";
+      }
+      return true;
+    },
+  };
+
+  return (
     <Controller
       name={name}
       control={control}
-      render={({ field, fieldState, formState: { isSubmitting } }) => {
-        const inputValue =
-          type === "datetime-local"
-            ? toDatetimeLocalValue(field.value)
-            : type === "date"
-              ? toDateInputValue(field.value)
-              : (field.value ?? "");
+      rules={rules}
+      render={({ field, fieldState, formState }) => {
+        const floatingText = label ?? placeholder ?? name;
+
+        const input = (
+          <FieldInput
+            field={field}
+            fieldState={fieldState}
+            name={name}
+            type={type}
+            placeholder={placeholder}
+            readonly={readonly}
+            isSubmitting={formState.isSubmitting}
+            access={access}
+            inline={inline}
+            className={className}
+            min={min}
+            rows={rows}
+            cols={cols}
+            autoFocus={autoFocus}
+            onChange={onChange}
+            as={as}
+          />
+        );
+
+        if (inline) {
+          return <div className="p-0 m-0 w-100">{input}</div>;
+        }
 
         return (
-          <>
-            <Form.Control
-              className={`${className ?? ""} ${type === "password" ? "text-center" : ""} ${
-                !inline ? "border-bottom" : ""
-              } shadow-none rounded-0 border-0 w-100 p-0`}
-              id={name}
-              title={name}
-              type={type}
-              isInvalid={!!fieldState.error}
-              readOnly={readonly}
-              disabled={isSubmitting}
-              value={inputValue}
-              min={min}
-              autoComplete="off"
-              autoFocus={autoFocus}
-              onChange={(e) => {
-                const raw = e.target.value;
-
-                if (type === "number") {
-                  const n = Number(raw);
-                  const rounded = Number.isFinite(n) ? round(n, 2) : raw;
-                  field.onChange(rounded);
-                  onChange?.(String(rounded));
-                  return;
-                }
-
-                if (type === "datetime-local") {
-                  const iso = datetimeLocalToISO(raw);
-                  field.onChange(iso);
-                  onChange?.(iso);
-                  return;
-                }
-
-                if (type === "date") {
-                  const iso = dateInputToISO(raw);
-                  field.onChange(iso);
-                  onChange?.(iso);
-                  return;
-                }
-
-                field.onChange(raw);
-                onChange?.(raw);
-              }}
-            />
-            <Form.Control.Feedback type="invalid">
-              {fieldState.error?.message}
-            </Form.Control.Feedback>
-          </>
+          <div className="mb-1">
+            <FloatingLabel label={floatingText} className="w-100 fs-6 fw-bold">
+              {input}
+            </FloatingLabel>
+          </div>
         );
       }}
     />
-  );
-
-  if (inline) {
-    return (
-      <div title={name} className="m-0 p-0">
-        {input}
-      </div>
-    );
-  }
-
-  return (
-    <Form.Group className="mb-3">
-      <div className="d-flex flex-column align-items-sm-end gap-0 flex-sm-row">
-        <Form.Label
-          htmlFor={name}
-          className="fw-semibold m-0 p-0 flex-shrink-0 "
-          style={{ width: 100 }}
-        >
-          {label}
-        </Form.Label>
-
-        <div className="flex-grow-1" style={{ minWidth: 0 }}>
-          {input}
-        </div>
-      </div>
-    </Form.Group>
   );
 }

@@ -13,20 +13,23 @@ const prisma = new PrismaClient({
 
 const userData: Prisma.UserCreateInput[] = [
   {
-    login: "admin",
-    password: "Admin1234#",
+    name: "bot",
+    login: "bot",
+    password: "",
     active: true,
+    createdUid: "",
     Partner: {
       create: {
-        name: "Admin",
-        email: "admin@correo.com",
+        name: "bot",
+        email: "",
+        createdUid: "",
       },
     },
   },
 ];
 
 export async function main() {
-  const hashedPswd = await bcrypt.hash("Admin1234#", 10);
+  const hashedPswd = await bcrypt.hash("Abcd1234#", 10);
   for (const u of userData) {
     await prisma.user.create({ data: { ...u, password: hashedPswd } });
   }

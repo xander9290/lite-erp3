@@ -147,7 +147,6 @@ export async function GET(
       where: {
         AND: [{ id: String(id) }, ...domainWhere],
       },
-      select: { id: true, name: true },
     });
 
     return NextResponse.json(record);
@@ -166,19 +165,10 @@ export async function GET(
   const results = await modelDelegate.findMany({
     where,
     take: limit,
-    select: {
-      id: true,
-      name: true,
-    },
     orderBy: {
       name: "asc",
     },
   });
 
-  return NextResponse.json(
-    results.map((r: any) => ({
-      id: r.id,
-      name: r.name,
-    })),
-  );
+  return NextResponse.json(results);
 }

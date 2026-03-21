@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint",
     "tc": "tsc --noEmit && next lint"
@@ -13,6 +13,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
+    "@supabase/supabase-js": "^2.98.0",
     "bcryptjs": "^3.0.3",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
@@ -22,12 +23,15 @@
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
     "pg": "^8.18.0",
-    "prisma": "^7.3.0",
+    "prisma": "^7.4.2",
     "react": "19.2.3",
     "react-bootstrap": "^2.10.10",
     "react-dom": "19.2.3",
+    "react-easy-crop": "^5.5.6",
     "react-hook-form": "^7.71.1",
     "react-hot-toast": "^2.6.0",
+    "react-medium-image-zoom": "^5.4.1",
+    "swr": "^2.4.1",
     "tsx": "^4.21.0",
     "zod": "^4.3.6"
   },

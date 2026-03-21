@@ -18,7 +18,7 @@ function ModalError({ show, onHide, string }: ModalBasicProps) {
           <i className="bi bi-exclamation-triangle text-warning me-2"></i>
           Operación no válida
         </Modal.Title>
-        <p className="px-3 py-2">{string}</p>
+        <p className="px-3 py-2 overflow-auto">{string}</p>
         <Button onClick={onHide}>Cerrar</Button>
       </Modal.Body>
     </Modal>

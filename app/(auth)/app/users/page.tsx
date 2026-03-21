@@ -1,7 +1,7 @@
 import LoadingPage from "@/app/loading-page";
 import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
-import { getUserById, UserWithProps } from "./actions/actions";
+import { getUserById } from "./actions/user-actions";
 
 const UsersFormView = lazy(() => import("./views/UsersFormView"));
 const UsersListView = lazy(() => import("./views/UsersListView"));

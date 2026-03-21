@@ -21,6 +21,9 @@ import { useRouter } from "next/navigation";
 import { ButtonVariant } from "react-bootstrap/esm/types";
 import NotFound from "@/app/not-found";
 import { Suspense } from "react";
+import AuditLogViewer from "./AuditLogViewer";
+import { useAuth } from "@/hooks/sessionStore";
+import { useAccess } from "@/contexts/AccessContext";
 
 type TFormActions = {
   string: React.ReactElement | string;
@@ -47,7 +50,7 @@ type FormViewProps<T extends FieldValues> = {
   actions?: TFormActions[];
   formStates?: TFormState[];
   state?: string;
-  modelThread?: string;
+  auditLog?: string;
 };
 
 export function FormView<T extends FieldValues>({
@@ -60,24 +63,44 @@ export function FormView<T extends FieldValues>({
   actions,
   formStates,
   state,
+  auditLog = "null",
 }: FormViewProps<T>) {
   const {
     handleSubmit,
     formState: { isSubmitting, isDirty },
     getValues,
   } = methods;
-
+  const { access } = useAuth();
   const router = useRouter();
 
   if (!id || id === "") {
     return <NotFound />;
   }
 
+  const modelName = cleanUrl.split("?")[0].split("/")[2] + "Model";
+  const modelAccess = access.find((acc) => acc.fieldName === modelName);
+
+  if (modelAccess?.invisible) {
+    return (
+      <Row className="h-100 justify-content-center">
+        <Col xs="12" md="6" className="h-100 px-0 mt-5">
+          <Alert variant="warning">
+            <h2 className="text-center">ACCESO DENEGADO</h2>
+          </Alert>
+        </Col>
+      </Row>
+    );
+  }
+
   return (
     <Row className="h-100 overflow-auto">
-      <Col xs="12" md="8" className="h-100">
+      <Col xs="12" md="8" className="h-100 px-0">
         <FormProvider {...methods}>
-          <Form noValidate className="card d-flex flex-column h-100 border-0">
+          <Form
+            noValidate
+            className="card d-flex flex-column h-100 border-0"
+            style={{ fontSize: "0.9rem" }}
+          >
             <div className="card-header d-flex justify-content-between align-items-center border-0">
               {/* BOTONES DE FORMULARIO */}
               <div className="d-flex align-items-center gap-1">
@@ -86,6 +109,8 @@ export function FormView<T extends FieldValues>({
                     type="button"
                     onClick={() => router.replace(cleanUrl)}
                     className="fw-semibold"
+                    size="sm"
+                    disabled={modelAccess?.notCreate}
                   >
                     Nuevo
                   </Button>
@@ -93,8 +118,10 @@ export function FormView<T extends FieldValues>({
 
                 <Button
                   type="button"
-                  disabled={!isDirty}
+                  disabled={!isDirty || modelAccess?.notEdit}
                   onClick={handleSubmit(onSubmit)}
+                  size="sm"
+                  variant="none"
                 >
                   {isSubmitting ? (
                     <Spinner size="sm" animation="border" />
@@ -108,6 +135,8 @@ export function FormView<T extends FieldValues>({
                   onClick={reverse}
                   disabled={!isDirty}
                   title="Deshacer cambios"
+                  size="sm"
+                  variant="none"
                 >
                   <i className="bi bi-arrow-counterclockwise"></i>
                 </Button>
@@ -116,6 +145,11 @@ export function FormView<T extends FieldValues>({
               {/* BOTONES VISTA ESCRITORIO */}
               <div className="d-none d-md-flex gap-1 align-items-center">
                 {actions?.map((action, index) => {
+                  const actionAccess = access.filter(
+                    (acc) => acc.fieldName === action.fieldName,
+                  );
+                  if (actionAccess[0]?.invisible) return null;
+                  if (action.invisible) return null;
                   return (
                     <Button
                       key={`${action.string}-${index}`}
@@ -125,6 +159,7 @@ export function FormView<T extends FieldValues>({
                       disabled={action.readonly}
                       title={action.fieldName}
                       className="fw-semibold"
+                      size="sm"
                     >
                       {action.string}
                     </Button>
@@ -136,6 +171,11 @@ export function FormView<T extends FieldValues>({
               <div className="d-flex d-md-none">
                 <DropdownButton variant="light" title="Acciones" align="end">
                   {actions?.map((action, index) => {
+                    const actionAccess = access.filter(
+                      (acc) => acc.fieldName === action.fieldName,
+                    );
+                    if (actionAccess[0]?.invisible) return null;
+                    if (action.invisible) return null;
                     return (
                       <Dropdown.Item
                         key={`${action.string}-${index}`}
@@ -151,7 +191,12 @@ export function FormView<T extends FieldValues>({
                 </DropdownButton>
               </div>
 
-              <Button onClick={() => router.back()} disabled={isDirty}>
+              <Button
+                size="sm"
+                variant="none"
+                onClick={() => router.back()}
+                disabled={isDirty}
+              >
                 <i className="bi bi-arrow-left"></i>
               </Button>
             </div>
@@ -204,12 +249,12 @@ export function FormView<T extends FieldValues>({
         </FormProvider>
       </Col>
       {/* ================= THREAD PANEL ================= */}
-      <Col xs="12" md="4" className="h-100 mt-3 mt-md-0">
-        {/* {modelThread && (
+      <Col xs="12" md="4" className="h-100 mt-3 mt-md-0 px-0">
+        {auditLog && (
           <Suspense fallback={<Spinner animation="border" size="sm" />}>
-            <ThreadTemplate entityId={id} entityName={modelThread} />
+            <AuditLogViewer entityId={id} entityType={auditLog} />
           </Suspense>
-        )} */}
+        )}
       </Col>
     </Row>
   );
@@ -294,31 +339,29 @@ export const FormPage = ({
 
 export const PageSheet = ({
   children,
-  fieldName,
+  name,
   invisible,
-  readonly,
 }: {
   children: React.ReactNode;
-  fieldName?: string;
+  name?: string;
   invisible?: boolean;
   readonly?: boolean;
 }) => {
+  const access = useAccess({ fieldName: name || "" });
+
+  if (invisible) return null;
+  if (access?.invisible) return null;
+
   return (
     <Row
       style={{
-        minHeight: "300px",
+        maxHeight: "100%",
+        pointerEvents: access?.readonly ? "none" : "auto",
       }}
-      title={fieldName}
+      title={name}
+      className="overflow-auto"
     >
-      <div
-        className="m-0 p-0 overflow-auto"
-        style={{
-          pointerEvents: readonly ? "none" : "auto",
-          minHeight: "300px",
-        }}
-      >
-        {children}
-      </div>
+      {children}
     </Row>
   );
 };

@@ -2,22 +2,38 @@
 
 import React, {
   useState,
-  useMemo,
   useRef,
   useEffect,
-  CSSProperties,
   useCallback,
+  useMemo,
 } from "react";
+import { createPortal } from "react-dom";
 import { useController, useFormContext } from "react-hook-form";
-import { Form, Dropdown, Badge, Spinner } from "react-bootstrap";
+import { Form, Dropdown, Badge } from "react-bootstrap";
+import { useAccess } from "@/contexts/AccessContext";
 
 export interface Many2ManyOption {
-  id: string; // cuid
+  id: string;
   name?: string | null;
   displayName?: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
+
+export type DomainOperator =
+  | "="
+  | "!="
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "in"
+  | "notIn"
+  | ">"
+  | ">="
+  | "<"
+  | "<=";
+
+export type DomainItem = [field: string, operator: DomainOperator, value: any];
+export type Domain = DomainItem[];
 
 interface Props {
   name: string;
@@ -27,6 +43,13 @@ interface Props {
   className?: string;
   required?: boolean;
   invisible?: boolean;
+  domain?: Domain;
+}
+
+interface MenuPosition {
+  top: number;
+  left: number;
+  width: number;
 }
 
 export function FieldRelationTags({
@@ -37,70 +60,88 @@ export function FieldRelationTags({
   className,
   required,
   invisible,
+  domain,
 }: Props) {
+  const access = useAccess({ fieldName: name });
+
   const { control } = useFormContext();
 
   const {
     field,
     fieldState: { error },
+    formState: { isSubmitting },
   } = useController({ name, control });
 
-  //   const access = useAccess();
-  //   const fieldAccess = access?.find((f) => f.fieldName === name);
-
-  //   const styleProps: CSSProperties = {
-  //     pointerEvents: fieldAccess?.readonly ? "none" : "auto",
-  //   };
-
-  /* ============================================================
-     1️⃣ RHF VALUE (ids[])
-     ============================================================ */
-
-  const value = field.value as string[] | undefined;
+  const value = (field.value as string[] | undefined) ?? [];
   const setValue = field.onChange;
-
-  /* ============================================================
-     2️⃣ UI STATE
-     ============================================================ */
 
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<Many2ManyOption[]>([]);
   const [selectedObjects, setSelectedObjects] = useState<Many2ManyOption[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition>({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  /* ============================================================
-     3️⃣ Resolver IDs → Objetos
-     ============================================================ */
+  const serializedDomain = useMemo(
+    () => JSON.stringify(domain ?? []),
+    [domain],
+  );
+
+  const updateMenuPosition = useCallback(() => {
+    if (!inputRef.current) return;
+
+    const rect = inputRef.current.getBoundingClientRect();
+
+    setMenuPosition({
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+    });
+  }, []);
 
   useEffect(() => {
-    if (!value || value.length === 0) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (value.length === 0) {
       setSelectedObjects([]);
       return;
     }
 
     const resolve = async () => {
       try {
-        const res = await fetch(`/api/m2o/${model}?ids=${value?.join(",")}`);
+        const params = new URLSearchParams({
+          ids: value.join(","),
+          domain: serializedDomain,
+        });
+
+        const res = await fetch(`/api/m2m/${model}?${params.toString()}`);
         const data = await res.json();
-        setSelectedObjects(data);
+        const safeData = Array.isArray(data) ? data : [];
+
+        const sorted = value
+          .map((id) => safeData.find((item: Many2ManyOption) => item.id === id))
+          .filter(Boolean) as Many2ManyOption[];
+
+        setSelectedObjects(sorted);
       } catch (err) {
         console.error(err);
       }
     };
 
     resolve();
-  }, [value, model]);
-
-  /* ============================================================
-     4️⃣ Fetch options dinámico
-     ============================================================ */
+  }, [value, model, serializedDomain]);
 
   const fetchOptions = useCallback(
     async (search: string) => {
@@ -109,43 +150,37 @@ export function FieldRelationTags({
       const controller = new AbortController();
       abortRef.current = controller;
 
-      setLoading(true);
-
       try {
-        const res = await fetch(
-          `/api/m2o/${model}?search=${encodeURIComponent(search)}&limit=10`,
-          { signal: controller.signal },
-        );
+        const params = new URLSearchParams({
+          search,
+          limit: "5",
+          domain: serializedDomain,
+          excludeIds: value.join(","),
+        });
+
+        const res = await fetch(`/api/m2o/${model}?${params.toString()}`, {
+          signal: controller.signal,
+        });
 
         const data = await res.json();
+        const safeData = Array.isArray(data) ? data : [];
 
-        // excluir ya seleccionados
-        const filtered = data.filter(
-          (opt: Many2ManyOption) => !value?.includes(opt.id),
+        const filtered = safeData.filter(
+          (opt: Many2ManyOption) => !value.includes(opt.id),
         );
 
         setOptions(filtered);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         if (err.name !== "AbortError") console.error(err);
-      } finally {
-        setLoading(false);
       }
     },
-    [model, value],
+    [model, value, serializedDomain],
   );
-
-  /* ============================================================
-     5️⃣ Debounce
-     ============================================================ */
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (query.length < 2) {
-      setOptions([]);
-      return;
-    }
+    if (!isOpen || disabled) return;
 
     debounceRef.current = setTimeout(() => {
       fetchOptions(query);
@@ -154,14 +189,16 @@ export function FieldRelationTags({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, fetchOptions]);
-
-  /* ============================================================
-     6️⃣ Seleccionar
-     ============================================================ */
+  }, [query, fetchOptions, isOpen, disabled]);
 
   const handleSelect = (option: Many2ManyOption) => {
-    setValue([...(value || []), option.id]);
+    if (value.includes(option.id)) {
+      setIsOpen(false);
+      setQuery("");
+      return;
+    }
+
+    setValue([...value, option.id]);
     setQuery("");
     setIsOpen(false);
     setHighlightedIndex(0);
@@ -169,17 +206,9 @@ export function FieldRelationTags({
     requestAnimationFrame(() => inputRef.current?.focus());
   };
 
-  /* ============================================================
-     7️⃣ Eliminar
-     ============================================================ */
-
   const handleRemove = (id: string) => {
-    setValue(value?.filter((v) => v !== id));
+    setValue(value.filter((v) => v !== id));
   };
-
-  /* ============================================================
-     8️⃣ Teclado
-     ============================================================ */
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isOpen || options.length === 0) return;
@@ -189,34 +218,38 @@ export function FieldRelationTags({
       setHighlightedIndex((prev) =>
         prev + 1 < options.length ? prev + 1 : prev,
       );
+      return;
     }
 
     if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+      return;
     }
 
     if (e.key === "Enter") {
       e.preventDefault();
       const option = options[highlightedIndex];
       if (option) handleSelect(option);
+      return;
     }
 
     if (e.key === "Escape") {
       setIsOpen(false);
+      return;
+    }
+
+    if (e.key === "Backspace" && query === "" && value.length > 0) {
+      e.preventDefault();
+      handleRemove(value[value.length - 1]);
     }
   };
 
-  /* ============================================================
-     9️⃣ Click fuera
-     ============================================================ */
-
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
+      const target = e.target as Node;
+
+      if (containerRef.current && !containerRef.current.contains(target)) {
         setIsOpen(false);
       }
     };
@@ -225,16 +258,82 @@ export function FieldRelationTags({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  //   if (invisible || fieldAccess?.invisible) return null;
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [options]);
 
-  /* ============================================================
-     🔟 Render
-     ============================================================ */
+  useEffect(() => {
+    if (!isOpen) return;
+
+    updateMenuPosition();
+
+    const handleScroll = () => {
+      updateMenuPosition();
+    };
+
+    const handleResize = () => {
+      updateMenuPosition();
+    };
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", handleScroll, true);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [isOpen, updateMenuPosition]);
+
+  if (invisible) return null;
+  if (access?.invisible) return null;
+
+  const dropdownMenu =
+    mounted && isOpen && options.length > 0
+      ? createPortal(
+          <div
+            style={{
+              position: "fixed",
+              top: menuPosition.top,
+              left: menuPosition.left,
+              width: menuPosition.width,
+              zIndex: 9999,
+            }}
+          >
+            <Dropdown show className="w-100">
+              <Dropdown.Menu
+                show
+                className="p-0 w-auto"
+                style={{
+                  maxHeight: "200px",
+                  overflowY: "auto",
+                  zIndex: 9999,
+                }}
+              >
+                {options.map((option, index) => (
+                  <Dropdown.Item
+                    key={option.id}
+                    active={index === highlightedIndex}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelect(option);
+                    }}
+                    className="text-wrap"
+                    style={{ fontSize: "0.9rem" }}
+                  >
+                    {option.displayName ?? option.name}
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <div ref={containerRef} className={className}>
       {label && (
-        <Form.Label className="fw-semibold">
+        <Form.Label className="fw-semibold" title={name}>
           {label}
           {required && <span className="text-danger ms-1">*</span>}
         </Form.Label>
@@ -245,44 +344,67 @@ export function FieldRelationTags({
         style={{ minHeight: "38px" }}
         onClick={() => inputRef.current?.focus()}
       >
-        {selectedObjects.map((opt) => (
-          <Badge
-            key={opt.id}
-            bg="secondary"
-            className="d-flex align-items-center gap-1 px-2 py-1"
-          >
-            <span>{opt.displayName ?? opt.name}</span>
-            {!disabled && (
-              <span
-                role="button"
-                onClick={() => handleRemove(opt.id)}
-                className="ms-1"
-              >
-                ×
-              </span>
-            )}
-          </Badge>
-        ))}
-
         {!disabled && (
           <Form.Control
             ref={inputRef}
             type="text"
             value={query}
+            readOnly={isSubmitting || access?.readonly}
             onChange={(e) => {
+              if (access?.readonly) return null;
               setQuery(e.target.value);
               setIsOpen(true);
+              requestAnimationFrame(updateMenuPosition);
             }}
-            onFocus={() => setIsOpen(true)}
+            onFocus={() => {
+              if (access?.readonly) return null;
+              setIsOpen(true);
+              fetchOptions(query.trim());
+              requestAnimationFrame(updateMenuPosition);
+            }}
+            onClick={() => {
+              if (access?.readonly) return null;
+              setIsOpen(true);
+              fetchOptions(query.trim());
+              requestAnimationFrame(updateMenuPosition);
+            }}
             onKeyDown={handleKeyDown}
             size="sm"
             className="border-0 border-bottom shadow-none flex-grow-1 rounded-0"
-            style={{ minWidth: "120px" }}
+            style={{ minWidth: "120px", fontSize: "0.9rem" }}
+            autoComplete="off"
           />
         )}
-      </div>
+        {selectedObjects.map((opt) => (
+          <Badge
+            key={opt.id}
+            bg="primary"
+            className="d-flex align-items-center gap-1 px-2 py-1"
+          >
+            <span>{opt.displayName ?? opt.name}</span>
 
-      {loading && <Spinner size="sm" />}
+            {!disabled && (
+              <button
+                type="button"
+                className="btn btn-sm p-0 ms-1 border-0 bg-transparent text-white lh-1"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  if (isSubmitting || access?.readonly) return null;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleRemove(opt.id);
+                }}
+                aria-label={`Quitar ${opt.name ?? opt.id}`}
+              >
+                ×
+              </button>
+            )}
+          </Badge>
+        ))}
+      </div>
 
       {error && (
         <div className="text-danger mt-1" style={{ fontSize: "0.85rem" }}>
@@ -290,29 +412,7 @@ export function FieldRelationTags({
         </div>
       )}
 
-      {isOpen && options.length > 0 && (
-        <Dropdown show className="w-100">
-          <Dropdown.Menu
-            className="p-0"
-            style={{
-              width: "100%",
-              maxHeight: "200px",
-              overflowY: "auto",
-            }}
-          >
-            {options.map((option, index) => (
-              <Dropdown.Item
-                key={option.id}
-                active={index === highlightedIndex}
-                onMouseDown={() => handleSelect(option)}
-                className="text-wrap border-bottom"
-              >
-                {option.displayName ?? option.name}
-              </Dropdown.Item>
-            ))}
-          </Dropdown.Menu>
-        </Dropdown>
-      )}
+      {dropdownMenu}
     </div>
   );
 }

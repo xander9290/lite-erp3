@@ -9,8 +9,8 @@ export function useAuth() {
   const auth = useMemo(() => {
     const user = session?.user;
     const uid = user?.id;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const roles = (user as any)?.roles ?? [];
+    const access = session?.user.access || [];
 
     const hasRole = (role: string) => {
       return roles.includes(role);
@@ -30,6 +30,7 @@ export function useAuth() {
       isAdmin: roles.includes("admin"),
       hasRole,
       hasAnyRole,
+      access,
     };
   }, [session, status]);
 

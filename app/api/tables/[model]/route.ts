@@ -3,10 +3,24 @@ import { NextRequest, NextResponse } from "next/server";
 
 type SortDir = "asc" | "desc";
 
+type DomainOperator =
+  | "="
+  | "!="
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "in"
+  | "notIn"
+  | ">"
+  | ">="
+  | "<"
+  | "<=";
+
+type DomainItem = [field: string, operator: DomainOperator, value: any];
+
 const MAX_FIELDS = 60;
 const MAX_PATH_DEPTH = 4;
 
-// Muy recomendado aunque sea “sin config”
 const SENSITIVE_FIELD_DENYLIST = [
   "password",
   "hash",
@@ -20,28 +34,78 @@ const SENSITIVE_FIELD_DENYLIST = [
   "twoFactorSecret",
 ];
 
-function isSafeKey(key: string) {
-  // permite foo, foo_bar, foo.bar_baz
-  return /^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)*$/.test(key);
-}
+type PathPart = {
+  key: string;
+  isArray: boolean;
+};
 
-function splitPath(key: string) {
+function splitPath(key: string): PathPart[] {
   return key
     .split(".")
     .map((s) => s.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((segment) => {
+      const isArray = segment.endsWith("[]");
+      return {
+        key: isArray ? segment.slice(0, -2) : segment,
+        isArray,
+      };
+    })
+    .filter((p) => p.key);
 }
 
-function containsDeniedSegment(path: string[]) {
+function isSafeKey(key: string) {
+  return /^[A-Za-z0-9_]+(\[\])?(\.[A-Za-z0-9_]+(\[\])?)*$/.test(key);
+}
+
+function containsDeniedSegment(path: PathPart[]) {
   return path.some((seg) =>
-    SENSITIVE_FIELD_DENYLIST.some((d) => seg.toLowerCase() === d.toLowerCase()),
+    SENSITIVE_FIELD_DENYLIST.some(
+      (d) => seg.key.toLowerCase() === d.toLowerCase(),
+    ),
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function buildSelectFromFieldPaths(fieldPaths: string[][]): any {
-  // { id: true, company: { select: { name: true } } }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// function splitPath(key: string) {
+//   return key
+//     .split(".")
+//     .map((s) => s.trim())
+//     .filter(Boolean);
+// }
+
+// function containsDeniedSegment(path: string[]) {
+//   return path.some((seg) =>
+//     SENSITIVE_FIELD_DENYLIST.some((d) => seg.toLowerCase() === d.toLowerCase()),
+//   );
+// }
+
+// function buildSelectFromFieldPaths(fieldPaths: string[][]): any {
+//   const select: any = {};
+
+//   for (const path of fieldPaths) {
+//     if (!path.length) continue;
+
+//     let cursor = select;
+
+//     for (let i = 0; i < path.length; i++) {
+//       const part = path[i];
+//       const isLast = i === path.length - 1;
+
+//       if (isLast) {
+//         cursor[part] = true;
+//       } else {
+//         cursor[part] = cursor[part] ?? { select: {} };
+//         cursor = cursor[part].select;
+//       }
+//     }
+//   }
+
+//   if (!select.id) select.id = true;
+
+//   return select;
+// }
+
+function buildSelectFromFieldPaths(fieldPaths: PathPart[][]): any {
   const select: any = {};
 
   for (const path of fieldPaths) {
@@ -50,7 +114,7 @@ function buildSelectFromFieldPaths(fieldPaths: string[][]): any {
     let cursor = select;
 
     for (let i = 0; i < path.length; i++) {
-      const part = path[i];
+      const part = path[i].key;
       const isLast = i === path.length - 1;
 
       if (isLast) {
@@ -62,25 +126,54 @@ function buildSelectFromFieldPaths(fieldPaths: string[][]): any {
     }
   }
 
-  // siempre intenta incluir id (si existe en el modelo)
   if (!select.id) select.id = true;
 
   return select;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function buildNestedWhere(path: string[], leafCondition: any) {
+// function buildNestedWhere(path: string[], leafCondition: any) {
+//   return path.reduceRight((acc, part, idx) => {
+//     if (idx === path.length - 1) return { [part]: leafCondition };
+//     return { [part]: acc };
+//   }, {});
+// }
+
+function buildNestedWhere(path: PathPart[], leafCondition: any): any {
   return path.reduceRight((acc, part, idx) => {
-    if (idx === path.length - 1) return { [part]: leafCondition };
-    return { [part]: acc };
+    if (idx === path.length - 1) {
+      return { [part.key]: leafCondition };
+    }
+
+    if (part.isArray) {
+      return { [part.key]: { some: acc } };
+    }
+
+    return { [part.key]: acc };
   }, {});
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function buildNestedOrderBy(path: string[], dir: SortDir): any {
+// function buildNestedOrderBy(path: string[], dir: SortDir): any {
+//   return path.reduceRight((acc, part, idx) => {
+//     if (idx === path.length - 1) return { [part]: dir };
+//     return { [part]: acc };
+//   }, {});
+// }
+
+function buildNestedOrderBy(path: PathPart[], dir: SortDir): any {
+  const hasArray = path.some((p) => p.isArray);
+
+  if (hasArray) {
+    const last = path[path.length - 1];
+    if (last?.key === "_count" && path.length >= 2) {
+      const rel = path[path.length - 2];
+      return { [rel.key]: { _count: dir } };
+    }
+    return undefined;
+  }
+
   return path.reduceRight((acc, part, idx) => {
-    if (idx === path.length - 1) return { [part]: dir };
-    return { [part]: acc };
+    if (idx === path.length - 1) return { [part.key]: dir };
+    return { [part.key]: acc };
   }, {});
 }
 
@@ -92,12 +185,19 @@ function parseRangeSyntax(raw: string) {
     const [start, end] = f.split("..").map((v) => v.trim());
     return { op: "between" as const, start: start || null, end: end || null };
   }
-  if (f.startsWith(">="))
+  if (f.startsWith(">=")) {
     return { op: ">=" as const, value: f.slice(2).trim() };
-  if (f.startsWith("<="))
+  }
+  if (f.startsWith("<=")) {
     return { op: "<=" as const, value: f.slice(2).trim() };
-  if (f.startsWith(">")) return { op: ">" as const, value: f.slice(1).trim() };
-  if (f.startsWith("<")) return { op: "<" as const, value: f.slice(1).trim() };
+  }
+  if (f.startsWith(">")) {
+    return { op: ">" as const, value: f.slice(1).trim() };
+  }
+  if (f.startsWith("<")) {
+    return { op: "<" as const, value: f.slice(1).trim() };
+  }
+
   return { op: "=" as const, value: f };
 }
 
@@ -121,13 +221,93 @@ function toBoolSafe(v: string | null) {
   return null;
 }
 
+function parseDomain(raw: string | null): DomainItem[] {
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.filter((item) => {
+      return (
+        Array.isArray(item) &&
+        item.length === 3 &&
+        typeof item[0] === "string" &&
+        typeof item[1] === "string"
+      );
+    }) as DomainItem[];
+  } catch {
+    return [];
+  }
+}
+
+function domainItemToWhere(item: DomainItem) {
+  const [field, operator, value] = item;
+
+  if (!field || !operator || !isSafeKey(field)) return null;
+
+  const path = splitPath(field);
+  if (!path.length || path.length > MAX_PATH_DEPTH) return null;
+  if (containsDeniedSegment(path)) return null;
+
+  switch (operator) {
+    case "=":
+      return buildNestedWhere(path, value);
+
+    case "!=":
+      return buildNestedWhere(path, { not: value });
+
+    case "contains":
+      return buildNestedWhere(path, {
+        contains: String(value ?? ""),
+        mode: "insensitive",
+      });
+
+    case "startsWith":
+      return buildNestedWhere(path, {
+        startsWith: String(value ?? ""),
+        mode: "insensitive",
+      });
+
+    case "endsWith":
+      return buildNestedWhere(path, {
+        endsWith: String(value ?? ""),
+        mode: "insensitive",
+      });
+
+    case "in":
+      return buildNestedWhere(path, {
+        in: Array.isArray(value) ? value : [value],
+      });
+
+    case "notIn":
+      return buildNestedWhere(path, {
+        notIn: Array.isArray(value) ? value : [value],
+      });
+
+    case ">":
+      return buildNestedWhere(path, { gt: value });
+
+    case ">=":
+      return buildNestedWhere(path, { gte: value });
+
+    case "<":
+      return buildNestedWhere(path, { lt: value });
+
+    case "<=":
+      return buildNestedWhere(path, { lte: value });
+
+    default:
+      return null;
+  }
+}
+
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ model: string }> },
 ) {
   const { model } = await context.params;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const modelDelegate = (prisma as any)[model];
   if (!modelDelegate) {
     return NextResponse.json(
@@ -146,7 +326,7 @@ export async function GET(
     Math.max(1, Number(searchParams.get("pageSize") ?? 20)),
   );
 
-  const sortKey = searchParams.get("sortKey"); // puede ser "company.name"
+  const sortKey = searchParams.get("sortKey");
   const sortDir = (searchParams.get("sortDir") ?? "asc") as SortDir;
 
   const fieldsParam = searchParams.get("fields") ?? "";
@@ -169,7 +349,14 @@ export async function GET(
     }
   }
 
-  // --- build select ---
+  const domain = parseDomain(searchParams.get("domain"));
+
+  // const fieldPaths = requestedFields
+  //   .filter(isSafeKey)
+  //   .map(splitPath)
+  //   .filter((p) => p.length > 0 && p.length <= MAX_PATH_DEPTH)
+  //   .filter((p) => !containsDeniedSegment(p));
+
   const fieldPaths = requestedFields
     .filter(isSafeKey)
     .map(splitPath)
@@ -178,10 +365,14 @@ export async function GET(
 
   const select = buildSelectFromFieldPaths(fieldPaths);
 
+  const domainWhere = domain.map(domainItemToWhere).filter(Boolean) as any[];
+
   if (id) {
     try {
-      const record = await modelDelegate.findUnique({
-        where: { id: String(id) },
+      const record = await modelDelegate.findFirst({
+        where: {
+          AND: [{ id: String(id) }, ...domainWhere],
+        },
         select,
       });
       return NextResponse.json(record);
@@ -193,9 +384,7 @@ export async function GET(
     }
   }
 
-  // --- build where (AND) ---
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const andWhere: any[] = [];
+  const andWhere: any[] = [...domainWhere];
 
   for (const [rawKey, rawVal] of Object.entries(filters)) {
     const key = rawKey.trim();
@@ -286,7 +475,6 @@ export async function GET(
       continue;
     }
 
-    // equals / contains (CSV -> OR)
     const eqNum = toNumberSafe(parsed.value ?? null);
     if (eqNum !== null) {
       andWhere.push(buildNestedWhere(path, eqNum));
@@ -313,7 +501,6 @@ export async function GET(
         buildNestedWhere(path, { contains: value, mode: "insensitive" }),
       );
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const orList: any[] = parts.map((p) =>
         buildNestedWhere(path, { contains: p, mode: "insensitive" }),
       );
@@ -323,8 +510,6 @@ export async function GET(
 
   const where = andWhere.length ? { AND: andWhere } : undefined;
 
-  // --- orderBy (dotted) ---
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let orderBy: any = undefined;
   if (sortKey && isSafeKey(sortKey)) {
     const sortPath = splitPath(sortKey);
@@ -347,10 +532,9 @@ export async function GET(
 
     return NextResponse.json({ rows, total, page, pageSize });
   } catch (e) {
-    // si piden un campo/relación inválida Prisma va a explotar aquí
     return NextResponse.json(
       {
-        error: "Invalid query (check fields/relations/sortKey/filters)",
+        error: "Invalid query (check fields/relations/sortKey/filters/domain)",
         details: String(e),
       },
       { status: 400 },
