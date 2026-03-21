@@ -332,15 +332,14 @@ export function FieldRelationTags({
 
   return (
     <div ref={containerRef} className={className}>
-      {label && (
+      {/* {label && (
         <Form.Label className="fw-semibold" title={name}>
-          {label}
           {required && <span className="text-danger ms-1">*</span>}
         </Form.Label>
-      )}
+      )} */}
 
       <div
-        className="d-flex flex-wrap align-items-center gap-1 p-1 mb-3"
+        className="d-flex flex-wrap align-items-center gap-1 p-1 mb-1 border rounded"
         style={{ minHeight: "38px" }}
         onClick={() => inputRef.current?.focus()}
       >
@@ -350,6 +349,7 @@ export function FieldRelationTags({
             type="text"
             value={query}
             readOnly={isSubmitting || access?.readonly}
+            placeholder={label}
             onChange={(e) => {
               if (access?.readonly) return null;
               setQuery(e.target.value);
@@ -370,7 +370,7 @@ export function FieldRelationTags({
             }}
             onKeyDown={handleKeyDown}
             size="sm"
-            className="border-0 border-bottom shadow-none flex-grow-1 rounded-0"
+            className="border-0 border-bottom shadow-none flex-grow-1 rounded-0 p-1"
             style={{ minWidth: "120px", fontSize: "0.9rem" }}
             autoComplete="off"
           />

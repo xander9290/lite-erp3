@@ -20,7 +20,7 @@ import {
 import { useRouter } from "next/navigation";
 import { ButtonVariant } from "react-bootstrap/esm/types";
 import NotFound from "@/app/not-found";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import AuditLogViewer from "./AuditLogViewer";
 import { useAuth } from "@/hooks/sessionStore";
 import { useAccess } from "@/contexts/AccessContext";
@@ -51,6 +51,7 @@ type FormViewProps<T extends FieldValues> = {
   formStates?: TFormState[];
   state?: string;
   auditLog?: string;
+  isReallyDirty?: boolean;
 };
 
 export function FormView<T extends FieldValues>({
@@ -64,18 +65,32 @@ export function FormView<T extends FieldValues>({
   formStates,
   state,
   auditLog = "null",
+  isReallyDirty,
 }: FormViewProps<T>) {
   const {
     handleSubmit,
     formState: { isSubmitting, isDirty },
     getValues,
   } = methods;
+
+  const dirty = isReallyDirty ?? isDirty;
+
   const { access } = useAuth();
   const router = useRouter();
 
   if (!id || id === "") {
     return <NotFound />;
   }
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!dirty) return;
+      e.preventDefault();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [dirty]);
 
   const modelName = cleanUrl.split("?")[0].split("/")[2] + "Model";
   const modelAccess = access.find((acc) => acc.fieldName === modelName);
@@ -107,7 +122,15 @@ export function FormView<T extends FieldValues>({
                 {id !== "null" && (
                   <Button
                     type="button"
-                    onClick={() => router.replace(cleanUrl)}
+                    onClick={() => {
+                      if (dirty) {
+                        const confirmLeave = confirm(
+                          "Tienes cambios sin guardar. ¿Continuar?",
+                        );
+                        if (!confirmLeave) return;
+                      }
+                      router.replace(cleanUrl);
+                    }}
                     className="fw-semibold"
                     size="sm"
                     disabled={modelAccess?.notCreate}
@@ -118,7 +141,7 @@ export function FormView<T extends FieldValues>({
 
                 <Button
                   type="button"
-                  disabled={!isDirty || modelAccess?.notEdit}
+                  disabled={!dirty || modelAccess?.notEdit}
                   onClick={handleSubmit(onSubmit)}
                   size="sm"
                   variant="none"
@@ -133,13 +156,21 @@ export function FormView<T extends FieldValues>({
                 <Button
                   type="button"
                   onClick={reverse}
-                  disabled={!isDirty}
+                  disabled={!dirty}
                   title="Deshacer cambios"
                   size="sm"
                   variant="none"
                 >
                   <i className="bi bi-arrow-counterclockwise"></i>
                 </Button>
+                <div>
+                  {dirty && (
+                    <div className="text-warning small">
+                      <i className="bi bi-exclamation-triangle-fill"></i>
+                      <span className="ms-1">Cambios sin guardar</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* BOTONES VISTA ESCRITORIO */}
@@ -194,8 +225,16 @@ export function FormView<T extends FieldValues>({
               <Button
                 size="sm"
                 variant="none"
-                onClick={() => router.back()}
-                disabled={isDirty}
+                onClick={() => {
+                  if (dirty) {
+                    const confirmLeave = confirm(
+                      "Tienes cambios sin guardar. ¿Salir?",
+                    );
+                    if (!confirmLeave) return;
+                  }
+                  router.back();
+                }}
+                disabled={dirty}
               >
                 <i className="bi bi-arrow-left"></i>
               </Button>
