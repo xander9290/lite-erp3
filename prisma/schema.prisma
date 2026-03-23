@@ -54,10 +54,6 @@ model User {
   lastLogin DateTime? @map("last_login")
   active    Boolean   @default(true)
 
-  managerId   String? @map("manager_id")
-  Manager     User?   @relation("ManagerRelation", fields: [managerId], references: [id], onDelete: Cascade)
-  TeamMembers User[]  @relation("ManagerRelation")
-
   partnerId String?  @unique @map("partner_id")
   Partner   Partner? @relation("PartnerUserRelated", fields: [partnerId], references: [id], onDelete: Cascade)
 

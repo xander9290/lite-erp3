@@ -12,6 +12,7 @@ import type {
   Company,
 } from "@/generated/prisma/client";
 import bcrypt from "bcryptjs";
+import { UserSchemaType } from "../schemas/user.schema";
 
 export interface UserWithPartner extends User {
   Partner: Partner | null;
@@ -75,39 +76,37 @@ export async function getUserByLogin({
   }
 }
 
+type UserCreateProps = Omit<
+  UserSchemaType,
+  "createdAt" | "createdUid" | "updatedAt"
+>;
+
 export async function createUser({
-  name,
-  login,
-  email,
-  active,
-  groupId,
-  imageUrl,
+  data,
 }: {
-  name: string;
-  login: string;
-  email: string;
-  active: boolean;
-  groupId: string | null;
-  imageUrl: string | null;
+  data: UserCreateProps;
 }): Promise<ActionResponse<UserWithProps>> {
   try {
     const { uid } = await sessionStore();
 
     const newUser = await prisma.user.create({
       data: {
-        name,
-        login,
-        active,
+        name: data.name,
+        login: data.login,
+        active: data.active,
         password: "",
         createdUid: uid || "",
-        ...(groupId && { Group: { connect: { id: groupId } } }),
+        ...(data.groupId && { Group: { connect: { id: data.groupId } } }),
         Partner: {
           create: {
-            name,
-            email,
-            imageUrl,
+            name: data.name,
+            email: data.email,
+            imageUrl: data.imageUrl,
             createdUid: uid || "",
           },
+        },
+        Companies: {
+          connect: data.companies.map((c) => ({ id: c })),
         },
       },
       include: {
@@ -144,20 +143,10 @@ export async function createUser({
 
 export async function updateUser({
   id,
-  name,
-  login,
-  email,
-  active,
-  groupId,
-  imageUrl,
+  data,
 }: {
   id: string | null;
-  name: string;
-  login: string;
-  email: string;
-  active: boolean;
-  groupId: string | null;
-  imageUrl: string | null;
+  data: UserCreateProps;
 }): Promise<ActionResponse<UserWithProps>> {
   try {
     if (!id) throw new Error("ID user is undefined");
@@ -165,15 +154,20 @@ export async function updateUser({
     const updatedUser = await prisma.user.update({
       where: { id },
       data: {
-        name,
-        login,
-        active,
-        Group: groupId ? { connect: { id: groupId } } : { disconnect: true },
+        name: data.name,
+        login: data.login,
+        active: data.active,
+        Group: data.groupId
+          ? { connect: { id: data.groupId } }
+          : { disconnect: true },
+        Companies: {
+          set: data.companies.map((c) => ({ id: c })),
+        },
         Partner: {
           update: {
-            name,
-            email,
-            imageUrl,
+            name: data.name,
+            email: data.email,
+            imageUrl: data.imageUrl,
           },
         },
       },

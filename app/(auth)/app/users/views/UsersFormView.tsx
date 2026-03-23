@@ -22,6 +22,7 @@ import {
   FieldEntry,
   FieldImage,
   FieldRelation,
+  FieldRelationTags,
 } from "@/components/templates/fields";
 import { createUser, updateUser, UserWithProps } from "../actions/user-actions";
 import toast from "react-hot-toast";
@@ -52,7 +53,7 @@ function UsersFormView({
 
   const onSubmit: SubmitHandler<UserSchemaType> = async (data) => {
     if (id && id === "null") {
-      const res = await createUser(data);
+      const res = await createUser({ data });
       if (!res.success) {
         modalError(res.message);
         return;
@@ -61,7 +62,7 @@ function UsersFormView({
       router.replace(`/app/users?view_type=form&id=${res.data?.id}`);
       toast.success(res.message);
     } else {
-      const res = await updateUser({ id: id, ...data });
+      const res = await updateUser({ id: id, data });
       if (!res.success) {
         modalError(res.message);
         return;
@@ -82,21 +83,8 @@ function UsersFormView({
 
   useEffect(() => {
     if (!user) {
-      const values: UserSchemaType = {
-        name: "",
-        login: "",
-        email: "",
-        imageUrl: null,
-        active: false,
-        createdAt: null,
-        lastLogin: null,
-        groupId: null,
-        updatedAt: null,
-        createdUid: null,
-      };
-
-      reset(values);
-      originalValuesRef.current = values;
+      reset(userSchemaDefault);
+      originalValuesRef.current = userSchemaDefault;
       return;
     }
 
@@ -109,6 +97,7 @@ function UsersFormView({
       createdAt: user.createdAt,
       lastLogin: user.lastLogin,
       groupId: user.groupId,
+      companies: user.Companies.map((c) => c.id) || [],
       updatedAt: user.updatedAt,
       createdUid: user.createdUid,
     };
@@ -159,6 +148,11 @@ function UsersFormView({
                 type: "string",
               },
             ]}
+          />
+          <FieldRelationTags
+            model="company"
+            name="companies"
+            label="Empresas"
           />
         </FormViewGroup>
         <FormBook dKey="otherInfo">

@@ -4,7 +4,7 @@ import TableTemplate, {
   TableTemplateColumn,
 } from "@/components/templates/TableTemplate";
 import { type UserWithProps } from "../actions/user-actions";
-import { Badge } from "react-bootstrap";
+import { Badge, Form } from "react-bootstrap";
 import { formatDate } from "date-fns";
 import ListView from "@/components/templates/ListView";
 import { getByPath } from "@/app/libs/getByPath";
@@ -36,6 +36,15 @@ function UsersListView() {
         </div>
       ),
     },
+
+    {
+      key: "Partner.email",
+      label: "Correo",
+      fieldName: "email",
+      accessor: (u) => getByPath(u, "Partner.email"),
+      filterable: true,
+      type: "string",
+    },
     {
       key: "Group.name",
       label: "Grupo",
@@ -45,12 +54,23 @@ function UsersListView() {
       filterable: true,
     },
     {
-      key: "Partner.email",
-      label: "Correo",
-      fieldName: "email",
-      accessor: (u) => getByPath(u, "Partner.email"),
+      key: "Companies[].name",
+      label: "Empresas",
+      fieldName: "comapnies",
+      accessor: (g) => g.Companies?.map((u) => u.name).join(", ") ?? "",
+      render: (g) => (
+        <div onClick={(e) => e.stopPropagation()}>
+          <Form.Select size="sm" className="border-0">
+            <option>{g.Companies?.length}</option>
+            {g.Companies?.map((u, i) => (
+              <option key={`user-${i}-${u.name}`} value={u.name}>
+                {u.name}
+              </option>
+            ))}
+          </Form.Select>
+        </div>
+      ),
       filterable: true,
-      type: "string",
     },
     {
       key: "active",
