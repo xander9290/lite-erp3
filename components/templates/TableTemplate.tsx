@@ -338,7 +338,7 @@ export default function TableTemplate<T>({
                   className="border-end border-bottom table-active text-nowrap"
                 >
                   <div
-                    style={{ fontSize: "1rem" }}
+                    style={{ fontSize: "0.9rem" }}
                     className="d-flex align-items-center gap-1 p-0"
                   >
                     {col.filterable ? (
@@ -354,7 +354,7 @@ export default function TableTemplate<T>({
                         title={col.fieldName}
                       />
                     ) : (
-                      <span title={col.fieldName}>{col.fieldName}</span>
+                      <span title={col.fieldName}>{col.label}</span>
                     )}
 
                     <i

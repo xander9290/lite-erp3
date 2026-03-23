@@ -239,7 +239,7 @@ export function FieldEntry({
         }
 
         return (
-          <div className="mb-1">
+          <div className="mb-1 w-100">
             <FloatingLabel label={floatingText} className="w-100 fs-6 fw-bold">
               {input}
             </FloatingLabel>

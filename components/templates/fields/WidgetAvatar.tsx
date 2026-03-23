@@ -14,17 +14,14 @@ export function WidgetAvatar({
 }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
-  const getUserAvatar = useCallback(async () => {
-    const getUser = await getUserById({ id });
-    if (getUser) {
-      const imageUrl: string | null = getUser.Partner?.imageUrl || null;
-      setImageUrl(imageUrl);
-    }
-  }, [id]);
-
   useEffect(() => {
-    getUserAvatar();
-  }, [getUserAvatar]);
+    if (!id) return;
+
+    getUserById({ id }).then((getUser) => {
+      const imageUrl = getUser?.Partner?.imageUrl ?? null;
+      setImageUrl(imageUrl);
+    });
+  }, [id]);
 
   return (
     <Zoom>
@@ -40,3 +37,25 @@ export function WidgetAvatar({
     </Zoom>
   );
 }
+
+// export function WidgetAvatar({
+//   imageUrl,
+//   name = "displayAvatar",
+// }: {
+//   imageUrl?: string | null;
+//   name?: string;
+// }) {
+//   return (
+//     <Zoom>
+//       <Image
+//         title={name}
+//         unoptimized
+//         src={imageUrl ?? "/images/avatar_default.svg"}
+//         width={32}
+//         height={32}
+//         alt="imageAvatar"
+//         className="rounded"
+//       />
+//     </Zoom>
+//   );
+// }

@@ -15,7 +15,7 @@ import { TableTemplateColumn } from "../TableTemplate";
 import RelationSearchModal from "../RelationSearchModal";
 
 export interface Many2OneOption {
-  id: number | string;
+  id: string;
   name?: string | null;
   [key: string]: any;
 }
@@ -446,7 +446,7 @@ export function FieldRelation<T extends Many2OneOption>({
   }
 
   return (
-    <div ref={containerRef} className="mb-3" title={name}>
+    <div ref={containerRef} className="mb-1" title={name}>
       <div className="d-flex align-items-stretch">
         <FloatingLabel
           controlId={name}

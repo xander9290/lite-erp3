@@ -25,7 +25,7 @@ export default function RelationSearchModal<T>({
         <Modal.Title>Buscar registro</Modal.Title>
       </Modal.Header>
 
-      <Modal.Body>
+      <Modal.Body className="p-0">
         <TableTemplate
           model={model}
           columns={columns}

@@ -9,6 +9,7 @@ import type {
   Partner,
   Group,
   GroupLine,
+  Company,
 } from "@/generated/prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -19,6 +20,7 @@ export interface UserWithPartner extends User {
 export interface UserWithProps extends User {
   Partner: Partner | null;
   Group: Group | null;
+  Companies: Company[];
 }
 
 export async function getUserById({
@@ -36,6 +38,7 @@ export async function getUserById({
       include: {
         Partner: true,
         Group: true,
+        Companies: true,
       },
     });
 
@@ -61,6 +64,7 @@ export async function getUserByLogin({
       include: {
         Partner: true,
         Group: true,
+        Companies: true,
       },
     });
 
@@ -109,6 +113,7 @@ export async function createUser({
       include: {
         Partner: true,
         Group: true,
+        Companies: true,
       },
     });
 
@@ -175,6 +180,7 @@ export async function updateUser({
       include: {
         Partner: true,
         Group: true,
+        Companies: true,
       },
     });
 

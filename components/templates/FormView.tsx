@@ -14,6 +14,7 @@ import {
   Form,
   Row,
   Spinner,
+  Stack,
   Tab,
   Tabs,
 } from "react-bootstrap";
@@ -313,17 +314,28 @@ export function FormViewGroup({
 
   return (
     <Col md="6">
-      <fieldset className="p-2 mt-1 rounded" disabled={readonly}>
-        {/* {label ? (
-          <legend
-            className="fw-bolder text-uppercase mx-1 mb-3"
-            style={{ fontSize: "1rem" }}
-          >
-            {label}
-          </legend>
-        ) : (
-          <div style={{ marginBottom: "36px" }}></div>
-        )} */}
+      <fieldset className="mt-1" disabled={readonly}>
+        {children}
+      </fieldset>
+    </Col>
+  );
+}
+
+export function FormViewFluid({
+  invisible,
+  children,
+  readonly,
+}: {
+  className?: string;
+  invisible?: boolean;
+  children: React.ReactNode;
+  readonly?: boolean;
+}) {
+  if (invisible) return null;
+
+  return (
+    <Col md="12">
+      <fieldset className="mt-1" disabled={readonly}>
         {children}
       </fieldset>
     </Col>
@@ -339,7 +351,7 @@ export function FormViewStack({
 }) {
   return (
     <div
-      className={`d-flex justify-content-between align-items-center m-0 p-0 ${className}`}
+      className={`d-flex justify-content-between align-items-center gap-1 m-0 p-0 ${className}`}
     >
       {children}
     </div>
@@ -394,7 +406,7 @@ export const PageSheet = ({
   return (
     <Row
       style={{
-        maxHeight: "100%",
+        minHeight: "200px",
         pointerEvents: access?.readonly ? "none" : "auto",
       }}
       title={name}

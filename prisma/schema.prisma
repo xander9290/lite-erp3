@@ -13,9 +13,22 @@ model Partner {
   email    String?
   imageUrl String?
 
-  displayType PartnerDisplayType @default(INTERNAL) @map("display_type")
+  phone       String?
+  street      String?
+  houseNumber String? @map("house_number")
+  streets     String?
+  town        String?
+  zip         Int?
+  county      String?
+  province    String?
+  country     String?
+  vat         String?
 
-  User User? @relation("PartnerUserRelated")
+  displayType PartnerDisplayType @default(INTERNAL) @map("display_type")
+  active      Boolean            @default(true)
+
+  User    User?    @relation("PartnerUserRelated")
+  Company Company? @relation("PartnerCompanyRel")
 
   createdUid String   @map("created_uid")
   createdAt  DateTime @default(now()) @map("created_at")
@@ -50,6 +63,10 @@ model User {
 
   Group   Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId String? @map("group_id")
+
+  ManagedCompanies Company[] @relation("UserManageCompanyRel")
+
+  Companies Company[] @relation("UserCompanyRel")
 
   Auditlogs Auditlog[] @relation("UserAuditlogRel")
 
@@ -175,4 +192,30 @@ model Tag {
   name String @unique
 
   @@map("tags")
+}
+
+model Company {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  code   String  @unique
+  active Boolean @default(true)
+
+  Users User[] @relation("UserCompanyRel")
+
+  managerId String? @map("manager_id")
+  Manager   User?   @relation("UserManageCompanyRel", fields: [managerId], references: [id], onDelete: Cascade)
+
+  partnerId String  @unique @map("partner_id")
+  Partner   Partner @relation("PartnerCompanyRel", fields: [partnerId], references: [id], onDelete: Cascade)
+
+  //Es sucursal de o empresa Matriz   
+  parentId String?   @map("parent_id")
+  Company  Company?  @relation("ParentChildrenCompany", fields: [parentId], references: [id], onDelete: Cascade)
+  Children Company[] @relation("ParentChildrenCompany")
+
+  createdUid String   @map("created_uid")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("companies")
 }

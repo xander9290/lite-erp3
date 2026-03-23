@@ -280,6 +280,8 @@ function TopNavItems() {
               (field) => field.fieldName === "settingsCompaniesMenu",
             )?.invisible
           }
+          as={Link}
+          href="/app/companies?view_type=list&id=null"
         >
           <i className="bi bi-buildings me-1"></i>
           <span>Empresas</span>

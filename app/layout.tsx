@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-// import "bootswatch/dist/cerulean/bootstrap.css";
+// import "bootswatch/dist/lumen/bootstrap.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { Toaster } from "react-hot-toast";

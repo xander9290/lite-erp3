@@ -24,7 +24,7 @@ function UsersListView() {
       key: "login",
       label: "Usuario",
       fieldName: "login",
-      accessor: (u) => u.login,
+      accessor: (u) => u.Partner?.name,
       filterable: true,
       type: "string",
       render: (u) => (

@@ -9,30 +9,38 @@ import Image from "next/image";
 
 function TopNavUser() {
   const { user } = useAuth();
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("darkModeSelection") === "dark";
-  });
+
+  const [darkMode, setDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // ✅ Solo cliente
+  useEffect(() => {
+    const stored = localStorage.getItem("darkModeSelection");
+    const isDark = stored === "dark";
+
+    setDarkMode(isDark);
+    document.documentElement.setAttribute(
+      "data-bs-theme",
+      isDark ? "dark" : "light",
+    );
+
+    setMounted(true);
+  }, []);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
+
     setDarkMode(newMode);
     document.documentElement.setAttribute(
       "data-bs-theme",
       newMode ? "dark" : "light",
     );
+
     localStorage.setItem("darkModeSelection", newMode ? "dark" : "light");
   };
 
-  // ✅ Este efecto solo corre al montar
-  useEffect(() => {
-    document.documentElement.setAttribute(
-      "data-bs-theme",
-      darkMode ? "dark" : "light",
-    );
-
-    localStorage.setItem("darkModeSelection", darkMode ? "dark" : "light");
-  }, [darkMode]);
+  // 🚫 Evita hydration mismatch
+  if (!mounted) return null;
 
   return (
     <Stack direction="horizontal" gap={2}>
@@ -53,6 +61,7 @@ function TopNavUser() {
             <small>{user?.name}</small>
           </strong>
         </Dropdown.Toggle>
+
         <Dropdown.Menu>
           <Dropdown.Item onClick={() => signOut()}>
             <i className="bi bi-box-arrow-right me-2"></i>
@@ -61,11 +70,15 @@ function TopNavUser() {
           <Dropdown.Divider />
         </Dropdown.Menu>
       </Dropdown>
+
       <div className="vr" />
+
       <Button variant="light" type="button" className="text-uppercase border-0">
         <Clock />
       </Button>
+
       <div className="vr" />
+
       <Button className="border-0" variant="light" onClick={toggleDarkMode}>
         {darkMode ? (
           <i className="bi bi-sun-fill"></i>
