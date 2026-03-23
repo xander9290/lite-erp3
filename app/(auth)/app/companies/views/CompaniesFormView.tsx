@@ -1,7 +1,11 @@
 "use client";
 
-import type { CompanieWithProps } from "../actions/companies-actions";
-import { useForm, SubmitHandler } from "react-hook-form";
+import {
+  createCompany,
+  updateCompany,
+  type CompanieWithProps,
+} from "../actions/companies-actions";
+import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isEqual } from "lodash";
 import {
@@ -16,7 +20,6 @@ import {
   FormBook,
   FormPage,
   FormView,
-  FormViewFluid,
   FormViewGroup,
   FormViewStack,
   PageSheet,
@@ -29,6 +32,13 @@ import {
   FieldRelationTags,
   WidgetAvatar,
 } from "@/components/templates/fields";
+import {
+  BtnDeleteLine,
+  SimpleTable,
+  SimpleTD,
+} from "@/components/templates/simpletemplates";
+import { Col } from "react-bootstrap";
+import toast from "react-hot-toast";
 
 function CompaniesFormView({
   company,
@@ -42,14 +52,31 @@ function CompaniesFormView({
     defaultValues: companySchemaDefault,
   });
 
-  const { reset } = methods;
+  const { reset, control } = methods;
+
+  const { append, fields, remove } = useFieldArray({
+    control,
+    name: "childrenIds",
+  });
 
   const originalValuesRef = useRef<CompanySchemaType | null>(null);
   const router = useRouter();
 
   const { modalError } = useModals();
 
-  const onSubmit: SubmitHandler<CompanySchemaType> = async (data) => {};
+  const onSubmit: SubmitHandler<CompanySchemaType> = async (data) => {
+    if (id && id === "null") {
+      const res = await createCompany({ data });
+      if (!res.success) return modalError(res.message);
+      router.replace(`/app/companies?view_type=form&id=${res.data?.id}`);
+      toast.success(res.message);
+    } else {
+      const res = await updateCompany({ id, data });
+      if (!res.success) return modalError(res.message);
+      router.refresh();
+      toast.success(res.message);
+    }
+  };
 
   const handleReverse = () => {
     if (originalValuesRef.current) {
@@ -130,14 +157,6 @@ function CompaniesFormView({
               accessor: (u) => u.login,
               filterable: true,
               type: "string",
-              render: (u) => (
-                <div className="d-flex flex-row align-items-end gap-2">
-                  <span onClick={(e) => e.stopPropagation()}>
-                    <WidgetAvatar id={u.id} />
-                  </span>
-                  <span>{u.login}</span>
-                </div>
-              ),
             },
           ]}
         />
@@ -149,7 +168,10 @@ function CompaniesFormView({
           model="company"
           name="parentId"
           label="Empresa"
-          domain={[["active", "=", true]]}
+          domain={[
+            ["active", "=", true],
+            ["id", "!=", id],
+          ]}
         />
         <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
@@ -183,7 +205,70 @@ function CompaniesFormView({
         </FormPage>
         <FormPage title="Sucursales" eventKey="childrenIds">
           <PageSheet name="childrenIds">
-            <h3>Sucursales</h3>
+            <Col className="p-0">
+              <SimpleTable
+                data={fields}
+                headers={[
+                  {
+                    string: "Nombre",
+                    name: "lineName",
+                    width: 200,
+                    minWidth: 180,
+                  },
+                  {
+                    string: "Gerente",
+                    name: "lineManagerId",
+                    width: 180,
+                    minWidth: 140,
+                  },
+                  {
+                    string: <i className="bi bi-trash"></i>,
+                    className: "text-center",
+                    width: 35,
+                    minWidth: 30,
+                    name: "lineDelete",
+                  },
+                ]}
+                renderRow={(row, index) => (
+                  <tr key={row.id} className="border-bottom">
+                    <SimpleTD colIdx={index} name="lineName">
+                      <FieldRelation
+                        model="company"
+                        name={`childrenIds.${index}.id`}
+                        label="Empresa"
+                        domain={[
+                          ["active", "=", true],
+                          ["id", "!=", id],
+                        ]}
+                        inline
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineManagerId">
+                      <FieldRelation
+                        model="user"
+                        name={`childrenIds.${index}.managerId`}
+                        label="Gerente"
+                        readonly
+                        inline
+                      />
+                    </SimpleTD>
+                    <SimpleTD
+                      name="lineDelete"
+                      colIdx={index}
+                      contentPosition="text-center"
+                    >
+                      <BtnDeleteLine action={() => remove(index)} />
+                    </SimpleTD>
+                  </tr>
+                )}
+                action={() =>
+                  append({
+                    name: "",
+                    managerId: "",
+                  })
+                }
+              />
+            </Col>
           </PageSheet>
         </FormPage>
       </FormBook>

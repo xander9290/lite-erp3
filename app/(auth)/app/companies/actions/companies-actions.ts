@@ -65,7 +65,7 @@ export async function createCompany({
 
     const newCompany = await prisma.company.create({
       data: {
-        name: `[${data.code}] ${data.name}`,
+        name: data.name,
         code: data.code,
         active: data.active,
         Users: {
@@ -129,6 +129,91 @@ export async function createCompany({
       message: "Se ha creado la empresa",
       success: true,
       data: newCompany,
+    };
+  } catch (error: any) {
+    console.log(error);
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
+}
+
+export async function updateCompany({
+  id,
+  data,
+}: {
+  id: string | null;
+  data: CreateCompanyProps;
+}): Promise<ActionResponse<CompanieWithProps>> {
+  try {
+    if (!id) throw new Error("ID not defined");
+
+    const updatedCompany = await prisma.company.update({
+      where: { id },
+      data: {
+        name: data.name,
+        code: data.code,
+        active: data.active,
+        Users: {
+          set: data.userIds.map((u) => ({ id: u })),
+        },
+        Manager: data.managerId
+          ? { connect: { id: data.managerId! } }
+          : { disconnect: true },
+        Company: data.parentId
+          ? { connect: { id: data.parentId! } }
+          : { disconnect: true },
+        Children: {
+          set: data.childrenIds.map((ch) => ({ id: ch.id })),
+        },
+        Partner: {
+          update: {
+            name: data.name,
+            phone: data.phone,
+            imageUrl: data.imageUrl,
+            street: data.street,
+            houseNumber: data.houseNumber,
+            streets: data.street,
+            zip: data.zip,
+            town: data.town,
+            county: data.county,
+            province: data.province,
+            country: data.country,
+            vat: data.vat,
+          },
+        },
+      },
+      include: {
+        Users: {
+          include: {
+            Partner: true,
+          },
+        },
+        Manager: {
+          include: {
+            Partner: true,
+          },
+        },
+        Partner: true,
+        Company: true,
+        Children: true,
+      },
+    });
+
+    if (!updatedCompany) throw new Error("No fue posible editar la empresa");
+
+    await createAuditlog({
+      action: "update",
+      entityId: updatedCompany.id,
+      entityType: "companies",
+      log: "Ha editado la empresa " + updatedCompany.name,
+    });
+
+    return {
+      message: "Se ha creado la empresa",
+      success: true,
+      data: updatedCompany,
     };
   } catch (error: any) {
     console.log(error);
