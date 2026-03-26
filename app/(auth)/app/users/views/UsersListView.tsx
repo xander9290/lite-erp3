@@ -13,7 +13,7 @@ import { WidgetAvatar } from "@/components/templates/fields";
 function UsersListView() {
   const columns: TableTemplateColumn<UserWithProps>[] = [
     {
-      key: "Partner.name",
+      key: "name",
       label: "Nombre",
       fieldName: "name",
       accessor: (u) => u.Partner?.name,
@@ -24,13 +24,13 @@ function UsersListView() {
       key: "login",
       label: "Usuario",
       fieldName: "login",
-      accessor: (u) => u.Partner?.name,
+      accessor: (u) => u.login,
       filterable: true,
       type: "string",
       render: (u) => (
         <div className="d-flex flex-row align-items-end gap-2">
           <span onClick={(e) => e.stopPropagation()}>
-            <WidgetAvatar id={u.id} />
+            <WidgetAvatar imageUrl={u.Partner?.imageUrl} />
           </span>
           <span>{u.login}</span>
         </div>
@@ -117,6 +117,9 @@ function UsersListView() {
           pageSize={20}
           defaultOrder="name asc"
           domain={[["name", "!=", "bot"]]}
+          includes={{
+            Partner: true,
+          }}
         />
       </ListView.Body>
     </ListView>

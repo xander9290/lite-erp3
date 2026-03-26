@@ -58,7 +58,6 @@ export function FieldRelationTags({
   label,
   disabled,
   className,
-  required,
   invisible,
   domain,
 }: Props) {

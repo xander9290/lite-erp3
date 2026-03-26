@@ -66,44 +66,42 @@ function containsDeniedSegment(path: PathPart[]) {
   );
 }
 
-// function splitPath(key: string) {
-//   return key
-//     .split(".")
-//     .map((s) => s.trim())
-//     .filter(Boolean);
-// }
+function mergeSelectWithIncludes(select: any, includes: any): any {
+  if (!includes || typeof includes !== "object") return select;
 
-// function containsDeniedSegment(path: string[]) {
-//   return path.some((seg) =>
-//     SENSITIVE_FIELD_DENYLIST.some((d) => seg.toLowerCase() === d.toLowerCase()),
-//   );
-// }
+  const result = { ...select };
 
-// function buildSelectFromFieldPaths(fieldPaths: string[][]): any {
-//   const select: any = {};
+  for (const key in includes) {
+    const value = includes[key];
 
-//   for (const path of fieldPaths) {
-//     if (!path.length) continue;
+    // include: { user: true }
+    if (value === true) {
+      result[key] = true;
+      continue;
+    }
 
-//     let cursor = select;
+    // include: { user: { include: {...} } }
+    if (typeof value === "object") {
+      result[key] = {
+        select: mergeSelectWithIncludes({}, value.include || {}),
+      };
+    }
+  }
 
-//     for (let i = 0; i < path.length; i++) {
-//       const part = path[i];
-//       const isLast = i === path.length - 1;
+  return result;
+}
 
-//       if (isLast) {
-//         cursor[part] = true;
-//       } else {
-//         cursor[part] = cursor[part] ?? { select: {} };
-//         cursor = cursor[part].select;
-//       }
-//     }
-//   }
+function parseIncludes(raw: string | null): any {
+  if (!raw) return {};
 
-//   if (!select.id) select.id = true;
-
-//   return select;
-// }
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return {};
+    return parsed;
+  } catch {
+    return {};
+  }
+}
 
 function buildSelectFromFieldPaths(fieldPaths: PathPart[][]): any {
   const select: any = {};
@@ -131,13 +129,6 @@ function buildSelectFromFieldPaths(fieldPaths: PathPart[][]): any {
   return select;
 }
 
-// function buildNestedWhere(path: string[], leafCondition: any) {
-//   return path.reduceRight((acc, part, idx) => {
-//     if (idx === path.length - 1) return { [part]: leafCondition };
-//     return { [part]: acc };
-//   }, {});
-// }
-
 function buildNestedWhere(path: PathPart[], leafCondition: any): any {
   return path.reduceRight((acc, part, idx) => {
     if (idx === path.length - 1) {
@@ -151,13 +142,6 @@ function buildNestedWhere(path: PathPart[], leafCondition: any): any {
     return { [part.key]: acc };
   }, {});
 }
-
-// function buildNestedOrderBy(path: string[], dir: SortDir): any {
-//   return path.reduceRight((acc, part, idx) => {
-//     if (idx === path.length - 1) return { [part]: dir };
-//     return { [part]: acc };
-//   }, {});
-// }
 
 function buildNestedOrderBy(path: PathPart[], dir: SortDir): any {
   const hasArray = path.some((p) => p.isArray);
@@ -351,11 +335,7 @@ export async function GET(
 
   const domain = parseDomain(searchParams.get("domain"));
 
-  // const fieldPaths = requestedFields
-  //   .filter(isSafeKey)
-  //   .map(splitPath)
-  //   .filter((p) => p.length > 0 && p.length <= MAX_PATH_DEPTH)
-  //   .filter((p) => !containsDeniedSegment(p));
+  const includes = parseIncludes(searchParams.get("includes"));
 
   const fieldPaths = requestedFields
     .filter(isSafeKey)
@@ -363,7 +343,11 @@ export async function GET(
     .filter((p) => p.length > 0 && p.length <= MAX_PATH_DEPTH)
     .filter((p) => !containsDeniedSegment(p));
 
-  const select = buildSelectFromFieldPaths(fieldPaths);
+  // const select = buildSelectFromFieldPaths(fieldPaths);
+  let select = buildSelectFromFieldPaths(fieldPaths);
+
+  // 👇 merge mágico
+  select = mergeSelectWithIncludes(select, includes);
 
   const domainWhere = domain.map(domainItemToWhere).filter(Boolean) as any[];
 

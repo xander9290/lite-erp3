@@ -14,7 +14,6 @@ import {
   Form,
   Row,
   Spinner,
-  Stack,
   Tab,
   Tabs,
 } from "react-bootstrap";
@@ -66,7 +65,6 @@ export function FormView<T extends FieldValues>({
   formStates,
   state,
   auditLog = "null",
-  isReallyDirty,
 }: FormViewProps<T>) {
   const {
     handleSubmit,
@@ -74,14 +72,13 @@ export function FormView<T extends FieldValues>({
     getValues,
   } = methods;
 
-  const dirty = isReallyDirty ?? isDirty;
+  const dirty = isDirty;
 
   const { access } = useAuth();
   const router = useRouter();
 
-  if (!id || id === "") {
-    return <NotFound />;
-  }
+  const modelName = cleanUrl.split("?")[0].split("/")[2] + "Model";
+  const modelAccess = access.find((acc) => acc.fieldName === modelName);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -93,8 +90,9 @@ export function FormView<T extends FieldValues>({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [dirty]);
 
-  const modelName = cleanUrl.split("?")[0].split("/")[2] + "Model";
-  const modelAccess = access.find((acc) => acc.fieldName === modelName);
+  if (!id || id === "") {
+    return <NotFound />;
+  }
 
   if (modelAccess?.invisible) {
     return (

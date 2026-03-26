@@ -39,7 +39,7 @@ function AuditLogItem({ audit }: { audit: AuditLogWithProps }) {
   return (
     <ListGroup.Item className="bg-body-tertiary p-2 border-0 border-bottom rounded-0">
       <div className="d-flex flex-row align-items-end gap-2">
-        <WidgetAvatar id={audit.User.id} />
+        <WidgetAvatar imageUrl={audit.User.Partner?.imageUrl} />
         <small className="fw-semibold">
           {audit.User.Partner?.name ?? audit.User.name ?? "Usuario"}
         </small>
@@ -94,17 +94,17 @@ function AuditLogSkeleton() {
 }
 
 function AuditLogCreatingState({
-  userName,
-  userId,
+  name,
+  imageUrl,
 }: {
-  userName?: string | null;
-  userId?: string | null;
+  name: string | null;
+  imageUrl: string | null;
 }) {
   return (
     <ListGroup.Item className="bg-body-tertiary p-2 border-0 border-bottom rounded-0">
       <div className="d-flex flex-row align-items-end gap-2">
-        <WidgetAvatar id={userId ?? null} />
-        <small className="fw-semibold">{userName ?? "Usuario"}</small>
+        <WidgetAvatar imageUrl={imageUrl} />
+        <small className="fw-semibold">{name ?? "Usuario"}</small>
         <small className="text-muted">
           {format(new Date(), "dd/MM/yyyy HH:mm")}
         </small>
@@ -298,7 +298,10 @@ export default function AuditLogViewer({
 
         <ListGroup variant="flush">
           {isCreating ? (
-            <AuditLogCreatingState userName={user?.name} userId={user?.id} />
+            <AuditLogCreatingState
+              imageUrl={user?.image || ""}
+              name={user?.name || ""}
+            />
           ) : status === "loading" ? (
             <AuditLogSkeleton />
           ) : auditLogs.length > 0 ? (

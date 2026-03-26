@@ -28,8 +28,6 @@ import { createUser, updateUser, UserWithProps } from "../actions/user-actions";
 import toast from "react-hot-toast";
 import UserChangePasswordModal from "./UserChangePasswordModal";
 
-import { isEqual } from "lodash";
-
 function UsersFormView({
   id,
   user,
@@ -79,8 +77,6 @@ function UsersFormView({
     }
   };
 
-  const isReallyDirty = !isEqual(methods.watch(), originalValuesRef.current);
-
   useEffect(() => {
     if (!user) {
       reset(userSchemaDefault);
@@ -110,7 +106,6 @@ function UsersFormView({
     <>
       <FormView
         cleanUrl="/app/users?view_type=form&id=null"
-        isReallyDirty={isReallyDirty}
         reverse={handleReverse}
         onSubmit={onSubmit}
         methods={methods}

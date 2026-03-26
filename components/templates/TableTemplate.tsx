@@ -51,6 +51,7 @@ type TableProps<T> = {
   defaultOrder?: string;
   domain?: Domain;
   onRowClick?: (row: T) => void;
+  includes?: any; // 👈 nuevo
 };
 
 function useDebouncedValue<T>(value: T, delay = 300) {
@@ -103,6 +104,7 @@ export default function TableTemplate<T>({
   defaultOrder,
   domain,
   onRowClick,
+  includes,
 }: TableProps<T>) {
   const router = useRouter();
 
@@ -174,6 +176,7 @@ export default function TableTemplate<T>({
 
     params.set("filters", JSON.stringify(debouncedFilters));
     params.set("domain", serializedDomain);
+    params.set("includes", JSON.stringify(includes ?? {}));
 
     return `/api/tables/${model}?${params.toString()}`;
   }, [
@@ -185,6 +188,7 @@ export default function TableTemplate<T>({
     sortConfig.direction,
     debouncedFilters,
     serializedDomain,
+    includes,
   ]);
 
   const { data, error, isLoading } = useSWR<TableApiResponse<T>>(

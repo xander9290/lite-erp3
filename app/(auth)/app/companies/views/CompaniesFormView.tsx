@@ -7,7 +7,6 @@ import {
 } from "../actions/companies-actions";
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { isEqual } from "lodash";
 import {
   companySchema,
   companySchemaDefault,
@@ -30,7 +29,6 @@ import {
   FieldImage,
   FieldRelation,
   FieldRelationTags,
-  WidgetAvatar,
 } from "@/components/templates/fields";
 import {
   BtnDeleteLine,
@@ -123,12 +121,9 @@ function CompaniesFormView({
     }
   }, [company, reset]);
 
-  const isReallyDirty = !isEqual(methods.watch(), originalValuesRef.current);
-
   return (
     <FormView
       cleanUrl="/app/companies?view_type=form&id=null"
-      isReallyDirty={isReallyDirty}
       reverse={handleReverse}
       auditLog="companies"
       onSubmit={onSubmit}

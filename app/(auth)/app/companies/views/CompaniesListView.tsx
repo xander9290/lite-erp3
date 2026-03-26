@@ -6,16 +6,25 @@ import TableTemplate, {
 } from "@/components/templates/TableTemplate";
 import { CompanieWithProps } from "../actions/companies-actions";
 import { Form } from "react-bootstrap";
+import { WidgetAvatar } from "@/components/templates/fields";
 
 function CompaniesListView() {
   const columns: TableTemplateColumn<CompanieWithProps>[] = [
     {
       key: "name",
       label: "Nombre",
-      accessor: (r) => r.name,
+      accessor: (r) => `[${r.code}] ${r.name}`,
       type: "string",
       filterable: true,
       fieldName: "name",
+      render: (u) => (
+        <div className="d-flex flex-row align-items-end gap-2">
+          <span onClick={(e) => e.stopPropagation()}>
+            <WidgetAvatar imageUrl={u.Partner?.imageUrl} />
+          </span>
+          <span>{`[${u.code}] ${u.name}`}</span>
+        </div>
+      ),
     },
     {
       key: "Manager.Partner.name",
@@ -66,6 +75,7 @@ function CompaniesListView() {
           defaultOrder="name asc"
           pageSize={50}
           viewForm="/app/companies?view_type=form"
+          includes={{ code: true, Partner: true }}
         />
       </ListView.Body>
     </ListView>
