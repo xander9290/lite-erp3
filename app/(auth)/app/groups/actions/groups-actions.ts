@@ -1,14 +1,14 @@
 "use server";
 
-import type { Group, GroupLine } from "@/generated/prisma/client";
-import { getUserById, UserWithProps } from "../../users/actions/user-actions";
+import type { Group, GroupLine, User } from "@/generated/prisma/client";
+import { getUserById } from "../../users/actions/user-actions";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { createAuditlog } from "@/app/actions/auditlog-actions";
 
 export interface GroupWithProps extends Group {
-  Users: UserWithProps[];
+  Users: User[];
   GroupLines: GroupLine[];
 }
 
