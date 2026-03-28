@@ -71,13 +71,13 @@ function ModelFormView({
 
   const onSubmit: SubmitHandler<ModelSchemaType> = async (data) => {
     if (id && id === "null") {
-      const res = await createModel(data);
+      const res = await createModel({ data });
       if (!res.success) return modalError(res.message);
 
       router.replace(`/app/models?view_type=form&id=${res.data?.id}`);
       toast.success(res.message);
     } else {
-      const res = await updateModel({ id, ...data });
+      const res = await updateModel({ data: { id, ...data } });
       if (!res.success) return modalError(res.message);
 
       router.refresh();

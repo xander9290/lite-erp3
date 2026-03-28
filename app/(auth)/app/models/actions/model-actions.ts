@@ -4,10 +4,18 @@ import { createAuditlog } from "@/app/(auth)/app/actions/auditlog-actions";
 import { ActionResponse } from "@/app/libs/definitions";
 import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
-import { FieldType, Model, ModelField } from "@/generated/prisma/client";
+import { FieldType, Model } from "@/generated/prisma/client";
+import { ModelSchemaType } from "../schemas/model.schema";
 
 export interface ModelWithProps extends Model {
-  ModelFields: ModelField[];
+  ModelFields: {
+    name: string;
+    id: string;
+    label: string;
+    description: string;
+    fieldType: FieldType;
+    active: boolean;
+  }[];
 }
 
 export async function getModelById({
@@ -20,7 +28,16 @@ export async function getModelById({
     const model = await prisma.model.findUnique({
       where: { id },
       include: {
-        ModelFields: true,
+        ModelFields: {
+          select: {
+            id: true,
+            name: true,
+            label: true,
+            description: true,
+            active: true,
+            fieldType: true,
+          },
+        },
       },
     });
 
@@ -32,38 +49,27 @@ export async function getModelById({
 }
 
 export async function createModel({
-  label,
-  description,
-  active,
-  lines,
+  data,
 }: {
-  label: string;
-  description: string;
-  active: boolean;
-  lines: {
-    label: string;
-    description: string;
-    active: boolean;
-    fieldType: FieldType;
-  }[];
+  data: ModelSchemaType;
 }): Promise<ActionResponse<ModelWithProps>> {
   try {
     const { uid } = await sessionStore();
 
-    const name = `[${label}] ${description}`;
+    const name = `[${data.label}] ${data.description}`;
 
     const newModel = await prisma.model.create({
       data: {
-        label,
-        description,
+        label: data.label,
+        description: data.description,
         name,
-        active,
+        active: data.active,
         ModelFields: {
           createMany: {
-            data: lines.map((line) => ({
+            data: data.lines.map((line) => ({
               label: line.label,
               description: line.description,
-              name: `[${label}] ${line.label}`,
+              name: `[${data.label}] ${line.label}`,
               active: line.active,
               fieldType: line.fieldType,
               createdUid: uid || "",
@@ -73,7 +79,16 @@ export async function createModel({
         createdUid: uid || "",
       },
       include: {
-        ModelFields: true,
+        ModelFields: {
+          select: {
+            id: true,
+            name: true,
+            label: true,
+            description: true,
+            active: true,
+            fieldType: true,
+          },
+        },
       },
     });
 
@@ -101,53 +116,41 @@ export async function createModel({
 }
 
 export async function updateModel({
-  id,
-  label,
-  description,
-  active,
-  lines,
+  data,
 }: {
-  id: string | null;
-  label: string;
-  description: string;
-  active: boolean;
-  lines: {
-    id?: string;
-    label: string;
-    description: string;
-    active: boolean;
-    fieldType: FieldType;
-  }[];
+  data: ModelSchemaType & { id: string | null };
 }): Promise<ActionResponse<ModelWithProps>> {
   try {
-    if (!id) throw new Error("ID not defined");
+    if (!data.id) throw new Error("ID not defined");
 
     const { uid } = await sessionStore();
 
     const changedModel = await prisma.model.update({
-      where: { id },
+      where: { id: data.id },
       data: {
-        label,
-        description,
-        name: `[${label}] ${description}`,
-        active,
+        label: data.label,
+        description: data.description,
+        name: `[${data.label}] ${data.description}`,
+        active: data.active,
         ModelFields: {
           deleteMany: {
             id: {
-              notIn: lines.filter((line) => line.id).map((line) => line.id!),
+              notIn: data.lines
+                .filter((line) => line.id)
+                .map((line) => line.id!),
             },
           },
-          upsert: lines.map((line) => ({
+          upsert: data.lines.map((line) => ({
             where: { id: line.id ?? "" },
             update: {
-              name: `[${label}] ${line.label}`,
+              name: `[${data.label}] ${line.label}`,
               label: line.label,
               description: line.description,
               active: line.active,
               fieldType: line.fieldType,
             },
             create: {
-              name: `[${label}] ${line.label}`,
+              name: `[${data.label}] ${line.label}`,
               label: line.label,
               description: line.description,
               active: line.active,
@@ -158,7 +161,16 @@ export async function updateModel({
         },
       },
       include: {
-        ModelFields: true,
+        ModelFields: {
+          select: {
+            id: true,
+            name: true,
+            label: true,
+            description: true,
+            active: true,
+            fieldType: true,
+          },
+        },
       },
     });
 

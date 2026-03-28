@@ -117,7 +117,7 @@ function TopNavItems() {
           </>
         }
         disabled={
-          fieldsAccess.find((field) => field.fieldName === "partnersMen")
+          fieldsAccess.find((field) => field.fieldName === "partnersMenu")
             ?.invisible
         }
       >
