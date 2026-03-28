@@ -3,11 +3,21 @@ import { z } from "zod";
 export const groupSchema = z.object({
   name: z.string().min(1, "Nombre es requerido"),
   active: z.boolean(),
-  users: z.array(z.string()),
+  users: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    }),
+  ),
   lines: z.array(
     z.object({
       id: z.string().optional(),
-      fieldId: z.string().nullable(),
+      fieldId: z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .nullable(),
       invisible: z.boolean(),
       required: z.boolean(),
       readonly: z.boolean(),

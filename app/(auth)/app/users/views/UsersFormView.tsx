@@ -92,8 +92,11 @@ function UsersFormView({
       active: user.active,
       createdAt: user.createdAt,
       lastLogin: user.lastLogin,
-      groupId: user.groupId,
-      companies: user.Companies.map((c) => c.id) || [],
+      groupId: {
+        id: user.groupId,
+        name: user.Group?.name || "",
+      },
+      companies: user.Companies.map((c) => ({ id: c.id, name: c.name })) || [],
       updatedAt: user.updatedAt,
       createdUid: user.createdUid,
     };
@@ -133,7 +136,6 @@ function UsersFormView({
             model="group"
             name="groupId"
             label="Grupo"
-            searchPageSize={25}
             searchColumns={[
               {
                 key: "name",

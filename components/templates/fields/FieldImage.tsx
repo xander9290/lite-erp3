@@ -6,7 +6,10 @@ import { Form, Modal, Button } from "react-bootstrap";
 import toast from "react-hot-toast";
 import Cropper from "react-easy-crop";
 import { useController, useFormContext } from "react-hook-form";
-import { createImage, deleteImage } from "@/app/actions/image-actions";
+import {
+  createImage,
+  deleteImage,
+} from "@/app/(auth)/app/actions/image-actions";
 import { useModals } from "@/contexts/ModalContext";
 import { useAccess } from "@/contexts/AccessContext";
 

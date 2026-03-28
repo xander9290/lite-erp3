@@ -18,7 +18,7 @@ import {
   createAuditlog,
   getAuditlogsByEntity,
   type AuditLogWithProps,
-} from "@/app/actions/auditlog-actions";
+} from "@/app/(auth)/app/actions/auditlog-actions";
 import { useAuth } from "@/hooks/sessionStore";
 import { FieldEntry, FieldSubmit, WidgetAvatar } from "./fields";
 import {

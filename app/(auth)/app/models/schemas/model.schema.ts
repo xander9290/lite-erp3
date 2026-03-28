@@ -24,6 +24,6 @@ export const modelSchemaDefault: ModelSchemaType = {
   name: "",
   label: "",
   description: "",
-  active: false,
+  active: true,
   lines: [],
 };

@@ -69,7 +69,7 @@ function CompaniesFormView({
       router.replace(`/app/companies?view_type=form&id=${res.data?.id}`);
       toast.success(res.message);
     } else {
-      const res = await updateCompany({ id, data });
+      const res = await updateCompany({ data: { id, ...data } });
       if (!res.success) return modalError(res.message);
       router.refresh();
       toast.success(res.message);
@@ -102,15 +102,26 @@ function CompaniesFormView({
         country: company.Partner.country || "",
         phone: company.Partner.phone || "",
         vat: company.Partner.vat || "",
-        userIds: company.Users.map((u) => u.id) || [],
-        managerId: company.managerId,
+        userIds: company.Users.map((u) => ({ id: u.id, name: u.name })) || [],
+        managerId: {
+          id: company.Manager?.id || "",
+          name: company.Manager?.name || "",
+        },
         partnerId: company.partnerId,
-        parentId: company.parentId,
+        parentId: {
+          id: company.parentId,
+          name: company.Company?.name || "",
+        },
         childrenIds:
           company.Children.map((ch) => ({
-            id: ch.id,
-            managerId: ch.managerId || "",
-            name: ch.name,
+            companyId: {
+              id: ch.id,
+              name: ch.name,
+            },
+            managerId: {
+              id: ch.Manager?.id || "",
+              name: ch.Manager?.name || "",
+            },
           })) || [],
         createdUid: company.createdUid,
         createdAt: company.createdAt,
@@ -118,6 +129,7 @@ function CompaniesFormView({
       };
       reset(values);
       originalValuesRef.current = values;
+      console.log(values);
     }
   }, [company, reset]);
 
@@ -229,7 +241,7 @@ function CompaniesFormView({
                     <SimpleTD colIdx={index} name="lineName">
                       <FieldRelation
                         model="company"
-                        name={`childrenIds.${index}.id`}
+                        name={`childrenIds.${index}.companyId`}
                         label="Empresa"
                         domain={[
                           ["active", "=", true],
@@ -258,8 +270,14 @@ function CompaniesFormView({
                 )}
                 action={() =>
                   append({
-                    name: "",
-                    managerId: "",
+                    companyId: {
+                      id: "",
+                      name: "",
+                    },
+                    managerId: {
+                      id: "",
+                      name: "",
+                    },
                   })
                 }
               />

@@ -1,8 +1,8 @@
 "use server";
 
 import { Tag } from "@/generated/prisma/client";
-import { ActionResponse } from "../libs/definitions";
-import prisma from "../libs/prisma";
+import { ActionResponse } from "../../../libs/definitions";
+import prisma from "../../../libs/prisma";
 
 export async function createTag({
   name,

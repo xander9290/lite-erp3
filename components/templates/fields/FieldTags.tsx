@@ -6,7 +6,7 @@ import { Form, Dropdown, Badge } from "react-bootstrap";
 import {
   fetchTags,
   createTag as createTagAction,
-} from "@/app/actions/tag-actions";
+} from "@/app/(auth)/app/actions/tag-actions";
 import { useAccess } from "@/contexts/AccessContext";
 
 interface TagOption {

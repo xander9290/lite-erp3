@@ -1,14 +1,17 @@
 "use server";
 
 import prisma from "@/app/libs/prisma";
-import type { Model, ModelField } from "@/generated/prisma/client";
+import type { ModelField } from "@/generated/prisma/client";
 import { ModelFieldSchemaType } from "../schemas/modelFields.schema";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { ActionResponse } from "@/app/libs/definitions";
-import { createAuditlog } from "@/app/actions/auditlog-actions";
+import { createAuditlog } from "@/app/(auth)/app/actions/auditlog-actions";
 
 export interface ModelFieldWithProps extends ModelField {
-  Model: Model;
+  Model: {
+    id: string;
+    name: string;
+  };
 }
 
 export async function getModelFieldById({
@@ -22,7 +25,12 @@ export async function getModelFieldById({
     const modelField = await prisma.modelField.findUnique({
       where: { id },
       include: {
-        Model: true,
+        Model: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -56,12 +64,17 @@ export async function createModelField({
         createdUid: uid || "",
         Model: {
           connect: {
-            id: data.modelId,
+            id: data.modelId.id,
           },
         },
       },
       include: {
-        Model: true,
+        Model: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -90,19 +103,28 @@ export async function createModelField({
 
 export async function updateModelField({
   data,
-  id,
 }: {
-  data: NewModelFieldData;
-  id: string | null;
+  data: NewModelFieldData & { id: string | null };
 }): Promise<ActionResponse<ModelFieldWithProps>> {
   try {
-    if (!id) throw new Error("ID not defined");
+    if (!data.id) throw new Error("ID not defined");
 
     const updatedModelField = await prisma.modelField.update({
-      where: { id },
-      data,
+      where: { id: data.id },
+      data: {
+        name: `[${data.label}] ${data.description}`,
+        label: data.label,
+        description: data.description,
+        fieldType: data.fieldType,
+        active: data.active,
+      },
       include: {
-        Model: true,
+        Model: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 

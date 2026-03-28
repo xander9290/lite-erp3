@@ -1,6 +1,6 @@
 "use server";
 
-import { createAuditlog } from "@/app/actions/auditlog-actions";
+import { createAuditlog } from "@/app/(auth)/app/actions/auditlog-actions";
 import { ActionResponse } from "@/app/libs/definitions";
 import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";

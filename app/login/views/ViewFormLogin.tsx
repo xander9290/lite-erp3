@@ -7,7 +7,7 @@ import {
   userLoginSchemaDefault,
   UserLoginSchemaType,
 } from "@/schemas/userlogin.schema";
-import { userLogin } from "@/app/actions/login-actions";
+import { userLogin } from "@/app/(auth)/app/actions/login-actions";
 import toast from "react-hot-toast";
 import { redirect } from "next/navigation";
 import { FieldEntry, FieldSubmit } from "@/components/templates/fields";

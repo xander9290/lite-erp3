@@ -7,8 +7,16 @@ export const userSchema = z.object({
   imageUrl: z.string().nullable(),
   lastLogin: z.date().nullable(),
   active: z.boolean(),
-  groupId: z.string().nullable(),
-  companies: z.array(z.string()),
+  groupId: z.object({
+    id: z.string().nullable(),
+    name: z.string(),
+  }),
+  companies: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    }),
+  ),
   createdUid: z.string().nullable(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
@@ -23,7 +31,10 @@ export const userSchemaDefault: UserSchemaType = {
   imageUrl: null,
   active: true,
   lastLogin: null,
-  groupId: null,
+  groupId: {
+    id: "",
+    name: "",
+  },
   companies: [],
   createdUid: null,
   createdAt: null,

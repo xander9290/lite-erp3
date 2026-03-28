@@ -7,7 +7,10 @@ export const modelFieldSchema = z.object({
   description: z.string().min(1, "Descripción es requerido"),
   fieldType: z.enum(FieldType),
   active: z.boolean(),
-  modelId: z.string().min(1, "Modelo es requerido"),
+  modelId: z.object({
+    id: z.string().min(1, "El modelo es requerido"),
+    name: z.string(),
+  }),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
   createdUid: z.string(),
@@ -21,7 +24,10 @@ export const modelFieldSchemaDefault: ModelFieldSchemaType = {
   description: "",
   fieldType: "string",
   active: true,
-  modelId: "",
+  modelId: {
+    id: "",
+    name: "",
+  },
   createdAt: null,
   updatedAt: null,
   createdUid: "",

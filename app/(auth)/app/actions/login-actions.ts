@@ -1,8 +1,8 @@
 "use server";
 
-import { signIn } from "../libs/auth";
-import { ActionResponse } from "../libs/definitions";
-import prisma from "../libs/prisma";
+import { signIn } from "../../../libs/auth";
+import { ActionResponse } from "../../../libs/definitions";
+import prisma from "../../../libs/prisma";
 
 export async function userLogin({
   login,

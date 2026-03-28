@@ -14,8 +14,7 @@ import { useAccess } from "@/contexts/AccessContext";
 
 export interface Many2ManyOption {
   id: string;
-  name?: string | null;
-  displayName?: string | null;
+  name: string;
   [key: string]: any;
 }
 
@@ -71,12 +70,13 @@ export function FieldRelationTags({
     formState: { isSubmitting },
   } = useController({ name, control });
 
-  const value = (field.value as string[] | undefined) ?? [];
+  const value = (field.value as Many2ManyOption[] | undefined) ?? [];
   const setValue = field.onChange;
+
+  const selectedObjects = value;
 
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<Many2ManyOption[]>([]);
-  const [selectedObjects, setSelectedObjects] = useState<Many2ManyOption[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -112,36 +112,6 @@ export function FieldRelationTags({
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (value.length === 0) {
-      setSelectedObjects([]);
-      return;
-    }
-
-    const resolve = async () => {
-      try {
-        const params = new URLSearchParams({
-          ids: value.join(","),
-          domain: serializedDomain,
-        });
-
-        const res = await fetch(`/api/m2m/${model}?${params.toString()}`);
-        const data = await res.json();
-        const safeData = Array.isArray(data) ? data : [];
-
-        const sorted = value
-          .map((id) => safeData.find((item: Many2ManyOption) => item.id === id))
-          .filter(Boolean) as Many2ManyOption[];
-
-        setSelectedObjects(sorted);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    resolve();
-  }, [value, model, serializedDomain]);
-
   const fetchOptions = useCallback(
     async (search: string) => {
       if (abortRef.current) abortRef.current.abort();
@@ -154,7 +124,7 @@ export function FieldRelationTags({
           search,
           limit: "5",
           domain: serializedDomain,
-          excludeIds: value.join(","),
+          excludeIds: value.map((v) => v.id).join(","),
         });
 
         const res = await fetch(`/api/m2o/${model}?${params.toString()}`, {
@@ -165,7 +135,7 @@ export function FieldRelationTags({
         const safeData = Array.isArray(data) ? data : [];
 
         const filtered = safeData.filter(
-          (opt: Many2ManyOption) => !value.includes(opt.id),
+          (opt: Many2ManyOption) => !value.some((v) => v.id === opt.id),
         );
 
         setOptions(filtered);
@@ -191,13 +161,19 @@ export function FieldRelationTags({
   }, [query, fetchOptions, isOpen, disabled]);
 
   const handleSelect = (option: Many2ManyOption) => {
-    if (value.includes(option.id)) {
+    if (value.some((v) => v.id === option.id)) {
       setIsOpen(false);
       setQuery("");
       return;
     }
 
-    setValue([...value, option.id]);
+    setValue([
+      ...value,
+      {
+        id: option.id,
+        name: option.displayName ?? option.name,
+      },
+    ]);
     setQuery("");
     setIsOpen(false);
     setHighlightedIndex(0);
@@ -206,7 +182,7 @@ export function FieldRelationTags({
   };
 
   const handleRemove = (id: string) => {
-    setValue(value.filter((v) => v !== id));
+    setValue(value.filter((v) => v.id !== id));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -240,7 +216,7 @@ export function FieldRelationTags({
 
     if (e.key === "Backspace" && query === "" && value.length > 0) {
       e.preventDefault();
-      handleRemove(value[value.length - 1]);
+      handleRemove(value[value.length - 1].id);
     }
   };
 
@@ -319,7 +295,7 @@ export function FieldRelationTags({
                     className="text-wrap"
                     style={{ fontSize: "0.9rem" }}
                   >
-                    {option.displayName ?? option.name}
+                    {option.name}
                   </Dropdown.Item>
                 ))}
               </Dropdown.Menu>
@@ -380,7 +356,7 @@ export function FieldRelationTags({
             bg="primary"
             className="d-flex align-items-center gap-1 px-2 py-1"
           >
-            <span>{opt.displayName ?? opt.name}</span>
+            <span>{opt.name}</span>
 
             {!disabled && (
               <button

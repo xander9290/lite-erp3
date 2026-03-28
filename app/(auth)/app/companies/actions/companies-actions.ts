@@ -1,19 +1,34 @@
 "use server";
 
 import type { Company, Partner } from "@/generated/prisma/client";
-import { UserWithPartner } from "../../users/actions/user-actions";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
 import { CompanySchemaType } from "../schemas/company.schema";
 import { sessionStore } from "@/app/libs/sessionStore";
-import { createAuditlog } from "@/app/actions/auditlog-actions";
+import { createAuditlog } from "@/app/(auth)/app/actions/auditlog-actions";
 
 export interface CompanieWithProps extends Company {
-  Users: UserWithPartner[];
-  Manager: UserWithPartner | null;
+  Users: {
+    id: string;
+    name: string;
+  }[];
+  Manager: {
+    name: string;
+    id: string;
+  } | null;
   Partner: Partner;
-  Company: Company | null;
-  Children: Company[];
+  Company: {
+    id: string;
+    name: string;
+  } | null;
+  Children: {
+    name: string;
+    id: string;
+    Manager: {
+      id: string;
+      name: string;
+    } | null;
+  }[];
 }
 
 export async function getCompanyById({
@@ -24,22 +39,53 @@ export async function getCompanyById({
   try {
     if (!id) throw new Error("ID not defined");
 
+    // const company = await prisma.company.findUnique({
+    //   where: { id },
+    //   include: {
+    //     Users: {
+    //       include: {
+    //         Partner: true,
+    //       },
+    //     },
+    //     Manager: {
+    //       include: {
+    //         Partner: true,
+    //       },
+    //     },
+    //     Partner: true,
+    //     Company: true,
+    //     Children: true,
+    //   },
+    // });
+
     const company = await prisma.company.findUnique({
       where: { id },
       include: {
         Users: {
-          include: {
-            Partner: true,
-          },
-        },
-        Manager: {
-          include: {
-            Partner: true,
-          },
+          select: { id: true, name: true },
         },
         Partner: true,
-        Company: true,
-        Children: true,
+        Company: {
+          select: { id: true, name: true },
+        },
+        Manager: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        Children: {
+          select: {
+            id: true,
+            name: true,
+            Manager: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -50,7 +96,7 @@ export async function getCompanyById({
   }
 }
 
-type CreateCompanyProps = Omit<
+type CompanyActionProps = Omit<
   CompanySchemaType,
   "createdUid" | "createdAt" | "updatedAt"
 >;
@@ -58,7 +104,7 @@ type CreateCompanyProps = Omit<
 export async function createCompany({
   data,
 }: {
-  data: CreateCompanyProps;
+  data: CompanyActionProps;
 }): Promise<ActionResponse<CompanieWithProps>> {
   try {
     const { uid } = await sessionStore();
@@ -69,16 +115,16 @@ export async function createCompany({
         code: data.code,
         active: data.active,
         Users: {
-          connect: data.userIds.map((u) => ({ id: u })),
+          connect: data.userIds.map((u) => ({ id: u.id })),
         },
         ...(data.managerId
-          ? { Manager: { connect: { id: data.managerId } } }
+          ? { Manager: { connect: { id: data.managerId.id! } } }
           : {}),
         ...(data.parentId
-          ? { Company: { connect: { id: data.parentId } } }
+          ? { Company: { connect: { id: data.parentId.id! } } }
           : {}),
         Children: {
-          connect: data.childrenIds.map((ch) => ({ id: ch.id })),
+          connect: data.childrenIds.map((ch) => ({ id: ch.companyId.id })),
         },
         Partner: {
           create: {
@@ -101,18 +147,30 @@ export async function createCompany({
       },
       include: {
         Users: {
-          include: {
-            Partner: true,
-          },
-        },
-        Manager: {
-          include: {
-            Partner: true,
-          },
+          select: { id: true, name: true },
         },
         Partner: true,
-        Company: true,
-        Children: true,
+        Company: {
+          select: { id: true, name: true },
+        },
+        Manager: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        Children: {
+          select: {
+            id: true,
+            name: true,
+            Manager: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -140,32 +198,30 @@ export async function createCompany({
 }
 
 export async function updateCompany({
-  id,
   data,
 }: {
-  id: string | null;
-  data: CreateCompanyProps;
+  data: CompanyActionProps & { id: string | null };
 }): Promise<ActionResponse<CompanieWithProps>> {
   try {
-    if (!id) throw new Error("ID not defined");
+    if (!data.id) throw new Error("ID not defined");
 
     const updatedCompany = await prisma.company.update({
-      where: { id },
+      where: { id: data.id },
       data: {
         name: data.name,
         code: data.code,
         active: data.active,
         Users: {
-          set: data.userIds.map((u) => ({ id: u })),
+          set: data.userIds.map((u) => ({ id: u.id })),
         },
-        Manager: data.managerId
-          ? { connect: { id: data.managerId! } }
+        Manager: data.managerId?.id
+          ? { connect: { id: data.managerId.id } }
           : { disconnect: true },
-        Company: data.parentId
-          ? { connect: { id: data.parentId! } }
+        Company: data.parentId.id
+          ? { connect: { id: data.parentId.id } }
           : { disconnect: true },
         Children: {
-          set: data.childrenIds.map((ch) => ({ id: ch.id })),
+          set: data.childrenIds.map((ch) => ({ id: ch.companyId.id })),
         },
         Partner: {
           update: {
@@ -186,18 +242,30 @@ export async function updateCompany({
       },
       include: {
         Users: {
-          include: {
-            Partner: true,
-          },
-        },
-        Manager: {
-          include: {
-            Partner: true,
-          },
+          select: { id: true, name: true },
         },
         Partner: true,
-        Company: true,
-        Children: true,
+        Company: {
+          select: { id: true, name: true },
+        },
+        Manager: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        Children: {
+          select: {
+            id: true,
+            name: true,
+            Manager: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 

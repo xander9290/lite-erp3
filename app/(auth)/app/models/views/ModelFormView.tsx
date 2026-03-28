@@ -93,15 +93,8 @@ function ModelFormView({
 
   useEffect(() => {
     if (!entity) {
-      const values: ModelSchemaType = {
-        name: "",
-        label: "",
-        description: "",
-        active: false,
-        lines: [],
-      };
-      originalValuesRef.current = values;
-      reset(values);
+      reset(modelSchemaDefault);
+      originalValuesRef.current = modelSchemaDefault;
     } else {
       const values: ModelSchemaType = {
         name: entity.name,

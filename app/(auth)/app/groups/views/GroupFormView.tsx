@@ -63,17 +63,14 @@ function GroupFormView({
 
   const onSubmit: SubmitHandler<GroupSchemaType> = async (data) => {
     if (id && id === "null") {
-      const res = await createGroup({
-        ...data,
-        users: data.users.map((u) => u),
-      });
+      const res = await createGroup({ data });
 
       if (!res.success) return modalError(res.message);
 
       router.replace(`/app/groups?view_type=form&id=${res.data?.id}`);
       toast.success(res.message);
     } else {
-      const res = await updateGroup({ id, ...data });
+      const res = await updateGroup({ data: { id: id, ...data } });
 
       if (!res.success) return modalError(res.message);
 
@@ -90,25 +87,20 @@ function GroupFormView({
 
   const setGroup = useCallback(() => {
     if (!group) {
-      const values: GroupSchemaType = {
-        name: "",
-        active: true,
-        users: [],
-        lines: [],
-        createdAt: null,
-        updatedAt: null,
-      };
-      reset(values);
-      originalValuesRef.current = values;
+      reset(groupSchemaDefault);
+      originalValuesRef.current = groupSchemaDefault;
     } else {
       const values: GroupSchemaType = {
         name: group.name,
         active: group.active,
-        users: group.Users.map((u) => u.id) ?? [],
+        users: group.Users.map((u) => ({ id: u.id, name: u.name })) ?? [],
         lines:
           group.GroupLines.map((line) => ({
             id: line.id,
-            fieldId: line.fieldId,
+            fieldId: {
+              id: line.fieldId,
+              name: line.fieldName,
+            },
             invisible: line.invisible,
             required: line.required,
             readonly: line.readonly,
@@ -286,7 +278,10 @@ function GroupFormView({
                 }}
                 action={() =>
                   append({
-                    fieldId: "",
+                    fieldId: {
+                      id: "",
+                      name: "",
+                    },
                     invisible: false,
                     required: false,
                     readonly: false,

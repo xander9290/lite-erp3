@@ -1,18 +1,36 @@
-import { z } from "zod";
+import { string, z } from "zod";
 
 export const companySchema = z.object({
   name: z.string().min(1, "Nombre es requerido"),
   code: z.string(),
   active: z.boolean(),
-  userIds: z.array(z.string()),
-  managerId: z.string().nullable(),
+  userIds: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    }),
+  ),
+  managerId: z
+    .object({
+      id: string().nullable(),
+      name: string(),
+    })
+    .nullable(),
   partnerId: z.string(),
-  parentId: z.string().nullable(),
+  parentId: z.object({
+    id: z.string().nullable(),
+    name: z.string(),
+  }),
   childrenIds: z.array(
     z.object({
-      id: z.string().optional(),
-      name: z.string(),
-      managerId: z.string(),
+      companyId: z.object({
+        id: z.string(),
+        name: z.string(),
+      }),
+      managerId: z.object({
+        id: z.string(),
+        name: z.string(),
+      }),
     }),
   ),
   imageUrl: z.string().nullable(),
@@ -49,9 +67,15 @@ export const companySchemaDefault: CompanySchemaType = {
   phone: "",
   vat: "",
   userIds: [],
-  managerId: null,
+  managerId: {
+    id: "",
+    name: "",
+  },
   partnerId: "",
-  parentId: null,
+  parentId: {
+    id: "",
+    name: "",
+  },
   childrenIds: [],
   createdUid: null,
   createdAt: null,

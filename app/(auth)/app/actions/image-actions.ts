@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
-import { ActionResponse } from "../libs/definitions";
+import { ActionResponse } from "../../../libs/definitions";
 
 export async function createImage({
   formData,

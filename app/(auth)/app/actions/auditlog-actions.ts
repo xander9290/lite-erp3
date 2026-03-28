@@ -1,10 +1,10 @@
 "use server";
 
 import { type AuditlogActions, type Auditlog } from "@/generated/prisma/client";
-import { type UserWithPartner } from "../(auth)/app/users/actions/user-actions";
-import { ActionResponse } from "../libs/definitions";
-import prisma from "../libs/prisma";
-import { sessionStore } from "../libs/sessionStore";
+import { type UserWithPartner } from "../users/actions/user-actions";
+import { ActionResponse } from "../../../libs/definitions";
+import prisma from "../../../libs/prisma";
+import { sessionStore } from "../../../libs/sessionStore";
 
 export interface AuditLogWithProps extends Auditlog {
   User: UserWithPartner;

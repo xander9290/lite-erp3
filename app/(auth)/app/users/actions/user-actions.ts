@@ -1,16 +1,10 @@
 "use server";
 
-import { createAuditlog } from "@/app/actions/auditlog-actions";
+import { createAuditlog } from "@/app/(auth)/app/actions/auditlog-actions";
 import { ActionResponse } from "@/app/libs/definitions";
 import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
-import type {
-  User,
-  Partner,
-  Group,
-  GroupLine,
-  Company,
-} from "@/generated/prisma/client";
+import type { User, Partner, GroupLine } from "@/generated/prisma/client";
 import bcrypt from "bcryptjs";
 import { UserSchemaType } from "../schemas/user.schema";
 
@@ -19,9 +13,19 @@ export interface UserWithPartner extends User {
 }
 
 export interface UserWithProps extends User {
-  Partner: Partner | null;
-  Group: Group | null;
-  Companies: Company[];
+  Partner: {
+    name: string;
+    email: string | null;
+    imageUrl: string | null;
+  } | null;
+  Group: {
+    name: string;
+    id: string;
+  } | null;
+  Companies: {
+    name: string;
+    id: string;
+  }[];
 }
 
 export async function getUserById({
@@ -37,9 +41,25 @@ export async function getUserById({
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
-        Partner: true,
-        Group: true,
-        Companies: true,
+        Partner: {
+          select: {
+            name: true,
+            email: true,
+            imageUrl: true,
+          },
+        },
+        Group: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        Companies: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -76,7 +96,7 @@ export async function getUserByLogin({
   }
 }
 
-type UserCreateProps = Omit<
+type UserActionProps = Omit<
   UserSchemaType,
   "createdAt" | "createdUid" | "updatedAt"
 >;
@@ -84,7 +104,7 @@ type UserCreateProps = Omit<
 export async function createUser({
   data,
 }: {
-  data: UserCreateProps;
+  data: UserActionProps;
 }): Promise<ActionResponse<UserWithProps>> {
   try {
     const { uid } = await sessionStore();
@@ -96,7 +116,7 @@ export async function createUser({
         active: data.active,
         password: "",
         createdUid: uid || "",
-        ...(data.groupId && { Group: { connect: { id: data.groupId } } }),
+        ...(data.groupId && { Group: { connect: { id: data.groupId.id! } } }),
         Partner: {
           create: {
             name: data.name,
@@ -106,13 +126,29 @@ export async function createUser({
           },
         },
         Companies: {
-          connect: data.companies.map((c) => ({ id: c })),
+          connect: data.companies.map((c) => ({ id: c.id })),
         },
       },
       include: {
-        Partner: true,
-        Group: true,
-        Companies: true,
+        Partner: {
+          select: {
+            name: true,
+            email: true,
+            imageUrl: true,
+          },
+        },
+        Group: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        Companies: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -146,7 +182,7 @@ export async function updateUser({
   data,
 }: {
   id: string | null;
-  data: UserCreateProps;
+  data: UserActionProps;
 }): Promise<ActionResponse<UserWithProps>> {
   try {
     if (!id) throw new Error("ID user is undefined");
@@ -158,10 +194,10 @@ export async function updateUser({
         login: data.login,
         active: data.active,
         Group: data.groupId
-          ? { connect: { id: data.groupId } }
+          ? { connect: { id: data.groupId.id! } }
           : { disconnect: true },
         Companies: {
-          set: data.companies.map((c) => ({ id: c })),
+          set: data.companies.map((c) => ({ id: c.id })),
         },
         Partner: {
           update: {
@@ -172,9 +208,25 @@ export async function updateUser({
         },
       },
       include: {
-        Partner: true,
-        Group: true,
-        Companies: true,
+        Partner: {
+          select: {
+            name: true,
+            email: true,
+            imageUrl: true,
+          },
+        },
+        Group: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        Companies: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 

@@ -50,7 +50,7 @@ function ModelFieldsFormView({
       router.replace(`/app/model_fields?view_type=form&id=${res.data?.id}`);
       toast.success(res.message);
     } else {
-      const res = await updateModelField({ id: id, data });
+      const res = await updateModelField({ data: { id, ...data } });
       if (!res.success) return modalError(res.message);
 
       router.refresh();
@@ -66,19 +66,8 @@ function ModelFieldsFormView({
 
   useEffect(() => {
     if (!modelField) {
-      const values: ModelFieldSchemaType = {
-        name: "",
-        label: "",
-        description: "",
-        active: true,
-        fieldType: "string",
-        modelId: "",
-        createdAt: null,
-        updatedAt: null,
-        createdUid: "",
-      };
-      reset(values);
-      originalValuesRef.current = values;
+      reset(modelFieldSchemaDefault);
+      originalValuesRef.current = modelFieldSchemaDefault;
     } else {
       const values: ModelFieldSchemaType = {
         name: modelField.name,
@@ -86,7 +75,10 @@ function ModelFieldsFormView({
         description: modelField.description,
         active: modelField.active,
         fieldType: modelField.fieldType,
-        modelId: modelField.modelId,
+        modelId: {
+          id: modelField.Model.id,
+          name: modelField.Model.name,
+        },
         createdAt: modelField.createdAt,
         updatedAt: modelField.updatedAt,
         createdUid: modelField.createdUid,
