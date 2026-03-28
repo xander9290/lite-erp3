@@ -27,9 +27,9 @@ function CompaniesListView() {
       ),
     },
     {
-      key: "Manager.Partner.name",
+      key: "Manager.name",
       label: "Gerente",
-      accessor: (r) => r.Manager?.Partner?.name,
+      accessor: (r) => r.Manager?.name,
       type: "string",
       filterable: true,
       fieldName: "managerId",
