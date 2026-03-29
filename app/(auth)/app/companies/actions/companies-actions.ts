@@ -217,7 +217,7 @@ export async function updateCompany({
         Manager: data.managerId?.id
           ? { connect: { id: data.managerId.id } }
           : { disconnect: true },
-        Company: data.parentId.id
+        Company: data.parentId?.id
           ? { connect: { id: data.parentId.id } }
           : { disconnect: true },
         Children: {
