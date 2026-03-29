@@ -101,6 +101,10 @@ function GroupFormView({
               id: line.fieldId,
               name: line.fieldName,
             },
+            modelId: {
+              id: line.modelId,
+              name: line.entityType,
+            },
             invisible: line.invisible,
             required: line.required,
             readonly: line.readonly,
@@ -148,6 +152,12 @@ function GroupFormView({
                 data={fields}
                 headers={[
                   {
+                    string: "Modelo",
+                    name: "model",
+                    width: 100,
+                    minWidth: 80,
+                  },
+                  {
                     string: "Campo",
                     name: "fieldId",
                     width: 200,
@@ -194,6 +204,13 @@ function GroupFormView({
                 renderRow={(row, index) => {
                   return (
                     <tr key={row.id} className="border-0 border-bottom">
+                      <SimpleTD name="lineField" colIdx={index}>
+                        <FieldEntry
+                          inline
+                          readonly
+                          name={`lines.${index}.modelId.name`}
+                        />
+                      </SimpleTD>
                       <SimpleTD name="lineField" colIdx={index}>
                         <FieldRelation
                           inline
@@ -279,6 +296,10 @@ function GroupFormView({
                 action={() =>
                   append({
                     fieldId: {
+                      id: "",
+                      name: "",
+                    },
+                    modelId: {
                       id: "",
                       name: "",
                     },

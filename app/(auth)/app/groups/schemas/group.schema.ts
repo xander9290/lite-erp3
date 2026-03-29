@@ -18,6 +18,12 @@ export const groupSchema = z.object({
           name: z.string(),
         })
         .nullable(),
+      modelId: z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .nullable(),
       invisible: z.boolean(),
       required: z.boolean(),
       readonly: z.boolean(),
