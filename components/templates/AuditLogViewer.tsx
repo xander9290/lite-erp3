@@ -41,7 +41,7 @@ function AuditLogItem({ audit }: { audit: AuditLogWithProps }) {
       <div className="d-flex flex-row align-items-end gap-2">
         <WidgetAvatar imageUrl={audit.User.Partner?.imageUrl} />
         <small className="fw-semibold">
-          {audit.User.Partner?.name ?? audit.User.name ?? "Usuario"}
+          {audit.User.Partner?.name ?? "Usuario"}
         </small>
         <small className="text-muted">
           {format(new Date(audit.createdAt), "dd/MM/yyyy HH:mm")}

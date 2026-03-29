@@ -1,15 +1,18 @@
 "use server";
 
 import { type AuditlogActions, type Auditlog } from "@/generated/prisma/client";
-import { type UserWithPartner } from "../users/actions/user-actions";
 import { ActionResponse } from "../../../libs/definitions";
 import prisma from "../../../libs/prisma";
 import { sessionStore } from "../../../libs/sessionStore";
 
 export interface AuditLogWithProps extends Auditlog {
-  User: UserWithPartner;
+  User: {
+    Partner: {
+      name: string;
+      imageUrl: string | null;
+    } | null;
+  };
 }
-
 export async function createAuditlog({
   entityType,
   entityId,
@@ -36,7 +39,12 @@ export async function createAuditlog({
       include: {
         User: {
           include: {
-            Partner: true,
+            Partner: {
+              select: {
+                name: true,
+                imageUrl: true,
+              },
+            },
           },
         },
       },
@@ -82,7 +90,12 @@ export async function getAuditlogsByEntity({
       include: {
         User: {
           include: {
-            Partner: true,
+            Partner: {
+              select: {
+                name: true,
+                imageUrl: true,
+              },
+            },
           },
         },
       },
