@@ -299,8 +299,13 @@ export function FieldRelation<T extends Many2OneOption>({
         placeholder={placeholder}
         onChange={(e) => {
           const newValue = String(e.target.value);
+
           setQuery(newValue);
           setIsOpen(true);
+
+          // 🔥 ESTA LÍNEA FALTABA
+          search(newValue.trim());
+
           requestAnimationFrame(updateMenuPosition);
 
           if (newValue.trim() === "") {
