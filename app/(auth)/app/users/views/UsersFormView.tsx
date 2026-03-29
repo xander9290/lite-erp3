@@ -50,6 +50,7 @@ function UsersFormView({
   const [changePasswordModal, setChangePasswordModal] = useState(false);
 
   const onSubmit: SubmitHandler<UserSchemaType> = async (data) => {
+    console.log(data);
     if (id && id === "null") {
       const res = await createUser({ data });
       if (!res.success) {
@@ -93,7 +94,7 @@ function UsersFormView({
       createdAt: user.createdAt,
       lastLogin: user.lastLogin,
       groupId: {
-        id: user.groupId,
+        id: user.Group?.id || "",
         name: user.Group?.name || "",
       },
       companies: user.Companies.map((c) => ({ id: c.id, name: c.name })) || [],

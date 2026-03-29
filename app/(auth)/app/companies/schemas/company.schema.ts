@@ -12,15 +12,17 @@ export const companySchema = z.object({
   ),
   managerId: z
     .object({
-      id: string().nullable(),
+      id: string(),
       name: string(),
     })
     .nullable(),
   partnerId: z.string(),
-  parentId: z.object({
-    id: z.string().nullable(),
-    name: z.string(),
-  }),
+  parentId: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .nullable(),
   childrenIds: z.array(
     z.object({
       companyId: z.object({

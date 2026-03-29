@@ -9,7 +9,19 @@ import bcrypt from "bcryptjs";
 import { UserSchemaType } from "../schemas/user.schema";
 
 export interface UserWithPartner extends User {
-  Partner: Partner | null;
+  Partner: {
+    name: string;
+    email: string | null;
+    imageUrl: string | null;
+  } | null;
+  Group: {
+    name: string;
+    id: string;
+  } | null;
+  Companies: {
+    name: string;
+    id: string;
+  }[];
 }
 
 export interface UserWithProps extends User {
@@ -194,7 +206,7 @@ export async function updateUser({
         login: data.login,
         active: data.active,
         Group: data.groupId
-          ? { connect: { id: data.groupId.id! } }
+          ? { connect: { id: data.groupId.id } }
           : { disconnect: true },
         Companies: {
           set: data.companies.map((c) => ({ id: c.id })),

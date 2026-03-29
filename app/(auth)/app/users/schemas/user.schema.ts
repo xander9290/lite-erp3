@@ -7,10 +7,12 @@ export const userSchema = z.object({
   imageUrl: z.string().nullable(),
   lastLogin: z.date().nullable(),
   active: z.boolean(),
-  groupId: z.object({
-    id: z.string().nullable(),
-    name: z.string(),
-  }),
+  groupId: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .nullable(),
   companies: z.array(
     z.object({
       id: z.string(),

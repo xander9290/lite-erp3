@@ -8,7 +8,7 @@ export const modelFieldSchema = z.object({
   fieldType: z.enum(FieldType),
   active: z.boolean(),
   modelId: z.object({
-    id: z.string().min(1, "El modelo es requerido"),
+    id: z.string(),
     name: z.string(),
   }),
   createdAt: z.date().nullable(),
