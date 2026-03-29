@@ -317,6 +317,7 @@ export function FieldRelationTags({
         className="d-flex flex-wrap align-items-center gap-1 p-1 mb-1 border rounded"
         style={{ minHeight: "38px" }}
         onClick={() => inputRef.current?.focus()}
+        title={name}
       >
         {!disabled && (
           <Form.Control

@@ -347,7 +347,11 @@ export function FieldRelation<T extends Many2OneOption>({
   return (
     <div ref={containerRef} className="mb-1">
       <div className="d-flex align-items-stretch">
-        <FloatingLabel label={label ?? name} className="flex-grow-1">
+        <FloatingLabel
+          label={label ?? name}
+          className="flex-grow-1 fs-6 fw-bold"
+          title={name}
+        >
           {input}
         </FloatingLabel>
 
