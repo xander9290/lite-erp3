@@ -109,7 +109,7 @@ function CompaniesFormView({
         },
         partnerId: company.partnerId,
         parentId: {
-          id: company.parentId,
+          id: company.parentId || "",
           name: company.Company?.name || "",
         },
         childrenIds:
