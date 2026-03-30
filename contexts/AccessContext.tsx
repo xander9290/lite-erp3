@@ -3,14 +3,7 @@
 import type { GroupLine } from "@/generated/prisma/client";
 import { useAuth } from "@/hooks/sessionStore";
 import { usePathname } from "next/navigation";
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useState,
-  Suspense,
-  useMemo,
-} from "react";
+import { createContext, ReactNode, useContext, Suspense, useMemo } from "react";
 
 interface AccessContextProps {
   access: GroupLine[];
