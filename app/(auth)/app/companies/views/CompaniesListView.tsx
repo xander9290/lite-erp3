@@ -7,8 +7,11 @@ import TableTemplate, {
 import { CompanieWithProps } from "../actions/companies-actions";
 import { Form } from "react-bootstrap";
 import { WidgetAvatar } from "@/components/templates/fields";
+import { useState } from "react";
 
 function CompaniesListView() {
+  const [active, setActive] = useState(true);
+
   const columns: TableTemplateColumn<CompanieWithProps>[] = [
     {
       key: "name",
@@ -66,6 +69,13 @@ function CompaniesListView() {
       <ListView.Header
         title="Empresas"
         formView="/app/companies?view_type=form&id=null"
+        actions={[
+          {
+            action: () => setActive(!active),
+            name: "showActive",
+            string: `${active ? "Inactivos" : "Activos"}`,
+          },
+        ]}
       />
       <ListView.Body>
         <TableTemplate
@@ -76,6 +86,7 @@ function CompaniesListView() {
           pageSize={50}
           viewForm="/app/companies?view_type=form"
           includes={{ code: true, Partner: true }}
+          domain={[["active", "=", active]]}
         />
       </ListView.Body>
     </ListView>

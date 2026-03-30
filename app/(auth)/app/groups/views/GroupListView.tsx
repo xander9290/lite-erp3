@@ -7,8 +7,11 @@ import TableTemplate, {
 import { GroupWithProps } from "../actions/groups-actions";
 import { formatDate } from "date-fns";
 import { Form } from "react-bootstrap";
+import { useState } from "react";
 
 function GroupListView() {
+  const [active, setActive] = useState(true);
+
   const columns: TableTemplateColumn<GroupWithProps>[] = [
     {
       key: "name",
@@ -75,6 +78,13 @@ function GroupListView() {
       <ListView.Header
         title="Grupos"
         formView="/app/groups?view_type=form&id=null"
+        actions={[
+          {
+            action: () => setActive(!active),
+            name: "showActive",
+            string: `${active ? "Inactivos" : "Activos"}`,
+          },
+        ]}
       />
       <ListView.Body>
         <TableTemplate<GroupWithProps>
@@ -83,6 +93,7 @@ function GroupListView() {
           model="group"
           defaultOrder="name asc"
           viewForm="/app/groups?view_type=form"
+          domain={[["active", "=", active]]}
         />
       </ListView.Body>
     </ListView>

@@ -9,8 +9,11 @@ import { formatDate } from "date-fns";
 import ListView from "@/components/templates/ListView";
 import { getByPath } from "@/app/libs/getByPath";
 import { WidgetAvatar } from "@/components/templates/fields";
+import { useState } from "react";
 
 function UsersListView() {
+  const [active, setActive] = useState(true);
+
   const columns: TableTemplateColumn<UserWithProps>[] = [
     {
       key: "name",
@@ -107,6 +110,13 @@ function UsersListView() {
       <ListView.Header
         title="Usuarios"
         formView="/app/users?view_type=form&id=null"
+        actions={[
+          {
+            action: () => setActive(!active),
+            name: "showActive",
+            string: `${active ? "Inactivos" : "Activos"}`,
+          },
+        ]}
       />
       <ListView.Body>
         <TableTemplate
@@ -116,7 +126,10 @@ function UsersListView() {
           viewForm="/app/users?view_type=form"
           pageSize={20}
           defaultOrder="name asc"
-          domain={[["name", "!=", "bot"]]}
+          domain={[
+            ["name", "!=", "bot"],
+            ["active", "=", active],
+          ]}
           includes={{
             Partner: true,
           }}

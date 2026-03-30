@@ -6,8 +6,11 @@ import TableTemplate, {
 import { ModelWithProps } from "../actions/model-actions";
 import ListView from "@/components/templates/ListView";
 import { Form } from "react-bootstrap";
+import { useState } from "react";
 
 function ModelListView() {
+  const [active, setActive] = useState(true);
+
   const columns: TableTemplateColumn<ModelWithProps>[] = [
     {
       key: "name",
@@ -58,6 +61,13 @@ function ModelListView() {
       <ListView.Header
         title="Modelos"
         formView="/app/models?view_type=form&id=null"
+        actions={[
+          {
+            action: () => setActive(!active),
+            name: "showActive",
+            string: `${active ? "Inactivos" : "Activos"}`,
+          },
+        ]}
       />
       <ListView.Body>
         <TableTemplate<ModelWithProps>
@@ -67,6 +77,7 @@ function ModelListView() {
           defaultOrder="name asc"
           pageSize={50}
           viewForm="/app/models?view_type=form"
+          domain={[["active", "=", active]]}
         />
       </ListView.Body>
     </ListView>

@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 
 function ModelFieldsListView() {
   const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
+  const [active, setActive] = useState(true);
 
   const { modalError, modalConfirm } = useModals();
 
@@ -68,6 +69,11 @@ function ModelFieldsListView() {
             action: handleDeleteRecord,
             name: "deleteRecord",
           },
+          {
+            action: () => setActive(!active),
+            name: "showActive",
+            string: `${active ? "Inactivos" : "Activos"}`,
+          },
         ]}
       />
       <ListView.Body>
@@ -78,6 +84,7 @@ function ModelFieldsListView() {
           columns={columns}
           pageSize={20}
           onSelectionChange={setSelectedIds}
+          domain={[["active", "=", active]]}
         />
       </ListView.Body>
     </ListView>
