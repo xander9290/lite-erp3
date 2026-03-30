@@ -5,19 +5,19 @@ declare module "next-auth" {
   // 👇 Extender la interfaz User
   interface User extends DefaultUser {
     access: GroupLine[];
-    // companies: { id: number; name: string; code: string | null }[];
+    companies: { id: string; name: string; code: string }[];
   }
 
   // 👇 Extender la interfaz Session
   interface Session {
     user: {
       access: GroupLine[];
-      //   companies: {
-      //     id: number;
-      //     name: string;
-      //     code: string | null;
-      //     current: boolean;
-      //   }[];
+      companies: {
+        id: string;
+        name: string;
+        code: string;
+        current: boolean;
+      }[];
     } & DefaultSession["user"];
   }
 }

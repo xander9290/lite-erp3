@@ -4,7 +4,7 @@ import { createAuditlog } from "@/app/(auth)/app/actions/auditlog-actions";
 import { ActionResponse } from "@/app/libs/definitions";
 import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
-import type { User, Partner, GroupLine } from "@/generated/prisma/client";
+import type { User, GroupLine } from "@/generated/prisma/client";
 import bcrypt from "bcryptjs";
 import { UserSchemaType } from "../schemas/user.schema";
 

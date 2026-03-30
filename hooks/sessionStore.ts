@@ -4,35 +4,50 @@ import { useMemo } from "react";
 import { useSession } from "next-auth/react";
 
 export function useAuth() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
+
+  const changeCompany = async ({ companyId }: { companyId: string }) => {
+    const changedCompany = session?.user.companies.map((company) => {
+      if (company.id == companyId) {
+        company = {
+          ...company,
+          current: true,
+        };
+      } else {
+        company = {
+          ...company,
+          current: false,
+        };
+      }
+
+      return company;
+    });
+
+    const newSession = {
+      ...session?.user,
+      companies: changedCompany,
+    };
+
+    await update({ user: newSession });
+  };
 
   const auth = useMemo(() => {
     const user = session?.user;
     const uid = user?.id;
-    const roles = (user as any)?.roles ?? [];
     const access = session?.user.access || [];
-
-    const hasRole = (role: string) => {
-      return roles.includes(role);
-    };
-
-    const hasAnyRole = (roleList: string[]) => {
-      return roleList.some((r) => roles.includes(r));
-    };
+    const companyCode =
+      session?.user.companies.find((c) => c.current)?.code || null;
 
     return {
       session,
       user,
       uid,
-      roles,
       isAuthenticated: !!session,
-      isLoading: status === "loading",
-      isAdmin: roles.includes("admin"),
-      hasRole,
-      hasAnyRole,
       access,
+      changeCompany,
+      companyCode,
     };
-  }, [session, status]);
+  }, [session, status, changeCompany]);
 
   return auth;
 }

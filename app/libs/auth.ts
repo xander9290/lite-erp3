@@ -33,6 +33,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 GroupLines: true,
               },
             },
+            Companies: true,
           },
         });
 
@@ -62,6 +63,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: findUser.Partner?.name,
           image: findUser.Partner?.imageUrl,
           access: findUser.Group?.GroupLines || [],
+          companies: findUser.Companies.map((c) => ({
+            id: c.id,
+            name: c.name,
+            code: c.code,
+            current:
+              findUser.Companies && findUser.Companies.length > 1
+                ? false
+                : true,
+          })),
         };
 
         return user;
@@ -83,6 +93,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.name = user.name;
         token.picture = user.image;
         token.access = user.access;
+        token.companies = user.companies || [];
       }
 
       if (trigger === "update" && session.user) {
@@ -90,6 +101,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.name = session.user.name;
         token.picture = session.user.image;
         token.access = session.user.access;
+        token.companies = session.user.companies || [];
       }
 
       return token;
@@ -100,6 +112,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.name = token.name as string;
         session.user.image = token.picture as string;
         session.user.access = token.access as GroupLine[];
+        session.user.companies = token.companies as {
+          id: string;
+          name: string;
+          code: string;
+          current: boolean;
+        }[];
       }
       return session;
     },
