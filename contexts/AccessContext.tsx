@@ -7,9 +7,9 @@ import {
   createContext,
   ReactNode,
   useContext,
-  useEffect,
   useState,
   Suspense,
+  useMemo,
 } from "react";
 
 interface AccessContextProps {
@@ -34,15 +34,29 @@ function AccessProviderInner({ children }: { children: ReactNode }) {
   const pathName = usePathname();
 
   const { access: acc } = useAuth();
-  const [access, setAccess] = useState<GroupLine[]>([]);
+  // const [access, setAccess] = useState<GroupLine[]>([]);
 
-  useEffect(() => {
-    const entityType = pathName.split("/")[2];
+  // useEffect(() => {
+  //   const entityType = pathName.split("/")[2];
 
-    const getAccess = acc.filter((acc) => acc.entityType === entityType);
+  //   if (!entityType) {
+  //     setAccess([]);
 
-    setAccess(getAccess || []);
-  }, [pathName, acc]);
+  //     return;
+  //   }
+
+  //   const getAccess = acc.filter((acc) => acc.entityType === entityType);
+
+  //   setAccess(getAccess || []);
+  // }, [pathName, acc]);
+
+  const entityType = pathName.split("/")[2];
+
+  const access = useMemo(() => {
+    if (!entityType) return [];
+
+    return acc.filter((a) => a.entityType === entityType);
+  }, [entityType, acc]);
 
   return (
     <AccessContext.Provider value={{ access }}>
