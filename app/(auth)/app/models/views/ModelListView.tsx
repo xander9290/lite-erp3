@@ -74,7 +74,7 @@ function ModelListView() {
           columns={columns}
           getRowId={(m) => m.id}
           model="model"
-          defaultOrder="name asc"
+          defaultOrder="createdAt asc"
           pageSize={50}
           viewForm="/app/models?view_type=form"
           domain={[["active", "=", active]]}
