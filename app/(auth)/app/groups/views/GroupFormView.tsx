@@ -10,13 +10,7 @@ import {
 } from "../schemas/group.schema";
 import { useCallback, useEffect, useRef } from "react";
 import { useModals } from "@/contexts/ModalContext";
-import {
-  FormBook,
-  FormPage,
-  FormView,
-  FormViewGroup,
-  PageSheet,
-} from "@/components/templates/FormView";
+import { FormView, FormViewGroup } from "@/components/templates/FormView";
 import {
   createGroup,
   GroupWithProps,
@@ -35,6 +29,7 @@ import {
   SimpleTable,
   SimpleTD,
 } from "@/components/templates/simpletemplates";
+import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 
 function GroupFormView({
   id,
@@ -144,8 +139,8 @@ function GroupFormView({
           domain={[["name", "!=", "bot"]]}
         />
       </FormViewGroup>
-      <FormBook dKey="groupLine">
-        <FormPage eventKey="groupLine" title="Accesos">
+      <Notebook defaultActiveKey="groupLine">
+        <Page eventKey="groupLine" title="Accesos">
           <PageSheet name="groupLines">
             <Col className="p-0">
               <SimpleTable
@@ -313,8 +308,8 @@ function GroupFormView({
               />
             </Col>
           </PageSheet>
-        </FormPage>
-      </FormBook>
+        </Page>
+      </Notebook>
     </FormView>
   );
 }

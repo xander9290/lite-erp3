@@ -16,12 +16,9 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
 import {
-  FormBook,
-  FormPage,
   FormView,
   FormViewGroup,
   FormViewStack,
-  PageSheet,
 } from "@/components/templates/FormView";
 import {
   FieldBoolean,
@@ -35,8 +32,9 @@ import {
   SimpleTable,
   SimpleTD,
 } from "@/components/templates/simpletemplates";
-import { Col } from "react-bootstrap";
 import toast from "react-hot-toast";
+import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
+import { Col } from "react-bootstrap";
 
 function CompaniesFormView({
   company,
@@ -202,15 +200,20 @@ function CompaniesFormView({
         <FieldEntry name="country" label="País" />
         <FieldEntry name="vat" label="R.F.C." />
       </FormViewGroup>
-      <FormBook dKey="userIds">
-        <FormPage title="Usuarios" eventKey="userIds">
+      {/* <FormBook dKey="userIds">
+        <FormPage title="Sucursales" eventKey="childrenIds">
+          
+        </FormPage>
+      </FormBook> */}
+      <Notebook defaultActiveKey="userIds">
+        <Page title="Usuarios" eventKey="userIds">
           <PageSheet name="userIds">
             <FormViewGroup>
               <FieldRelationTags model="user" name="userIds" label="Usuarios" />
             </FormViewGroup>
           </PageSheet>
-        </FormPage>
-        <FormPage title="Sucursales" eventKey="childrenIds">
+        </Page>
+        <Page title="Sucursales" eventKey="childrenIds">
           <PageSheet name="childrenIds">
             <Col className="p-0">
               <SimpleTable
@@ -283,8 +286,8 @@ function CompaniesFormView({
               />
             </Col>
           </PageSheet>
-        </FormPage>
-      </FormBook>
+        </Page>
+      </Notebook>
     </FormView>
   );
 }

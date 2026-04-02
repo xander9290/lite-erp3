@@ -14,8 +14,6 @@ import {
   Form,
   Row,
   Spinner,
-  Tab,
-  Tabs,
 } from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import { ButtonVariant } from "react-bootstrap/esm/types";
@@ -23,7 +21,6 @@ import NotFound from "@/app/not-found";
 import { Suspense, useEffect } from "react";
 import AuditLogViewer from "./AuditLogViewer";
 import { useAuth } from "@/hooks/sessionStore";
-import { useAccess } from "@/contexts/AccessContext";
 
 type TFormActions = {
   string: React.ReactElement | string;
@@ -355,62 +352,3 @@ export function FormViewStack({
     </div>
   );
 }
-
-export const FormBook = ({
-  children,
-  dKey,
-}: {
-  children: React.ReactNode;
-  dKey: string;
-}) => {
-  return (
-    <Tabs defaultActiveKey={dKey} transition={false} className="mt-3">
-      {children}
-    </Tabs>
-  );
-};
-
-export const FormPage = ({
-  children,
-  eventKey,
-  title,
-}: {
-  children: React.ReactNode;
-  eventKey: string;
-  title: string;
-}) => {
-  return (
-    <Tab eventKey={eventKey} title={title}>
-      {children}
-    </Tab>
-  );
-};
-
-export const PageSheet = ({
-  children,
-  name,
-  invisible,
-}: {
-  children: React.ReactNode;
-  name?: string;
-  invisible?: boolean;
-  readonly?: boolean;
-}) => {
-  const access = useAccess({ fieldName: name || "" });
-
-  if (invisible) return null;
-  if (access?.invisible) return null;
-
-  return (
-    <Row
-      style={{
-        minHeight: "200px",
-        pointerEvents: access?.readonly ? "none" : "auto",
-      }}
-      title={name}
-      className="overflow-auto"
-    >
-      {children}
-    </Row>
-  );
-};

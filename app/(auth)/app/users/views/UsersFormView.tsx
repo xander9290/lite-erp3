@@ -2,13 +2,7 @@
 
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import {
-  FormBook,
-  FormPage,
-  FormView,
-  FormViewGroup,
-  PageSheet,
-} from "@/components/templates/FormView";
+import { FormView, FormViewGroup } from "@/components/templates/FormView";
 import {
   userSchema,
   userSchemaDefault,
@@ -27,6 +21,7 @@ import {
 import { createUser, updateUser, UserWithProps } from "../actions/user-actions";
 import toast from "react-hot-toast";
 import UserChangePasswordModal from "./UserChangePasswordModal";
+import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 
 function UsersFormView({
   id,
@@ -153,8 +148,8 @@ function UsersFormView({
             label="Empresas"
           />
         </FormViewGroup>
-        <FormBook dKey="otherInfo">
-          <FormPage eventKey="otherInfo" title="Otra información">
+        <Notebook defaultActiveKey="otherInfo">
+          <Page eventKey="otherInfo" title="Otra información">
             <PageSheet name="pageOtherInfo">
               <FormViewGroup>
                 <FieldEntry
@@ -175,16 +170,10 @@ function UsersFormView({
                   label="Fecha de creación"
                   readonly
                 />
-                <FieldRelation
-                  name="createdUid"
-                  model="user"
-                  label="Creado por"
-                  readonly
-                />
               </FormViewGroup>
             </PageSheet>
-          </FormPage>
-        </FormBook>
+          </Page>
+        </Notebook>
       </FormView>
       <UserChangePasswordModal
         show={changePasswordModal}

@@ -9,13 +9,7 @@ import {
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import {
-  FormBook,
-  FormPage,
-  FormView,
-  FormViewGroup,
-  PageSheet,
-} from "@/components/templates/FormView";
+import { FormView, FormViewGroup } from "@/components/templates/FormView";
 import {
   createModel,
   ModelWithProps,
@@ -33,6 +27,7 @@ import {
   SimpleTable,
   SimpleTD,
 } from "@/components/templates/simpletemplates";
+import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 
 function ModelFormView({
   id,
@@ -130,9 +125,9 @@ function ModelFormView({
         <FieldEntry name="description" label="Descripción" />
         <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
-      <FormBook dKey="modelFields">
-        <FormPage title="Campos" eventKey="modelFields">
-          <PageSheet>
+      <Notebook defaultActiveKey="modelFields">
+        <Page title="Campos" eventKey="modelFields">
+          <PageSheet name="modelFields">
             <Col md="12" className="p-0 m-0 overflow-auto">
               <SimpleTable
                 data={fields}
@@ -221,8 +216,8 @@ function ModelFormView({
               />
             </Col>
           </PageSheet>
-        </FormPage>
-      </FormBook>
+        </Page>
+      </Notebook>
     </FormView>
   );
 }
