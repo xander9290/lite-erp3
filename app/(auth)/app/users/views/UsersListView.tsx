@@ -4,11 +4,15 @@ import TableTemplate, {
   TableTemplateColumn,
 } from "@/components/templates/TableTemplate";
 import { type UserWithProps } from "../actions/user-actions";
-import { Badge, Form } from "react-bootstrap";
+import { Badge } from "react-bootstrap";
 import { formatDate } from "date-fns";
 import ListView from "@/components/templates/ListView";
 import { getByPath } from "@/app/libs/getByPath";
-import { WidgetAvatar } from "@/components/templates/fields";
+import {
+  WidgetAvatar,
+  WidgetCellRow,
+  WidgetDropList,
+} from "@/components/templates/fields";
 import { useState } from "react";
 
 function UsersListView() {
@@ -62,16 +66,9 @@ function UsersListView() {
       fieldName: "comapnies",
       accessor: (g) => g.Companies?.map((u) => u.name).join(", ") ?? "",
       render: (g) => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <Form.Select size="sm" className="border-0">
-            <option>{g.Companies?.length}</option>
-            {g.Companies?.map((u, i) => (
-              <option key={`user-${i}-${u.name}`} value={u.name}>
-                {u.name}
-              </option>
-            ))}
-          </Form.Select>
-        </div>
+        <WidgetCellRow>
+          <WidgetDropList items={g.Companies} />
+        </WidgetCellRow>
       ),
       filterable: true,
     },

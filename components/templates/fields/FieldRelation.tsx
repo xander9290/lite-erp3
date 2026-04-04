@@ -265,7 +265,7 @@ export function FieldRelation<T extends Many2OneOption>({
                     className="p-1"
                     style={{ fontSize: "0.9rem" }}
                   >
-                    {opt.displayName ?? opt.name}
+                    {opt.name}
                   </Dropdown.Item>
                 ))}
 

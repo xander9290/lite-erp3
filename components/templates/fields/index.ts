@@ -1,4 +1,6 @@
 export { FieldRelationTags } from "./FieldRelationTags";
+export { WidgetDropList } from "./WidgetDropList";
+export { WidgetCellRow } from "./WidgetCellRow";
 export { FieldRelation } from "./FieldRelation";
 export { FieldBoolean } from "./FieldBoolean";
 export { WidgetAvatar } from "./WidgetAvatar";

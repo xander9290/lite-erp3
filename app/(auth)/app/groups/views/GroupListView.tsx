@@ -6,8 +6,8 @@ import TableTemplate, {
 } from "@/components/templates/TableTemplate";
 import { GroupWithProps } from "../actions/groups-actions";
 import { formatDate } from "date-fns";
-import { Form } from "react-bootstrap";
 import { useState } from "react";
+import { WidgetCellRow, WidgetDropList } from "@/components/templates/fields";
 
 function GroupListView() {
   const [active, setActive] = useState(true);
@@ -27,16 +27,9 @@ function GroupListView() {
       fieldName: "users",
       accessor: (g) => g.Users?.map((u) => u.name).join(", ") ?? "",
       render: (g) => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <Form.Select size="sm" className="border-0">
-            <option>{g.Users?.length}</option>
-            {g.Users?.map((u, i) => (
-              <option key={`user-${i}-${u.name}`} value={u.name}>
-                {u.name}
-              </option>
-            ))}
-          </Form.Select>
-        </div>
+        <WidgetCellRow>
+          <WidgetDropList items={g.Users} />
+        </WidgetCellRow>
       ),
       filterable: true,
     },
@@ -47,19 +40,11 @@ function GroupListView() {
       accessor: (g) =>
         g.GroupLines?.map((line) => line.fieldName).join(", ") ?? "",
       render: (g) => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <Form.Select size="sm" className="border-0">
-            <option>{g.GroupLines?.length}</option>
-            {g.GroupLines?.map((line, i) => (
-              <option
-                key={`line-${i}-${line.fieldName}`}
-                value={line.fieldName}
-              >
-                {`${line.fieldName}`}
-              </option>
-            ))}
-          </Form.Select>
-        </div>
+        <WidgetCellRow>
+          <WidgetDropList
+            items={g.GroupLines.map((l) => ({ id: l.id, name: l.fieldName }))}
+          />
+        </WidgetCellRow>
       ),
       filterable: true,
     },
