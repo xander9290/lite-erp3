@@ -5,8 +5,8 @@ import TableTemplate, {
 } from "@/components/templates/TableTemplate";
 import { ModelWithProps } from "../actions/model-actions";
 import ListView from "@/components/templates/ListView";
-import { Form } from "react-bootstrap";
 import { useState } from "react";
+import { WidgetCellRow, WidgetDropList } from "@/components/widgets";
 
 function ModelListView() {
   const [active, setActive] = useState(true);
@@ -43,16 +43,9 @@ function ModelListView() {
       accessor: (m) => m.ModelFields?.map((u) => u.name).join(", ") ?? "",
       filterable: true,
       render: (m) => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <Form.Select size="sm" className="border-0">
-            <option>{m.ModelFields?.length}</option>
-            {m.ModelFields?.map((f, i) => (
-              <option key={`field-${i}-${f.name}`} value={f.name}>
-                {f.name}
-              </option>
-            ))}
-          </Form.Select>
-        </div>
+        <WidgetCellRow>
+          <WidgetDropList items={m.ModelFields} />
+        </WidgetCellRow>
       ),
     },
   ];

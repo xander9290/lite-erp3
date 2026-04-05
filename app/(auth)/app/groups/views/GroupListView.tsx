@@ -7,7 +7,7 @@ import TableTemplate, {
 import { GroupWithProps } from "../actions/groups-actions";
 import { formatDate } from "date-fns";
 import { useState } from "react";
-import { WidgetCellRow, WidgetDropList } from "@/components/templates/fields";
+import { WidgetCellRow, WidgetDropList } from "@/components/widgets";
 
 function GroupListView() {
   const [active, setActive] = useState(true);

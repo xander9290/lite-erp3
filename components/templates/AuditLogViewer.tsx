@@ -20,13 +20,14 @@ import {
   type AuditLogWithProps,
 } from "@/app/(auth)/app/actions/auditlog-actions";
 import { useAuth } from "@/hooks/sessionStore";
-import { FieldEntry, FieldSubmit, WidgetAvatar } from "./fields";
+import { FieldEntry, FieldSubmit } from "./fields";
 import {
   auditNotesSchema,
   auditNotesSchemaDefault,
   AuditNotesSchemaType,
 } from "@/schemas/auditnotes.schema";
 import { useModals } from "@/contexts/ModalContext";
+import { WidgetAvatar } from "../widgets";
 
 type AuditLogViewerProps = {
   entityType: string;

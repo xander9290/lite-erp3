@@ -8,12 +8,13 @@ import { Badge } from "react-bootstrap";
 import { formatDate } from "date-fns";
 import ListView from "@/components/templates/ListView";
 import { getByPath } from "@/app/libs/getByPath";
+import { useState } from "react";
 import {
   WidgetAvatar,
+  WidgetBadgeStatus,
   WidgetCellRow,
   WidgetDropList,
-} from "@/components/templates/fields";
-import { useState } from "react";
+} from "@/components/widgets";
 
 function UsersListView() {
   const [active, setActive] = useState(true);
@@ -79,9 +80,13 @@ function UsersListView() {
       accessor: (u) => (u.active ? "Sí" : "No"),
       render: (u) => (
         <div className="text-center">
-          <Badge bg={u.active ? "success" : "danger"}>
-            {u.active ? "Sí" : "No"}
-          </Badge>
+          <WidgetBadgeStatus
+            value={u.active ? "active" : "inactive"}
+            options={{
+              active: { label: "Activo", color: "success" },
+              inactive: { label: "Inactivo", color: "danger" },
+            }}
+          />
         </div>
       ),
     },

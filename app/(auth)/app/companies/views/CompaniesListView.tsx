@@ -6,8 +6,8 @@ import TableTemplate, {
 } from "@/components/templates/TableTemplate";
 import { CompanieWithProps } from "../actions/companies-actions";
 import { Form } from "react-bootstrap";
-import { WidgetAvatar } from "@/components/templates/fields";
 import { useState } from "react";
+import { WidgetAvatar } from "@/components/widgets";
 
 function CompaniesListView() {
   const [active, setActive] = useState(true);
