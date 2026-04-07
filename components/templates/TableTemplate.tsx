@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Table, Form, Button, Spinner } from "react-bootstrap";
+import { Table, Form, Button, Spinner, Badge } from "react-bootstrap";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/sessionStore";
@@ -11,7 +11,7 @@ export type TableTemplateColumn<T> = {
   key: string;
   fieldName?: string;
   label: string;
-  type?: "string" | "number" | "date" | "boolean";
+  type?: "string" | "number" | "date" | "datetime" | "boolean";
   filterable?: boolean;
   accessor: (row: T) => unknown;
   render?: (row: T, index: number) => React.ReactNode;
@@ -41,6 +41,13 @@ export type DomainOperator =
 export type DomainItem = [field: string, operator: DomainOperator, value: any];
 export type Domain = DomainItem[];
 
+type FilterCondition = {
+  id: string;
+  field: string;
+  operator: DomainOperator;
+  value: string;
+};
+
 type TableProps<T> = {
   model: string;
   columns: TableTemplateColumn<T>[];
@@ -51,19 +58,19 @@ type TableProps<T> = {
   defaultOrder?: string;
   domain?: Domain;
   onRowClick?: (row: T) => void;
-  includes?: any; // 👈 nuevo
+  includes?: any;
 };
 
-function useDebouncedValue<T>(value: T, delay = 300) {
-  const [debounced, setDebounced] = useState(value);
+// function useDebouncedValue<T>(value: T, delay = 300) {
+//   const [debounced, setDebounced] = useState(value);
 
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
+//   useEffect(() => {
+//     const t = setTimeout(() => setDebounced(value), delay);
+//     return () => clearTimeout(t);
+//   }, [value, delay]);
 
-  return debounced;
-}
+//   return debounced;
+// }
 
 function parseDefaultOrder(defaultOrder?: string): {
   key: string | null;
@@ -94,6 +101,53 @@ const fetcher = async <T,>(url: string): Promise<TableApiResponse<T>> => {
   return res.json();
 };
 
+const getOperatorsByType = (type?: string): DomainOperator[] => {
+  switch (type) {
+    case "number":
+      return ["=", "!=", ">", ">=", "<", "<="];
+    case "date":
+      return ["=", "!=", ">", ">=", "<", "<="];
+    case "datetime":
+      return ["=", "!=", ">", ">=", "<", "<="];
+    case "boolean":
+      return ["=", "!="];
+    default:
+      return ["contains", "=", "!=", "startsWith", "endsWith"];
+  }
+};
+
+const operatorLabels: Record<DomainOperator, string> = {
+  "=": "Igual a",
+  "!=": "Diferente de",
+  contains: "Contiene",
+  startsWith: "Empieza con",
+  endsWith: "Termina con",
+  in: "Está en",
+  notIn: "No está en",
+  ">": "Mayor que",
+  ">=": "Mayor o igual que",
+  "<": "Menor que",
+  "<=": "Menor o igual que",
+};
+
+const formatFilterValue = (value: string, type?: string): string => {
+  if (type === "date" && value.match(/^\d{4}-\d{2}-\d{2}/)) {
+    const [year, month, day] = value.split("-");
+    if (day) return `${day}/${month}/${year}`;
+  }
+  if (type === "datetime" && value) {
+    try {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        return format(date, "dd/MM/yyyy HH:mm");
+      }
+    } catch {
+      return value;
+    }
+  }
+  return value;
+};
+
 export default function TableTemplate<T>({
   model,
   columns,
@@ -102,7 +156,7 @@ export default function TableTemplate<T>({
   viewForm,
   pageSize: pageSizeProp = 20,
   defaultOrder,
-  domain,
+  domain: externalDomain,
   onRowClick,
   includes,
 }: TableProps<T>) {
@@ -112,8 +166,16 @@ export default function TableTemplate<T>({
   const { access } = useAuth();
   const accesProps = access.filter((acc) => acc.entityType === modelName);
 
-  const [filters, setFilters] = useState<Record<string, string>>({});
-  const debouncedFilters = useDebouncedValue(filters, 350);
+  const [filterConditions, setFilterConditions] = useState<FilterCondition[]>(
+    [],
+  );
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [newFilterField, setNewFilterField] = useState<string>("");
+  const [newFilterOperator, setNewFilterOperator] =
+    useState<DomainOperator>("contains");
+  const [newFilterValue, setNewFilterValue] = useState<string>("");
+
+  // const debouncedFilters = useDebouncedValue(filterConditions, 350);
 
   const [sortConfig, setSortConfig] = useState<{
     key: string | null;
@@ -141,7 +203,7 @@ export default function TableTemplate<T>({
 
   useEffect(() => {
     setPage(1);
-  }, [JSON.stringify(domain)]);
+  }, [JSON.stringify(externalDomain)]);
 
   const visibleColumns = useMemo(() => {
     return columns.filter(() => true);
@@ -157,10 +219,14 @@ export default function TableTemplate<T>({
     return Array.from(keys).join(",");
   }, [columns]);
 
-  const serializedDomain = useMemo(
-    () => JSON.stringify(domain ?? []),
-    [domain],
-  );
+  const serializedDomain = useMemo(() => {
+    const domainFromConditions: Domain = filterConditions
+      .filter((fc) => fc.field && fc.value)
+      .map((fc) => [fc.field, fc.operator, fc.value]);
+
+    const allDomain = [...(externalDomain || []), ...domainFromConditions];
+    return JSON.stringify(allDomain);
+  }, [externalDomain, filterConditions]);
 
   const buildUrl = useMemo(() => {
     const params = new URLSearchParams();
@@ -174,7 +240,6 @@ export default function TableTemplate<T>({
       params.set("sortDir", sortConfig.direction);
     }
 
-    params.set("filters", JSON.stringify(debouncedFilters));
     params.set("domain", serializedDomain);
     params.set("includes", JSON.stringify(includes ?? {}));
 
@@ -186,7 +251,6 @@ export default function TableTemplate<T>({
     fieldsParam,
     sortConfig.key,
     sortConfig.direction,
-    debouncedFilters,
     serializedDomain,
     includes,
   ]);
@@ -205,11 +269,6 @@ export default function TableTemplate<T>({
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-    setPage(1);
-  };
-
   const handleHeaderDoubleClick = (key: string) => {
     setSortConfig((prev) => {
       if (prev.key === key) {
@@ -217,6 +276,46 @@ export default function TableTemplate<T>({
       }
       return { key, direction: "asc" };
     });
+    setPage(1);
+  };
+
+  const handleAddFilter = () => {
+    if (!newFilterField || !newFilterValue) return;
+
+    let finalValue = newFilterValue;
+    const columnType = getColumnByKey(newFilterField)?.type;
+
+    if (columnType === "date" || columnType === "datetime") {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(newFilterValue)) {
+        finalValue = `${newFilterValue}T00:00:00.000Z`;
+      } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(newFilterValue)) {
+        finalValue = `${newFilterValue}:00.000Z`;
+      } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(newFilterValue)) {
+        finalValue = `${newFilterValue}.000Z`;
+      }
+    }
+
+    const newCondition: FilterCondition = {
+      id: crypto.randomUUID(),
+      field: newFilterField,
+      operator: newFilterOperator,
+      value: finalValue,
+    };
+
+    setFilterConditions([...filterConditions, newCondition]);
+    setNewFilterField("");
+    setNewFilterOperator("contains");
+    setNewFilterValue("");
+    setPage(1);
+  };
+
+  const handleRemoveFilter = (id: string) => {
+    setFilterConditions(filterConditions.filter((fc) => fc.id !== id));
+    setPage(1);
+  };
+
+  const handleClearFilters = () => {
+    setFilterConditions([]);
     setPage(1);
   };
 
@@ -229,7 +328,7 @@ export default function TableTemplate<T>({
     return rows.reduce<Record<string, T[]>>((groups, row) => {
       let val = col.accessor(row);
 
-      if (col.type === "date" && val) {
+      if ((col.type === "date" || col.type === "datetime") && val) {
         const d = new Date(String(val));
         if (!isNaN(d.getTime())) val = format(d, col.groupFormat || "yyyy-MM");
       }
@@ -257,7 +356,7 @@ export default function TableTemplate<T>({
 
       const groups = rows.reduce<Record<string, boolean>>((acc, row) => {
         let val = col.accessor(row);
-        if (col.type === "date" && val) {
+        if ((col.type === "date" || col.type === "datetime") && val) {
           const d = new Date(String(val));
           if (!isNaN(d.getTime())) {
             val = format(d, col.groupFormat || "yyyy-MM");
@@ -282,10 +381,7 @@ export default function TableTemplate<T>({
 
   const allVisibleIds = Object.entries(paginatedData)
     .filter(([group]) => !(collapsedGroups[group] ?? false))
-    .flatMap(([_, rws]) => {
-      console.log(_);
-      return rws.map(getRowId);
-    });
+    .flatMap(([, rws]) => rws.map(getRowId));
 
   const handleSelectAll = (checked: boolean) => {
     const visibleIds = allVisibleIds;
@@ -297,6 +393,12 @@ export default function TableTemplate<T>({
       setSelectedIds((prev) => prev.filter((id) => !visibleIds.includes(id)));
     }
   };
+
+  const getColumnByKey = (key: string) => {
+    return columns.find((c) => c.key === key);
+  };
+
+  const selectedColumnType = getColumnByKey(newFilterField)?.type;
 
   return (
     <div className="position-relative">
@@ -311,6 +413,185 @@ export default function TableTemplate<T>({
       )}
 
       {error && <div className="text-danger small mb-2">{error.message}</div>}
+
+      {/* Panel de filtros */}
+      <div className="mb-3">
+        <div className="d-flex justify-content-between align-items-center mb-2">
+          <Button
+            size="sm"
+            variant="outline-secondary"
+            onClick={() => setShowFilterPanel(!showFilterPanel)}
+          >
+            <i
+              className={`bi ${showFilterPanel ? "bi-eye-slash" : "bi-funnel"}`}
+            ></i>{" "}
+            {showFilterPanel ? "Ocultar filtros" : "Mostrar filtros"}
+            {filterConditions.length > 0 && (
+              <Badge bg="primary" className="ms-2">
+                {filterConditions.length}
+              </Badge>
+            )}
+          </Button>
+          {filterConditions.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline-danger"
+              onClick={handleClearFilters}
+            >
+              <i className="bi bi-trash"></i> Limpiar filtros
+            </Button>
+          )}
+        </div>
+
+        {showFilterPanel && (
+          <div className="border rounded p-2">
+            {/* Filtros activos */}
+            {filterConditions.length > 0 && (
+              <div className="mb-3">
+                <strong>Filtros activos:</strong>
+                <div className="d-flex flex-wrap gap-2 mt-2">
+                  {filterConditions.map((filter) => {
+                    const col = getColumnByKey(filter.field);
+                    const displayValue = formatFilterValue(
+                      filter.value,
+                      col?.type,
+                    );
+                    return (
+                      <Badge
+                        key={filter.id}
+                        bg="primary"
+                        className="d-flex align-items-center gap-2 py-2 px-3"
+                        style={{ fontSize: "0.85rem" }}
+                      >
+                        <span>
+                          {col?.label || filter.field}:{" "}
+                          {operatorLabels[filter.operator]} &quot;{displayValue}
+                          &quot;
+                        </span>
+                        <i
+                          className="bi bi-x-circle-fill"
+                          style={{ cursor: "pointer" }}
+                          onClick={() => handleRemoveFilter(filter.id)}
+                        ></i>
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Agregar nuevo filtro */}
+            <div className="row g-2 align-items-end">
+              <div className="col-auto">
+                <Form.Label className="small mb-0">Campo</Form.Label>
+                <Form.Select
+                  size="sm"
+                  value={newFilterField}
+                  onChange={(e) => {
+                    setNewFilterField(e.target.value);
+                    const col = getColumnByKey(e.target.value);
+                    if (col) {
+                      setNewFilterOperator(getOperatorsByType(col.type)[0]);
+                      setNewFilterValue("");
+                    }
+                  }}
+                  style={{ width: "220px" }}
+                >
+                  <option value="">Seleccionar campo</option>
+                  {visibleColumns.map((col) => {
+                    const fieldAccess = accesProps.find(
+                      (acc) => acc.fieldName === col.fieldName,
+                    );
+                    if (fieldAccess?.invisible) return null;
+                    const typeLabel =
+                      col.type === "datetime" ? "datetime" : col.type;
+                    return (
+                      <option key={col.key} value={col.key}>
+                        {col.label} {typeLabel && `(${typeLabel})`}
+                      </option>
+                    );
+                  })}
+                </Form.Select>
+              </div>
+
+              <div className="col-auto">
+                <Form.Label className="small mb-0">Operador</Form.Label>
+                <Form.Select
+                  size="sm"
+                  value={newFilterOperator}
+                  onChange={(e) =>
+                    setNewFilterOperator(e.target.value as DomainOperator)
+                  }
+                  style={{ width: "140px" }}
+                  disabled={!newFilterField}
+                >
+                  {getOperatorsByType(selectedColumnType).map((op) => (
+                    <option key={op} value={op}>
+                      {operatorLabels[op]}
+                    </option>
+                  ))}
+                </Form.Select>
+              </div>
+
+              <div className="col-auto">
+                <Form.Label className="small mb-0">Valor</Form.Label>
+                {selectedColumnType === "date" ? (
+                  <Form.Control
+                    size="sm"
+                    type="date"
+                    value={newFilterValue}
+                    onChange={(e) => setNewFilterValue(e.target.value)}
+                    style={{ width: "180px" }}
+                    disabled={!newFilterField}
+                  />
+                ) : selectedColumnType === "datetime" ? (
+                  <Form.Control
+                    size="sm"
+                    type="datetime-local"
+                    value={newFilterValue}
+                    onChange={(e) => setNewFilterValue(e.target.value)}
+                    style={{ width: "220px" }}
+                    disabled={!newFilterField}
+                  />
+                ) : selectedColumnType === "boolean" ? (
+                  <Form.Select
+                    size="sm"
+                    value={newFilterValue}
+                    onChange={(e) => setNewFilterValue(e.target.value)}
+                    style={{ width: "180px" }}
+                    disabled={!newFilterField}
+                  >
+                    <option value="">Seleccionar...</option>
+                    <option value="true">Sí / Verdadero</option>
+                    <option value="false">No / Falso</option>
+                  </Form.Select>
+                ) : (
+                  <Form.Control
+                    size="sm"
+                    type="text"
+                    placeholder="Valor a buscar..."
+                    value={newFilterValue}
+                    onChange={(e) => setNewFilterValue(e.target.value)}
+                    style={{ width: "250px" }}
+                    disabled={!newFilterField}
+                  />
+                )}
+              </div>
+
+              <div className="col-auto">
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={handleAddFilter}
+                  disabled={!newFilterField || !newFilterValue}
+                >
+                  <i className="bi bi-plus-lg"></i> Agregar filtro
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       <Table borderless hover size="sm" style={{ fontSize: "0.9rem" }}>
         <thead className="sticky-top" style={{ zIndex: 1 }}>
@@ -343,37 +624,34 @@ export default function TableTemplate<T>({
                 >
                   <div
                     style={{ fontSize: "0.9rem" }}
-                    className="d-flex align-items-center gap-1 p-0"
+                    className="d-flex align-items-center justify-content-between gap-1 p-0"
                   >
-                    {col.filterable ? (
-                      <Form.Control
-                        size="sm"
-                        type="text"
-                        placeholder={col.label}
-                        value={filters[col.key] ?? ""}
-                        onChange={(e) =>
-                          handleFilterChange(col.key, e.target.value)
-                        }
-                        className="fw-bolder"
-                        title={col.fieldName}
+                    <span title={col.fieldName}>{col.label}</span>
+
+                    <div className="d-flex gap-1">
+                      <i
+                        className={`bi bi-collection ${groupBy === col.key ? "text-warning" : "text-muted"}`}
+                        style={{ cursor: "pointer", fontSize: "0.8rem" }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleGroupBy(col.key);
+                        }}
+                        title={`Agrupar por ${col.label}`}
                       />
-                    ) : (
-                      <span title={col.fieldName}>{col.label}</span>
-                    )}
 
-                    <i
-                      className={`bi bi-collection ${groupBy === col.key ? "text-warning" : "text-muted"}`}
-                      style={{ cursor: "pointer" }}
-                      onClick={() => toggleGroupBy(col.key)}
-                      title={`Agrupar por ${col.label}`}
-                    />
-
-                    {sortConfig.key === col.key &&
-                      (sortConfig.direction === "asc" ? (
-                        <i className="bi bi-arrow-bar-up"></i>
-                      ) : (
-                        <i className="bi bi-arrow-bar-down"></i>
-                      ))}
+                      {sortConfig.key === col.key &&
+                        (sortConfig.direction === "asc" ? (
+                          <i
+                            className="bi bi-arrow-bar-up"
+                            style={{ fontSize: "0.8rem" }}
+                          ></i>
+                        ) : (
+                          <i
+                            className="bi bi-arrow-bar-down"
+                            style={{ fontSize: "0.8rem" }}
+                          ></i>
+                        ))}
+                    </div>
                   </div>
                 </th>
               );
@@ -460,10 +738,10 @@ export default function TableTemplate<T>({
         </tbody>
 
         <tfoot className="sticky-bottom">
-          <tr style={{ display: total >= pageSize ? "table-row" : "none" }}>
-            <td colSpan={visibleColumns.length + 1}>
-              {!groupBy && (
-                <div className="d-flex justify-content-end align-items-center gap-2 sticky-top">
+          {!groupBy && total >= pageSize && (
+            <tr>
+              <td colSpan={visibleColumns.length + 1}>
+                <div className="d-flex justify-content-end align-items-center gap-2">
                   <span className="text-muted small">
                     Página {page} de {totalPages} — {total} registros
                   </span>
@@ -486,9 +764,9 @@ export default function TableTemplate<T>({
                     </Button>
                   </div>
                 </div>
-              )}
-            </td>
-          </tr>
+              </td>
+            </tr>
+          )}
         </tfoot>
       </Table>
     </div>

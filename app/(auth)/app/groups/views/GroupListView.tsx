@@ -54,7 +54,7 @@ function GroupListView() {
       fieldName: "createdAt",
       accessor: (g) =>
         g.createdAt ? formatDate(g.createdAt, "dd/MM/yyyy HH:mm") : null,
-      type: "date",
+      type: "datetime",
       groupFormat: "dd/MM",
     },
   ];

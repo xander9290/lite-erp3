@@ -187,6 +187,26 @@ function parseRangeSyntax(raw: string) {
 
 function toDateSafe(v: string | null) {
   if (!v) return null;
+
+  // Para campos tipo "date" del frontend (YYYY-MM-DD)
+  // Convertir a inicio del día (00:00:00)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    const d = new Date(`${v}T00:00:00.000Z`);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Para datetime-local del frontend (YYYY-MM-DDTHH:mm)
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) {
+    const d = new Date(`${v}:00.000Z`);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Para datetime con segundos (YYYY-MM-DDTHH:mm:ss)
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(v)) {
+    const d = new Date(`${v}.000Z`);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
   const d = new Date(v);
   return isNaN(d.getTime()) ? null : d;
 }
@@ -225,6 +245,67 @@ function parseDomain(raw: string | null): DomainItem[] {
   }
 }
 
+// function domainItemToWhere(item: DomainItem) {
+//   const [field, operator, value] = item;
+
+//   if (!field || !operator || !isSafeKey(field)) return null;
+
+//   const path = splitPath(field);
+//   if (!path.length || path.length > MAX_PATH_DEPTH) return null;
+//   if (containsDeniedSegment(path)) return null;
+
+//   switch (operator) {
+//     case "=":
+//       return buildNestedWhere(path, value);
+
+//     case "!=":
+//       return buildNestedWhere(path, { not: value });
+
+//     case "contains":
+//       return buildNestedWhere(path, {
+//         contains: String(value ?? ""),
+//         mode: "insensitive",
+//       });
+
+//     case "startsWith":
+//       return buildNestedWhere(path, {
+//         startsWith: String(value ?? ""),
+//         mode: "insensitive",
+//       });
+
+//     case "endsWith":
+//       return buildNestedWhere(path, {
+//         endsWith: String(value ?? ""),
+//         mode: "insensitive",
+//       });
+
+//     case "in":
+//       return buildNestedWhere(path, {
+//         in: Array.isArray(value) ? value : [value],
+//       });
+
+//     case "notIn":
+//       return buildNestedWhere(path, {
+//         notIn: Array.isArray(value) ? value : [value],
+//       });
+
+//     case ">":
+//       return buildNestedWhere(path, { gt: value });
+
+//     case ">=":
+//       return buildNestedWhere(path, { gte: value });
+
+//     case "<":
+//       return buildNestedWhere(path, { lt: value });
+
+//     case "<=":
+//       return buildNestedWhere(path, { lte: value });
+
+//     default:
+//       return null;
+//   }
+// }
+
 function domainItemToWhere(item: DomainItem) {
   const [field, operator, value] = item;
 
@@ -234,56 +315,73 @@ function domainItemToWhere(item: DomainItem) {
   if (!path.length || path.length > MAX_PATH_DEPTH) return null;
   if (containsDeniedSegment(path)) return null;
 
+  // 👇 NORMALIZAR EL VALOR ANTES DE USARLO
+  const normalizedValue = normalizeDateTime(value);
+
   switch (operator) {
     case "=":
-      return buildNestedWhere(path, value);
-
+      return buildNestedWhere(path, normalizedValue);
     case "!=":
-      return buildNestedWhere(path, { not: value });
-
+      return buildNestedWhere(path, { not: normalizedValue });
     case "contains":
       return buildNestedWhere(path, {
-        contains: String(value ?? ""),
+        contains: String(normalizedValue ?? ""),
         mode: "insensitive",
       });
-
     case "startsWith":
       return buildNestedWhere(path, {
-        startsWith: String(value ?? ""),
+        startsWith: String(normalizedValue ?? ""),
         mode: "insensitive",
       });
-
     case "endsWith":
       return buildNestedWhere(path, {
-        endsWith: String(value ?? ""),
+        endsWith: String(normalizedValue ?? ""),
         mode: "insensitive",
       });
-
     case "in":
       return buildNestedWhere(path, {
-        in: Array.isArray(value) ? value : [value],
+        in: Array.isArray(normalizedValue)
+          ? normalizedValue
+          : [normalizedValue],
       });
-
     case "notIn":
       return buildNestedWhere(path, {
-        notIn: Array.isArray(value) ? value : [value],
+        notIn: Array.isArray(normalizedValue)
+          ? normalizedValue
+          : [normalizedValue],
       });
-
     case ">":
-      return buildNestedWhere(path, { gt: value });
-
+      return buildNestedWhere(path, { gt: normalizedValue });
     case ">=":
-      return buildNestedWhere(path, { gte: value });
-
+      return buildNestedWhere(path, { gte: normalizedValue });
     case "<":
-      return buildNestedWhere(path, { lt: value });
-
+      return buildNestedWhere(path, { lt: normalizedValue });
     case "<=":
-      return buildNestedWhere(path, { lte: value });
-
+      return buildNestedWhere(path, { lte: normalizedValue });
     default:
       return null;
   }
+}
+
+function normalizeDateTime(value: any): any {
+  if (typeof value !== "string") return value;
+
+  // Si es solo fecha (YYYY-MM-DD)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return `${value}T00:00:00.000Z`;
+  }
+
+  // Si es datetime-local (YYYY-MM-DDTHH:mm)
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
+    return `${value}:00.000Z`;
+  }
+
+  // Si es datetime con segundos (YYYY-MM-DDTHH:mm:ss)
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value)) {
+    return `${value}.000Z`;
+  }
+
+  return value;
 }
 
 export async function GET(
@@ -386,7 +484,9 @@ export async function GET(
       continue;
     }
 
-    const parsed = parseRangeSyntax(value);
+    const normalizedValue = normalizeDateTime(value); // <-- AGREGAR ESTA LÍNEA
+
+    const parsed = parseRangeSyntax(normalizedValue);
     if (!parsed) continue;
 
     if (parsed.op === "between") {
