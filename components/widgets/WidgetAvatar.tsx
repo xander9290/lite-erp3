@@ -20,6 +20,7 @@ export function WidgetAvatar({
         height={32}
         alt="imageAvatar"
         className="rounded"
+        onClick={(e) => e.stopPropagation()}
       />
     </Zoom>
   );
