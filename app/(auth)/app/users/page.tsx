@@ -5,6 +5,7 @@ import { getUserById } from "./actions/user-actions";
 
 const UsersFormView = lazy(() => import("./views/UsersFormView"));
 const UsersListView = lazy(() => import("./views/UsersListView"));
+const UsersKanbanView = lazy(() => import("./views/UsersKanbanView"));
 
 async function PageUsers({
   searchParams,
@@ -23,6 +24,9 @@ async function PageUsers({
         <UsersFormView id={id} user={user} />
       </Suspense>
     );
+  }
+  if (viewType === "kanban") {
+    return <UsersKanbanView />;
   } else {
     return <NotFound />;
   }

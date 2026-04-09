@@ -1,13 +1,12 @@
 "use client";
 
-import { Badge, Card, Col, Container, Row } from "react-bootstrap";
+import { Card, Col, Row } from "react-bootstrap";
 import { UserWithProps } from "../actions/user-actions";
 import {
   WidgetAvatar,
   WidgetBadgeStatus,
   WidgetDropList,
 } from "@/components/widgets";
-import { formatDate } from "date-fns";
 
 function CardUser({ user }: { user: UserWithProps }) {
   return (

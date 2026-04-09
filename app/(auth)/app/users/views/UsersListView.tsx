@@ -1,13 +1,20 @@
 "use client";
 
-import { TableTemplateColumn } from "@/components/templates/TableTemplate";
+import TableTemplate, {
+  TableTemplateColumn,
+} from "@/components/templates/TableTemplate";
 import { type UserWithProps } from "../actions/user-actions";
 import { formatDate } from "date-fns";
 import ListView from "@/components/templates/ListView";
 import { getByPath } from "@/app/libs/getByPath";
 import { useState } from "react";
-import CardTemplate from "@/components/templates/CardTemplate";
-import CardUser from "./CardUser";
+import Link from "next/link";
+import {
+  WidgetAvatar,
+  WidgetBadgeStatus,
+  WidgetCellRow,
+  WidgetDropList,
+} from "@/components/widgets";
 
 export const USER_COLUMNS: TableTemplateColumn<UserWithProps>[] = [
   {
@@ -25,6 +32,12 @@ export const USER_COLUMNS: TableTemplateColumn<UserWithProps>[] = [
     accessor: (u) => u.login,
     filterable: true,
     type: "string",
+    render: (u) => (
+      <WidgetCellRow>
+        <WidgetAvatar imageUrl={u.Partner?.imageUrl} />
+        <span>{u.Partner?.name}</span>
+      </WidgetCellRow>
+    ),
   },
 
   {
@@ -49,12 +62,29 @@ export const USER_COLUMNS: TableTemplateColumn<UserWithProps>[] = [
     fieldName: "comapnies",
     accessor: (g) => g.Companies?.map((u) => u.name).join(", ") ?? "",
     filterable: true,
+    render: (u) => (
+      <WidgetCellRow>
+        <WidgetDropList items={u.Companies} />
+      </WidgetCellRow>
+    ),
   },
   {
     key: "active",
     label: "Activo",
     fieldName: "active",
+    type: "boolean",
     accessor: (u) => (u.active ? "Sí" : "No"),
+    render: (u) => (
+      <WidgetCellRow content="center">
+        <WidgetBadgeStatus
+          value={u.active ? "active" : "inactive"}
+          options={{
+            active: { label: "Activo", color: "success" },
+            inactive: { label: "Inactivo", color: "danger" },
+          }}
+        />
+      </WidgetCellRow>
+    ),
   },
   {
     key: "lastLogin",
@@ -68,7 +98,6 @@ export const USER_COLUMNS: TableTemplateColumn<UserWithProps>[] = [
 
 function UsersListView() {
   const [active, setActive] = useState(true);
-  // const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
 
   // const updateGroup = async ({
   //   id,
@@ -93,33 +122,22 @@ function UsersListView() {
           },
         ]}
       >
-        {/* <Button
-          size="sm"
-          variant="secondary"
-          title="Vista Kanban"
-          onClick={() => setViewMode(viewMode === "list" ? "kanban" : "list")}
+        <Link
+          href="/app/users?view_type=kanban&id=null"
+          className="btn btn-secondary btn-sm"
+          title="Vista kanban"
         >
-          {viewMode === "list" ? (
-            <i className="bi bi-kanban"></i>
-          ) : (
-            <i className="bi bi-list-task"></i>
-          )}
-        </Button> */}
+          <i className="bi bi-table"></i>
+        </Link>
       </ListView.Header>
       <ListView.Body>
-        <CardTemplate
+        <TableTemplate
           columns={USER_COLUMNS}
           getRowId={(u) => u.id}
+          pageSize={50}
           model="user"
           viewForm="/app/users?view_type=form"
-          pageSize={50}
-          columnsGrid={4}
-          defaultOrder="name"
-          renderCard={(user) => <CardUser user={user} />}
-          domain={[
-            ["name", "!=", "bot"],
-            ["active", "=", active],
-          ]}
+          domain={[["active", "=", active]]}
           includes={{
             Partner: true,
           }}
