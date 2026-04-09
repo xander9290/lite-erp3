@@ -311,7 +311,7 @@ export default function CardTemplate<T>({
           >
             <i
               className={`bi ${showFilterPanel ? "bi-eye-slash" : "bi-funnel"}`}
-            ></i>{" "}
+            ></i>
             {showFilterPanel ? "Ocultar filtros" : "Mostrar filtros"}
             {filterConditions.length > 0 && (
               <Badge bg="primary" className="ms-2">
@@ -482,12 +482,13 @@ export default function CardTemplate<T>({
         <div className="text-center p-5 text-muted">{emptyMessage}</div>
       ) : (
         <>
-          <Row {...getColProps()} className="g-3">
+          <Row className="g-3">
             {rows.map((row) => (
               <Col
                 key={getRowId(row)}
                 onClick={() => handleCardClick(row)}
                 style={{ cursor: "pointer" }}
+                {...getColProps()}
               >
                 {renderCard(row)}
               </Col>

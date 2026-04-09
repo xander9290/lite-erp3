@@ -23,7 +23,7 @@ export function WidgetAvatar({
         width={width}
         height={height}
         alt="imageAvatar"
-        className="rounded"
+        className="img-fluid rounded"
         onClick={(e) => e.stopPropagation()}
       />
     </Zoom>
