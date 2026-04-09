@@ -10,7 +10,7 @@ import {
 
 function CardUser({ user }: { user: UserWithProps }) {
   return (
-    <Card className="p-1 bg-body-tertiary">
+    <Card className="p-1">
       <Row className="g-0">
         <Col md="2" className="text-center">
           <WidgetAvatar
