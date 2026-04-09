@@ -2,7 +2,15 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Form, Button, Spinner, Badge, Row, Col } from "react-bootstrap";
+import {
+  Form,
+  Button,
+  Spinner,
+  Badge,
+  Row,
+  Col,
+  Container,
+} from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/sessionStore";
 import useSWR from "swr";
@@ -279,7 +287,7 @@ export default function CardTemplate<T>({
       case 2:
         return { xs: 12, md: 6 };
       case 3:
-        return { xs: 12, md: 5, lg: 4 };
+        return { xs: 12, sm: 6, md: 6, lg: 6, xl: 2 };
       case 4:
         return { xs: 12, md: 6, lg: 3 };
       default:
@@ -482,18 +490,20 @@ export default function CardTemplate<T>({
         <div className="text-center p-5 text-muted">{emptyMessage}</div>
       ) : (
         <>
-          <Row className="g-3">
-            {rows.map((row) => (
-              <Col
-                key={getRowId(row)}
-                onClick={() => handleCardClick(row)}
-                style={{ cursor: "pointer" }}
-                {...getColProps()}
-              >
-                {renderCard(row)}
-              </Col>
-            ))}
-          </Row>
+          <Container fluid>
+            <Row className="g-2">
+              {rows.map((row) => (
+                <Col
+                  key={getRowId(row)}
+                  onClick={() => handleCardClick(row)}
+                  style={{ cursor: "pointer", minWidth: "325px" }}
+                  {...getColProps()}
+                >
+                  {renderCard(row)}
+                </Col>
+              ))}
+            </Row>
+          </Container>
 
           {/* Paginación */}
           {total >= pageSize && (

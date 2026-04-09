@@ -38,7 +38,6 @@ function UsersKanbanView() {
           model="user"
           viewForm="/app/users?view_type=form"
           pageSize={50}
-          columnsGrid={4}
           defaultOrder="name"
           renderCard={(user) => <CardUser user={user} />}
           domain={[["active", "=", active]]}
