@@ -279,7 +279,7 @@ export default function CardTemplate<T>({
       case 2:
         return { xs: 12, md: 6 };
       case 3:
-        return { xs: 12, md: 6, lg: 4 };
+        return { xs: 12, md: 5, lg: 4 };
       case 4:
         return { xs: 12, md: 6, lg: 3 };
       default:
@@ -351,8 +351,8 @@ export default function CardTemplate<T>({
                         style={{ fontSize: "0.85rem" }}
                       >
                         <span>
-                          {col?.label || filter.field}:{" "}
-                          {operatorLabels[filter.operator]} "{displayValue}"
+                          {col?.label || filter.field}:
+                          {operatorLabels[filter.operator]} {displayValue}
                         </span>
                         <i
                           className="bi bi-x-circle-fill"

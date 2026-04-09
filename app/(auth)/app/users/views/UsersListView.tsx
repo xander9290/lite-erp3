@@ -15,8 +15,6 @@ import {
   WidgetCellRow,
   WidgetDropList,
 } from "@/components/widgets";
-import Link from "next/link";
-import KanbanTemplate from "@/components/templates/KanbanTemplate";
 import CardTemplate from "@/components/templates/CardTemplate";
 
 export const USER_COLUMNS: TableTemplateColumn<UserWithProps>[] = [
@@ -113,6 +111,16 @@ function UsersListView() {
   const [active, setActive] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
 
+  // const updateGroup = async ({
+  //   id,
+  //   newGroup,
+  // }: {
+  //   id: string | null;
+  //   newGroup: string;
+  // }) => {
+  //   console.log(id, newGroup);
+  // };
+
   return (
     <ListView model="users">
       <ListView.Header
@@ -157,26 +165,23 @@ function UsersListView() {
             }}
           />
         ) : (
-          <KanbanTemplate
+          <CardTemplate
             columns={USER_COLUMNS}
-            model="user"
             getRowId={(u) => u.id}
+            model="user"
             viewForm="/app/users?view_type=form"
-            groupBy="Group.name"
-            defaultOrder="createdAt"
-            includes={{
-              Partner: true,
-            }}
-            domain={[
-              ["name", "!=", "bot"],
-              ["active", "=", active],
-            ]}
+            pageSize={50}
+            columnsGrid={3}
             renderCard={(user) => (
               <Card>
                 <Card.Body className="p-1">
                   <div>
                     <small className="d-flex flex-row align-items-end justify-content-between gap-2">
-                      <WidgetAvatar imageUrl={user.Partner?.imageUrl} />
+                      <WidgetAvatar
+                        width={50}
+                        height={50}
+                        imageUrl={user.Partner?.imageUrl}
+                      />
                       <strong>{user.Partner?.name}</strong>
                       <WidgetBadgeStatus
                         value={user.active ? "active" : "inactive"}
@@ -193,48 +198,14 @@ function UsersListView() {
                 </Card.Body>
               </Card>
             )}
-            // sortGroups={(groups) => {
-            //   const order = ["Alta", "Media", "Baja", "Sin categoría"];
-            //   return order.filter((g) => groups.includes(g));
-            // }}
+            domain={[
+              ["name", "!=", "bot"],
+              ["active", "=", active],
+            ]}
+            includes={{
+              Partner: true,
+            }}
           />
-          // <CardTemplate
-          //   columns={USER_COLUMNS}
-          //   getRowId={(u) => u.id}
-          //   model="user"
-          //   viewForm="/app/users?view_type=form"
-          //   pageSize={50}
-          //   columnsGrid={2}
-          //   renderCard={(user) => (
-          //     <Card>
-          //       <Card.Body className="p-1">
-          //         <div>
-          //           <small className="d-flex flex-row align-items-end justify-content-between gap-2">
-          //             <WidgetAvatar imageUrl={user.Partner?.imageUrl} />
-          //             <strong>{user.Partner?.name}</strong>
-          //             <WidgetBadgeStatus
-          //               value={user.active ? "active" : "inactive"}
-          //               options={{
-          //                 active: { label: "Activo", color: "success" },
-          //                 inactive: { label: "Inactivo", color: "danger" },
-          //               }}
-          //             />
-          //           </small>
-          //         </div>
-          //         <div>
-          //           <p>{user.Partner?.email}</p>
-          //         </div>
-          //       </Card.Body>
-          //     </Card>
-          //   )}
-          //   domain={[
-          //     ["name", "!=", "bot"],
-          //     ["active", "=", active],
-          //   ]}
-          //   includes={{
-          //     Partner: true,
-          //   }}
-          // />
         )}
       </ListView.Body>
     </ListView>

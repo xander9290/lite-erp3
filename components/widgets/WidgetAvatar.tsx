@@ -6,9 +6,13 @@ import "react-medium-image-zoom/dist/styles.css";
 export function WidgetAvatar({
   imageUrl,
   name = "displayAvatar",
+  width = 32,
+  height = 32,
 }: {
   imageUrl?: string | null;
   name?: string;
+  width?: number;
+  height?: number;
 }) {
   return (
     <Zoom>
@@ -16,8 +20,8 @@ export function WidgetAvatar({
         title={name}
         unoptimized
         src={imageUrl ?? "/images/avatar_default.svg"}
-        width={32}
-        height={32}
+        width={width}
+        height={height}
         alt="imageAvatar"
         className="rounded"
         onClick={(e) => e.stopPropagation()}

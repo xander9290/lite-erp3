@@ -503,8 +503,8 @@ export default function TableTemplate<T>({
                       (acc) => acc.fieldName === col.fieldName,
                     );
                     if (fieldAccess?.invisible) return null;
-                    const typeLabel =
-                      col.type === "datetime" ? "datetime" : col.type;
+                    // const typeLabel =
+                    //   col.type === "datetime" ? "datetime" : col.type;
                     return (
                       <option key={col.key} value={col.key}>
                         {col.label}
