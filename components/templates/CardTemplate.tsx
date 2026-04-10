@@ -496,7 +496,10 @@ export default function CardTemplate<T>({
                 <Col
                   key={getRowId(row)}
                   onClick={() => handleCardClick(row)}
-                  style={{ cursor: "pointer", minWidth: "325px" }}
+                  style={{
+                    cursor: "pointer",
+                    minWidth: "325px",
+                  }}
                   {...getColProps()}
                 >
                   {renderCard(row)}

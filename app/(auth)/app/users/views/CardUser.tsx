@@ -21,7 +21,7 @@ function CardUser({ user }: { user: UserWithProps }) {
         </Col>
         <Col md="10">
           <Card.Body className="p-1 text-center text-md-start">
-            <div className="fs-6 fw-bold">{user.Partner?.name}</div>
+            <div className="fs-6 fw-semibold">{user.Partner?.name}</div>
             <div>
               <small>
                 <strong>Usuario: </strong>
