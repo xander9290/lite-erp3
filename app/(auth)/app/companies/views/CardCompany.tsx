@@ -2,7 +2,7 @@
 
 import { Card, Col, Row } from "react-bootstrap";
 import { CompanieWithProps } from "../actions/companies-actions";
-import { WidgetAvatar, WidgetDropList } from "@/components/widgets";
+import { WidgetAvatar } from "@/components/widgets";
 
 function CardCompany({ comapny }: { comapny: CompanieWithProps }) {
   return (
