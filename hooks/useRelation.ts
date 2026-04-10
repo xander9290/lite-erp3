@@ -5,7 +5,7 @@ const relationCache = new Map<string, any[]>();
 export function useRelation<T>({
   model,
   domain,
-  limit = 5,
+  limit = 8,
 }: {
   model: string;
   domain?: any[];

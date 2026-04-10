@@ -2,18 +2,11 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Form,
-  Button,
-  Spinner,
-  Badge,
-  Row,
-  Col,
-  Container,
-} from "react-bootstrap";
+import { Form, Button, Badge, Row, Col, Container } from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/sessionStore";
 import useSWR from "swr";
+import LoadingPage from "@/app/loading-page";
 
 export type CardTemplateColumn<T> = {
   key: string;
@@ -287,7 +280,7 @@ export default function CardTemplate<T>({
       case 2:
         return { xs: 12, md: 6 };
       case 3:
-        return { xs: 12, sm: 6, md: 6, lg: 6, xl: 2 };
+        return { xs: 12, sm: 6, md: 6, lg: 6, xl: 3, xxl: 3 };
       case 4:
         return { xs: 12, md: 6, lg: 3 };
       default:
@@ -297,15 +290,7 @@ export default function CardTemplate<T>({
 
   return (
     <div className="position-relative">
-      {isLoading && (
-        <div
-          className="position-absolute end-0 top-0 me-2 mt-2 d-flex align-items-center gap-2 text-muted"
-          style={{ zIndex: 5 }}
-        >
-          <Spinner size="sm" />
-          <span className="small">Cargando…</span>
-        </div>
-      )}
+      {isLoading && <LoadingPage />}
 
       {error && <div className="text-danger small mb-2">{error.message}</div>}
 
@@ -498,7 +483,6 @@ export default function CardTemplate<T>({
                   onClick={() => handleCardClick(row)}
                   style={{
                     cursor: "pointer",
-                    minWidth: "325px",
                   }}
                   {...getColProps()}
                 >

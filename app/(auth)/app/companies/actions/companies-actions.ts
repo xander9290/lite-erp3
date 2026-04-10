@@ -260,7 +260,7 @@ export async function updateCompany({
     });
 
     return {
-      message: "Se ha creado la empresa",
+      message: "Se ha editado la empresa",
       success: true,
       data: updatedCompany,
     };

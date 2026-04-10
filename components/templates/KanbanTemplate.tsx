@@ -33,6 +33,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import LoadingPage from "@/app/loading-page";
 
 export type KanbanTemplateColumn<T> = {
   key: string;
@@ -656,15 +657,7 @@ export default function KanbanTemplate<T>({
       onDragCancel={handleDragCancel}
     >
       <div className="position-relative">
-        {isLoading && (
-          <div
-            className="position-absolute end-0 top-0 me-2 mt-2 d-flex align-items-center gap-2 text-muted"
-            style={{ zIndex: 5 }}
-          >
-            <Spinner size="sm" />
-            <span className="small">Cargando…</span>
-          </div>
-        )}
+        {isLoading && <LoadingPage />}
 
         {error && <div className="text-danger small mb-2">{error.message}</div>}
 
