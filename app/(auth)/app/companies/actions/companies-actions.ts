@@ -39,25 +39,6 @@ export async function getCompanyById({
   try {
     if (!id) throw new Error("ID not defined");
 
-    // const company = await prisma.company.findUnique({
-    //   where: { id },
-    //   include: {
-    //     Users: {
-    //       include: {
-    //         Partner: true,
-    //       },
-    //     },
-    //     Manager: {
-    //       include: {
-    //         Partner: true,
-    //       },
-    //     },
-    //     Partner: true,
-    //     Company: true,
-    //     Children: true,
-    //   },
-    // });
-
     const company = await prisma.company.findUnique({
       where: { id },
       include: {
@@ -117,12 +98,12 @@ export async function createCompany({
         Users: {
           connect: data.userIds.map((u) => ({ id: u.id })),
         },
-        ...(data.managerId
-          ? { Manager: { connect: { id: data.managerId.id! } } }
-          : {}),
-        ...(data.parentId
-          ? { Company: { connect: { id: data.parentId.id! } } }
-          : {}),
+        ...(data.managerId?.id && {
+          Manager: { connect: { id: data.managerId.id } },
+        }),
+        ...(data.parentId?.id && {
+          Company: { connect: { id: data.parentId.id } },
+        }),
         Children: {
           connect: data.childrenIds.map((ch) => ({ id: ch.companyId.id })),
         },

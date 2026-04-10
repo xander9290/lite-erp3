@@ -117,6 +117,7 @@ export async function updateModelField({
         description: data.description,
         fieldType: data.fieldType,
         active: data.active,
+        modelId: data.modelId.id,
       },
       include: {
         Model: {

@@ -128,7 +128,9 @@ export async function createUser({
         active: data.active,
         password: "",
         createdUid: uid || "",
-        ...(data.groupId && { Group: { connect: { id: data.groupId.id! } } }),
+        ...(data.groupId?.id && {
+          Group: { connect: { id: data.groupId.id } },
+        }),
         Partner: {
           create: {
             name: data.name,
@@ -205,7 +207,7 @@ export async function updateUser({
         name: data.name,
         login: data.login,
         active: data.active,
-        Group: data.groupId
+        Group: data.groupId?.id
           ? { connect: { id: data.groupId.id } }
           : { disconnect: true },
         Companies: {
