@@ -45,7 +45,6 @@ function UsersFormView({
   const [changePasswordModal, setChangePasswordModal] = useState(false);
 
   const onSubmit: SubmitHandler<UserSchemaType> = async (data) => {
-    console.log(data);
     if (id && id === "null") {
       const res = await createUser({ data });
       if (!res.success) {

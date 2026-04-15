@@ -64,6 +64,8 @@ model User {
 
   Companies Company[] @relation("UserCompanyRel")
 
+  Warehouses Warehouse[] @relation("UsersWarehouseRel")
+
   Auditlogs Auditlog[] @relation("UserAuditlogRel")
 
   createdUid String   @map("created_uid")
@@ -209,9 +211,43 @@ model Company {
   Company  Company?  @relation("ParentChildrenCompany", fields: [parentId], references: [id], onDelete: Cascade)
   Children Company[] @relation("ParentChildrenCompany")
 
+  Warehouses Warehouse[] @relation("WarehouseCompanyRel")
+
   createdUid String   @map("created_uid")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("companies")
+}
+
+model Warehouse {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  code        String        @unique
+  description String        @unique
+  type        WarehouseType @default(SALES)
+  active      Boolean       @default(true)
+
+  companyId String  @map("company_id")
+  Company   Company @relation("WarehouseCompanyRel", fields: [companyId], references: [id], onDelete: Cascade)
+
+  Users User[] @relation("UsersWarehouseRel")
+
+  InternalsFrom Warehouse[] @relation("InternalsWarehouseRel")
+  InternalsTo   Warehouse[] @relation("InternalsWarehouseRel")
+
+  createdUid String   @map("created_uid")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("warehouses")
+}
+
+enum WarehouseType {
+  SALES
+  SUPPLY
+  PRODUCTION
+  QUARANTINE
+  ADJUSTMENT
+  TRANSIT
 }

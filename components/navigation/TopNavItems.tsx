@@ -170,6 +170,8 @@ function TopNavItems() {
       >
         <NavDropdown.Item
           title="inventoryWarehousesMenu"
+          href="/app/warehouses?view_type=list&id=null"
+          as={Link}
           disabled={
             fieldsAccess.find(
               (field) => field.fieldName === "inventoryWarehousesMenu",

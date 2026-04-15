@@ -45,8 +45,8 @@ export const companySchema = z.object({
   province: z.string(),
   country: z.string(),
   vat: z.string(),
-  createdUid: z.string().nullable(),
   streets: z.string(),
+  createdUid: z.string().nullable(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
 });
