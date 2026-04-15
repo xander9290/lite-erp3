@@ -6,6 +6,7 @@ import { ActionResponse } from "@/app/libs/definitions";
 import { CompanySchemaType } from "../schemas/company.schema";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { createAuditlog } from "@/app/(auth)/app/actions/auditlog-actions";
+import { generateModelCode } from "@/app/libs/helpers";
 
 export interface CompanieWithProps extends Company {
   Users: {
@@ -28,6 +29,10 @@ export interface CompanieWithProps extends Company {
       id: string;
       name: string;
     } | null;
+  }[];
+  Warehouses: {
+    id: string;
+    name: string;
   }[];
 }
 
@@ -65,6 +70,12 @@ export async function getCompanyById({
                 name: true,
               },
             },
+          },
+        },
+        Warehouses: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },
@@ -124,6 +135,18 @@ export async function createCompany({
             createdUid: uid || "",
           },
         },
+        Warehouses: {
+          createMany: {
+            data: {
+              code: generateModelCode(data.name),
+              description: `VENTAS ${data.name}`,
+              name: `[${generateModelCode(data.name)}] VENTAS ${data.name}`,
+              active: true,
+              createdUid: uid || "",
+              type: "SALES",
+            },
+          },
+        },
         createdUid: uid || "",
       },
       include: {
@@ -150,6 +173,12 @@ export async function createCompany({
                 name: true,
               },
             },
+          },
+        },
+        Warehouses: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },
@@ -245,6 +274,12 @@ export async function updateCompany({
                 name: true,
               },
             },
+          },
+        },
+        Warehouses: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },

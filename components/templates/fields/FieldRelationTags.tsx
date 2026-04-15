@@ -346,7 +346,7 @@ export function FieldRelationTags({
             }}
             onKeyDown={handleKeyDown}
             size="sm"
-            className="border-0 border-bottom shadow-none flex-grow-1 rounded-0 p-1"
+            className="border-0 border-bottom shadow-none flex-grow-1 rounded-0 p-1 fw-bold"
             style={{ minWidth: "120px", fontSize: "0.9rem" }}
             autoComplete="off"
           />

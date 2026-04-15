@@ -101,3 +101,19 @@ export const formatCurrency = (value: number) => {
     currency: "MXN",
   }).format(value);
 };
+
+export function generateModelCode(string: string) {
+  // CONSTRUYE EL CÓDIGO PREFIJO PARA EL ALMACÉN A PARTIR DEL NOMBRE DE LA NUEVA EMPRESA
+  let newCode = "";
+
+  const stringArray = string.split(" ");
+  const firstLetter = stringArray[0].slice(0, 1);
+  const secondLetter =
+    stringArray.length > 1
+      ? stringArray[1].slice(0, 1)
+      : stringArray[0].slice(1, 2);
+
+  newCode = firstLetter + secondLetter;
+
+  return newCode;
+}

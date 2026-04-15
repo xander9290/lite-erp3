@@ -64,8 +64,6 @@ model User {
 
   Companies Company[] @relation("UserCompanyRel")
 
-  Warehouses Warehouse[] @relation("UsersWarehouseRel")
-
   Auditlogs Auditlog[] @relation("UserAuditlogRel")
 
   createdUid String   @map("created_uid")
@@ -230,8 +228,6 @@ model Warehouse {
 
   companyId String  @map("company_id")
   Company   Company @relation("WarehouseCompanyRel", fields: [companyId], references: [id], onDelete: Cascade)
-
-  Users User[] @relation("UsersWarehouseRel")
 
   InternalsFrom Warehouse[] @relation("InternalsWarehouseRel")
   InternalsTo   Warehouse[] @relation("InternalsWarehouseRel")

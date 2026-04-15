@@ -121,6 +121,11 @@ function CompaniesFormView({
               name: ch.Manager?.name || "",
             },
           })) || [],
+        warehouseIds:
+          company.Warehouses.map((w) => ({
+            id: w.id,
+            name: w.name,
+          })) || [],
         createdUid: company.createdUid,
         createdAt: company.createdAt,
         updatedAt: company.updatedAt,
@@ -200,16 +205,16 @@ function CompaniesFormView({
         <FieldEntry name="country" label="País" />
         <FieldEntry name="vat" label="R.F.C." />
       </FormViewGroup>
-      {/* <FormBook dKey="userIds">
-        <FormPage title="Sucursales" eventKey="childrenIds">
-          
-        </FormPage>
-      </FormBook> */}
-      <Notebook defaultActiveKey="userIds">
-        <Page title="Usuarios" eventKey="userIds">
-          <PageSheet name="userIds">
+      <Notebook defaultActiveKey="relationIds">
+        <Page title="Modelos relacionados" eventKey="relationIds">
+          <PageSheet name="relationIds">
             <FormViewGroup>
               <FieldRelationTags model="user" name="userIds" label="Usuarios" />
+              <FieldRelationTags
+                model="warehouse"
+                name="warehouseIds"
+                label="Almacenes"
+              />
             </FormViewGroup>
           </PageSheet>
         </Page>

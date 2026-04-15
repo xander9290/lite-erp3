@@ -117,7 +117,6 @@ function FieldInput({
       className={`${className ?? ""} ${
         type === "password" ? "text-center" : ""
       } shadow-none w-100 overflow-hidden px-1 ${inline ? "border-0" : ""}`}
-      id={name}
       title={name}
       as={as ?? (type === "text" ? "textarea" : undefined)}
       type={type}
@@ -240,7 +239,11 @@ export function FieldEntry({
 
         return (
           <div className="mb-1 w-100">
-            <FloatingLabel label={floatingText} className="w-100 fs-6 fw-bold">
+            <FloatingLabel
+              label={floatingText}
+              controlId={name}
+              className="w-100 fs-6 fw-bold"
+            >
               {input}
             </FloatingLabel>
           </div>

@@ -35,6 +35,12 @@ export const companySchema = z.object({
       }),
     }),
   ),
+  warehouseIds: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    }),
+  ),
   imageUrl: z.string().nullable(),
   phone: z.string(),
   street: z.string(),
@@ -79,6 +85,7 @@ export const companySchemaDefault: CompanySchemaType = {
     name: "",
   },
   childrenIds: [],
+  warehouseIds: [],
   createdUid: null,
   createdAt: null,
   updatedAt: null,

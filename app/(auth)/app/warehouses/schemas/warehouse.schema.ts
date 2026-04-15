@@ -2,21 +2,15 @@ import { WarehouseType } from "@/generated/prisma/enums";
 import { z } from "zod";
 
 export const warehouseSchema = z.object({
-  name: z.string().min(1, "Nombre es requerido"),
+  name: z.string(),
   code: z.string().min(1, "Código es requerido"),
   description: z.string().min(1, "Descripción es requerido"),
   type: z.enum(WarehouseType),
   active: z.boolean(),
-  compnayId: z.object({
-    id: z.string(),
+  companyId: z.object({
+    id: z.string().min(1, "Empresa es requerido"),
     name: z.string(),
   }),
-  userIds: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-    }),
-  ),
   internalIds: z.array(
     z.object({
       id: z.string(),
@@ -36,11 +30,10 @@ export const warehouseSchemaDefault: WarehouseSchemaType = {
   description: "",
   active: true,
   type: "SALES",
-  compnayId: {
+  companyId: {
     id: "",
     name: "",
   },
-  userIds: [],
   internalIds: [],
   createdUid: null,
   createdAt: null,

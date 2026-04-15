@@ -363,13 +363,17 @@ export function FieldOption<T extends SelectOption>({
 
   return (
     <div
-      className="mb-3"
+      className="mb-1"
       ref={(element) => {
         containerRef.current = element;
       }}
       title={name}
     >
-      <FloatingLabel controlId={name} label={floatingText} className="w-100">
+      <FloatingLabel
+        controlId={name}
+        label={floatingText}
+        className="w-100 fs-6 fw-bold"
+      >
         {input}
         <Form.Control.Feedback
           type="invalid"

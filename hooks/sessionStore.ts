@@ -38,6 +38,8 @@ export function useAuth() {
     const companyCode =
       session?.user.companies.find((c) => c.current)?.code || null;
 
+    const companyId = session?.user.companies.find((c) => c.current)?.id || "";
+
     return {
       session,
       user,
@@ -46,6 +48,7 @@ export function useAuth() {
       access,
       changeCompany,
       companyCode,
+      companyId,
     };
   }, [session, status, changeCompany]);
 
