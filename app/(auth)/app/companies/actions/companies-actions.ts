@@ -138,9 +138,9 @@ export async function createCompany({
         Warehouses: {
           createMany: {
             data: {
-              code: generateModelCode(data.name),
+              code: `V${generateModelCode(data.name)}`,
               description: `VENTAS ${data.name}`,
-              name: `[${generateModelCode(data.name)}] VENTAS ${data.name}`,
+              name: `[V${generateModelCode(data.name)}] VENTAS ${data.name}`,
               active: true,
               createdUid: uid || "",
               type: "SALES",
