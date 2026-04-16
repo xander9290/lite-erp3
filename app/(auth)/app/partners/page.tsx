@@ -19,7 +19,13 @@ async function PagePartners({
   if (viewType === "list") {
     return <PartnersListView display={display.toUpperCase()} />;
   } else if (viewType === "form") {
-    return <PartnersFormView display={display.toUpperCase()} />;
+    return (
+      <PartnersFormView
+        display={display.toUpperCase()}
+        partner={partner}
+        id={id}
+      />
+    );
   } else {
     return <NotFound />;
   }
