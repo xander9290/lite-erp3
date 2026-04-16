@@ -128,6 +128,8 @@ function TopNavItems() {
               (field) => field.fieldName === "partnersCustomersMenu",
             )?.invisible
           }
+          as={Link}
+          href="/app/partners?view_type=list&id=null&display=CUSTOMER"
         >
           <i className="bi bi-person-vcard-fill me-1"></i>
           <span>Clientes</span>
@@ -139,6 +141,8 @@ function TopNavItems() {
               (field) => field.fieldName === "partnersSuppliersMenu",
             )?.invisible
           }
+          as={Link}
+          href="/app/partners?view_type=list&id=null&display=SUPPLIER"
         >
           <i className="bi bi-building me-1"></i>
           <span>Proveedores</span>
@@ -150,6 +154,8 @@ function TopNavItems() {
               (field) => field.fieldName === "partnersInternalsMenu",
             )?.invisible
           }
+          as={Link}
+          href="/app/partners?view_type=list&id=null&display=INTERNAL"
         >
           <i className="bi bi-person-bounding-box me-1"></i>
           <span>Internos</span>

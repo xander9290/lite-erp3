@@ -27,8 +27,12 @@ model Partner {
   displayType PartnerDisplayType @default(INTERNAL) @map("display_type")
   active      Boolean            @default(true)
 
-  User    User?    @relation("PartnerUserRelated")
+  User User? @relation("PartnerUserRelated")
+
   Company Company? @relation("PartnerCompanyRel")
+
+  userId      String? @map("user_id")
+  UserManager User?   @relation("PartnerManagerRel", references: [id], fields: [userId], onDelete: Cascade)
 
   createdUid String   @map("created_uid")
   createdAt  DateTime @default(now()) @map("created_at")
@@ -63,6 +67,8 @@ model User {
   ManagedCompanies Company[] @relation("UserManageCompanyRel")
 
   Companies Company[] @relation("UserCompanyRel")
+
+  PartnerManager Partner[] @relation("PartnerManagerRel")
 
   Auditlogs Auditlog[] @relation("UserAuditlogRel")
 

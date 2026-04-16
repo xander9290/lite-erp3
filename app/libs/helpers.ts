@@ -102,18 +102,13 @@ export const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-export function generateModelCode(string: string) {
-  // CONSTRUYE EL CÓDIGO PREFIJO PARA EL ALMACÉN A PARTIR DEL NOMBRE DE LA NUEVA EMPRESA
-  let newCode = "";
+export function generateModelCode(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
 
-  const stringArray = string.split(" ");
-  const firstLetter = stringArray[0].slice(0, 1);
-  const secondLetter =
-    stringArray.length > 1
-      ? stringArray[1].slice(0, 1)
-      : stringArray[0].slice(1, 2);
+  if (words.length === 0) return "";
+  if (words.length === 1) {
+    return words[0].slice(0, 2).toUpperCase();
+  }
 
-  newCode = firstLetter + secondLetter;
-
-  return newCode;
+  return (words[0][0] + words[1][0]).toUpperCase();
 }

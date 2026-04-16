@@ -476,7 +476,7 @@ export default function CardTemplate<T>({
       ) : (
         <>
           <Container fluid>
-            <Row className="g-2">
+            <Row className="g-1">
               {rows.map((row) => (
                 <Col
                   key={getRowId(row)}
