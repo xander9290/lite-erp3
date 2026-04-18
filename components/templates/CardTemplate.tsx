@@ -280,7 +280,7 @@ export default function CardTemplate<T>({
       case 2:
         return { xs: 12, md: 6 };
       case 3:
-        return { xs: 12, sm: 6, md: 6, lg: 6, xl: 3, xxl: 3 };
+        return { xs: 12, sm: 6, md: 5, lg: 6, xl: 3, xxl: 3 };
       case 4:
         return { xs: 12, md: 6, lg: 3 };
       default:

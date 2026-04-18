@@ -2,25 +2,21 @@
 
 import { Card, Col, Row } from "react-bootstrap";
 import { PartnerWithProps } from "../actions/partner-actions";
-import Image from "next/image";
+import { WidgetAvatar } from "@/components/widgets";
 
 function CardPartner({ p }: { p: PartnerWithProps }) {
   return (
-    <Card style={{ height: "138px" }}>
+    <Card style={{ minHeight: "122px" }}>
       <Row className="g-0">
-        <Col md="4">
-          <img
-            src={p.imageUrl || "/images/avatar_default.svg"}
-            className="img-fluid rounded-start"
-            alt=""
-          />
+        <Col md="4" className="text-md-start text-center">
+          <WidgetAvatar width={90} height={90} imageUrl={p.imageUrl} />
         </Col>
         <Col md="8">
-          <Card.Body>
-            <Card.Title className="text-truncate" title={p.name}>
-              {p.name}
-            </Card.Title>
+          <Card.Body className="px-1">
             <small style={{ fontSize: "0.8rem" }}>
+              <Card.Title className="text-truncate" title={p.name}>
+                {p.name}
+              </Card.Title>
               <Card.Text
                 className="p-0 m-0 text-truncate"
                 title={`${p.street} ${p.houseNumber}`}
