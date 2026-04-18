@@ -1,6 +1,10 @@
 "use client";
 
-import { PartnerWithProps, updatePartner } from "../actions/partner-actions";
+import {
+  craetePartner,
+  PartnerWithProps,
+  updatePartner,
+} from "../actions/partner-actions";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -49,6 +53,14 @@ function PartnersFormView({
 
   const onSubmit: SubmitHandler<PartnerSchemaType> = async (data) => {
     if (id && id === "null") {
+      const res = await craetePartner({
+        data: { ...data, displayType: display as PartnerDisplayType },
+      });
+      if (!res.success) return modalError(res.message);
+      router.replace(
+        `/app/partners?view_type=form&id=${res.data?.id}&display=${res.data?.displayType}`,
+      );
+      toast.success(res.message);
     } else {
       const res = await updatePartner({ id, data });
       if (!res.success) return modalError(res.message);
@@ -76,6 +88,7 @@ function PartnersFormView({
       email: partner.email,
       imageUrl: partner.imageUrl,
       phone: partner.phone,
+      mobile: partner.mobile,
       street: partner.street,
       streets: partner.streets,
       houseNumber: partner.houseNumber,
@@ -113,8 +126,11 @@ function PartnersFormView({
         <FieldImage folder="partners" name="imageUrl" />
         <FieldEntry name="name" label="Nombre" />
         <FieldEntry name="email" label="Correo" />
+        <FormViewStack>
+          <FieldEntry name="phone" label="Teléfono" />
+          <FieldEntry name="mobile" label="Móvil" />
+        </FormViewStack>
         <FieldEntry name="vat" label="R.F.C." />
-        <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
       <FormViewGroup>
         <FieldEntry name="street" label="Calle" />
@@ -136,6 +152,7 @@ function PartnersFormView({
           <FieldEntry name="province" label="Estado" />
           <FieldEntry name="country" label="País" />
         </FormViewStack>
+        <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
       <Notebook defaultActiveKey="salePurchase">
         <Page eventKey="salePurchase" title="Cartera">
