@@ -35,12 +35,7 @@ export const productTemplateSchema = z.object({
       name: z.string(),
     })
     .nullable(),
-  Tags: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-    }),
-  ),
+  Tags: z.array(z.string()),
   createdUid: z.string().nullable(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),

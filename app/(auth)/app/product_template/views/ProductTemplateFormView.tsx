@@ -1,6 +1,10 @@
 "use client";
 
-import { ProductTemplateWithProps } from "../actions/productTemplate.action";
+import {
+  createProduct,
+  ProductTemplateWithProps,
+  updateProduct,
+} from "../actions/productTemplate.action";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -22,8 +26,10 @@ import {
   FieldImage,
   FieldRelation,
   FieldSelect,
+  FieldTags,
 } from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
+import toast from "react-hot-toast";
 
 function ProductTemplateFormView({
   id,
@@ -44,7 +50,21 @@ function ProductTemplateFormView({
 
   const { modalError } = useModals();
 
-  const onSubmit: SubmitHandler<ProductTemplateSchemaType> = async (data) => {};
+  const onSubmit: SubmitHandler<ProductTemplateSchemaType> = async (data) => {
+    if (id && id === "null") {
+      const res = await createProduct({ data });
+      if (!res.success) return modalError(res.message);
+
+      router.replace(`/app/product_template?view_type=form&id=${res.data?.id}`);
+      toast.success(res.message);
+    } else {
+      const res = await updateProduct({ data, id });
+      if (!res.success) return modalError(res.message);
+
+      router.refresh();
+      toast.success(res.message);
+    }
+  };
 
   const handleReverse = () => {
     if (originalValuesRef.current) {
@@ -86,11 +106,14 @@ function ProductTemplateFormView({
       userId: { id: product.User?.id || "", name: product.User?.name || "" },
       uomIncomingAllowed: product.uomIncomingAllowed,
       uomOutgoingAllowed: product.uomOutgoingAllowed,
-      Tags: product.Tags.map((t) => ({ id: t.id, name: t.name })) || [],
+      Tags: product.Tags.map((t) => t.id) || [],
       createdAt: product.createdAt,
       createdUid: product.createUid,
       updatedAt: product.updatedAt,
     };
+
+    reset(values);
+    originalValuesRef.current = values;
   }, [product, reset]);
 
   return (
@@ -117,6 +140,9 @@ function ProductTemplateFormView({
         />
         <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
+      <FormViewGroup>
+        <FieldTags name="Tags" label="Etiquetas" />
+      </FormViewGroup>
       <Notebook defaultActiveKey="purchases">
         <Page eventKey="purchases" title="Compras">
           <PageSheet name="purchase">
@@ -135,6 +161,7 @@ function ProductTemplateFormView({
                   type="number"
                   label="Múltiplo de compra"
                   className="text-center"
+                  step={0.0001}
                 />
               </FormViewStack>
               <FieldRelation model="user" name="userId" label="Comprador" />
@@ -157,18 +184,21 @@ function ProductTemplateFormView({
                   name="price1"
                   label="Precio 1"
                   className="text-end"
+                  step={0.01}
                 />
                 <FieldEntry
                   type="number"
                   name="price2"
                   label="Precio 2"
                   className="text-end"
+                  step={0.01}
                 />
                 <FieldEntry
                   type="number"
                   name="price3"
                   label="Precio 3"
                   className="text-end"
+                  step={0.01}
                 />
               </FormViewStack>
               <FormViewStack>
@@ -177,20 +207,23 @@ function ProductTemplateFormView({
                   name="price4"
                   label="Precio 4"
                   className="text-end"
+                  step={0.01}
                 />
                 <FieldEntry
                   type="number"
                   name="price5"
                   label="Precio 5"
                   className="text-end"
+                  step={0.01}
+                />
+                <FieldEntry
+                  name="uomOutgoingAllowed"
+                  type="number"
+                  label="Múltiplo de venta"
+                  className="text-center"
+                  step={0.0001}
                 />
               </FormViewStack>
-              <FieldEntry
-                name="uomOutgoingAllowed"
-                type="number"
-                label="Múltiplo de venta"
-                className="text-center"
-              />
             </FormViewGroup>
           </PageSheet>
         </Page>
