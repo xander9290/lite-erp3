@@ -6,7 +6,7 @@ import { WidgetAvatar } from "@/components/widgets";
 
 function CardCompany({ comapny }: { comapny: CompanieWithProps }) {
   return (
-    <Card className="p-1" style={{ minHeight: "100px" }}>
+    <Card className="p-1" style={{ height: "100px" }}>
       <Row className="g-0">
         <Col md="2" className="text-center">
           <WidgetAvatar

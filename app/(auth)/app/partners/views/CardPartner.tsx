@@ -6,7 +6,7 @@ import { WidgetAvatar } from "@/components/widgets";
 
 function CardPartner({ p }: { p: PartnerWithProps }) {
   return (
-    <Card style={{ minHeight: "122px" }}>
+    <Card style={{ height: "135px" }}>
       <Row className="g-0">
         <Col md="4" className="text-md-start text-center">
           <WidgetAvatar width={90} height={90} imageUrl={p.imageUrl} />
