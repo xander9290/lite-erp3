@@ -194,6 +194,8 @@ function TopNavItems() {
               (field) => field.fieldName === "inventoryProductTemplate",
             )?.invisible
           }
+          href="/app/product_template?view_type=list&id=null"
+          as={Link}
         >
           <i className="bi bi-boxes me-1"></i>
           <span>Productos</span>

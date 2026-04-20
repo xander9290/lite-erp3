@@ -35,6 +35,8 @@ model Partner {
   userId      String? @map("user_id")
   UserManager User?   @relation("PartnerManagerRel", references: [id], fields: [userId], onDelete: Cascade)
 
+  Products ProductTemplate[] @relation("ProductSupplierRel") //Proveedor en productos
+
   createdUid String   @map("created_uid")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
@@ -70,6 +72,8 @@ model User {
   Companies Company[] @relation("UserCompanyRel")
 
   PartnerManager Partner[] @relation("PartnerManagerRel")
+
+  Products ProductTemplate[] @relation("ProductUserRel") //Comprador designado en productos
 
   Auditlogs Auditlog[] @relation("UserAuditlogRel")
 
@@ -194,6 +198,8 @@ model Tag {
   id   String @id @default(cuid())
   name String @unique
 
+  ProductTemplate ProductTemplate[]
+
   @@map("tags")
 }
 
@@ -253,4 +259,49 @@ enum WarehouseType {
   QUARANTINE
   ADJUSTMENT
   TRANSIT
+}
+
+model ProductTemplate {
+  id                 String             @id @default(cuid())
+  name               String             @unique
+  description        String             @unique
+  defaultCode        String             @unique @map("default_code")
+  displayType        ProductDisplayType @default(PRODUCT) @map("display_type")
+  active             Boolean            @default(true)
+  sales              Boolean            @default(true)
+  purchases          Boolean            @default(true)
+  imageUrl           String?            @default("/image/avatar_default.svg") @map("image_url")
+  price1             Float              @default(0.00) @map("price_1")
+  price2             Float              @default(0.00) @map("price_2")
+  price3             Float              @default(0.00) @map("price_3")
+  price4             Float              @default(0.00) @map("price_4")
+  price5             Float              @default(0.00) @map("price_5")
+  lastCost           Float              @default(0.00) @map("last_cost")
+  weight             Float              @default(0.00)
+  volume             Float              @default(0.00)
+  ancho              Float              @default(0.00)
+  alto               Float              @default(0.00)
+  largo              Float              @default(0.00)
+  uomIncomingAllowed Float              @default(1.0) @map("uom_incoming_allowed")
+  uomOutgoingAllowed Float              @default(1.0) @map("uom_outgoing_allowed")
+
+  supplierId String?  @map("supplier_id")
+  Supplier   Partner? @relation("ProductSupplierRel", fields: [supplierId], references: [id])
+
+  userId String? @map("user_id")
+  User   User?   @relation("ProductUserRel", fields: [userId], references: [id])
+
+  Tags Tag[]
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("product_template")
+}
+
+enum ProductDisplayType {
+  CONSU
+  SERVICE
+  PRODUCT
 }
