@@ -89,7 +89,7 @@ function ModelFieldsListView() {
           getRowId={(r) => r.id}
           model="modelField"
           columns={columns}
-          pageSize={20}
+          pageSize={50}
           onSelectionChange={setSelectedIds}
           domain={[["active", "=", active]]}
         />

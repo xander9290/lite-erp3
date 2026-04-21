@@ -43,7 +43,7 @@ function ProductTemplateFormView({
     defaultValues: productTemplateSchemaDefault,
   });
 
-  const { reset } = methods;
+  const { reset, getValues, handleSubmit } = methods;
 
   const originalValuesRef = useRef<ProductTemplateSchemaType | null>(null);
   const router = useRouter();
@@ -72,6 +72,14 @@ function ProductTemplateFormView({
     }
   };
 
+  const actionToggleState = handleSubmit(async () => {
+    const newData: ProductTemplateSchemaType = {
+      ...getValues(),
+      state: product?.state === "AVAILABLE" ? "NOT_AVAILABLE" : "AVAILABLE",
+    };
+    await onSubmit(newData);
+  });
+
   useEffect(() => {
     if (!product) {
       reset(productTemplateSchemaDefault);
@@ -87,6 +95,7 @@ function ProductTemplateFormView({
       sales: product.sales,
       purchases: product.purchases,
       displayType: product.displayType,
+      state: product.state,
       imageUrl: product.imageUrl,
       lastCost: product.lastCost,
       price1: product.price1,
@@ -124,6 +133,19 @@ function ProductTemplateFormView({
       reverse={handleReverse}
       onSubmit={onSubmit}
       id={id}
+      formStates={[
+        { name: "AVAILABLE", label: "DISPONIBLE", decoration: "success" },
+        { name: "NOT_AVAILABLE", label: "AGOTADO", decoration: "danger" },
+      ]}
+      state={product?.state}
+      actions={[
+        {
+          action: actionToggleState,
+          fieldName: "actionToggleState",
+          string: product?.state === "AVAILABLE" ? "AGOTADO" : "DISPONIBLE",
+          variant: "info",
+        },
+      ]}
     >
       <FormViewGroup>
         <FieldImage folder="products" name="imageUrl" remove editable />
@@ -223,6 +245,21 @@ function ProductTemplateFormView({
                   className="text-center"
                   step={0.0001}
                 />
+              </FormViewStack>
+            </FormViewGroup>
+          </PageSheet>
+        </Page>
+        <Page eventKey="inventory" title="Inventario">
+          <PageSheet name="inventory">
+            <FormViewGroup>
+              <FormViewStack>
+                <FieldEntry name="alto" label="Alto" type="number" />
+                <FieldEntry name="ancho" label="Ancho" type="number" />
+                <FieldEntry name="largo" label="Largo" type="number" />
+              </FormViewStack>
+              <FormViewStack>
+                <FieldEntry name="weight" label="Peso" type="number" />
+                <FieldEntry name="volume" label="Volumen" type="number" />
               </FormViewStack>
             </FormViewGroup>
           </PageSheet>

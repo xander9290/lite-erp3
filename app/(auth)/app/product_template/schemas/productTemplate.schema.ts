@@ -1,4 +1,4 @@
-import { ProductDisplayType } from "@/generated/prisma/enums";
+import { ProductDisplayType, ProductStateType } from "@/generated/prisma/enums";
 import { z } from "zod";
 
 export const productTemplateSchema = z.object({
@@ -9,6 +9,7 @@ export const productTemplateSchema = z.object({
   sales: z.boolean(),
   purchases: z.boolean(),
   displayType: z.enum(ProductDisplayType),
+  state: z.enum(ProductStateType),
   imageUrl: z.string().nullable(),
   price1: z.number(),
   price2: z.number(),
@@ -51,6 +52,7 @@ export const productTemplateSchemaDefault: ProductTemplateSchemaType = {
   sales: true,
   purchases: true,
   displayType: "PRODUCT",
+  state: "AVAILABLE",
   imageUrl: null,
   lastCost: 0.0,
   price1: 0.0,

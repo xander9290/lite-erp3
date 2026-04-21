@@ -13,8 +13,20 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
         </Col>
         <Col md="10">
           <Card.Body className="p-1 text-center text-md-start">
-            <div className="fs-6 fw-semibold text-truncate">
-              {product.description}
+            <div className="d-flex flex-row justify-content-between">
+              <div
+                className="fs-6 fw-semibold text-truncate"
+                title={product.description}
+              >
+                {product.description}
+              </div>
+              <div>
+                {product.state === "AVAILABLE" ? (
+                  <Badge bg="success">DISPONIBLE</Badge>
+                ) : (
+                  <Badge bg="danger">AGOTADO</Badge>
+                )}
+              </div>
             </div>
             <Card.Text className="m-0">{`[${product.defaultCode}]`}</Card.Text>
             <Card.Text className="m-0">${product.price1 || "0.00"}</Card.Text>

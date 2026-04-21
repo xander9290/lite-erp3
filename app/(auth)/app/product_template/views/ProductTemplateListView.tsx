@@ -42,6 +42,12 @@ const PRODUCT_COLUMNS: TableTemplateColumn<ProductTemplateWithProps>[] = [
     accessor: (p) => p.imageUrl,
     label: "Imagen",
   },
+  {
+    key: "state",
+    accessor: (p) => p.state,
+    label: "Estado",
+    type: "string",
+  },
 ];
 
 function ProductTemplateListView() {

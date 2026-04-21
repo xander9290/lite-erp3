@@ -267,6 +267,7 @@ model ProductTemplate {
   description        String             @unique
   defaultCode        String             @unique @map("default_code")
   displayType        ProductDisplayType @default(PRODUCT) @map("display_type")
+  state              ProductStateType   @default(AVAILABLE)
   active             Boolean            @default(true)
   sales              Boolean            @default(true)
   purchases          Boolean            @default(true)
@@ -300,8 +301,14 @@ model ProductTemplate {
   @@map("product_template")
 }
 
-enum ProductDisplayType {
+model ProductCategory {
+  enum ProductDisplayType {
   CONSU
   SERVICE
   PRODUCT
+}
+
+enum ProductStateType {
+  AVAILABLE
+  NOT_AVAILABLE
 }

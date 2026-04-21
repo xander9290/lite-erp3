@@ -245,7 +245,7 @@ export function FormView<T extends FieldValues>({
                 </div>
 
                 {/* STATEBAR DESKTOP */}
-                <div className="d-none d-md-flex justify-content-end gap-1 my-2 w-50">
+                <div className="d-none d-md-flex justify-content-end gap-1 mx-2 my-2 w-50">
                   <ButtonGroup>
                     {formStates?.map((st, index) => (
                       <Button
