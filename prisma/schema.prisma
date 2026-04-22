@@ -286,6 +286,9 @@ model ProductTemplate {
   uomIncomingAllowed Float              @default(1.0) @map("uom_incoming_allowed")
   uomOutgoingAllowed Float              @default(1.0) @map("uom_outgoing_allowed")
 
+  productCategoryId String?          @map("product_category_id")
+  ProductCategory   ProductCategory? @relation(fields: [productCategoryId], references: [id])
+
   supplierId String?  @map("supplier_id")
   Supplier   Partner? @relation("ProductSupplierRel", fields: [supplierId], references: [id])
 
@@ -302,7 +305,24 @@ model ProductTemplate {
 }
 
 model ProductCategory {
-  enum ProductDisplayType {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String @unique
+
+  parentId String?           @map("parent_id")
+  Parent   ProductCategory?  @relation("ParentProductCategoryRel", fields: [parentId], references: [id], onDelete: Cascade)
+  Children ProductCategory[] @relation("ParentProductCategoryRel")
+
+  Products ProductTemplate[]
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("product_category")
+}
+
+enum ProductDisplayType {
   CONSU
   SERVICE
   PRODUCT

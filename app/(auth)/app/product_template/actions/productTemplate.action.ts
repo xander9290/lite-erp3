@@ -10,6 +10,7 @@ import { createAuditlog } from "../../actions/auditlog-actions";
 export interface ProductTemplateWithProps extends ProductTemplate {
   Supplier: { id: string; name: string } | null;
   User: { id: string; name: string } | null;
+  ProductCategory: { id: string; name: string } | null;
   Tags: { id: string; name: string }[];
 }
 
@@ -42,6 +43,12 @@ export async function getProductById({
           },
         },
         Tags: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        ProductCategory: {
           select: {
             id: true,
             name: true,
@@ -110,6 +117,12 @@ export async function createProduct({
           },
         },
         Tags: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        ProductCategory: {
           select: {
             id: true,
             name: true,
@@ -196,6 +209,12 @@ export async function updateProduct({
           },
         },
         Tags: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        ProductCategory: {
           select: {
             id: true,
             name: true,

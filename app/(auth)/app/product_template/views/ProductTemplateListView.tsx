@@ -36,6 +36,7 @@ const PRODUCT_COLUMNS: TableTemplateColumn<ProductTemplateWithProps>[] = [
     key: "Tags[].name",
     accessor: (p) => p.Tags,
     label: "Etiquetas",
+    type: "string",
   },
   {
     key: "imageUrl",
