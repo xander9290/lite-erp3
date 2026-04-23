@@ -3,7 +3,7 @@
 import CardTemplate from "@/components/templates/CardTemplate";
 import ListView from "@/components/templates/ListView";
 import { TableTemplateColumn } from "@/components/templates/TableTemplate";
-import { ProductTemplateWithProps } from "../actions/productTemplate.action";
+import { ProductTemplateWithProps } from "../../actions/productTemplate.action";
 import CardProduct from "./CardProduct";
 import { useState } from "react";
 
@@ -75,7 +75,7 @@ function ProductTemplateListView() {
           renderCard={(p) => <CardProduct product={p} />}
           defaultOrder="description asc"
           domain={[["active", "=", active]]}
-          viewForm="/app/product_template?view_type=form"
+          viewForm="/app/product_template/products?view_type=form"
         />
       </ListView.Body>
     </ListView>

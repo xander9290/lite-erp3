@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Card, Col, Row } from "react-bootstrap";
-import { ProductTemplateWithProps } from "../actions/productTemplate.action";
+import { ProductTemplateWithProps } from "../../actions/productTemplate.action";
 import { WidgetAvatar } from "@/components/widgets";
 
 function CardProduct({ product }: { product: ProductTemplateWithProps }) {

@@ -4,7 +4,7 @@ import {
   createProduct,
   ProductTemplateWithProps,
   updateProduct,
-} from "../actions/productTemplate.action";
+} from "../../actions/productTemplate.action";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {

@@ -4,7 +4,7 @@ import type {
   ProductCategory,
   ProductTemplate,
 } from "@/generated/prisma/client";
-import { ProductCategorySchemaType } from "../schemas/productCategory.schema";
+import { ProductCategorySchemaType } from "../products/schemas/productCategory.schema";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
 import { sessionStore } from "@/app/libs/sessionStore";

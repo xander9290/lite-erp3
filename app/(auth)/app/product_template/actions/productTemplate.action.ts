@@ -1,7 +1,7 @@
 "use server";
 
 import type { ProductTemplate } from "@/generated/prisma/client";
-import { ProductTemplateSchemaType } from "../schemas/productTemplate.schema";
+import { ProductTemplateSchemaType } from "../products/schemas/productTemplate.schema";
 import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { ActionResponse } from "@/app/libs/definitions";
