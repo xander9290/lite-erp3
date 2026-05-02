@@ -1,32 +1,19 @@
 "use client";
 
 import ListView from "@/components/templates/ListView";
-import TableTemplate, {
-  TableTemplateColumn,
-} from "@/components/templates/TableTemplate";
 import { useState } from "react";
 import { WarehouseWithProps } from "../actions/warehouse-actions";
 import { useAuth } from "@/hooks/sessionStore";
-
-const WAREHOUSE_COLUMNS: TableTemplateColumn<WarehouseWithProps>[] = [
-  {
-    key: "name",
-    label: "Nombre",
-    accessor: (w) => w.name,
-    type: "string",
-  },
-  {
-    key: "Company.name",
-    label: "Empresa",
-    accessor: (w) => w.Company.name,
-    type: "string",
-  },
-];
+import { TableTemplateLite } from "@/components/templates/table";
+import { useRouter } from "next/navigation";
+import { Column } from "@/components/templates/table/Column";
 
 function WarehousesListView() {
   const { companyId, companyCode } = useAuth();
 
   const [active, setActive] = useState(true);
+
+  const router = useRouter();
 
   return (
     <ListView model="warehouses">
@@ -42,18 +29,26 @@ function WarehousesListView() {
         ]}
       />
       <ListView.Body>
-        <TableTemplate
-          viewForm="/app/warehouses?view_type=form"
-          domain={[
+        <TableTemplateLite
+          pageSize={100}
+          defaultOrder="name asc"
+          model="warehouse"
+          onRowClick={(row) =>
+            router.push(`/app/warehouses?view_type=form&id=${row.id}`)
+          }
+          baseDomain={[
             ["active", "=", active],
             ["companyId", "=", companyId],
           ]}
-          columns={WAREHOUSE_COLUMNS}
-          defaultOrder="name asc"
-          getRowId={(w) => w.id}
-          model="warehouse"
-          pageSize={50}
-        />
+        >
+          <Column field="name" label="Nombre" type="string" />
+          <Column
+            field="Company.name"
+            label="Empresa"
+            include={{ Company: { select: { id: true, name: true } } }}
+          />
+          <Column field="active" label="Activo" type="boolean" />
+        </TableTemplateLite>
       </ListView.Body>
     </ListView>
   );

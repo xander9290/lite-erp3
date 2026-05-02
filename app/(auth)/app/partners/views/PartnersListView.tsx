@@ -1,6 +1,6 @@
 "use client";
 
-import CardTemplate from "@/components/templates/CardTemplate";
+import CardTemplate from "@/components/templates/CardTemplateLite";
 import ListView from "@/components/templates/ListView";
 import { TableTemplateColumn } from "@/components/templates/TableTemplate";
 import type { PartnerDisplayType } from "@/generated/prisma/enums";

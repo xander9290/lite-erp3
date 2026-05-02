@@ -1,8 +1,6 @@
 "use client";
 
-import TableTemplate, {
-  TableTemplateColumn,
-} from "@/components/templates/TableTemplate";
+import { TableTemplateColumn } from "@/components/templates/TableTemplate";
 import { type UserWithProps } from "../actions/user-actions";
 import { formatDate } from "date-fns";
 import ListView from "@/components/templates/ListView";
@@ -15,6 +13,9 @@ import {
   WidgetCellRow,
   WidgetDropList,
 } from "@/components/widgets";
+import { useRouter } from "next/navigation";
+import { TableTemplateLite } from "@/components/templates/table";
+import { Column } from "@/components/templates/table/Column";
 
 export const USER_COLUMNS: TableTemplateColumn<UserWithProps>[] = [
   {
@@ -109,6 +110,8 @@ function UsersListView() {
   //   console.log(id, newGroup);
   // };
 
+  const router = useRouter();
+
   return (
     <ListView model="users">
       <ListView.Header
@@ -131,17 +134,73 @@ function UsersListView() {
         </Link>
       </ListView.Header>
       <ListView.Body>
-        <TableTemplate
-          columns={USER_COLUMNS}
-          getRowId={(u) => u.id}
-          pageSize={50}
+        <TableTemplateLite
           model="user"
-          viewForm="/app/users?view_type=form"
-          domain={[["active", "=", active]]}
-          includes={{
-            Partner: true,
-          }}
-        />
+          pageSize={100}
+          defaultOrder="name asc"
+          onRowClick={(row) =>
+            router.push(`/app/users?view_type=form&id=${row.id}`)
+          }
+          baseDomain={[
+            ["name", "!=", "bot"],
+            ["active", "=", active],
+          ]}
+        >
+          <Column
+            field="name"
+            label="Nombre"
+            filterable
+            type="string"
+            render={(name, u) => (
+              <WidgetCellRow>
+                <WidgetAvatar imageUrl={u.Partner?.imageUrl} />
+                <span>{name}</span>
+              </WidgetCellRow>
+            )}
+            include={{
+              Partner: { select: { imageUrl: true, name: true, email: true } },
+            }}
+          />
+          <Column
+            field="login"
+            label="Usuario"
+            sortable
+            filterable
+            type="string"
+          />
+          <Column field="Partner.email" label="Correo" filterable />
+          <Column
+            field="Group.name"
+            label="Grupo"
+            filterable
+            sortable
+            include={{ Group: { select: { name: true } } }}
+          />
+          <Column
+            field="active"
+            label="Active"
+            type="boolean"
+            render={(_, u) => (
+              <WidgetCellRow content="center">
+                <WidgetBadgeStatus
+                  value={u.active ? "active" : "inactive"}
+                  options={{
+                    active: { label: "Activo", color: "success" },
+                    inactive: { label: "Inactivo", color: "danger" },
+                  }}
+                />
+              </WidgetCellRow>
+            )}
+          />
+          <Column
+            field="lastLogin"
+            label="Última conexión"
+            type="datetime"
+            format="dd/mm/yyyy HH:mm"
+            sortable
+            filterable
+          />
+        </TableTemplateLite>
       </ListView.Body>
     </ListView>
   );

@@ -1,54 +1,17 @@
 "use client";
 
-import TableTemplate, {
-  TableTemplateColumn,
-} from "@/components/templates/TableTemplate";
-import { ModelWithProps } from "../actions/model-actions";
 import ListView from "@/components/templates/ListView";
 import { useState } from "react";
 import { WidgetCellRow, WidgetDropList } from "@/components/widgets";
+import { TableTemplateLite } from "@/components/templates/table";
+import { useRouter } from "next/navigation";
+import { Column } from "@/components/templates/table/Column";
 
 function ModelListView() {
   const [active, setActive] = useState(true);
 
-  const columns: TableTemplateColumn<ModelWithProps>[] = [
-    {
-      key: "name",
-      label: "Nombre",
-      fieldName: "name",
-      accessor: (m) => m.name,
-      filterable: true,
-      type: "string",
-    },
-    {
-      key: "label",
-      label: "Etiqueta",
-      fieldName: "label",
-      accessor: (m) => m.label,
-      filterable: true,
-      type: "string",
-    },
-    {
-      key: "description",
-      label: "Descripción",
-      fieldName: "description",
-      accessor: (m) => m.description,
-      filterable: true,
-      type: "string",
-    },
-    {
-      key: "ModelFields[].name",
-      label: "Campos",
-      fieldName: "fields",
-      accessor: (m) => m.ModelFields?.map((u) => u.name).join(", ") ?? "",
-      filterable: true,
-      render: (m) => (
-        <WidgetCellRow>
-          <WidgetDropList items={m.ModelFields} />
-        </WidgetCellRow>
-      ),
-    },
-  ];
+  const router = useRouter();
+
   return (
     <ListView model="models">
       <ListView.Header
@@ -63,15 +26,34 @@ function ModelListView() {
         ]}
       />
       <ListView.Body>
-        <TableTemplate<ModelWithProps>
-          columns={columns}
-          getRowId={(m) => m.id}
+        <TableTemplateLite
+          baseDomain={[["active", "=", active]]}
+          defaultOrder="name asc"
+          pageSize={100}
           model="model"
-          defaultOrder="createdAt asc"
-          pageSize={50}
-          viewForm="/app/models?view_type=form"
-          domain={[["active", "=", active]]}
-        />
+          onRowClick={(row) =>
+            router.push(`/app/models?view_type=form&id=${row.id}`)
+          }
+        >
+          <Column field="name" label="Nombre" type="string" />
+          <Column
+            field="ModelFields.name"
+            label="Campos"
+            type="relation"
+            include={{ ModelFields: { select: { id: true, name: true } } }}
+            render={(name, m) => (
+              <WidgetCellRow>
+                <WidgetDropList items={m.ModelFields} />
+              </WidgetCellRow>
+            )}
+          />
+          <Column
+            field="active"
+            label="Activo"
+            type="boolean"
+            sortable={false}
+          />
+        </TableTemplateLite>
       </ListView.Body>
     </ListView>
   );

@@ -1,11 +1,12 @@
 "use client";
 
-import CardTemplate from "@/components/templates/CardTemplate";
 import ListView from "@/components/templates/ListView";
 import { useState } from "react";
 import { USER_COLUMNS } from "./UsersListView";
 import CardUser from "./CardUser";
 import Link from "next/link";
+import { CardTemplateLite } from "@/components/templates/CardTemplateLite";
+import { Column } from "@/components/templates/table/Column";
 
 function UsersKanbanView() {
   const [active, setActive] = useState(true);
@@ -32,19 +33,28 @@ function UsersKanbanView() {
         </Link>
       </ListView.Header>
       <ListView.Body>
-        <CardTemplate
-          columns={USER_COLUMNS}
-          getRowId={(u) => u.id}
+        {/* <CardTemplateLite
           model="user"
           viewForm="/app/users?view_type=form"
           pageSize={50}
           defaultOrder="name"
           renderCard={(user) => <CardUser user={user} />}
-          domain={[["active", "=", active]]}
-          includes={{
-            Partner: true,
-          }}
-        />
+          baseDomain={[["active", "=", active]]}
+        /> */}
+        <CardTemplateLite
+          model="user"
+          renderCard={(user) => <CardUser user={user} />}
+          baseDomain={[["active", "=", active]]}
+          viewForm="/app/users?view_type=form"
+        >
+          <Column field="active" label="Activo" type="boolean" />
+          <Column
+            field="Companies"
+            label="Empresas"
+            type="relation"
+            include={{ Companies: { select: { id: true, name: true } } }}
+          />
+        </CardTemplateLite>
       </ListView.Body>
     </ListView>
   );

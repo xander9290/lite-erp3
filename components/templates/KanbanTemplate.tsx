@@ -1020,3 +1020,21 @@ export default function KanbanTemplate<T>({
   useInfiniteScroll={false}
 /> */
 }
+
+{
+  /* <KanbanTemplate
+          columns={columns}
+          model="modelField"
+          getRowId={(m) => m.id}
+          pageSize={50}
+          groupBy="active"
+          renderCard={(field) => <CardField field={field} />}
+          viewForm="/app/model_fields?view_type=form"
+          sortGroups={(state) => {
+            const order = ["Activo", "Inactivo"];
+            return order.filter((g) => state.includes(g));
+          }}
+          useInfiniteScroll
+          infiniteScrollThreshold={10}
+        /> */
+}

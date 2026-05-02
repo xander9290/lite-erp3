@@ -1,249 +1,310 @@
-import prisma from "@/app/libs/prisma";
-import { NextRequest, NextResponse } from "next/server";
+// import prisma from "@/app/libs/prisma";
+// import { NextRequest, NextResponse } from "next/server";
 
-type SortDir = "asc" | "desc";
+// type SortDir = "asc" | "desc";
 
-type DomainOperator =
-  | "="
-  | "!="
-  | "contains"
-  | "startsWith"
-  | "endsWith"
-  | "in"
-  | "notIn"
-  | ">"
-  | ">="
-  | "<"
-  | "<=";
+// type DomainOperator =
+//   | "="
+//   | "!="
+//   | "contains"
+//   | "startsWith"
+//   | "endsWith"
+//   | "in"
+//   | "notIn"
+//   | ">"
+//   | ">="
+//   | "<"
+//   | "<=";
 
-type DomainItem = [field: string, operator: DomainOperator, value: any];
+// type DomainItem = [field: string, operator: DomainOperator, value: any];
 
-const MAX_FIELDS = 60;
-const MAX_PATH_DEPTH = 4;
+// const MAX_FIELDS = 60;
+// const MAX_PATH_DEPTH = 4;
 
-const SENSITIVE_FIELD_DENYLIST = [
-  "password",
-  "hash",
-  "salt",
-  "token",
-  "refreshToken",
-  "accessToken",
-  "secret",
-  "apiKey",
-  "privateKey",
-  "twoFactorSecret",
-];
+// const SENSITIVE_FIELD_DENYLIST = [
+//   "password",
+//   "hash",
+//   "salt",
+//   "token",
+//   "refreshToken",
+//   "accessToken",
+//   "secret",
+//   "apiKey",
+//   "privateKey",
+//   "twoFactorSecret",
+// ];
 
-type PathPart = {
-  key: string;
-  isArray: boolean;
-};
+// type PathPart = {
+//   key: string;
+//   isArray: boolean;
+// };
 
-function splitPath(key: string): PathPart[] {
-  return key
-    .split(".")
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .map((segment) => {
-      const isArray = segment.endsWith("[]");
-      return {
-        key: isArray ? segment.slice(0, -2) : segment,
-        isArray,
-      };
-    })
-    .filter((p) => p.key);
-}
+// function splitPath(key: string): PathPart[] {
+//   return key
+//     .split(".")
+//     .map((s) => s.trim())
+//     .filter(Boolean)
+//     .map((segment) => {
+//       const isArray = segment.endsWith("[]");
+//       return {
+//         key: isArray ? segment.slice(0, -2) : segment,
+//         isArray,
+//       };
+//     })
+//     .filter((p) => p.key);
+// }
 
-function isSafeKey(key: string) {
-  return /^[A-Za-z0-9_]+(\[\])?(\.[A-Za-z0-9_]+(\[\])?)*$/.test(key);
-}
+// function isSafeKey(key: string) {
+//   return /^[A-Za-z0-9_]+(\[\])?(\.[A-Za-z0-9_]+(\[\])?)*$/.test(key);
+// }
 
-function containsDeniedSegment(path: PathPart[]) {
-  return path.some((seg) =>
-    SENSITIVE_FIELD_DENYLIST.some(
-      (d) => seg.key.toLowerCase() === d.toLowerCase(),
-    ),
-  );
-}
+// function containsDeniedSegment(path: PathPart[]) {
+//   return path.some((seg) =>
+//     SENSITIVE_FIELD_DENYLIST.some(
+//       (d) => seg.key.toLowerCase() === d.toLowerCase(),
+//     ),
+//   );
+// }
 
-function mergeSelectWithIncludes(select: any, includes: any): any {
-  if (!includes || typeof includes !== "object") return select;
+// function mergeSelectWithIncludes(select: any, includes: any): any {
+//   if (!includes || typeof includes !== "object") return select;
 
-  const result = { ...select };
+//   const result = { ...select };
 
-  for (const key in includes) {
-    const value = includes[key];
+//   for (const key in includes) {
+//     const value = includes[key];
 
-    // include: { user: true }
-    if (value === true) {
-      result[key] = true;
-      continue;
-    }
+//     // include: { user: true }
+//     if (value === true) {
+//       result[key] = true;
+//       continue;
+//     }
 
-    // include: { user: { include: {...} } }
-    if (typeof value === "object") {
-      result[key] = {
-        select: mergeSelectWithIncludes({}, value.include || {}),
-      };
-    }
-  }
+//     // include: { user: { include: {...} } }
+//     if (typeof value === "object") {
+//       result[key] = {
+//         select: mergeSelectWithIncludes({}, value.include || {}),
+//       };
+//     }
+//   }
 
-  return result;
-}
+//   return result;
+// }
 
-function parseIncludes(raw: string | null): any {
-  if (!raw) return {};
+// function parseIncludes(raw: string | null): any {
+//   if (!raw) return {};
 
-  try {
-    const parsed = JSON.parse(raw);
-    if (typeof parsed !== "object" || parsed === null) return {};
-    return parsed;
-  } catch {
-    return {};
-  }
-}
+//   try {
+//     const parsed = JSON.parse(raw);
+//     if (typeof parsed !== "object" || parsed === null) return {};
+//     return parsed;
+//   } catch {
+//     return {};
+//   }
+// }
 
-function buildSelectFromFieldPaths(fieldPaths: PathPart[][]): any {
-  const select: any = {};
+// function buildSelectFromFieldPaths(fieldPaths: PathPart[][]): any {
+//   const select: any = {};
 
-  for (const path of fieldPaths) {
-    if (!path.length) continue;
+//   for (const path of fieldPaths) {
+//     if (!path.length) continue;
 
-    let cursor = select;
+//     let cursor = select;
 
-    for (let i = 0; i < path.length; i++) {
-      const part = path[i].key;
-      const isLast = i === path.length - 1;
+//     for (let i = 0; i < path.length; i++) {
+//       const part = path[i].key;
+//       const isLast = i === path.length - 1;
 
-      if (isLast) {
-        cursor[part] = true;
-      } else {
-        cursor[part] = cursor[part] ?? { select: {} };
-        cursor = cursor[part].select;
-      }
-    }
-  }
+//       if (isLast) {
+//         cursor[part] = true;
+//       } else {
+//         cursor[part] = cursor[part] ?? { select: {} };
+//         cursor = cursor[part].select;
+//       }
+//     }
+//   }
 
-  if (!select.id) select.id = true;
+//   if (!select.id) select.id = true;
 
-  return select;
-}
+//   return select;
+// }
 
-function buildNestedWhere(path: PathPart[], leafCondition: any): any {
-  return path.reduceRight((acc, part, idx) => {
-    if (idx === path.length - 1) {
-      return { [part.key]: leafCondition };
-    }
+// function buildNestedWhere(path: PathPart[], leafCondition: any): any {
+//   return path.reduceRight((acc, part, idx) => {
+//     if (idx === path.length - 1) {
+//       return { [part.key]: leafCondition };
+//     }
 
-    if (part.isArray) {
-      return { [part.key]: { some: acc } };
-    }
+//     if (part.isArray) {
+//       return { [part.key]: { some: acc } };
+//     }
 
-    return { [part.key]: acc };
-  }, {});
-}
+//     return { [part.key]: acc };
+//   }, {});
+// }
 
-function buildNestedOrderBy(path: PathPart[], dir: SortDir): any {
-  const hasArray = path.some((p) => p.isArray);
+// function buildNestedOrderBy(path: PathPart[], dir: SortDir): any {
+//   const hasArray = path.some((p) => p.isArray);
 
-  if (hasArray) {
-    const last = path[path.length - 1];
-    if (last?.key === "_count" && path.length >= 2) {
-      const rel = path[path.length - 2];
-      return { [rel.key]: { _count: dir } };
-    }
-    return undefined;
-  }
+//   if (hasArray) {
+//     const last = path[path.length - 1];
+//     if (last?.key === "_count" && path.length >= 2) {
+//       const rel = path[path.length - 2];
+//       return { [rel.key]: { _count: dir } };
+//     }
+//     return undefined;
+//   }
 
-  return path.reduceRight((acc, part, idx) => {
-    if (idx === path.length - 1) return { [part.key]: dir };
-    return { [part.key]: acc };
-  }, {});
-}
+//   return path.reduceRight((acc, part, idx) => {
+//     if (idx === path.length - 1) return { [part.key]: dir };
+//     return { [part.key]: acc };
+//   }, {});
+// }
 
-function parseRangeSyntax(raw: string) {
-  const f = raw.trim();
-  if (!f) return null;
+// function parseRangeSyntax(raw: string) {
+//   const f = raw.trim();
+//   if (!f) return null;
 
-  if (f.includes("..")) {
-    const [start, end] = f.split("..").map((v) => v.trim());
-    return { op: "between" as const, start: start || null, end: end || null };
-  }
-  if (f.startsWith(">=")) {
-    return { op: ">=" as const, value: f.slice(2).trim() };
-  }
-  if (f.startsWith("<=")) {
-    return { op: "<=" as const, value: f.slice(2).trim() };
-  }
-  if (f.startsWith(">")) {
-    return { op: ">" as const, value: f.slice(1).trim() };
-  }
-  if (f.startsWith("<")) {
-    return { op: "<" as const, value: f.slice(1).trim() };
-  }
+//   if (f.includes("..")) {
+//     const [start, end] = f.split("..").map((v) => v.trim());
+//     return { op: "between" as const, start: start || null, end: end || null };
+//   }
+//   if (f.startsWith(">=")) {
+//     return { op: ">=" as const, value: f.slice(2).trim() };
+//   }
+//   if (f.startsWith("<=")) {
+//     return { op: "<=" as const, value: f.slice(2).trim() };
+//   }
+//   if (f.startsWith(">")) {
+//     return { op: ">" as const, value: f.slice(1).trim() };
+//   }
+//   if (f.startsWith("<")) {
+//     return { op: "<" as const, value: f.slice(1).trim() };
+//   }
 
-  return { op: "=" as const, value: f };
-}
+//   return { op: "=" as const, value: f };
+// }
 
-function toDateSafe(v: string | null) {
-  if (!v) return null;
+// function toDateSafe(v: string | null) {
+//   if (!v) return null;
 
-  // Para campos tipo "date" del frontend (YYYY-MM-DD)
-  // Convertir a inicio del día (00:00:00)
-  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
-    const d = new Date(`${v}T00:00:00.000Z`);
-    return isNaN(d.getTime()) ? null : d;
-  }
+//   // Para campos tipo "date" del frontend (YYYY-MM-DD)
+//   // Convertir a inicio del día (00:00:00)
+//   if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+//     const d = new Date(`${v}T00:00:00.000Z`);
+//     return isNaN(d.getTime()) ? null : d;
+//   }
 
-  // Para datetime-local del frontend (YYYY-MM-DDTHH:mm)
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) {
-    const d = new Date(`${v}:00.000Z`);
-    return isNaN(d.getTime()) ? null : d;
-  }
+//   // Para datetime-local del frontend (YYYY-MM-DDTHH:mm)
+//   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) {
+//     const d = new Date(`${v}:00.000Z`);
+//     return isNaN(d.getTime()) ? null : d;
+//   }
 
-  // Para datetime con segundos (YYYY-MM-DDTHH:mm:ss)
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(v)) {
-    const d = new Date(`${v}.000Z`);
-    return isNaN(d.getTime()) ? null : d;
-  }
+//   // Para datetime con segundos (YYYY-MM-DDTHH:mm:ss)
+//   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(v)) {
+//     const d = new Date(`${v}.000Z`);
+//     return isNaN(d.getTime()) ? null : d;
+//   }
 
-  const d = new Date(v);
-  return isNaN(d.getTime()) ? null : d;
-}
+//   const d = new Date(v);
+//   return isNaN(d.getTime()) ? null : d;
+// }
 
-function toNumberSafe(v: string | null) {
-  if (v == null) return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
+// function toNumberSafe(v: string | null) {
+//   if (v == null) return null;
+//   const n = Number(v);
+//   return Number.isFinite(n) ? n : null;
+// }
 
-function toBoolSafe(v: string | null) {
-  if (v == null) return null;
-  const s = v.trim().toLowerCase();
-  if (["true", "1", "yes", "y", "si", "sí"].includes(s)) return true;
-  if (["false", "0", "no", "n"].includes(s)) return false;
-  return null;
-}
+// function toBoolSafe(v: string | null) {
+//   if (v == null) return null;
+//   const s = v.trim().toLowerCase();
+//   if (["true", "1", "yes", "y", "si", "sí"].includes(s)) return true;
+//   if (["false", "0", "no", "n"].includes(s)) return false;
+//   return null;
+// }
 
-function parseDomain(raw: string | null): DomainItem[] {
-  if (!raw) return [];
+// function parseDomain(raw: string | null): DomainItem[] {
+//   if (!raw) return [];
 
-  try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
+//   try {
+//     const parsed = JSON.parse(raw);
+//     if (!Array.isArray(parsed)) return [];
 
-    return parsed.filter((item) => {
-      return (
-        Array.isArray(item) &&
-        item.length === 3 &&
-        typeof item[0] === "string" &&
-        typeof item[1] === "string"
-      );
-    }) as DomainItem[];
-  } catch {
-    return [];
-  }
-}
+//     return parsed.filter((item) => {
+//       return (
+//         Array.isArray(item) &&
+//         item.length === 3 &&
+//         typeof item[0] === "string" &&
+//         typeof item[1] === "string"
+//       );
+//     }) as DomainItem[];
+//   } catch {
+//     return [];
+//   }
+// }
+
+// // function domainItemToWhere(item: DomainItem) {
+// //   const [field, operator, value] = item;
+
+// //   if (!field || !operator || !isSafeKey(field)) return null;
+
+// //   const path = splitPath(field);
+// //   if (!path.length || path.length > MAX_PATH_DEPTH) return null;
+// //   if (containsDeniedSegment(path)) return null;
+
+// //   switch (operator) {
+// //     case "=":
+// //       return buildNestedWhere(path, value);
+
+// //     case "!=":
+// //       return buildNestedWhere(path, { not: value });
+
+// //     case "contains":
+// //       return buildNestedWhere(path, {
+// //         contains: String(value ?? ""),
+// //         mode: "insensitive",
+// //       });
+
+// //     case "startsWith":
+// //       return buildNestedWhere(path, {
+// //         startsWith: String(value ?? ""),
+// //         mode: "insensitive",
+// //       });
+
+// //     case "endsWith":
+// //       return buildNestedWhere(path, {
+// //         endsWith: String(value ?? ""),
+// //         mode: "insensitive",
+// //       });
+
+// //     case "in":
+// //       return buildNestedWhere(path, {
+// //         in: Array.isArray(value) ? value : [value],
+// //       });
+
+// //     case "notIn":
+// //       return buildNestedWhere(path, {
+// //         notIn: Array.isArray(value) ? value : [value],
+// //       });
+
+// //     case ">":
+// //       return buildNestedWhere(path, { gt: value });
+
+// //     case ">=":
+// //       return buildNestedWhere(path, { gte: value });
+
+// //     case "<":
+// //       return buildNestedWhere(path, { lt: value });
+
+// //     case "<=":
+// //       return buildNestedWhere(path, { lte: value });
+
+// //     default:
+// //       return null;
+// //   }
+// // }
 
 // function domainItemToWhere(item: DomainItem) {
 //   const [field, operator, value] = item;
@@ -254,374 +315,552 @@ function parseDomain(raw: string | null): DomainItem[] {
 //   if (!path.length || path.length > MAX_PATH_DEPTH) return null;
 //   if (containsDeniedSegment(path)) return null;
 
+//   // 👇 NORMALIZAR EL VALOR ANTES DE USARLO
+//   const normalizedValue = normalizeDateTime(value);
+
 //   switch (operator) {
 //     case "=":
-//       return buildNestedWhere(path, value);
-
+//       return buildNestedWhere(path, normalizedValue);
 //     case "!=":
-//       return buildNestedWhere(path, { not: value });
-
+//       return buildNestedWhere(path, { not: normalizedValue });
 //     case "contains":
 //       return buildNestedWhere(path, {
-//         contains: String(value ?? ""),
+//         contains: String(normalizedValue ?? ""),
 //         mode: "insensitive",
 //       });
-
 //     case "startsWith":
 //       return buildNestedWhere(path, {
-//         startsWith: String(value ?? ""),
+//         startsWith: String(normalizedValue ?? ""),
 //         mode: "insensitive",
 //       });
-
 //     case "endsWith":
 //       return buildNestedWhere(path, {
-//         endsWith: String(value ?? ""),
+//         endsWith: String(normalizedValue ?? ""),
 //         mode: "insensitive",
 //       });
-
 //     case "in":
 //       return buildNestedWhere(path, {
-//         in: Array.isArray(value) ? value : [value],
+//         in: Array.isArray(normalizedValue)
+//           ? normalizedValue
+//           : [normalizedValue],
 //       });
-
 //     case "notIn":
 //       return buildNestedWhere(path, {
-//         notIn: Array.isArray(value) ? value : [value],
+//         notIn: Array.isArray(normalizedValue)
+//           ? normalizedValue
+//           : [normalizedValue],
 //       });
-
 //     case ">":
-//       return buildNestedWhere(path, { gt: value });
-
+//       return buildNestedWhere(path, { gt: normalizedValue });
 //     case ">=":
-//       return buildNestedWhere(path, { gte: value });
-
+//       return buildNestedWhere(path, { gte: normalizedValue });
 //     case "<":
-//       return buildNestedWhere(path, { lt: value });
-
+//       return buildNestedWhere(path, { lt: normalizedValue });
 //     case "<=":
-//       return buildNestedWhere(path, { lte: value });
-
+//       return buildNestedWhere(path, { lte: normalizedValue });
 //     default:
 //       return null;
 //   }
 // }
 
-function domainItemToWhere(item: DomainItem) {
-  const [field, operator, value] = item;
+// function normalizeDateTime(value: any): any {
+//   if (typeof value !== "string") return value;
 
-  if (!field || !operator || !isSafeKey(field)) return null;
+//   // Si es solo fecha (YYYY-MM-DD)
+//   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+//     return `${value}T00:00:00.000Z`;
+//   }
 
-  const path = splitPath(field);
-  if (!path.length || path.length > MAX_PATH_DEPTH) return null;
-  if (containsDeniedSegment(path)) return null;
+//   // Si es datetime-local (YYYY-MM-DDTHH:mm)
+//   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
+//     return `${value}:00.000Z`;
+//   }
 
-  // 👇 NORMALIZAR EL VALOR ANTES DE USARLO
-  const normalizedValue = normalizeDateTime(value);
+//   // Si es datetime con segundos (YYYY-MM-DDTHH:mm:ss)
+//   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value)) {
+//     return `${value}.000Z`;
+//   }
 
-  switch (operator) {
-    case "=":
-      return buildNestedWhere(path, normalizedValue);
-    case "!=":
-      return buildNestedWhere(path, { not: normalizedValue });
-    case "contains":
-      return buildNestedWhere(path, {
-        contains: String(normalizedValue ?? ""),
-        mode: "insensitive",
-      });
-    case "startsWith":
-      return buildNestedWhere(path, {
-        startsWith: String(normalizedValue ?? ""),
-        mode: "insensitive",
-      });
-    case "endsWith":
-      return buildNestedWhere(path, {
-        endsWith: String(normalizedValue ?? ""),
-        mode: "insensitive",
-      });
-    case "in":
-      return buildNestedWhere(path, {
-        in: Array.isArray(normalizedValue)
-          ? normalizedValue
-          : [normalizedValue],
-      });
-    case "notIn":
-      return buildNestedWhere(path, {
-        notIn: Array.isArray(normalizedValue)
-          ? normalizedValue
-          : [normalizedValue],
-      });
-    case ">":
-      return buildNestedWhere(path, { gt: normalizedValue });
-    case ">=":
-      return buildNestedWhere(path, { gte: normalizedValue });
-    case "<":
-      return buildNestedWhere(path, { lt: normalizedValue });
-    case "<=":
-      return buildNestedWhere(path, { lte: normalizedValue });
-    default:
-      return null;
-  }
-}
+//   return value;
+// }
 
-function normalizeDateTime(value: any): any {
-  if (typeof value !== "string") return value;
+// export async function GET(
+//   req: NextRequest,
+//   context: { params: Promise<{ model: string }> },
+// ) {
+//   const { model } = await context.params;
 
-  // Si es solo fecha (YYYY-MM-DD)
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return `${value}T00:00:00.000Z`;
-  }
+//   const modelDelegate = (prisma as any)[model];
+//   if (!modelDelegate) {
+//     return NextResponse.json(
+//       { error: "Model not found in Prisma client" },
+//       { status: 400 },
+//     );
+//   }
 
-  // Si es datetime-local (YYYY-MM-DDTHH:mm)
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
-    return `${value}:00.000Z`;
-  }
+//   const { searchParams } = new URL(req.url);
 
-  // Si es datetime con segundos (YYYY-MM-DDTHH:mm:ss)
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value)) {
-    return `${value}.000Z`;
-  }
+//   const id = searchParams.get("id");
 
-  return value;
-}
+//   const page = Math.max(1, Number(searchParams.get("page") ?? 1));
+//   const pageSize = Math.min(
+//     200,
+//     Math.max(1, Number(searchParams.get("pageSize") ?? 20)),
+//   );
 
+//   const sortKey = searchParams.get("sortKey");
+//   const sortDir = (searchParams.get("sortDir") ?? "asc") as SortDir;
+
+//   const fieldsParam = searchParams.get("fields") ?? "";
+//   const requestedFields = fieldsParam
+//     .split(",")
+//     .map((s) => s.trim())
+//     .filter(Boolean)
+//     .slice(0, MAX_FIELDS);
+
+//   let filters: Record<string, string> = {};
+//   const filtersParam = searchParams.get("filters");
+//   if (filtersParam) {
+//     try {
+//       filters = JSON.parse(filtersParam);
+//     } catch {
+//       return NextResponse.json(
+//         { error: "Invalid filters JSON" },
+//         { status: 400 },
+//       );
+//     }
+//   }
+
+//   const domain = parseDomain(searchParams.get("domain"));
+
+//   const includes = parseIncludes(searchParams.get("includes"));
+
+//   const fieldPaths = requestedFields
+//     .filter(isSafeKey)
+//     .map(splitPath)
+//     .filter((p) => p.length > 0 && p.length <= MAX_PATH_DEPTH)
+//     .filter((p) => !containsDeniedSegment(p));
+
+//   // const select = buildSelectFromFieldPaths(fieldPaths);
+//   let select = buildSelectFromFieldPaths(fieldPaths);
+
+//   // 👇 merge mágico
+//   select = mergeSelectWithIncludes(select, includes);
+
+//   const domainWhere = domain.map(domainItemToWhere).filter(Boolean) as any[];
+
+//   if (id) {
+//     try {
+//       const record = await modelDelegate.findFirst({
+//         where: {
+//           AND: [{ id: String(id) }, ...domainWhere],
+//         },
+//         select,
+//       });
+//       return NextResponse.json(record);
+//     } catch (e) {
+//       return NextResponse.json(
+//         { error: "Invalid query", details: String(e) },
+//         { status: 400 },
+//       );
+//     }
+//   }
+
+//   const andWhere: any[] = [...domainWhere];
+
+//   for (const [rawKey, rawVal] of Object.entries(filters)) {
+//     const key = rawKey.trim();
+//     const value = (rawVal ?? "").trim();
+//     if (!key || !value) continue;
+//     if (!isSafeKey(key)) continue;
+
+//     const path = splitPath(key);
+//     if (!path.length || path.length > MAX_PATH_DEPTH) continue;
+//     if (containsDeniedSegment(path)) continue;
+
+//     const bool = toBoolSafe(value);
+//     if (bool !== null) {
+//       andWhere.push(buildNestedWhere(path, bool));
+//       continue;
+//     }
+
+//     const normalizedValue = normalizeDateTime(value); // <-- AGREGAR ESTA LÍNEA
+
+//     const parsed = parseRangeSyntax(normalizedValue);
+//     if (!parsed) continue;
+
+//     if (parsed.op === "between") {
+//       const startDate = toDateSafe(parsed.start);
+//       const endDate = toDateSafe(parsed.end);
+
+//       if (startDate || endDate) {
+//         andWhere.push(
+//           buildNestedWhere(path, {
+//             ...(startDate ? { gte: startDate } : {}),
+//             ...(endDate ? { lte: endDate } : {}),
+//           }),
+//         );
+//         continue;
+//       }
+
+//       const startNum = toNumberSafe(parsed.start);
+//       const endNum = toNumberSafe(parsed.end);
+
+//       if (startNum !== null || endNum !== null) {
+//         andWhere.push(
+//           buildNestedWhere(path, {
+//             ...(startNum !== null ? { gte: startNum } : {}),
+//             ...(endNum !== null ? { lte: endNum } : {}),
+//           }),
+//         );
+//         continue;
+//       }
+
+//       andWhere.push(
+//         buildNestedWhere(path, { contains: value, mode: "insensitive" }),
+//       );
+//       continue;
+//     }
+
+//     if (parsed.op !== "=") {
+//       const date = toDateSafe(parsed.value ?? null);
+//       if (date) {
+//         const cond =
+//           parsed.op === ">="
+//             ? { gte: date }
+//             : parsed.op === "<="
+//               ? { lte: date }
+//               : parsed.op === ">"
+//                 ? { gt: date }
+//                 : { lt: date };
+
+//         andWhere.push(buildNestedWhere(path, cond));
+//         continue;
+//       }
+
+//       const num = toNumberSafe(parsed.value ?? null);
+//       if (num !== null) {
+//         const cond =
+//           parsed.op === ">="
+//             ? { gte: num }
+//             : parsed.op === "<="
+//               ? { lte: num }
+//               : parsed.op === ">"
+//                 ? { gt: num }
+//                 : { lt: num };
+
+//         andWhere.push(buildNestedWhere(path, cond));
+//         continue;
+//       }
+
+//       andWhere.push(
+//         buildNestedWhere(path, { contains: value, mode: "insensitive" }),
+//       );
+//       continue;
+//     }
+
+//     const eqNum = toNumberSafe(parsed.value ?? null);
+//     if (eqNum !== null) {
+//       andWhere.push(buildNestedWhere(path, eqNum));
+//       continue;
+//     }
+
+//     const eqDate = toDateSafe(parsed.value ?? null);
+//     if (eqDate) {
+//       const start = new Date(eqDate);
+//       start.setHours(0, 0, 0, 0);
+//       const next = new Date(start);
+//       next.setDate(next.getDate() + 1);
+//       andWhere.push(buildNestedWhere(path, { gte: start, lt: next }));
+//       continue;
+//     }
+
+//     const parts = value
+//       .split(",")
+//       .map((v) => v.trim())
+//       .filter(Boolean);
+
+//     if (parts.length <= 1) {
+//       andWhere.push(
+//         buildNestedWhere(path, { contains: value, mode: "insensitive" }),
+//       );
+//     } else {
+//       const orList: any[] = parts.map((p) =>
+//         buildNestedWhere(path, { contains: p, mode: "insensitive" }),
+//       );
+//       andWhere.push({ OR: orList });
+//     }
+//   }
+
+//   const where = andWhere.length ? { AND: andWhere } : undefined;
+
+//   let orderBy: any = undefined;
+//   if (sortKey && isSafeKey(sortKey)) {
+//     const sortPath = splitPath(sortKey);
+//     if (sortPath.length <= MAX_PATH_DEPTH && !containsDeniedSegment(sortPath)) {
+//       orderBy = buildNestedOrderBy(sortPath, sortDir);
+//     }
+//   }
+
+//   try {
+//     const [total, rows] = await Promise.all([
+//       modelDelegate.count({ where }),
+//       modelDelegate.findMany({
+//         where,
+//         orderBy,
+//         skip: (page - 1) * pageSize,
+//         take: pageSize,
+//         select,
+//       }),
+//     ]);
+
+//     return NextResponse.json({ rows, total, page, pageSize });
+//   } catch (e) {
+//     return NextResponse.json(
+//       {
+//         error: "Invalid query (check fields/relations/sortKey/filters/domain)",
+//         details: String(e),
+//       },
+//       { status: 400 },
+//     );
+//   }
+// }
+
+// app/api/tables/[model]/route.ts
+import prisma from "@/app/libs/prisma";
+import { NextRequest, NextResponse } from "next/server";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+type FilterItem = { field: string; operator: string; value: any };
+
+// ─── GET Handler ──────────────────────────────────────────────────────────────
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ model: string }> },
 ) {
-  const { model } = await context.params;
-
-  const modelDelegate = (prisma as any)[model];
-  if (!modelDelegate) {
-    return NextResponse.json(
-      { error: "Model not found in Prisma client" },
-      { status: 400 },
-    );
-  }
-
-  const { searchParams } = new URL(req.url);
-
-  const id = searchParams.get("id");
-
-  const page = Math.max(1, Number(searchParams.get("page") ?? 1));
-  const pageSize = Math.min(
-    200,
-    Math.max(1, Number(searchParams.get("pageSize") ?? 20)),
-  );
-
-  const sortKey = searchParams.get("sortKey");
-  const sortDir = (searchParams.get("sortDir") ?? "asc") as SortDir;
-
-  const fieldsParam = searchParams.get("fields") ?? "";
-  const requestedFields = fieldsParam
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, MAX_FIELDS);
-
-  let filters: Record<string, string> = {};
-  const filtersParam = searchParams.get("filters");
-  if (filtersParam) {
-    try {
-      filters = JSON.parse(filtersParam);
-    } catch {
-      return NextResponse.json(
-        { error: "Invalid filters JSON" },
-        { status: 400 },
-      );
-    }
-  }
-
-  const domain = parseDomain(searchParams.get("domain"));
-
-  const includes = parseIncludes(searchParams.get("includes"));
-
-  const fieldPaths = requestedFields
-    .filter(isSafeKey)
-    .map(splitPath)
-    .filter((p) => p.length > 0 && p.length <= MAX_PATH_DEPTH)
-    .filter((p) => !containsDeniedSegment(p));
-
-  // const select = buildSelectFromFieldPaths(fieldPaths);
-  let select = buildSelectFromFieldPaths(fieldPaths);
-
-  // 👇 merge mágico
-  select = mergeSelectWithIncludes(select, includes);
-
-  const domainWhere = domain.map(domainItemToWhere).filter(Boolean) as any[];
-
-  if (id) {
-    try {
-      const record = await modelDelegate.findFirst({
-        where: {
-          AND: [{ id: String(id) }, ...domainWhere],
-        },
-        select,
-      });
-      return NextResponse.json(record);
-    } catch (e) {
-      return NextResponse.json(
-        { error: "Invalid query", details: String(e) },
-        { status: 400 },
-      );
-    }
-  }
-
-  const andWhere: any[] = [...domainWhere];
-
-  for (const [rawKey, rawVal] of Object.entries(filters)) {
-    const key = rawKey.trim();
-    const value = (rawVal ?? "").trim();
-    if (!key || !value) continue;
-    if (!isSafeKey(key)) continue;
-
-    const path = splitPath(key);
-    if (!path.length || path.length > MAX_PATH_DEPTH) continue;
-    if (containsDeniedSegment(path)) continue;
-
-    const bool = toBoolSafe(value);
-    if (bool !== null) {
-      andWhere.push(buildNestedWhere(path, bool));
-      continue;
-    }
-
-    const normalizedValue = normalizeDateTime(value); // <-- AGREGAR ESTA LÍNEA
-
-    const parsed = parseRangeSyntax(normalizedValue);
-    if (!parsed) continue;
-
-    if (parsed.op === "between") {
-      const startDate = toDateSafe(parsed.start);
-      const endDate = toDateSafe(parsed.end);
-
-      if (startDate || endDate) {
-        andWhere.push(
-          buildNestedWhere(path, {
-            ...(startDate ? { gte: startDate } : {}),
-            ...(endDate ? { lte: endDate } : {}),
-          }),
-        );
-        continue;
-      }
-
-      const startNum = toNumberSafe(parsed.start);
-      const endNum = toNumberSafe(parsed.end);
-
-      if (startNum !== null || endNum !== null) {
-        andWhere.push(
-          buildNestedWhere(path, {
-            ...(startNum !== null ? { gte: startNum } : {}),
-            ...(endNum !== null ? { lte: endNum } : {}),
-          }),
-        );
-        continue;
-      }
-
-      andWhere.push(
-        buildNestedWhere(path, { contains: value, mode: "insensitive" }),
-      );
-      continue;
-    }
-
-    if (parsed.op !== "=") {
-      const date = toDateSafe(parsed.value ?? null);
-      if (date) {
-        const cond =
-          parsed.op === ">="
-            ? { gte: date }
-            : parsed.op === "<="
-              ? { lte: date }
-              : parsed.op === ">"
-                ? { gt: date }
-                : { lt: date };
-
-        andWhere.push(buildNestedWhere(path, cond));
-        continue;
-      }
-
-      const num = toNumberSafe(parsed.value ?? null);
-      if (num !== null) {
-        const cond =
-          parsed.op === ">="
-            ? { gte: num }
-            : parsed.op === "<="
-              ? { lte: num }
-              : parsed.op === ">"
-                ? { gt: num }
-                : { lt: num };
-
-        andWhere.push(buildNestedWhere(path, cond));
-        continue;
-      }
-
-      andWhere.push(
-        buildNestedWhere(path, { contains: value, mode: "insensitive" }),
-      );
-      continue;
-    }
-
-    const eqNum = toNumberSafe(parsed.value ?? null);
-    if (eqNum !== null) {
-      andWhere.push(buildNestedWhere(path, eqNum));
-      continue;
-    }
-
-    const eqDate = toDateSafe(parsed.value ?? null);
-    if (eqDate) {
-      const start = new Date(eqDate);
-      start.setHours(0, 0, 0, 0);
-      const next = new Date(start);
-      next.setDate(next.getDate() + 1);
-      andWhere.push(buildNestedWhere(path, { gte: start, lt: next }));
-      continue;
-    }
-
-    const parts = value
-      .split(",")
-      .map((v) => v.trim())
-      .filter(Boolean);
-
-    if (parts.length <= 1) {
-      andWhere.push(
-        buildNestedWhere(path, { contains: value, mode: "insensitive" }),
-      );
-    } else {
-      const orList: any[] = parts.map((p) =>
-        buildNestedWhere(path, { contains: p, mode: "insensitive" }),
-      );
-      andWhere.push({ OR: orList });
-    }
-  }
-
-  const where = andWhere.length ? { AND: andWhere } : undefined;
-
-  let orderBy: any = undefined;
-  if (sortKey && isSafeKey(sortKey)) {
-    const sortPath = splitPath(sortKey);
-    if (sortPath.length <= MAX_PATH_DEPTH && !containsDeniedSegment(sortPath)) {
-      orderBy = buildNestedOrderBy(sortPath, sortDir);
-    }
-  }
-
   try {
+    const { model } = await context.params;
+    const { searchParams } = new URL(req.url);
+
+    // Validar modelo
+    if (!model || !(model in prisma)) {
+      return NextResponse.json({ error: "Invalid model" }, { status: 400 });
+    }
+
+    const modelDelegate = (prisma as any)[model];
+
+    // Parsear parámetros
+    const page = Math.max(1, Number(searchParams.get("page") || 1));
+    const pageSize = Math.min(200, Number(searchParams.get("pageSize") || 20));
+    const sort = parseSort(searchParams.get("sort"));
+    const filters = parseJSON(searchParams.get("filters"), []);
+    const domain = parseJSON(searchParams.get("domain"), []);
+    const columnTypes = parseJSON(searchParams.get("columnTypes"), {});
+    const includes = parseJSON(searchParams.get("includes"), {});
+
+    // Combinar domain + filters
+    const allFilters = [
+      ...domain.map(([field, operator, value]: any[]) => ({
+        field,
+        operator,
+        value,
+      })),
+      ...filters,
+    ];
+
+    // Construir where
+    const where = buildWhereClause(allFilters, columnTypes);
+
+    // Ejecutar queries
     const [total, rows] = await Promise.all([
       modelDelegate.count({ where }),
       modelDelegate.findMany({
         where,
-        orderBy,
+        orderBy: sort, // Ya viene en formato Prisma correcto
         skip: (page - 1) * pageSize,
         take: pageSize,
-        select,
+        include: Object.keys(includes).length > 0 ? includes : undefined,
       }),
     ]);
 
     return NextResponse.json({ rows, total, page, pageSize });
-  } catch (e) {
+  } catch (error: any) {
+    console.error("Table API Error:", error.message);
     return NextResponse.json(
-      {
-        error: "Invalid query (check fields/relations/sortKey/filters/domain)",
-        details: String(e),
-      },
+      { error: error.message || "Query failed" },
       { status: 400 },
     );
   }
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function parseSort(raw: string | null): any {
+  try {
+    const parsed = JSON.parse(raw || '{"id":"asc"}');
+
+    // Si ya viene en formato Prisma ({ Group: { name: "asc" } }), usarlo directo
+    if (!parsed.field) return parsed;
+
+    // Si viene en formato { field: "Group.name", dir: "asc" }, convertirlo
+    if (parsed.field.includes(".")) {
+      const [relation, ...path] = parsed.field.split(".");
+      return { [relation]: { [path.join(".")]: parsed.dir } };
+    }
+
+    return { [parsed.field]: parsed.dir };
+  } catch {
+    return { id: "asc" };
+  }
+}
+
+function parseJSON<T>(raw: string | null, fallback: T): T {
+  try {
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function convertValueForPrisma(value: any, type: string): any {
+  if (value == null) return value;
+
+  switch (type) {
+    case "number":
+      return Number(value);
+    case "boolean":
+      // 👇 Forzar conversión de string a boolean
+      if (typeof value === "string") {
+        return value === "true" || value === "1";
+      }
+      return Boolean(value);
+    case "date":
+    case "datetime":
+      return new Date(value);
+    case "relation":
+      return value;
+    default:
+      return String(value);
+  }
+}
+
+function buildOperatorCondition(
+  operator: string,
+  value: any,
+  type: string,
+): any {
+  const isString = type === "string" || type === "relation";
+
+  switch (operator) {
+    case "=":
+      return value;
+    case "!=":
+      return { not: value };
+    case ">":
+      return { gt: value };
+    case ">=":
+      return { gte: value };
+    case "<":
+      return { lt: value };
+    case "<=":
+      return { lte: value };
+    case "contains":
+      return isString ? { contains: value, mode: "insensitive" } : value;
+    case "startsWith":
+      return isString ? { startsWith: value, mode: "insensitive" } : value;
+    case "endsWith":
+      return isString ? { endsWith: value, mode: "insensitive" } : value;
+    case "some":
+      return { some: value };
+    case "every":
+      return { every: value };
+    case "none":
+      return { none: value };
+    default:
+      return value;
+  }
+}
+
+function buildRelationCondition(
+  field: string,
+  operator: string,
+  value: any,
+): any {
+  if (field.includes(".")) {
+    const [relation, ...path] = field.split(".");
+    const fieldName = path.join(".");
+
+    switch (operator) {
+      case "contains":
+        return {
+          [relation]: {
+            some: {
+              [fieldName]: { contains: String(value), mode: "insensitive" },
+            },
+          },
+        };
+      case "=":
+        return {
+          [relation]: {
+            some: { [fieldName]: value },
+          },
+        };
+      case "!=":
+        return {
+          [relation]: {
+            none: { [fieldName]: value },
+          },
+        };
+      default:
+        return {
+          [relation]: {
+            some: { [fieldName]: { [operator]: value } },
+          },
+        };
+    }
+  }
+
+  // Si no tiene punto, asumir que es el nombre de la relación y buscar por name
+  return {
+    [field]: {
+      some: { name: { contains: String(value), mode: "insensitive" } },
+    },
+  };
+}
+
+function buildCondition(
+  field: string,
+  operator: string,
+  value: any,
+  type: string,
+): any {
+  // Si es tipo relación, manejar diferente
+  if (type === "relation") {
+    return buildRelationCondition(field, operator, value);
+  }
+
+  const condition = buildOperatorCondition(operator, value, type);
+
+  // Campos anidados (ej: "Partner.name")
+  if (field.includes(".")) {
+    const [relation, ...path] = field.split(".");
+    return { [relation]: { [path.join(".")]: condition } };
+  }
+
+  return { [field]: condition };
+}
+
+function buildWhereClause(
+  filters: FilterItem[],
+  columnTypes: Record<string, string>,
+): any {
+  if (!filters.length) return {};
+
+  const conditions = filters.map(({ field, operator, value }) => {
+    const type = columnTypes[field] || "string";
+    const convertedValue = convertValueForPrisma(value, type);
+    return buildCondition(field, operator, convertedValue, type);
+  });
+
+  return { AND: conditions };
 }

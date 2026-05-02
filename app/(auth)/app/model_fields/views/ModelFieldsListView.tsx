@@ -1,18 +1,13 @@
 "use client";
 
 import ListView from "@/components/templates/ListView";
-import TableTemplate, {
-  TableTemplateColumn,
-} from "@/components/templates/TableTemplate";
-import {
-  deleteModelFields,
-  ModelFieldWithProps,
-} from "../actions/fields-actions";
+import { deleteModelFields } from "../actions/fields-actions";
 import { useState } from "react";
 import { useModals } from "@/contexts/ModalContext";
 import toast from "react-hot-toast";
-// import KanbanTemplate from "@/components/templates/KanbanTemplate";
-// import CardField from "./CardField";
+import { TableTemplateLite } from "@/components/templates/table";
+import { useRouter } from "next/navigation";
+import { Column } from "@/components/templates/table/Column";
 
 function ModelFieldsListView() {
   const [selectedIds, setSelectedIds] = useState<Array<string>>([]);
@@ -20,34 +15,7 @@ function ModelFieldsListView() {
 
   const { modalError, modalConfirm } = useModals();
 
-  const columns: TableTemplateColumn<ModelFieldWithProps>[] = [
-    {
-      key: "name",
-      label: "Nombre",
-      accessor: (f) => f.name,
-      type: "string",
-      filterable: true,
-    },
-    {
-      key: "description",
-      label: "Descripción",
-      accessor: (f) => f.description,
-      type: "string",
-      filterable: true,
-    },
-    {
-      key: "Model.name",
-      label: "Modelo",
-      accessor: (f) => f.Model?.name,
-      type: "string",
-      filterable: true,
-    },
-    {
-      key: "active",
-      label: "Activo",
-      accessor: (f) => (f.active ? "Activo" : "Inactivo"),
-    },
-  ];
+  const router = useRouter();
 
   const handleDeleteRecord = () => {
     if (selectedIds.length < 1)
@@ -84,30 +52,24 @@ function ModelFieldsListView() {
         ]}
       />
       <ListView.Body>
-        <TableTemplate
-          viewForm="/app/model_fields?view_type=form"
-          getRowId={(r) => r.id}
+        <TableTemplateLite
           model="modelField"
-          columns={columns}
-          pageSize={50}
+          baseDomain={[["active", "=", active]]}
+          pageSize={100}
+          defaultOrder="name asc"
+          onRowClick={(row) =>
+            router.push(`/app/model_fields?view_type=form&id=${row.id}`)
+          }
           onSelectionChange={setSelectedIds}
-          domain={[["active", "=", active]]}
-        />
-        {/* <KanbanTemplate
-          columns={columns}
-          model="modelField"
-          getRowId={(m) => m.id}
-          pageSize={50}
-          groupBy="active"
-          renderCard={(field) => <CardField field={field} />}
-          viewForm="/app/model_fields?view_type=form"
-          sortGroups={(state) => {
-            const order = ["Activo", "Inactivo"];
-            return order.filter((g) => state.includes(g));
-          }}
-          useInfiniteScroll
-          infiniteScrollThreshold={10}
-        /> */}
+        >
+          <Column field="name" label="Nombre" type="string" />
+          <Column
+            field="Model.name"
+            label="Modelo"
+            include={{ Model: { select: { id: true, name: true } } }}
+          />
+          <Column field="active" label="Activo" type="boolean" />
+        </TableTemplateLite>
       </ListView.Body>
     </ListView>
   );

@@ -1,63 +1,17 @@
 "use client";
 
 import ListView from "@/components/templates/ListView";
-import TableTemplate, {
-  TableTemplateColumn,
-} from "@/components/templates/TableTemplate";
-import { GroupWithProps } from "../actions/groups-actions";
-import { formatDate } from "date-fns";
 import { useState } from "react";
 import { WidgetCellRow, WidgetDropList } from "@/components/widgets";
+import { TableTemplateLite } from "@/components/templates/table";
+import { useRouter } from "next/navigation";
+import { Column } from "@/components/templates/table/Column";
 
 function GroupListView() {
   const [active, setActive] = useState(true);
 
-  const columns: TableTemplateColumn<GroupWithProps>[] = [
-    {
-      key: "name",
-      label: "Nombre",
-      fieldName: "name",
-      accessor: (g) => g.name,
-      type: "string",
-      filterable: true,
-    },
-    {
-      key: "Users[].name",
-      label: "Usuarios",
-      fieldName: "users",
-      accessor: (g) => g.Users?.map((u) => u.name).join(", ") ?? "",
-      render: (g) => (
-        <WidgetCellRow>
-          <WidgetDropList items={g.Users} />
-        </WidgetCellRow>
-      ),
-      filterable: true,
-    },
-    {
-      key: "GroupLines[].fieldName",
-      label: "Campos",
-      fieldName: "lines",
-      accessor: (g) =>
-        g.GroupLines?.map((line) => line.fieldName).join(", ") ?? "",
-      render: (g) => (
-        <WidgetCellRow>
-          <WidgetDropList
-            items={g.GroupLines.map((l) => ({ id: l.id, name: l.fieldName }))}
-          />
-        </WidgetCellRow>
-      ),
-      filterable: true,
-    },
-    {
-      key: "createdAt",
-      label: "Creación",
-      fieldName: "createdAt",
-      accessor: (g) =>
-        g.createdAt ? formatDate(g.createdAt, "dd/MM/yyyy HH:mm") : null,
-      type: "datetime",
-      groupFormat: "dd/MM",
-    },
-  ];
+  const router = useRouter();
+
   return (
     <ListView model="groups">
       <ListView.Header
@@ -72,14 +26,29 @@ function GroupListView() {
         ]}
       />
       <ListView.Body>
-        <TableTemplate<GroupWithProps>
-          columns={columns}
-          getRowId={(g) => g.id}
+        <TableTemplateLite
           model="group"
           defaultOrder="name asc"
-          viewForm="/app/groups?view_type=form"
-          domain={[["active", "=", active]]}
-        />
+          baseDomain={[["active", "=", active]]}
+          onRowClick={(row) =>
+            router.push(`/app/groups?view_type=form&id=${row.id}`)
+          }
+        >
+          <Column field="name" label="Nombre" type="string" />
+          <Column
+            field="Users"
+            label="Usuarios"
+            type="relation"
+            include={{ Users: { select: { id: true, name: true } } }}
+            sortable={false}
+            render={(_, g) => (
+              <WidgetCellRow>
+                <WidgetDropList items={g.Users} />
+              </WidgetCellRow>
+            )}
+          />
+          <Column field="active" label="Activo" type="boolean" />
+        </TableTemplateLite>
       </ListView.Body>
     </ListView>
   );
