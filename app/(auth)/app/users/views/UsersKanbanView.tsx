@@ -2,7 +2,6 @@
 
 import ListView from "@/components/templates/ListView";
 import { useState } from "react";
-import { USER_COLUMNS } from "./UsersListView";
 import CardUser from "./CardUser";
 import Link from "next/link";
 import { CardTemplateLite } from "@/components/templates/CardTemplateLite";
@@ -33,14 +32,6 @@ function UsersKanbanView() {
         </Link>
       </ListView.Header>
       <ListView.Body>
-        {/* <CardTemplateLite
-          model="user"
-          viewForm="/app/users?view_type=form"
-          pageSize={50}
-          defaultOrder="name"
-          renderCard={(user) => <CardUser user={user} />}
-          baseDomain={[["active", "=", active]]}
-        /> */}
         <CardTemplateLite
           model="user"
           renderCard={(user) => <CardUser user={user} />}
