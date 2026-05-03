@@ -10,7 +10,7 @@ function layout({
   children: React.ReactNode;
 }>) {
   return (
-    <Row>
+    <Row className="h-100 overflow-auto">
       <Col xs="3" sm="3" md="2" xl="1" xxl="1">
         <Nav
           className="flex-column"

@@ -1,12 +1,11 @@
 "use client";
 
-import CardTemplate from "@/components/templates/CardTemplateLite";
-import ListView from "@/components/templates/ListView";
-import { TableTemplateColumn } from "@/components/templates/TableTemplate";
+import { CardTemplateLite } from "@/components/templates/CardTemplateLite";
 import type { PartnerDisplayType } from "@/generated/prisma/enums";
-import { useState } from "react";
-import { PartnerWithProps } from "../actions/partner-actions";
+import { Column } from "@/components/templates/table/Column";
+import ListView from "@/components/templates/ListView";
 import CardPartner from "./CardPartner";
+import { useState } from "react";
 
 type partnersDisplayTypes = Record<PartnerDisplayType, string>;
 
@@ -17,64 +16,6 @@ export const partnerTypes: partnersDisplayTypes = {
   DELIVERY: "ENTREGA",
   CONTACT: "CONTACTO",
 };
-
-const PARTNER_COLUMNS: TableTemplateColumn<PartnerWithProps>[] = [
-  {
-    key: "name",
-    label: "Nombre",
-    accessor: (p) => p.name,
-  },
-  {
-    key: "imageUrl",
-    label: "Imagen",
-    accessor: (p) => p.imageUrl,
-  },
-  {
-    key: "street",
-    label: "Calle",
-    accessor: (p) => p.street,
-  },
-  {
-    key: "street",
-    label: "Entre calles",
-    accessor: (p) => p.streets,
-  },
-  {
-    key: "houseNumber",
-    label: "Exterior",
-    accessor: (p) => p.streets,
-  },
-  {
-    key: "town",
-    label: "Colonia",
-    accessor: (p) => p.town,
-  },
-  {
-    key: "county",
-    label: "Municipio",
-    accessor: (p) => p.county,
-  },
-  {
-    key: "province",
-    label: "Estado",
-    accessor: (p) => p.province,
-  },
-  {
-    key: "country",
-    label: "País",
-    accessor: (p) => p.country,
-  },
-  {
-    key: "phone",
-    label: "Teléfono",
-    accessor: (p) => p.phone,
-  },
-  {
-    key: "email",
-    label: "Correo",
-    accessor: (p) => p.email,
-  },
-];
 
 function PartnersListView({ display }: { display: string }) {
   const [active, setActive] = useState(true);
@@ -93,20 +34,28 @@ function PartnersListView({ display }: { display: string }) {
         ]}
       />
       <ListView.Body>
-        <CardTemplate
-          columns={PARTNER_COLUMNS}
-          model="partner"
-          getRowId={(p) => p.id}
-          renderCard={(p) => <CardPartner p={p} />}
-          defaultOrder="name asc"
+        <CardTemplateLite
+          viewForm={`/app/partners?view_type=form&display=${display}`}
           emptyMessage="NO HAY REGISTROS"
-          pageSize={50}
-          domain={[
+          defaultOrder="name asc"
+          pageSize={100}
+          model="partner"
+          baseDomain={[
             ["displayType", "=", display],
             ["active", "=", active],
           ]}
-          viewForm={`/app/partners?view_type=form&display=${display}`}
-        />
+          renderCard={(row) => <CardPartner p={row} />}
+        >
+          <Column field="name" label="Nombre" />
+          <Column
+            field="imageUrl"
+            label="Avatar"
+            sortable={false}
+            filterable={false}
+          />
+          <Column field="displayType" label="Tipo" type="string" />
+          <Column field="active" label="Active" type="boolean" />
+        </CardTemplateLite>
       </ListView.Body>
     </ListView>
   );

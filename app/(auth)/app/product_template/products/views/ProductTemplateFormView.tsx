@@ -55,7 +55,9 @@ function ProductTemplateFormView({
       const res = await createProduct({ data });
       if (!res.success) return modalError(res.message);
 
-      router.replace(`/app/product_template?view_type=form&id=${res.data?.id}`);
+      router.replace(
+        `/app/product_template/products?view_type=form&id=${res.data?.id}`,
+      );
       toast.success(res.message);
     } else {
       const res = await updateProduct({ data, id });
@@ -144,6 +146,7 @@ function ProductTemplateFormView({
           fieldName: "actionToggleState",
           string: product?.state === "AVAILABLE" ? "AGOTADO" : "DISPONIBLE",
           variant: "info",
+          invisible: id === "null",
         },
       ]}
     >
