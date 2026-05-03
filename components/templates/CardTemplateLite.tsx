@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, Badge, Row, Col, Container } from "react-bootstrap";
+import { Row, Col, Container } from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { ColumnConfig, FilterValue, TableData } from "@/app/libs/definitions";
@@ -50,18 +50,16 @@ export function CardTemplateLite({
     .map((child) => child.props as ColumnConfig);
 
   // Estado
-  const [sort, setSort] = useState<{ field: string; dir: "asc" | "desc" }>(
-    () => {
-      if (defaultOrder) {
-        const [field, dir] = defaultOrder.split(" ");
-        return {
-          field,
-          dir: dir?.toLowerCase() === "desc" ? "desc" : "asc",
-        };
-      }
-      return { field: "id", dir: "asc" };
-    },
-  );
+  const [sort] = useState<{ field: string; dir: "asc" | "desc" }>(() => {
+    if (defaultOrder) {
+      const [field, dir] = defaultOrder.split(" ");
+      return {
+        field,
+        dir: dir?.toLowerCase() === "desc" ? "desc" : "asc",
+      };
+    }
+    return { field: "id", dir: "asc" };
+  });
 
   const [filters, setFilters] = useState<FilterValue[]>([]);
   const [page, setPage] = useState(1);

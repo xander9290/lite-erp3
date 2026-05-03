@@ -2,7 +2,6 @@
 
 import ListView from "@/components/templates/ListView";
 import { useState } from "react";
-import { WarehouseWithProps } from "../actions/warehouse-actions";
 import { useAuth } from "@/hooks/sessionStore";
 import { TableTemplateLite } from "@/components/templates/table";
 import { useRouter } from "next/navigation";

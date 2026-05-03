@@ -31,7 +31,7 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
             <Card.Text className="m-0">{`[${product.defaultCode}]`}</Card.Text>
             <Card.Text className="m-0">${product.price1 || "0.00"}</Card.Text>
             <div className="d-flex gap-1">
-              {product.Tags.map((t, i) => (
+              {product.Tags.map((t) => (
                 <Badge key={t.name}>{t.name}</Badge>
               ))}
             </div>

@@ -1,14 +1,11 @@
 "use server";
 
-import type {
-  ProductCategory,
-  ProductTemplate,
-} from "@/generated/prisma/client";
-import { ProductCategorySchemaType } from "../products/schemas/productCategory.schema";
+import type { ProductCategory } from "@/generated/prisma/client";
+import { ProductCategorySchemaType } from "../../products/schemas/productCategory.schema";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
 import { sessionStore } from "@/app/libs/sessionStore";
-import { createAuditlog } from "../../actions/auditlog-actions";
+import { createAuditlog } from "../../../actions/auditlog-actions";
 
 export interface ProductCategoryWithProps extends ProductCategory {
   Products: { id: string; name: string }[];
