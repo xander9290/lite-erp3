@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Card, Col, Row } from "react-bootstrap";
-import { ProductTemplateWithProps } from "../../actions/productTemplate.action";
+import { ProductTemplateWithProps } from "../actions/productTemplate.action";
 import { WidgetAvatar } from "@/components/widgets";
 
 function CardProduct({ product }: { product: ProductTemplateWithProps }) {
@@ -28,7 +28,12 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
                 )}
               </div>
             </div>
-            <Card.Text className="m-0">{`[${product.defaultCode}]`}</Card.Text>
+            <Card.Text className="d-flex justify-content-between m-0 my-1">
+              {`[${product.defaultCode}]`}
+              <small>
+                <em>{`${product.ProductCategory?.name}`}</em>
+              </small>
+            </Card.Text>
             <Card.Text className="m-0">${product.price1 || "0.00"}</Card.Text>
             <div className="d-flex gap-1">
               {product.Tags.map((t) => (

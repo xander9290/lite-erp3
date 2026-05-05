@@ -4,7 +4,7 @@ import {
   createProduct,
   ProductTemplateWithProps,
   updateProduct,
-} from "../../actions/productTemplate.action";
+} from "../actions/productTemplate.action";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -118,6 +118,10 @@ function ProductTemplateFormView({
       uomIncomingAllowed: product.uomIncomingAllowed,
       uomOutgoingAllowed: product.uomOutgoingAllowed,
       Tags: product.Tags.map((t) => t.id) || [],
+      productCategoryId: {
+        id: product.ProductCategory?.id || "",
+        name: product.ProductCategory?.name || "",
+      },
       createdAt: product.createdAt,
       createdUid: product.createUid,
       updatedAt: product.updatedAt,
@@ -166,6 +170,16 @@ function ProductTemplateFormView({
         <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
       <FormViewGroup>
+        <FieldRelation
+          model="productCategory"
+          name="productCategoryId"
+          label="Categoría"
+          searchColumns={[
+            { field: "name", label: "Nombre" },
+            { field: "active", label: "Activo", type: "boolean" },
+          ]}
+          domain={[["active", "=", true]]}
+        />
         <FieldTags name="Tags" label="Etiquetas" />
       </FormViewGroup>
       <Notebook defaultActiveKey="purchases">

@@ -305,9 +305,10 @@ model ProductTemplate {
 }
 
 model ProductCategory {
-  id          String @id @default(cuid())
-  name        String @unique
-  description String @unique
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String  @unique
+  active      Boolean @default(true)
 
   parentId String?           @map("parent_id")
   Parent   ProductCategory?  @relation("ParentProductCategoryRel", fields: [parentId], references: [id], onDelete: Cascade)

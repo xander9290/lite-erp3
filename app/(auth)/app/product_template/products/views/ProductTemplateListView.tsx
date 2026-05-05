@@ -37,7 +37,14 @@ function ProductTemplateListView() {
             field="Tags"
             label="Etiquetas"
             type="relation"
-            include={{ Tags: { select: { id: true, name: true } } }}
+            include={{
+              Tags: { select: { id: true, name: true } },
+            }}
+          />
+          <Column
+            field="ProductCategory.name"
+            label="Categoría"
+            include={{ ProductCategory: { select: { id: true, name: true } } }}
           />
           <Column field="active" label="Activo" type="boolean" />
         </CardTemplateLite>

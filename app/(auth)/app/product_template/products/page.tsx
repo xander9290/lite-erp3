@@ -1,7 +1,7 @@
 import LoadingPage from "@/app/loading-page";
 import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
-import { getProductById } from "../actions/productTemplate.action";
+import { getProductById } from "./actions/productTemplate.action";
 
 const ProductTemplateListView = lazy(
   () => import("./views/ProductTemplateListView"),

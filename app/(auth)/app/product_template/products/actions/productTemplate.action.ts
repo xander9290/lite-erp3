@@ -1,11 +1,11 @@
 "use server";
 
 import type { ProductTemplate } from "@/generated/prisma/client";
-import { ProductTemplateSchemaType } from "../products/schemas/productTemplate.schema";
+import { ProductTemplateSchemaType } from "../schemas/productTemplate.schema";
 import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { ActionResponse } from "@/app/libs/definitions";
-import { createAuditlog } from "../../actions/auditlog-actions";
+import { createAuditlog } from "../../../actions/auditlog-actions";
 
 export interface ProductTemplateWithProps extends ProductTemplate {
   Supplier: { id: string; name: string } | null;
@@ -101,6 +101,9 @@ export async function createProduct({
           Supplier: { connect: { id: data.supplierId.id } },
         }),
         ...(data.userId?.id && { User: { connect: { id: data.userId.id } } }),
+        ...(data.productCategoryId?.id && {
+          ProductCategory: { connect: { id: data.productCategoryId.id } },
+        }),
         createUid: uid || "",
       },
       include: {
@@ -193,6 +196,9 @@ export async function updateProduct({
           : { disconnect: true },
         User: data.userId?.id
           ? { connect: { id: data.userId.id } }
+          : { disconnect: true },
+        ProductCategory: data.productCategoryId?.id
+          ? { connect: { id: data.productCategoryId.id } }
           : { disconnect: true },
       },
       include: {
