@@ -1,6 +1,6 @@
 "use server";
 
-import type { ProductCategory } from "@/generated/prisma/client";
+import type { Prisma, ProductCategory } from "@/generated/prisma/client";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
 import { sessionStore } from "@/app/libs/sessionStore";
@@ -111,6 +111,34 @@ export async function createProductCategory({
   }
 }
 
+// Versión optimizada con límite de profundidad
+async function updateChildrenNames(
+  tx: Prisma.TransactionClient,
+  parentId: string,
+  parentPath: string,
+  depth: number = 0,
+  maxDepth: number = 10,
+): Promise<void> {
+  if (depth >= maxDepth) {
+    throw new Error(`Max depth ${maxDepth} reached for category ${parentId}`);
+  }
+
+  const children = await tx.productCategory.findMany({
+    where: { parentId },
+  });
+
+  for (const child of children) {
+    const newChildName = `${parentPath} / ${child.description}`;
+
+    await tx.productCategory.update({
+      where: { id: child.id },
+      data: { name: newChildName },
+    });
+
+    await updateChildrenNames(tx, child.id, newChildName, depth + 1, maxDepth);
+  }
+}
+
 export async function updateProductCategory({
   id,
   data,
@@ -129,6 +157,7 @@ export async function updateProductCategory({
     }
 
     const updatedProductCategory = await prisma.$transaction(async (tx) => {
+      // Actualizar la categoría actual
       const productCategory = await tx.productCategory.update({
         where: { id },
         data: {
@@ -155,23 +184,8 @@ export async function updateProductCategory({
         },
       });
 
-      const getChildren = await tx.productCategory.findMany({
-        where: {
-          parentId: productCategory.id,
-        },
-      });
-
-      for (const child of getChildren) {
-        const childDesc = child.description;
-        const newParentDesc = data.description;
-        const newChildName = `${newParentDesc} / ${childDesc}`;
-        await tx.productCategory.update({
-          where: { id: child.id },
-          data: {
-            name: newChildName,
-          },
-        });
-      }
+      // Actualizar recursivamente TODOS los hijos (cualquier profundidad)
+      await updateChildrenNames(tx, productCategory.id, defineName);
 
       return productCategory;
     });

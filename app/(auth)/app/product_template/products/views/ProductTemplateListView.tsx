@@ -5,6 +5,14 @@ import ListView from "@/components/templates/ListView";
 import CardProduct from "./CardProduct";
 import { useState } from "react";
 import { Column } from "@/components/templates/table/Column";
+import type { ProductDisplayType } from "@/generated/prisma/browser";
+
+type ProductDisplayOutput = Record<ProductDisplayType, string>;
+export const productDisplayOutput: ProductDisplayOutput = {
+  CONSU: "consumible",
+  PRODUCT: "producto",
+  SERVICE: "servicio",
+};
 
 function ProductTemplateListView() {
   const [active, setActive] = useState(true);
@@ -46,6 +54,7 @@ function ProductTemplateListView() {
             label="Categoría"
             include={{ ProductCategory: { select: { id: true, name: true } } }}
           />
+          <Column field="price1" label="Precio" type="number" />
           <Column field="active" label="Activo" type="boolean" />
         </CardTemplateLite>
       </ListView.Body>

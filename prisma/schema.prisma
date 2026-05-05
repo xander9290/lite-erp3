@@ -307,7 +307,7 @@ model ProductTemplate {
 model ProductCategory {
   id          String  @id @default(cuid())
   name        String  @unique
-  description String  @unique
+  description String
   active      Boolean @default(true)
 
   parentId String?           @map("parent_id")

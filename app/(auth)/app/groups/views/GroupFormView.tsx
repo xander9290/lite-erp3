@@ -213,30 +213,26 @@ function GroupFormView({
                           name={`lines.${index}.fieldId`}
                           searchColumns={[
                             {
-                              key: "name",
+                              field: "name",
                               label: "Nombre",
-                              accessor: (r) => r.name,
                               filterable: true,
                               type: "string",
                             },
                             {
-                              key: "label",
+                              field: "label",
                               label: "Etiqueta",
-                              accessor: (r) => r.label,
                               filterable: true,
                               type: "string",
                             },
                             {
-                              key: "description",
+                              field: "description",
                               label: "Descripción",
-                              accessor: (r) => r.description,
                               filterable: true,
                               type: "string",
                             },
                             {
-                              key: "Model.name",
+                              field: "Model.name",
                               label: "Modelo",
-                              accessor: (r) => r.Model?.name,
                               filterable: true,
                               type: "string",
                             },

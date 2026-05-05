@@ -3,6 +3,7 @@
 import { Badge, Card, Col, Row } from "react-bootstrap";
 import { ProductTemplateWithProps } from "../actions/productTemplate.action";
 import { WidgetAvatar } from "@/components/widgets";
+import { productDisplayOutput } from "./ProductTemplateListView";
 
 function CardProduct({ product }: { product: ProductTemplateWithProps }) {
   return (
@@ -31,7 +32,7 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
             <Card.Text className="d-flex justify-content-between m-0 my-1">
               {`[${product.defaultCode}]`}
               <small>
-                <em>{`${product.ProductCategory?.name}`}</em>
+                <em>{`${product.ProductCategory?.name || ""}`}</em>
               </small>
             </Card.Text>
             <Card.Text className="m-0">${product.price1 || "0.00"}</Card.Text>

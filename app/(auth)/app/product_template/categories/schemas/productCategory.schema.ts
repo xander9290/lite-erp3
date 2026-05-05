@@ -10,6 +10,12 @@ export const productCategorySchema = z.object({
       name: z.string(),
     })
     .nullable(),
+  Products: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    }),
+  ),
   createdUid: z.string().nullable(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
@@ -25,6 +31,7 @@ export const productCategorySchemaDefault: ProductCategorySchemaType = {
     id: "",
     name: "",
   },
+  Products: [],
   createdAt: null,
   createdUid: null,
   updatedAt: null,

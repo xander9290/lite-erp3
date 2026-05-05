@@ -7,7 +7,7 @@ import {
   updateProductCategory,
 } from "../actions/productCategory.action";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import {
   productCategorySchema,
   productCategorySchemaDefault,
@@ -22,6 +22,9 @@ import {
   FieldRelation,
 } from "@/components/templates/fields";
 import toast from "react-hot-toast";
+import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
+import { SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
+import { Col } from "react-bootstrap";
 
 function ProductCategoryFormView({
   id,
@@ -35,7 +38,12 @@ function ProductCategoryFormView({
     defaultValues: productCategorySchemaDefault,
   });
 
-  const { reset } = method;
+  const { reset, control } = method;
+
+  const { remove, fields, append } = useFieldArray({
+    control,
+    name: "Products",
+  });
 
   const originalValuesRef = useRef<ProductCategorySchemaType | null>(null);
   const router = useRouter();
@@ -80,6 +88,10 @@ function ProductCategoryFormView({
         id: productCategory.Parent?.id || "",
         name: productCategory.Parent?.name || "",
       },
+      Products: productCategory.Products.map((p) => ({
+        id: p.id,
+        name: p.name,
+      })),
       createdAt: productCategory.createdAt,
       createdUid: productCategory.createUid,
       updatedAt: productCategory.updatedAt,
@@ -106,14 +118,37 @@ function ProductCategoryFormView({
             { field: "name", label: "Nombre" },
             { field: "active", label: "Activo", type: "boolean" },
           ]}
-          domain={[
-            ["parentId", "=", null],
-            ["active", "=", true],
-          ]}
+          domain={[["active", "=", true]]}
         />
         <FieldEntry name="description" label="Descripción" />
         <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
+      <Notebook defaultActiveKey="Products">
+        <Page eventKey="Products" title="Productos">
+          <PageSheet name="Products">
+            <Col className="p-0">
+              <SimpleTable
+                data={fields}
+                headers={[
+                  {
+                    string: "Código",
+                    name: "defaultCode",
+                    width: 80,
+                    minWidth: 60,
+                  },
+                ]}
+                renderRow={(field, i) => (
+                  <tr key={field.id} className="border-0 border-bottom">
+                    <SimpleTD colIdx={i} name="lineDefaultCode">
+                      <div className="py-1">{field.name}</div>
+                    </SimpleTD>
+                  </tr>
+                )}
+              />
+            </Col>
+          </PageSheet>
+        </Page>
+      </Notebook>
     </FormView>
   );
 }

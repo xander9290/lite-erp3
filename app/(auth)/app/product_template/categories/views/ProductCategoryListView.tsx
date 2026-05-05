@@ -3,8 +3,10 @@
 import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
+import { WidgetDropList } from "@/components/widgets";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Col } from "react-bootstrap";
 
 function ProductCategoryListView() {
   const [active, setActive] = useState(true);
@@ -36,6 +38,15 @@ function ProductCategoryListView() {
           }
         >
           <Column field="name" label="Nombre" />
+          <Column
+            field="Products"
+            label="Productos"
+            type="relation"
+            include={{ Products: { select: { id: true, name: true } } }}
+            render={(_, r) => (
+              <div className="text-end">{r.Products.length}</div>
+            )}
+          />
           <Column
             field="Parent.name"
             label="Principal"
