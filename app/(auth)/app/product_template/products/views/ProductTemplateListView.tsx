@@ -14,8 +14,15 @@ export const productDisplayOutput: ProductDisplayOutput = {
   SERVICE: "servicio",
 };
 
-function ProductTemplateListView() {
+function ProductTemplateListView({
+  categoryId,
+}: {
+  categoryId: string | null;
+}) {
   const [active, setActive] = useState(true);
+
+  const domain = [["active", "=", active]];
+  if (categoryId) domain.push(["productCategoryId", "=", categoryId]);
 
   return (
     <ListView model="product_template">
@@ -34,7 +41,7 @@ function ProductTemplateListView() {
         <CardTemplateLite
           model="productTemplate"
           viewForm="/app/product_template/products?view_type=form"
-          baseDomain={[["active", "=", active]]}
+          baseDomain={domain}
           renderCard={(p) => <CardProduct product={p} />}
           defaultOrder="name asc"
         >

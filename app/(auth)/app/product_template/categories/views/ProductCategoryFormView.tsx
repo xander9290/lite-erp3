@@ -7,7 +7,7 @@ import {
   updateProductCategory,
 } from "../actions/productCategory.action";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import {
   productCategorySchema,
   productCategorySchemaDefault,
@@ -22,9 +22,6 @@ import {
   FieldRelation,
 } from "@/components/templates/fields";
 import toast from "react-hot-toast";
-import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
-import { SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
-import { Col } from "react-bootstrap";
 
 function ProductCategoryFormView({
   id,
@@ -38,12 +35,7 @@ function ProductCategoryFormView({
     defaultValues: productCategorySchemaDefault,
   });
 
-  const { reset, control } = method;
-
-  const { remove, fields, append } = useFieldArray({
-    control,
-    name: "Products",
-  });
+  const { reset } = method;
 
   const originalValuesRef = useRef<ProductCategorySchemaType | null>(null);
   const router = useRouter();
@@ -72,6 +64,11 @@ function ProductCategoryFormView({
       reset(originalValuesRef.current);
     }
   };
+
+  const actionViewProducts = () =>
+    router.push(
+      `/app/product_template/products?view_type=list&id=null&categoryId=${id}`,
+    );
 
   useEffect(() => {
     if (!productCategory) {
@@ -108,6 +105,18 @@ function ProductCategoryFormView({
       reverse={handleReverse}
       onSubmit={onSubmit}
       auditLog="productCategory"
+      actions={[
+        {
+          action: actionViewProducts,
+          fieldName: "actionViewProducts",
+          string: `Productos (${productCategory?.Products && productCategory.Products.length})`,
+          invisible:
+            (productCategory?.Products &&
+              productCategory.Products.length < 1) ||
+            id === "null",
+          variant: "outline-primary",
+        },
+      ]}
     >
       <FormViewGroup>
         <FieldRelation
@@ -123,32 +132,6 @@ function ProductCategoryFormView({
         <FieldEntry name="description" label="Descripción" />
         <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
-      <Notebook defaultActiveKey="Products">
-        <Page eventKey="Products" title="Productos">
-          <PageSheet name="Products">
-            <Col className="p-0">
-              <SimpleTable
-                data={fields}
-                headers={[
-                  {
-                    string: "Código",
-                    name: "defaultCode",
-                    width: 80,
-                    minWidth: 60,
-                  },
-                ]}
-                renderRow={(field, i) => (
-                  <tr key={field.id} className="border-0 border-bottom">
-                    <SimpleTD colIdx={i} name="lineDefaultCode">
-                      <div className="py-1">{field.name}</div>
-                    </SimpleTD>
-                  </tr>
-                )}
-              />
-            </Col>
-          </PageSheet>
-        </Page>
-      </Notebook>
     </FormView>
   );
 }

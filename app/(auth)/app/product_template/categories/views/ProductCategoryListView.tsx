@@ -3,10 +3,8 @@
 import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
-import { WidgetDropList } from "@/components/widgets";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Col } from "react-bootstrap";
 
 function ProductCategoryListView() {
   const [active, setActive] = useState(true);

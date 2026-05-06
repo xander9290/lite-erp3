@@ -3,7 +3,6 @@
 import { Badge, Card, Col, Row } from "react-bootstrap";
 import { ProductTemplateWithProps } from "../actions/productTemplate.action";
 import { WidgetAvatar } from "@/components/widgets";
-import { productDisplayOutput } from "./ProductTemplateListView";
 
 function CardProduct({ product }: { product: ProductTemplateWithProps }) {
   return (
