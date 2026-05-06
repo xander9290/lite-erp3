@@ -34,7 +34,7 @@ export async function createTag({
 
 export async function fetchTags(): Promise<Tag[]> {
   try {
-    const tags = await prisma.tag.findMany({ take: 5 });
+    const tags = await prisma.tag.findMany();
 
     return tags;
   } catch (error: any) {
