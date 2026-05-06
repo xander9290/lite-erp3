@@ -16,13 +16,16 @@ export const productDisplayOutput: ProductDisplayOutput = {
 
 function ProductTemplateListView({
   categoryId,
+  brandId,
 }: {
   categoryId: string | null;
+  brandId: string | null;
 }) {
   const [active, setActive] = useState(true);
 
   const domain = [["active", "=", active]];
   if (categoryId) domain.push(["productCategoryId", "=", categoryId]);
+  if (brandId) domain.push(["productBrandId", "=", brandId]);
 
   return (
     <ListView model="product_template">
@@ -63,6 +66,15 @@ function ProductTemplateListView({
           />
           <Column field="price1" label="Precio" type="number" />
           <Column field="active" label="Activo" type="boolean" />
+          <Column
+            field="ProductBrand.name"
+            label="Marca"
+            include={{
+              ProductBrand: {
+                select: { id: true, name: true, description: true },
+              },
+            }}
+          />
         </CardTemplateLite>
       </ListView.Body>
     </ListView>

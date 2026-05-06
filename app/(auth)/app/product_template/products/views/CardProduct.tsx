@@ -34,7 +34,14 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
                 <em>{`${product.ProductCategory?.name || ""}`}</em>
               </small>
             </Card.Text>
-            <Card.Text className="m-0">${product.price1 || "0.00"}</Card.Text>
+            <Card.Text className="m-0">
+              <div className="d-flex flex-row justify-content-between">
+                <div>${product.price1 || "0.00"}</div>
+                <small>
+                  <em>{product.ProductBrand?.description}</em>
+                </small>
+              </div>
+            </Card.Text>
             <div className="d-flex gap-1">
               {product.Tags.map((t) => (
                 <Badge key={t.name}>{t.name}</Badge>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useController, useFormContext } from "react-hook-form";
 import { Form, Dropdown, Badge } from "react-bootstrap";
 import {
@@ -8,6 +8,7 @@ import {
   createTag as createTagAction,
 } from "@/app/(auth)/app/actions/tag-actions";
 import { useAccess } from "@/contexts/AccessContext";
+import { usePathname } from "next/navigation";
 
 interface TagOption {
   id: string;
@@ -35,6 +36,8 @@ export function FieldTags({
   readOnly,
 }: Many2manyTagsFieldProps) {
   const access = useAccess({ fieldName: name });
+
+  const pathName = usePathname();
 
   const { control } = useFormContext();
 
@@ -79,7 +82,8 @@ export function FieldTags({
   /* ---------------- Fetch tags ---------------- */
   useEffect(() => {
     const load = async () => {
-      const tags = await fetchTags();
+      const getEntity = pathName.split("/")[2];
+      const tags = await fetchTags({ entityName: getEntity.trim() });
       setOptions(tags);
     };
     load();
@@ -114,7 +118,12 @@ export function FieldTags({
   const handleCreateTag = async (name: string) => {
     if (!name.trim()) return;
 
-    const res = await createTagAction({ name: name.trim() });
+    const getEntity = pathName.split("/")[2];
+
+    const res = await createTagAction({
+      name: name.trim().toUpperCase(),
+      entityName: getEntity.trim(),
+    });
     if (!res.data) return;
 
     const newTag: TagOption = {

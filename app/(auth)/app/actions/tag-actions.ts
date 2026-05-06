@@ -6,14 +6,16 @@ import prisma from "../../../libs/prisma";
 
 export async function createTag({
   name,
+  entityName,
 }: {
   name: string | null;
+  entityName: string | null;
 }): Promise<ActionResponse<Tag>> {
   try {
-    if (!name) throw new Error("No se ha especificado nombre");
+    if (!name || !entityName) throw new Error("No se ha especificado nombre");
 
     const newTag = await prisma.tag.create({
-      data: { name },
+      data: { name, entityName },
     });
 
     if (!newTag) throw new Error("Error al crar etiqueta");
@@ -32,9 +34,17 @@ export async function createTag({
   }
 }
 
-export async function fetchTags(): Promise<Tag[]> {
+export async function fetchTags({
+  entityName,
+}: {
+  entityName: string | null;
+}): Promise<Tag[]> {
   try {
-    const tags = await prisma.tag.findMany();
+    if (!entityName) throw new Error("Entity name not defined over fetchTags");
+
+    const tags = await prisma.tag.findMany({
+      where: { entityName },
+    });
 
     return tags;
   } catch (error: any) {

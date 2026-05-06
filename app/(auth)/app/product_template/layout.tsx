@@ -30,6 +30,13 @@ function layout({
           >
             Categorías
           </Nav.Link>
+          <Nav.Link
+            as={Link}
+            href="/app/product_template/brands?view_type=list&id=null"
+            className="border-bottom py-2"
+          >
+            Marcas
+          </Nav.Link>
         </Nav>
       </Col>
       <Col xs="9" sm="9" md="10" xl="11" xxl="11">

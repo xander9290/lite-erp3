@@ -109,7 +109,7 @@ export function FormView<T extends FieldValues>({
         <FormProvider {...methods}>
           <Form
             noValidate
-            className="card d-flex flex-column h-100 border-0"
+            className="card d-flex flex-column h-100 border-0 bg-body-tertiary"
             style={{ fontSize: "0.9rem" }}
           >
             <div className="card-header d-flex justify-content-between align-items-center border-0">

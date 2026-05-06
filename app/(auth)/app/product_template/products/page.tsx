@@ -16,14 +16,14 @@ async function PageProductTemplate({
 }: {
   searchParams: Promise<{ [key: string]: string }>;
 }) {
-  const { view_type: viewType, id, categoryId } = await searchParams;
+  const { view_type: viewType, id, categoryId, brandId } = await searchParams;
 
   const product = id && id !== "null" ? await getProductById({ id }) : null;
 
   if (viewType === "list") {
     return (
       <Suspense fallback={<LoadingPage />}>
-        <ProductTemplateListView categoryId={categoryId} />
+        <ProductTemplateListView categoryId={categoryId} brandId={brandId} />
       </Suspense>
     );
   } else if (viewType === "form") {

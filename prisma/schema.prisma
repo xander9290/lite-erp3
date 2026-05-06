@@ -195,11 +195,13 @@ enum FieldType {
 }
 
 model Tag {
-  id   String @id @default(cuid())
-  name String @unique
+  id         String @id @default(cuid())
+  name       String
+  entityName String @map("entity_name")
 
   ProductTemplate ProductTemplate[]
 
+  @@index([name, entityName])
   @@map("tags")
 }
 
@@ -295,6 +297,9 @@ model ProductTemplate {
   userId String? @map("user_id")
   User   User?   @relation("ProductUserRel", fields: [userId], references: [id])
 
+  productBrandId String?       @map("product_brand_id")
+  ProductBrand   ProductBrand? @relation(fields: [productBrandId], references: [id])
+
   Tags Tag[]
 
   createUid String   @map("create_uid")
@@ -321,6 +326,22 @@ model ProductCategory {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("product_category")
+}
+
+model ProductBrand {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String  @unique
+  code        String  @unique
+  active      Boolean @default(true)
+
+  Products ProductTemplate[]
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("product_brand")
 }
 
 enum ProductDisplayType {

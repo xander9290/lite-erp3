@@ -190,6 +190,13 @@ export async function updateProductCategory({
       return productCategory;
     });
 
+    await createAuditlog({
+      action: "update",
+      entityId: updatedProductCategory.id,
+      log: "Ha editado el registro",
+      entityType: "productCategory",
+    });
+
     return {
       success: true,
       message: "Se ha editado el registro",

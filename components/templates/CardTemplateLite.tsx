@@ -119,7 +119,7 @@ export function CardTemplateLite({
       case 2:
         return { xs: 12, md: 6 };
       case 3:
-        return { xs: 12, sm: 6, lg: 4 };
+        return { xs: 12, sm: 6, lg: 4, xxl: 3 };
       case 4:
         return { xs: 12, sm: 6, md: 4, lg: 3 };
       default:
@@ -144,7 +144,7 @@ export function CardTemplateLite({
       ) : (
         <>
           <Container fluid>
-            <Row className="g-3">
+            <Row className="g-1">
               {rows.map((row: any) => (
                 <Col
                   key={row.id}

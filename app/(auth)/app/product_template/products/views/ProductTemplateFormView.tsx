@@ -122,6 +122,10 @@ function ProductTemplateFormView({
         id: product.ProductCategory?.id || "",
         name: product.ProductCategory?.name || "",
       },
+      productBrandId: {
+        id: product.ProductBrand?.id || "",
+        name: product.ProductBrand?.name || "",
+      },
       createdAt: product.createdAt,
       createdUid: product.createUid,
       updatedAt: product.updatedAt,
@@ -174,6 +178,16 @@ function ProductTemplateFormView({
           model="productCategory"
           name="productCategoryId"
           label="Categoría"
+          searchColumns={[
+            { field: "name", label: "Nombre" },
+            { field: "active", label: "Activo", type: "boolean" },
+          ]}
+          domain={[["active", "=", true]]}
+        />
+        <FieldRelation
+          model="productBrand"
+          name="productBrandId"
+          label="Marca"
           searchColumns={[
             { field: "name", label: "Nombre" },
             { field: "active", label: "Activo", type: "boolean" },

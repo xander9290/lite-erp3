@@ -11,6 +11,7 @@ export interface ProductTemplateWithProps extends ProductTemplate {
   Supplier: { id: string; name: string } | null;
   User: { id: string; name: string } | null;
   ProductCategory: { id: string; name: string } | null;
+  ProductBrand: { id: string; name: string; description: string } | null;
   Tags: { id: string; name: string }[];
 }
 
@@ -52,6 +53,13 @@ export async function getProductById({
           select: {
             id: true,
             name: true,
+          },
+        },
+        ProductBrand: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
           },
         },
       },
@@ -104,6 +112,9 @@ export async function createProduct({
         ...(data.productCategoryId?.id && {
           ProductCategory: { connect: { id: data.productCategoryId.id } },
         }),
+        ...(data.productBrandId?.id && {
+          ProductBrand: { connect: { id: data.productBrandId.id } },
+        }),
         createUid: uid || "",
       },
       include: {
@@ -129,6 +140,13 @@ export async function createProduct({
           select: {
             id: true,
             name: true,
+          },
+        },
+        ProductBrand: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
           },
         },
       },
@@ -200,6 +218,9 @@ export async function updateProduct({
         ProductCategory: data.productCategoryId?.id
           ? { connect: { id: data.productCategoryId.id } }
           : { disconnect: true },
+        ProductBrand: data.productBrandId?.id
+          ? { connect: { id: data.productBrandId.id } }
+          : { disconnect: true },
       },
       include: {
         Supplier: {
@@ -224,6 +245,13 @@ export async function updateProduct({
           select: {
             id: true,
             name: true,
+          },
+        },
+        ProductBrand: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
           },
         },
       },
