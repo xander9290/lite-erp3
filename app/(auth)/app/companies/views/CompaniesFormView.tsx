@@ -154,17 +154,14 @@ function CompaniesFormView({
           domain={[["active", "=", true]]}
           searchColumns={[
             {
-              key: "name",
-              accessor: (r) => r.name,
+              field: "name",
               label: "Nombre",
               type: "string",
               filterable: true,
             },
             {
-              key: "login",
+              field: "login",
               label: "Usuario",
-              fieldName: "login",
-              accessor: (u) => u.login,
               filterable: true,
               type: "string",
             },

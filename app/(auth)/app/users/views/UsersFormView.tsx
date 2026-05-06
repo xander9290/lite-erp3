@@ -133,9 +133,8 @@ function UsersFormView({
             label="Grupo"
             searchColumns={[
               {
-                key: "name",
+                field: "name",
                 label: "Nombre",
-                accessor: (r) => r.name,
                 filterable: true,
                 type: "string",
               },

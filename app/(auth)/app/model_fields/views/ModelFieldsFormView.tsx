@@ -123,15 +123,13 @@ function ModelFieldsFormView({
           label="Modelo"
           searchColumns={[
             {
-              key: "name",
-              accessor: (r) => r.name,
+              field: "name",
               label: "Nombre",
               type: "string",
               filterable: true,
             },
             {
-              key: "description",
-              accessor: (r) => r.description,
+              field: "description",
               label: "Descripción",
               type: "string",
               filterable: true,
