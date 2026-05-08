@@ -36,7 +36,7 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
             </Card.Text>
             <Card.Text className="m-0">
               <div className="d-flex flex-row justify-content-between">
-                <div>${product.price1 || "0.00"}</div>
+                <span>${product.price1 || "0.00"}</span>
                 <small>
                   <em>{product.ProductBrand?.description}</em>
                 </small>
