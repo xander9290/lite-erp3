@@ -14,18 +14,13 @@ export const productDisplayOutput: ProductDisplayOutput = {
   SERVICE: "servicio",
 };
 
-function ProductTemplateListView({
-  categoryId,
-  brandId,
-}: {
-  categoryId: string | null;
-  brandId: string | null;
-}) {
+function ProductTemplateListView({ categoryId, brandId, uomId }: { categoryId: string | null; brandId: string | null; uomId: string | null }) {
   const [active, setActive] = useState(true);
 
   const domain = [["active", "=", active]];
   if (categoryId) domain.push(["productCategoryId", "=", categoryId]);
   if (brandId) domain.push(["productBrandId", "=", brandId]);
+  if (uomId) domain.push(["uomId", "=", uomId]);
 
   return (
     <ListView model="product_template">
@@ -41,13 +36,7 @@ function ProductTemplateListView({
         ]}
       />
       <ListView.Body>
-        <CardTemplateLite
-          model="productTemplate"
-          viewForm="/app/product_template/products?view_type=form"
-          baseDomain={domain}
-          renderCard={(p) => <CardProduct product={p} />}
-          defaultOrder="name asc"
-        >
+        <CardTemplateLite model="productTemplate" viewForm="/app/product_template/products?view_type=form" baseDomain={domain} renderCard={(p) => <CardProduct product={p} />} defaultOrder="name asc">
           <Column field="name" label="Nombre" />
           <Column field="description" label="Descripción" />
           <Column field="defaultCode" label="Código interno" />
@@ -59,11 +48,7 @@ function ProductTemplateListView({
               Tags: { select: { id: true, name: true } },
             }}
           />
-          <Column
-            field="ProductCategory.name"
-            label="Categoría"
-            include={{ ProductCategory: { select: { id: true, name: true } } }}
-          />
+          <Column field="ProductCategory.name" label="Categoría" include={{ ProductCategory: { select: { id: true, name: true } } }} />
           <Column field="price1" label="Precio" type="number" />
           <Column field="active" label="Activo" type="boolean" />
           <Column

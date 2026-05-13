@@ -12,19 +12,13 @@ export interface ProductTemplateWithProps extends ProductTemplate {
   User: { id: string; name: string } | null;
   ProductCategory: { id: string; name: string } | null;
   ProductBrand: { id: string; name: string; description: string } | null;
+  Uom: { id: string; name: string; ratio: number } | null;
   Tags: { id: string; name: string }[];
 }
 
-type ProductTemplateActionProps = Omit<
-  ProductTemplateSchemaType,
-  "createdAt" | "updatedAt" | "createdUid"
->;
+type ProductTemplateActionProps = Omit<ProductTemplateSchemaType, "createdAt" | "updatedAt" | "createdUid">;
 
-export async function getProductById({
-  id,
-}: {
-  id: string | null;
-}): Promise<ProductTemplateWithProps | null> {
+export async function getProductById({ id }: { id: string | null }): Promise<ProductTemplateWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -62,6 +56,9 @@ export async function getProductById({
             description: true,
           },
         },
+        Uom: {
+          select: { id: true, name: true, ratio: true },
+        },
       },
     });
 
@@ -72,11 +69,7 @@ export async function getProductById({
   }
 }
 
-export async function createProduct({
-  data,
-}: {
-  data: ProductTemplateActionProps;
-}): Promise<ActionResponse<ProductTemplateWithProps>> {
+export async function createProduct({ data }: { data: ProductTemplateActionProps }): Promise<ActionResponse<ProductTemplateWithProps>> {
   try {
     const { uid } = await sessionStore();
 
@@ -105,6 +98,7 @@ export async function createProduct({
         Tags: { connect: data.Tags.map((t) => ({ id: t })) },
         uomIncomingAllowed: data.uomIncomingAllowed,
         uomOutgoingAllowed: data.uomOutgoingAllowed,
+        ...(data.uomId?.id && { Uom: { connect: { id: data.uomId.id } } }),
         ...(data.supplierId?.id && {
           Supplier: { connect: { id: data.supplierId.id } },
         }),
@@ -149,6 +143,9 @@ export async function createProduct({
             description: true,
           },
         },
+        Uom: {
+          select: { id: true, name: true, ratio: true },
+        },
       },
     });
 
@@ -173,13 +170,7 @@ export async function createProduct({
   }
 }
 
-export async function updateProduct({
-  id,
-  data,
-}: {
-  id: string | null;
-  data: ProductTemplateActionProps;
-}): Promise<ActionResponse<ProductTemplateWithProps>> {
+export async function updateProduct({ id, data }: { id: string | null; data: ProductTemplateActionProps }): Promise<ActionResponse<ProductTemplateWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -209,18 +200,11 @@ export async function updateProduct({
         Tags: { set: data.Tags.map((t) => ({ id: t })) },
         uomIncomingAllowed: data.uomIncomingAllowed,
         uomOutgoingAllowed: data.uomOutgoingAllowed,
-        Supplier: data.supplierId?.id
-          ? { connect: { id: data.supplierId.id } }
-          : { disconnect: true },
-        User: data.userId?.id
-          ? { connect: { id: data.userId.id } }
-          : { disconnect: true },
-        ProductCategory: data.productCategoryId?.id
-          ? { connect: { id: data.productCategoryId.id } }
-          : { disconnect: true },
-        ProductBrand: data.productBrandId?.id
-          ? { connect: { id: data.productBrandId.id } }
-          : { disconnect: true },
+        Supplier: data.supplierId?.id ? { connect: { id: data.supplierId.id } } : { disconnect: true },
+        User: data.userId?.id ? { connect: { id: data.userId.id } } : { disconnect: true },
+        ProductCategory: data.productCategoryId?.id ? { connect: { id: data.productCategoryId.id } } : { disconnect: true },
+        ProductBrand: data.productBrandId?.id ? { connect: { id: data.productBrandId.id } } : { disconnect: true },
+        Uom: data.uomId?.id ? { connect: { id: data.uomId.id } } : { disconnect: true },
       },
       include: {
         Supplier: {
@@ -253,6 +237,9 @@ export async function updateProduct({
             name: true,
             description: true,
           },
+        },
+        Uom: {
+          select: { id: true, name: true, ratio: true },
         },
       },
     });

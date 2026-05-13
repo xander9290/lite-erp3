@@ -3,27 +3,19 @@ import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
 import { getProductById } from "./actions/productTemplate.action";
 
-const ProductTemplateListView = lazy(
-  () => import("./views/ProductTemplateListView"),
-);
+const ProductTemplateListView = lazy(() => import("./views/ProductTemplateListView"));
 
-const ProductTemplateFormView = lazy(
-  () => import("./views/ProductTemplateFormView"),
-);
+const ProductTemplateFormView = lazy(() => import("./views/ProductTemplateFormView"));
 
-async function PageProductTemplate({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string }>;
-}) {
-  const { view_type: viewType, id, categoryId, brandId } = await searchParams;
+async function PageProductTemplate({ searchParams }: { searchParams: Promise<{ [key: string]: string }> }) {
+  const { view_type: viewType, id, categoryId, brandId, uomId } = await searchParams;
 
   const product = id && id !== "null" ? await getProductById({ id }) : null;
 
   if (viewType === "list") {
     return (
       <Suspense fallback={<LoadingPage />}>
-        <ProductTemplateListView categoryId={categoryId} brandId={brandId} />
+        <ProductTemplateListView categoryId={categoryId} brandId={brandId} uomId={uomId} />
       </Suspense>
     );
   } else if (viewType === "form") {

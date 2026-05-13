@@ -302,6 +302,9 @@ model ProductTemplate {
 
   Tags Tag[]
 
+  uomId String?      @map("uom_id")
+  Uom   UomCategory? @relation(fields: [uomId], references: [id])
+
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -353,4 +356,21 @@ enum ProductDisplayType {
 enum ProductStateType {
   AVAILABLE
   NOT_AVAILABLE
+}
+
+model UomCategory {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String  @unique
+  code        String  @unique
+  ratio       Float   @default(0.0)
+  active      Boolean @default(true)
+
+  Products ProductTemplate[]
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("uom_category")
 }

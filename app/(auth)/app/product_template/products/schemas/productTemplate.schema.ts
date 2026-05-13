@@ -48,6 +48,12 @@ export const productTemplateSchema = z.object({
       name: z.string(),
     })
     .nullable(),
+  uomId: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .nullable(),
   Tags: z.array(z.string()),
   createdUid: z.string().nullable(),
   createdAt: z.date().nullable(),
@@ -90,6 +96,7 @@ export const productTemplateSchemaDefault: ProductTemplateSchemaType = {
     id: "",
     name: "",
   },
+  uomId: { id: "", name: "" },
   createdAt: null,
   createdUid: null,
   updatedAt: null,

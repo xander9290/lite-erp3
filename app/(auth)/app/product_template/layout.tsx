@@ -12,30 +12,18 @@ function layout({
   return (
     <Row className="h-100 overflow-auto">
       <Col xs="3" sm="3" md="2" xl="1" xxl="1">
-        <Nav
-          className="flex-column"
-          defaultActiveKey="/app/product_template/products"
-        >
-          <Nav.Link
-            as={Link}
-            href="/app/product_template/products?view_type=list&id=null"
-            className="border-bottom py-2"
-          >
+        <Nav className="flex-column" defaultActiveKey="/app/product_template/products">
+          <Nav.Link as={Link} href="/app/product_template/products?view_type=list&id=null" className="border-bottom py-2">
             Productos
           </Nav.Link>
-          <Nav.Link
-            as={Link}
-            href="/app/product_template/categories?view_type=list&id=null"
-            className="border-bottom py-2"
-          >
+          <Nav.Link as={Link} href="/app/product_template/categories?view_type=list&id=null" className="border-bottom py-2">
             Categorías
           </Nav.Link>
-          <Nav.Link
-            as={Link}
-            href="/app/product_template/brands?view_type=list&id=null"
-            className="border-bottom py-2"
-          >
+          <Nav.Link as={Link} href="/app/product_template/brands?view_type=list&id=null" className="border-bottom py-2">
             Marcas
+          </Nav.Link>
+          <Nav.Link as={Link} href="/app/product_template/uom_category?view_type=list&id=null" className="border-bottom py-2">
+            UdM
           </Nav.Link>
         </Nav>
       </Col>
