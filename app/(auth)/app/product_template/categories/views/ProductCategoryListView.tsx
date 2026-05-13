@@ -1,5 +1,6 @@
 "use client";
 
+import { FieldText } from "@/components/templates/fields";
 import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
@@ -35,7 +36,13 @@ function ProductCategoryListView() {
             )
           }
         >
-          <Column field="name" label="Nombre" />
+          <Column
+            field="name"
+            label="Nombre"
+            render={(_, name) => (
+              <FieldText name="categoryName" output={name.name} />
+            )}
+          />
           <Column
             field="Products"
             label="Productos"

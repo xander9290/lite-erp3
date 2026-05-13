@@ -3,6 +3,7 @@
 import { Badge, Card, Col, Row } from "react-bootstrap";
 import { ProductTemplateWithProps } from "../actions/productTemplate.action";
 import { WidgetAvatar } from "@/components/widgets";
+import { FieldText } from "@/components/templates/fields";
 
 function CardProduct({ product }: { product: ProductTemplateWithProps }) {
   return (
@@ -14,21 +15,49 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
         <Col md="10">
           <Card.Body className="p-1 text-center text-md-start">
             <div className="d-flex flex-row justify-content-between">
-              <div className="fs-6 fw-semibold text-truncate" title={product.description}>
-                {product.description}
+              <div
+                className="fs-6 fw-semibold text-truncate"
+                title={product.description}
+              >
+                <FieldText name="description" output={product.description} />
               </div>
-              <div>{product.state === "AVAILABLE" ? <Badge bg="success">DISPONIBLE</Badge> : <Badge bg="danger">AGOTADO</Badge>}</div>
+              <div>
+                {product.state === "AVAILABLE" ? (
+                  <Badge bg="success">DISPONIBLE</Badge>
+                ) : (
+                  <Badge bg="danger">AGOTADO</Badge>
+                )}
+              </div>
             </div>
             <Card.Text className="d-flex justify-content-between m-0 my-1">
-              {`[${product.defaultCode}]`}
-              <small className="text-truncate" title={product.ProductCategory?.name}>
-                <em>{`${product.ProductCategory?.name || ""}`}</em>
+              <FieldText
+                name="defaultCode"
+                output={`[${product.defaultCode}]`}
+              />
+              <small
+                className="text-truncate"
+                title={product.ProductCategory?.name}
+              >
+                <em>
+                  <FieldText
+                    name="productCategory"
+                    output={`${product.ProductCategory?.name || ""}`}
+                  />
+                </em>
               </small>
             </Card.Text>
             <Card.Text className="d-flex justify-content-between m-0 my-1">
-              <span>${product.price1 || "0.00"}</span>
+              <FieldText
+                name="price1"
+                output={`$${product.price1 || "0.00"}`}
+              />
               <small>
-                <em>{product.ProductBrand?.description}</em>
+                <em>
+                  <FieldText
+                    name="productBrand"
+                    output={product.ProductBrand?.description || ""}
+                  />
+                </em>
               </small>
             </Card.Text>
             <div className="d-flex gap-1">
