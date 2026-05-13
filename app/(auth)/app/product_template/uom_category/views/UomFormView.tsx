@@ -3,15 +3,29 @@
 import { createUom, UomWithProps, updateUom } from "../actions/uom.action";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UomSchema, uomSchemaDefault, UomSchemaType } from "../schemas/uom.schema";
+import {
+  UomSchema,
+  uomSchemaDefault,
+  UomSchemaType,
+} from "../schemas/uom.schema";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import { FormView, FormViewGroup } from "@/components/templates/FormView";
+import {
+  FormView,
+  FormViewGroup,
+  FormViewStack,
+} from "@/components/templates/FormView";
 import { FieldBoolean, FieldEntry } from "@/components/templates/fields";
 import toast from "react-hot-toast";
 
-function UomFormView({ uom, id }: { uom: UomWithProps | null; id: string | null }) {
+function UomFormView({
+  uom,
+  id,
+}: {
+  uom: UomWithProps | null;
+  id: string | null;
+}) {
   const methods = useForm<UomSchemaType>({
     resolver: zodResolver(UomSchema),
     defaultValues: uomSchemaDefault,
@@ -34,7 +48,9 @@ function UomFormView({ uom, id }: { uom: UomWithProps | null; id: string | null 
     if (id && id === "null") {
       const res = await createUom({ data });
       if (!res.success) return modalError(res.message);
-      router.replace(`/app/product_template/uom_category?view_type=form&id=${res.data?.id}`);
+      router.replace(
+        `/app/product_template/uom_category?view_type=form&id=${res.data?.id}`,
+      );
       toast.success(res.message);
     } else {
       const res = await updateUom({ id, data });
@@ -56,6 +72,7 @@ function UomFormView({ uom, id }: { uom: UomWithProps | null; id: string | null 
       description: uom.description,
       code: uom.code,
       ratio: uom.ratio,
+      isBaseUnit: uom.isBaseUnit,
       active: uom.active,
       Products: uom.Products.map((p) => ({ id: p.id, name: p.name })),
       createdAt: uom.createdAt,
@@ -67,7 +84,10 @@ function UomFormView({ uom, id }: { uom: UomWithProps | null; id: string | null 
     originalValuesRef.current = values;
   }, [reset, uom]);
 
-  const actionViewProducts = () => router.push(`/app/product_template/products?view_type=list&id=null&uomId=${id}`);
+  const actionViewProducts = () =>
+    router.push(
+      `/app/product_template/products?view_type=list&id=null&uomId=${id}`,
+    );
 
   return (
     <FormView
@@ -81,7 +101,8 @@ function UomFormView({ uom, id }: { uom: UomWithProps | null; id: string | null 
           action: actionViewProducts,
           fieldName: "actionViewProducts",
           string: `Productos (${uom?.Products && uom.Products.length})`,
-          invisible: (uom?.Products && uom.Products.length < 1) || id === "null",
+          invisible:
+            (uom?.Products && uom.Products.length < 1) || id === "null",
           variant: "outline-primary",
         },
       ]}
@@ -90,11 +111,21 @@ function UomFormView({ uom, id }: { uom: UomWithProps | null; id: string | null 
       <FormViewGroup>
         <FieldEntry name="description" label="Descripción" />
         <FieldEntry name="code" label="Código" />
-        <FieldEntry name="ratio" label="Proporción" type="number" />
-        <FieldBoolean name="active" label="Activo" />
+        <FieldEntry
+          name="ratio"
+          label="Proporción"
+          type="number"
+          step="0.001"
+        />
+        <FormViewStack>
+          <FieldBoolean name="isBaseUnit" label="Unidad base" />
+          <FieldBoolean name="active" label="Activo" />
+        </FormViewStack>
       </FormViewGroup>
     </FormView>
   );
 }
+
+// SI SA UNIDAD DE MEDIDA ES UNIDAD BASE SE MARCA COMO TRUE PARA QUE EL SISTEMA HAGA LA DIVISION, DE LO CONTRARIO HARA LA MULTIPLICACIÓN
 
 export default UomFormView;

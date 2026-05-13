@@ -11,9 +11,16 @@ export interface UomWithProps extends UomCategory {
   Products: { id: string; name: string }[];
 }
 
-export type UomActionProps = Omit<UomSchemaType, "createdAt" | "updatedAt" | "createdUid">;
+export type UomActionProps = Omit<
+  UomSchemaType,
+  "createdAt" | "updatedAt" | "createdUid"
+>;
 
-export async function getUomById({ id }: { id: string | null }): Promise<UomWithProps | null> {
+export async function getUomById({
+  id,
+}: {
+  id: string | null;
+}): Promise<UomWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
     const uom = await prisma.uomCategory.findUnique({
@@ -34,7 +41,11 @@ export async function getUomById({ id }: { id: string | null }): Promise<UomWith
   }
 }
 
-export async function createUom({ data }: { data: UomActionProps }): Promise<ActionResponse<UomWithProps>> {
+export async function createUom({
+  data,
+}: {
+  data: UomActionProps;
+}): Promise<ActionResponse<UomWithProps>> {
   try {
     const { uid } = await sessionStore();
 
@@ -46,6 +57,7 @@ export async function createUom({ data }: { data: UomActionProps }): Promise<Act
         description: data.description,
         code: data.code,
         ratio: Number(data.ratio),
+        isBaseUnit: data.isBaseUnit,
         createUid: uid || "",
       },
       include: {
@@ -76,7 +88,13 @@ export async function createUom({ data }: { data: UomActionProps }): Promise<Act
   }
 }
 
-export async function updateUom({ id, data }: { id: string | null; data: UomActionProps }): Promise<ActionResponse<UomWithProps>> {
+export async function updateUom({
+  id,
+  data,
+}: {
+  id: string | null;
+  data: UomActionProps;
+}): Promise<ActionResponse<UomWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -89,6 +107,7 @@ export async function updateUom({ id, data }: { id: string | null; data: UomActi
         description: data.description,
         code: data.code,
         ratio: Number(data.ratio),
+        isBaseUnit: data.isBaseUnit,
       },
       include: {
         Products: {

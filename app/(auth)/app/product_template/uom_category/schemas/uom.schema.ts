@@ -5,6 +5,7 @@ export const UomSchema = z.object({
   description: z.string().min(1, "Clave es requerida"),
   code: z.string().min(1, "Código es requerido"),
   ratio: z.number(),
+  isBaseUnit: z.boolean(),
   active: z.boolean(),
   Products: z.array(
     z.object({
@@ -24,6 +25,7 @@ export const uomSchemaDefault: UomSchemaType = {
   description: "",
   code: "",
   ratio: 0.0,
+  isBaseUnit: false,
   active: true,
   Products: [],
   createdUid: null,

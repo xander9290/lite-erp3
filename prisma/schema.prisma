@@ -364,6 +364,7 @@ model UomCategory {
   description String  @unique
   code        String  @unique
   ratio       Float   @default(0.0)
+  isBaseUnit  Boolean @default(false) @map("is_base_unit")
   active      Boolean @default(true)
 
   Products ProductTemplate[]

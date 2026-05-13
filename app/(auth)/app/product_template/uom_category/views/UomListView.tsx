@@ -29,16 +29,23 @@ function UomListView() {
           baseDomain={[["active", "=", active]]}
           defaultOrder="name asc"
           pageSize={100}
-          onRowClick={(row) => router.push(`/app/product_template/uom_category?view_type=form&id=${row.id}`)}
+          onRowClick={(row) =>
+            router.push(
+              `/app/product_template/uom_category?view_type=form&id=${row.id}`,
+            )
+          }
         >
           <Column field="name" label="Nombre" />
+          <Column field="isBaseUnit" label="Base" type="boolean" />
           <Column field="ratio" label="Proporción" type="number" />
           <Column
             field="Products"
             label="Productos"
             type="relation"
             include={{ Products: { select: { id: true, name: true } } }}
-            render={(_, r) => <div className="text-end">{r.Products.length}</div>}
+            render={(_, r) => (
+              <div className="text-end">{r.Products.length}</div>
+            )}
           />
           <Column field="active" label="Activo" type="boolean" />
         </TableTemplateLite>
