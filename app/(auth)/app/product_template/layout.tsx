@@ -25,6 +25,9 @@ function layout({
           <Nav.Link as={Link} href="/app/product_template/uom_category?view_type=list&id=null" className="border-bottom py-2">
             UdM
           </Nav.Link>
+          <Nav.Link as={Link} href="/app/product_template/product_packaging?view_type=list&id=null" className="border-bottom py-2">
+            Embalajes
+          </Nav.Link>
         </Nav>
       </Col>
       <Col xs="9" sm="9" md="10" xl="11" xxl="11">

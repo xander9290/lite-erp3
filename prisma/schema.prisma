@@ -305,6 +305,8 @@ model ProductTemplate {
   uomId String?      @map("uom_id")
   Uom   UomCategory? @relation(fields: [uomId], references: [id])
 
+  ProductPackagingLines ProductPackagingLine[]
+
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -374,4 +376,35 @@ model UomCategory {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("uom_category")
+}
+
+model ProductPackaging {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  active Boolean @default(true)
+
+  ProductPackagingLines ProductPackagingLine[]
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("product_packaging")
+}
+
+model ProductPackagingLine {
+  id  String @id @default(cuid())
+  qty Float  @default(0.0)
+
+  packagingId      String           @map("packagin_id")
+  ProductPackaging ProductPackaging @relation(fields: [packagingId], references: [id])
+
+  productId String          @map("product_id")
+  Product   ProductTemplate @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("product_packaging_line")
 }

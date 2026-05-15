@@ -54,6 +54,14 @@ export const productTemplateSchema = z.object({
       name: z.string(),
     })
     .nullable(),
+  ProductPackagingLines: z.array(
+    z.object({
+      id: z.string(),
+      packagingId: z.object({ id: z.string().min(1, "Embalaje es requerido"), name: z.string() }),
+      productId: z.object({ id: z.string(), name: z.string() }),
+      qty: z.number().min(1, "Cantidad es requerida"),
+    }),
+  ),
   Tags: z.array(z.string()),
   createdUid: z.string().nullable(),
   createdAt: z.date().nullable(),
@@ -96,6 +104,7 @@ export const productTemplateSchemaDefault: ProductTemplateSchemaType = {
     id: "",
     name: "",
   },
+  ProductPackagingLines: [],
   uomId: { id: "", name: "" },
   createdAt: null,
   createdUid: null,

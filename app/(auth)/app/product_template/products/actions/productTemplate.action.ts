@@ -14,6 +14,12 @@ export interface ProductTemplateWithProps extends ProductTemplate {
   ProductBrand: { id: string; name: string; description: string } | null;
   Uom: { id: string; name: string; ratio: number } | null;
   Tags: { id: string; name: string }[];
+  ProductPackagingLines: {
+    id: string;
+    ProductPackaging: { id: string; name: string };
+    Product: { id: string; name: string };
+    qty: number;
+  }[];
 }
 
 type ProductTemplateActionProps = Omit<ProductTemplateSchemaType, "createdAt" | "updatedAt" | "createdUid">;
@@ -58,6 +64,18 @@ export async function getProductById({ id }: { id: string | null }): Promise<Pro
         },
         Uom: {
           select: { id: true, name: true, ratio: true },
+        },
+        ProductPackagingLines: {
+          select: {
+            ProductPackaging: {
+              select: { id: true, name: true },
+            },
+            Product: {
+              select: { id: true, name: true },
+            },
+            qty: true,
+            id: true,
+          },
         },
       },
     });
@@ -109,6 +127,15 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
         ...(data.productBrandId?.id && {
           ProductBrand: { connect: { id: data.productBrandId.id } },
         }),
+        ProductPackagingLines: {
+          createMany: {
+            data: data.ProductPackagingLines.map((line) => ({
+              createUid: uid || "",
+              packagingId: line.packagingId.id,
+              qty: line.qty,
+            })),
+          },
+        },
         createUid: uid || "",
       },
       include: {
@@ -146,6 +173,18 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
         Uom: {
           select: { id: true, name: true, ratio: true },
         },
+        ProductPackagingLines: {
+          select: {
+            ProductPackaging: {
+              select: { id: true, name: true },
+            },
+            Product: {
+              select: { id: true, name: true },
+            },
+            qty: true,
+            id: true,
+          },
+        },
       },
     });
 
@@ -173,6 +212,8 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
 export async function updateProduct({ id, data }: { id: string | null; data: ProductTemplateActionProps }): Promise<ActionResponse<ProductTemplateWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
+
+    const { uid } = await sessionStore();
 
     const updatedProduct = await prisma.productTemplate.update({
       where: { id },
@@ -205,6 +246,25 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
         ProductCategory: data.productCategoryId?.id ? { connect: { id: data.productCategoryId.id } } : { disconnect: true },
         ProductBrand: data.productBrandId?.id ? { connect: { id: data.productBrandId.id } } : { disconnect: true },
         Uom: data.uomId?.id ? { connect: { id: data.uomId.id } } : { disconnect: true },
+        ProductPackagingLines: {
+          deleteMany: {
+            id: {
+              notIn: data.ProductPackagingLines.filter((l) => l.id).map((l) => l.id!),
+            },
+          },
+          upsert: data.ProductPackagingLines.map((line) => ({
+            where: { id: line.id ?? "" },
+            update: {
+              packagingId: line.packagingId.id,
+              qty: line.qty,
+            },
+            create: {
+              createUid: uid || "",
+              packagingId: line.packagingId.id,
+              qty: line.qty,
+            },
+          })),
+        },
       },
       include: {
         Supplier: {
@@ -240,6 +300,18 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
         },
         Uom: {
           select: { id: true, name: true, ratio: true },
+        },
+        ProductPackagingLines: {
+          select: {
+            ProductPackaging: {
+              select: { id: true, name: true },
+            },
+            Product: {
+              select: { id: true, name: true },
+            },
+            qty: true,
+            id: true,
+          },
         },
       },
     });
