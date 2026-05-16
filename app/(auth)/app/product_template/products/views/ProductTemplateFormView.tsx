@@ -12,6 +12,8 @@ import { FieldBoolean, FieldEntry, FieldImage, FieldRelation, FieldSelect, Field
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
 import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
+import { Col } from "react-bootstrap";
+import { getUomById } from "../../uom_category/actions/uom.action";
 
 function ProductTemplateFormView({ id, product }: { id: string | null; product: ProductTemplateWithProps | null }) {
   const methods = useForm<ProductTemplateSchemaType>({
@@ -19,7 +21,9 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
     defaultValues: productTemplateSchemaDefault,
   });
 
-  const { reset, getValues, handleSubmit, control } = methods;
+  const { reset, getValues, handleSubmit, control, setValue } = methods;
+
+  //LÍNEAS DE EMBALAJE
   const {
     remove,
     append,
@@ -27,6 +31,16 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
   } = useFieldArray({
     control,
     name: "ProductPackagingLines",
+  });
+
+  //LÍNEAS DE RECETARIO
+  const {
+    remove: removeReceipt,
+    append: appReceipt,
+    fields: receipts,
+  } = useFieldArray({
+    control,
+    name: "ReceiptLines",
   });
 
   const originalValuesRef = useRef<ProductTemplateSchemaType | null>(null);
@@ -117,6 +131,13 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
           uomId: { id: p.Uom.id, name: p.Uom.name },
           qty: p.qty,
         })) || [],
+      ReceiptLines: product.ReceiptLines.map((line) => ({
+        id: line.id,
+        qty: line.qty,
+        active: line.active,
+        productId: { id: line.Product.id, name: line.Product.name },
+        uomId: { id: line.Uom.id, name: line.Uom.name },
+      })),
       createdAt: product.createdAt,
       createdUid: product.createUid,
       updatedAt: product.updatedAt,
@@ -204,7 +225,7 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
               <FieldBoolean name="purchases" label="Se puede comprar" />
               <FormViewStack>
                 <FieldEntry name="lastCost" type="number" label="Último costo" readonly className="text-end" />
-                <FieldEntry name="uomIncomingAllowed" type="number" label="Múltiplo de compra" className="text-center" step={0.0001} />
+                <FieldEntry name="uomIncomingAllowed" type="number" label="Múltiplo de compra" className="text-center" step="0.00" />
               </FormViewStack>
               <FieldRelation model="user" name="userId" label="Comprador" />
               <FieldRelation model="partner" name="supplierId" label="Proveedor" domain={[["displayType", "=", "SUPPLIER"]]} />
@@ -216,14 +237,14 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
             <FormViewGroup>
               <FieldBoolean name="sales" label="Se puede vender" />
               <FormViewStack>
-                <FieldEntry type="number" name="price1" label="Precio 1" className="text-end" step={0.01} />
-                <FieldEntry type="number" name="price2" label="Precio 2" className="text-end" step={0.01} />
-                <FieldEntry type="number" name="price3" label="Precio 3" className="text-end" step={0.01} />
+                <FieldEntry type="number" name="price1" label="Precio 1" className="text-end" step="0.00" />
+                <FieldEntry type="number" name="price2" label="Precio 2" className="text-end" step="0.00" />
+                <FieldEntry type="number" name="price3" label="Precio 3" className="text-end" step="0.00" />
               </FormViewStack>
               <FormViewStack>
-                <FieldEntry type="number" name="price4" label="Precio 4" className="text-end" step={0.01} />
-                <FieldEntry type="number" name="price5" label="Precio 5" className="text-end" step={0.01} />
-                <FieldEntry name="uomOutgoingAllowed" type="number" label="Múltiplo de venta" className="text-center" step={0.0001} />
+                <FieldEntry type="number" name="price4" label="Precio 4" className="text-end" step="0.00" />
+                <FieldEntry type="number" name="price5" label="Precio 5" className="text-end" step="0.00" />
+                <FieldEntry name="uomOutgoingAllowed" type="number" label="Múltiplo de venta" className="text-center" step="0.00" />
               </FormViewStack>
             </FormViewGroup>
           </PageSheet>
@@ -233,13 +254,13 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
             <FormViewGroup>
               <h6>Dimensiones</h6>
               <FormViewStack>
-                <FieldEntry name="alto" label="Alto" type="number" />
-                <FieldEntry name="ancho" label="Ancho" type="number" />
-                <FieldEntry name="largo" label="Largo" type="number" />
+                <FieldEntry name="alto" label="Alto" type="number" step="0.00" />
+                <FieldEntry name="ancho" label="Ancho" type="number" step="0.00" />
+                <FieldEntry name="largo" label="Largo" type="number" step="0.00" />
               </FormViewStack>
               <FormViewStack>
-                <FieldEntry name="weight" label="Peso" type="number" />
-                <FieldEntry name="volume" label="Volumen" type="number" />
+                <FieldEntry name="weight" label="Peso" type="number" step="0.00" />
+                <FieldEntry name="volume" label="Volumen" type="number" step="0.00" />
               </FormViewStack>
             </FormViewGroup>
             <FormViewGroup>
@@ -286,6 +307,69 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                 }
               />
             </FormViewGroup>
+          </PageSheet>
+        </Page>
+        <Page title="Recetario" eventKey="receipt">
+          <PageSheet name="productReceiptLines">
+            <Col md="12" className="p-0 m-0 overflow-auto">
+              <SimpleTable
+                data={receipts}
+                headers={[
+                  { string: "Producto", width: 200, minWidth: 90 },
+                  { string: "Cantidad", width: 70, minWidth: 50 },
+                  { string: "UdM", width: 80, minWidth: 70 },
+                  { string: "Activo", width: 50, minWidth: 45 },
+                  {
+                    string: <i className="bi bi-trash"></i>,
+                    className: "text-center",
+                    width: 35,
+                    minWidth: 30,
+                    name: "lineDelete",
+                  },
+                ]}
+                resizable
+                renderRow={(row, index) => (
+                  <tr key={row.id} className="border-bottom">
+                    <SimpleTD colIdx={index} name="lineReceiptProductId">
+                      <FieldRelation
+                        inline
+                        model="productTemplate"
+                        name={`ReceiptLines.${index}.productId`}
+                        searchColumns={[{ field: "name", label: "Nombre" }]}
+                        domain={[["id", "!=", id]]}
+                        ponChange={async (val, record) => {
+                          const rec = record as ProductTemplateWithProps;
+                          const uomId = rec && rec.uomId;
+                          const getUom = (await getUomById({ id: uomId })) || { id: "", name: "" };
+                          setValue(`ReceiptLines.${index}.uomId`, { id: getUom.id, name: getUom.name });
+                        }}
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineReceiptQty">
+                      <FieldEntry inline type="number" step="0.00" className="text-end" name={`ReceiptLines.${index}.qty`} />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineReceiptUomId">
+                      <FieldRelation inline model="uomCategory" readonly name={`ReceiptLines.${index}.uomId`} />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineReceiptActive">
+                      <FieldBoolean inline name={`ReceiptLines.${index}.active`} />
+                    </SimpleTD>
+                    <SimpleTD name="lineDelete" colIdx={index} contentPosition="text-center">
+                      <BtnDeleteLine action={() => removeReceipt(index)} />
+                    </SimpleTD>
+                  </tr>
+                )}
+                action={() =>
+                  appReceipt({
+                    id: "",
+                    productId: { id: "", name: "" },
+                    uomId: { id: "", name: "" },
+                    qty: 1.0,
+                    active: true,
+                  })
+                }
+              />
+            </Col>
           </PageSheet>
         </Page>
       </Notebook>

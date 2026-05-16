@@ -307,6 +307,9 @@ model ProductTemplate {
 
   ProductPackagingLines ProductPackagingLine[]
 
+  ReceiptLines        ProductReceiptLine[] @relation("ParentProductReceipt")
+  ProductReceiptLines ProductReceiptLine[] @relation("ProductReceipt")
+
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -369,14 +372,16 @@ model UomCategory {
   isBaseUnit  Boolean @default(false) @map("is_base_unit")
   active      Boolean @default(true)
 
-  Products              ProductTemplate[]
+  Products ProductTemplate[]
+
   productPackagingLines ProductPackagingLine[]
+  ProductReceiptLines   ProductReceiptLine[]
 
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("uom_category")
+  @@map("product_uom_category")
 }
 
 model ProductPackaging {
@@ -411,4 +416,25 @@ model ProductPackagingLine {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("product_packaging_line")
+}
+
+model ProductReceiptLine {
+  id     String  @id @default(cuid())
+  qty    Float   @default(0.0)
+  active Boolean @default(true)
+
+  parentId String          @map("parent_id")
+  Parent   ProductTemplate @relation("ParentProductReceipt", fields: [parentId], references: [id])
+
+  productId String          @map("product_id")
+  Product   ProductTemplate @relation("ProductReceipt", fields: [productId], references: [id])
+
+  uomId String      @map("uom_id")
+  Uom   UomCategory @relation(fields: [uomId], references: [id])
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("product_receipt_line")
 }

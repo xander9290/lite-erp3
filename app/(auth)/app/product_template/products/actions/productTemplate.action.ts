@@ -21,6 +21,13 @@ export interface ProductTemplateWithProps extends ProductTemplate {
     qty: number;
     Uom: { id: string; name: string };
   }[];
+  ReceiptLines: {
+    id: string;
+    qty: number;
+    active: boolean;
+    Product: { id: string; name: string };
+    Uom: { id: string; name: string };
+  }[];
 }
 
 type ProductTemplateActionProps = Omit<ProductTemplateSchemaType, "createdAt" | "updatedAt" | "createdUid">;
@@ -79,6 +86,19 @@ export async function getProductById({ id }: { id: string | null }): Promise<Pro
             },
             qty: true,
             id: true,
+          },
+        },
+        ReceiptLines: {
+          select: {
+            Product: {
+              select: { id: true, name: true },
+            },
+            active: true,
+            qty: true,
+            id: true,
+            Uom: {
+              select: { id: true, name: true },
+            },
           },
         },
       },
@@ -141,6 +161,17 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
             })),
           },
         },
+        ReceiptLines: {
+          createMany: {
+            data: data.ReceiptLines.map((line) => ({
+              productId: line.productId.id,
+              uomId: line.uomId.id,
+              qty: line.qty,
+              active: line.active,
+              createUid: uid || "",
+            })),
+          },
+        },
         createUid: uid || "",
       },
       include: {
@@ -191,6 +222,19 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
             },
             qty: true,
             id: true,
+          },
+        },
+        ReceiptLines: {
+          select: {
+            Product: {
+              select: { id: true, name: true },
+            },
+            active: true,
+            qty: true,
+            id: true,
+            Uom: {
+              select: { id: true, name: true },
+            },
           },
         },
       },
@@ -275,6 +319,29 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
             },
           })),
         },
+        ReceiptLines: {
+          deleteMany: {
+            id: {
+              notIn: data.ReceiptLines.filter((l) => l.id).map((l) => l.id!),
+            },
+          },
+          upsert: data.ReceiptLines.map((line) => ({
+            where: { id: line.id ?? "" },
+            update: {
+              qty: line.qty,
+              uomId: line.uomId.id,
+              active: line.active,
+              productId: line.productId.id,
+            },
+            create: {
+              createUid: uid || "",
+              productId: line.productId.id,
+              qty: line.qty,
+              uomId: line.uomId.id,
+              active: line.active,
+            },
+          })),
+        },
       },
       include: {
         Supplier: {
@@ -324,6 +391,19 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
             },
             qty: true,
             id: true,
+          },
+        },
+        ReceiptLines: {
+          select: {
+            Product: {
+              select: { id: true, name: true },
+            },
+            active: true,
+            qty: true,
+            id: true,
+            Uom: {
+              select: { id: true, name: true },
+            },
           },
         },
       },
