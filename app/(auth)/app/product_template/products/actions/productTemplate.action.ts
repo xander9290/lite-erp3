@@ -6,7 +6,6 @@ import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { ActionResponse } from "@/app/libs/definitions";
 import { createAuditlog } from "../../../actions/auditlog-actions";
-import { string } from "zod";
 
 export interface ProductTemplateWithProps extends ProductTemplate {
   Supplier: { id: string; name: string } | null;

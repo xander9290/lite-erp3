@@ -8,7 +8,7 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
 import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
-import { FieldBoolean, FieldEntry, FieldImage, FieldRelation, FieldSelect, FieldTags, FieldText } from "@/components/templates/fields";
+import { FieldBoolean, FieldEntry, FieldImage, FieldRelation, FieldSelect, FieldTags } from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
 import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
