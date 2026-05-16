@@ -369,7 +369,8 @@ model UomCategory {
   isBaseUnit  Boolean @default(false) @map("is_base_unit")
   active      Boolean @default(true)
 
-  Products ProductTemplate[]
+  Products              ProductTemplate[]
+  productPackagingLines ProductPackagingLine[]
 
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")
@@ -395,6 +396,9 @@ model ProductPackaging {
 model ProductPackagingLine {
   id  String @id @default(cuid())
   qty Float  @default(0.0)
+
+  uomId String      @map("uom_id")
+  Uom   UomCategory @relation(fields: [uomId], references: [id])
 
   packagingId      String           @map("packagin_id")
   ProductPackaging ProductPackaging @relation(fields: [packagingId], references: [id])

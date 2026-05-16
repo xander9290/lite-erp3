@@ -8,7 +8,7 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
 import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
-import { FieldBoolean, FieldEntry, FieldImage, FieldRelation, FieldSelect, FieldTags } from "@/components/templates/fields";
+import { FieldBoolean, FieldEntry, FieldImage, FieldRelation, FieldSelect, FieldTags, FieldText } from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
 import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
@@ -114,6 +114,7 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
           id: p.id,
           packagingId: { id: p.ProductPackaging.id, name: p.ProductPackaging.name },
           productId: { id: p.Product.id, name: p.Product.name },
+          uomId: { id: p.Uom.id, name: p.Uom.name },
           qty: p.qty,
         })) || [],
       createdAt: product.createdAt,
@@ -248,6 +249,7 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                 headers={[
                   { string: "Nombre", width: 100, minWidth: 60 },
                   { string: "Cantidad", width: 35, minWidth: 25 },
+                  { string: "UdM", width: 100, minWidth: 60 },
                   {
                     string: <i className="bi bi-trash"></i>,
                     className: "text-center",
@@ -263,7 +265,10 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                       <FieldRelation inline model="productPackaging" name={`ProductPackagingLines.${index}.packagingId`} />
                     </SimpleTD>
                     <SimpleTD name="linePackagingQty" colIdx={index}>
-                      <FieldEntry inline name={`ProductPackagingLines.${index}.qty`} type="number" step="0.00" />
+                      <FieldEntry className="text-end" inline name={`ProductPackagingLines.${index}.qty`} type="number" step="0.00" />
+                    </SimpleTD>
+                    <SimpleTD name="lineUomId" colIdx={index}>
+                      <FieldRelation model="uomCategory" name={`ProductPackagingLines.${index}.uomId`} inline />
                     </SimpleTD>
                     <SimpleTD name="lineDelete" colIdx={index} contentPosition="text-center">
                       <BtnDeleteLine action={() => remove(index)} />
@@ -274,7 +279,8 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                   append({
                     id: "",
                     packagingId: { id: "", name: "" },
-                    productId: { id: id || "", name: product?.name || "" },
+                    productId: { id: "", name: "" },
+                    uomId: { id: "", name: "" },
                     qty: 0.0,
                   })
                 }

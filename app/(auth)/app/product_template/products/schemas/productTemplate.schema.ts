@@ -60,6 +60,7 @@ export const productTemplateSchema = z.object({
       packagingId: z.object({ id: z.string().min(1, "Embalaje es requerido"), name: z.string() }),
       productId: z.object({ id: z.string(), name: z.string() }),
       qty: z.number().min(1, "Cantidad es requerida"),
+      uomId: z.object({ id: z.string(), name: z.string() }),
     }),
   ),
   Tags: z.array(z.string()),

@@ -6,6 +6,7 @@ import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { ActionResponse } from "@/app/libs/definitions";
 import { createAuditlog } from "../../../actions/auditlog-actions";
+import { string } from "zod";
 
 export interface ProductTemplateWithProps extends ProductTemplate {
   Supplier: { id: string; name: string } | null;
@@ -19,6 +20,7 @@ export interface ProductTemplateWithProps extends ProductTemplate {
     ProductPackaging: { id: string; name: string };
     Product: { id: string; name: string };
     qty: number;
+    Uom: { id: string; name: string };
   }[];
 }
 
@@ -71,6 +73,9 @@ export async function getProductById({ id }: { id: string | null }): Promise<Pro
               select: { id: true, name: true },
             },
             Product: {
+              select: { id: true, name: true },
+            },
+            Uom: {
               select: { id: true, name: true },
             },
             qty: true,
@@ -133,6 +138,7 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
               createUid: uid || "",
               packagingId: line.packagingId.id,
               qty: line.qty,
+              uomId: line.uomId.id,
             })),
           },
         },
@@ -179,6 +185,9 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
               select: { id: true, name: true },
             },
             Product: {
+              select: { id: true, name: true },
+            },
+            Uom: {
               select: { id: true, name: true },
             },
             qty: true,
@@ -257,11 +266,13 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
             update: {
               packagingId: line.packagingId.id,
               qty: line.qty,
+              uomId: line.uomId.id,
             },
             create: {
               createUid: uid || "",
               packagingId: line.packagingId.id,
               qty: line.qty,
+              uomId: line.uomId.id,
             },
           })),
         },
@@ -307,6 +318,9 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
               select: { id: true, name: true },
             },
             Product: {
+              select: { id: true, name: true },
+            },
+            Uom: {
               select: { id: true, name: true },
             },
             qty: true,
