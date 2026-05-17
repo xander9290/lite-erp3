@@ -15,48 +15,24 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
         <Col md="10">
           <Card.Body className="p-1 text-center text-md-start">
             <div className="d-flex flex-row justify-content-between">
-              <div
-                className="fs-6 fw-semibold text-truncate"
-                title={product.description}
-              >
+              <div className="fs-6 fw-semibold text-truncate" title={product.description}>
                 <FieldText name="description" output={product.description} />
               </div>
-              <div>
-                {product.state === "AVAILABLE" ? (
-                  <Badge bg="success">DISPONIBLE</Badge>
-                ) : (
-                  <Badge bg="danger">AGOTADO</Badge>
-                )}
-              </div>
+              <div>{product.state === "AVAILABLE" ? <Badge bg="success">DISPONIBLE</Badge> : <Badge bg="danger">AGOTADO</Badge>}</div>
             </div>
             <Card.Text className="d-flex justify-content-between m-0 my-1">
-              <FieldText
-                name="defaultCode"
-                output={`[${product.defaultCode}]`}
-              />
-              <small
-                className="text-truncate"
-                title={product.ProductCategory?.name}
-              >
+              <FieldText name="defaultCode" output={`[${product.defaultCode}]`} />
+              <small className="text-truncate" title={product.ProductCategory?.name}>
                 <em>
-                  <FieldText
-                    name="productCategory"
-                    output={`${product.ProductCategory?.name || ""}`}
-                  />
+                  <FieldText name="productCategory" output={`${product.ProductCategory?.name || ""}`} />
                 </em>
               </small>
             </Card.Text>
             <Card.Text className="d-flex justify-content-between m-0 my-1">
-              <FieldText
-                name="price1"
-                output={`$${product.price1 || "0.00"}`}
-              />
+              <FieldText name="price1" output={`$${product.price1.toFixed(2) || "0.00"}`} />
               <small>
                 <em>
-                  <FieldText
-                    name="productBrand"
-                    output={product.ProductBrand?.description || ""}
-                  />
+                  <FieldText name="productBrand" output={product.ProductBrand?.description || ""} />
                 </em>
               </small>
             </Card.Text>

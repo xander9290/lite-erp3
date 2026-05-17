@@ -30,17 +30,7 @@ export const parserDate = (date: Date | string) => {
 export const toDatetimeLocal = (date: Date | null) => {
   if (!date) return null;
   const pad = (n: number) => n.toString().padStart(2, "0");
-  return (
-    date.getFullYear() +
-    "-" +
-    pad(date.getMonth() + 1) +
-    "-" +
-    pad(date.getDate()) +
-    "T" +
-    pad(date.getHours()) +
-    ":" +
-    pad(date.getMinutes())
-  );
+  return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + "T" + pad(date.getHours()) + ":" + pad(date.getMinutes());
 };
 
 export function round(value: number, decimals: number) {
@@ -49,12 +39,7 @@ export function round(value: number, decimals: number) {
 
 type CompareOperator = ">" | ">=" | "<" | "<=" | "==" | "===" | "!=" | "!==";
 
-export function compareDates(
-  date1: Date | string,
-  operator: CompareOperator,
-  date2: Date | string,
-  compareTime: boolean = true,
-): boolean {
+export function compareDates(date1: Date | string, operator: CompareOperator, date2: Date | string, compareTime: boolean = true): boolean {
   let d1 = new Date(date1);
   let d2 = new Date(date2);
 
@@ -111,4 +96,47 @@ export function generateModelCode(name: string): string {
   }
 
   return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+// helpers/numberFormat.ts
+
+/**
+ * Formatea un número para visualización
+ * @example formatNumberForDisplay(1234.5, 2, true) // "1,234.50"
+ */
+export function formatNumberForDisplay(value: number | null | undefined, decimals: number = 2, useThousandsSeparator: boolean = false): string {
+  if (value === null || value === undefined || isNaN(value)) return "";
+
+  const options: Intl.NumberFormatOptions = {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  };
+
+  if (useThousandsSeparator) {
+    options.useGrouping = true;
+  }
+
+  return new Intl.NumberFormat("es-MX", options).format(value);
+}
+
+/**
+ * Parsea un string formateado a número
+ * @example parseNumberFromDisplay("1,234.50") // 1234.5
+ */
+export function parseNumberFromDisplay(value: string): number {
+  // Limpiar separadores de miles y reemplazar coma decimal
+  const cleanValue = value
+    .replace(/[^0-9.,-]/g, "") // Solo números, puntos, comas y guiones
+    .replace(/,/g, "."); // La coma pasa a ser punto decimal
+
+  const parsed = parseFloat(cleanValue);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+/**
+ * Redondea a N decimales
+ */
+export function roundToDecimals(value: number, decimals: number = 2): number {
+  const factor = Math.pow(10, decimals);
+  return Math.round(value * factor) / factor;
 }

@@ -2,7 +2,7 @@
 
 import { useFormContext, Controller } from "react-hook-form";
 import { Form, FloatingLabel } from "react-bootstrap";
-import { round } from "@/app/libs/helpers";
+import { formatNumberForDisplay, parseNumberFromDisplay, roundToDecimals } from "@/app/libs/helpers";
 import { format } from "date-fns";
 import { ElementType, useEffect } from "react";
 import { useAccess } from "@/contexts/AccessContext";
@@ -24,6 +24,8 @@ interface FieldEntryProps {
   cols?: number;
   rows?: number;
   autoFocus?: boolean;
+  decimals?: number; // 👈 Nueva prop: cantidad de decimales (ej: 2, 3, 4)
+  thousandsSeparator?: boolean; // 👈 Separador de miles
 }
 
 interface FieldInputProps {
@@ -44,17 +46,14 @@ interface FieldInputProps {
   autoFocus?: boolean;
   onChange?: (value: string) => void;
   as?: ElementType;
+  decimals?: number;
+  thousandsSeparator?: boolean;
 }
 
 function toDateInputValue(value: unknown): string {
   if (value == null || value === "") return "";
 
-  const d =
-    value instanceof Date
-      ? value
-      : typeof value === "string" || typeof value === "number"
-        ? new Date(value)
-        : null;
+  const d = value instanceof Date ? value : typeof value === "string" || typeof value === "number" ? new Date(value) : null;
 
   if (!d || isNaN(d.getTime())) return "";
   return format(d, "yyyy-MM-dd");
@@ -63,12 +62,7 @@ function toDateInputValue(value: unknown): string {
 function toDatetimeLocalValue(value: unknown): string {
   if (value == null || value === "") return "";
 
-  const d =
-    value instanceof Date
-      ? value
-      : typeof value === "string" || typeof value === "number"
-        ? new Date(value)
-        : null;
+  const d = value instanceof Date ? value : typeof value === "string" || typeof value === "number" ? new Date(value) : null;
 
   if (!d || isNaN(d.getTime())) return "";
   return format(d, "yyyy-MM-dd'T'HH:mm");
@@ -100,12 +94,14 @@ function FieldInput({
   inline,
   className,
   min,
-  step,
+  step = "0.00",
   rows = 1,
   cols,
   autoFocus,
   onChange,
   as,
+  decimals = 2,
+  thousandsSeparator,
 }: FieldInputProps) {
   // Toast para errores
   useEffect(() => {
@@ -117,18 +113,18 @@ function FieldInput({
     }
   }, [fieldState.error?.message, name]);
 
-  const inputValue =
-    type === "datetime-local"
-      ? toDatetimeLocalValue(field.value)
-      : type === "date"
-        ? toDateInputValue(field.value)
-        : (field.value ?? "");
+  const inputValue = (() => {
+    if (type === "datetime-local") return toDatetimeLocalValue(field.value);
+    if (type === "date") return toDateInputValue(field.value);
+    if (type === "number" && typeof field.value === "number" && !isNaN(field.value)) {
+      return formatNumberForDisplay(field.value, decimals ?? 2, thousandsSeparator);
+    }
+    return field.value ?? "";
+  })();
 
   const isTextarea = as === "textarea" || type === "text";
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const el = e.target;
     const raw = el.value;
 
@@ -140,10 +136,12 @@ function FieldInput({
 
     // Procesamiento según el tipo
     if (type === "number") {
-      const n = Number(raw);
-      const rounded = Number.isFinite(n) ? round(n, 2) : raw;
-      field.onChange(rounded);
-      onChange?.(String(rounded));
+      const rawValue = e.target.value;
+      const numberValue = parseNumberFromDisplay(rawValue);
+      const rounded = roundToDecimals(numberValue, decimals ?? 2);
+
+      field.onChange(rounded); // Guarda el número crudo
+      onChange?.(formatNumberForDisplay(rounded, decimals ?? 2, thousandsSeparator));
       return;
     }
 
@@ -173,9 +171,7 @@ function FieldInput({
           el.style.height = `${el.scrollHeight}px`;
         }
       }}
-      className={`${className ?? ""} ${
-        type === "password" ? "text-center" : ""
-      } shadow-none w-100 overflow-hidden px-1 ${inline ? "border-0" : ""}`}
+      className={`${className ?? ""} ${type === "password" ? "text-center" : type === "number" ? "text-end" : ""} shadow-none w-100 overflow-hidden px-1 ${inline ? "border-0" : ""}`}
       title={name}
       as={as ?? (type === "text" ? "textarea" : undefined)}
       type={type}
@@ -200,23 +196,7 @@ function FieldInput({
   );
 }
 
-export function FieldEntry({
-  name,
-  label,
-  readonly,
-  invisible,
-  inline,
-  onChange,
-  className,
-  type = "text",
-  min,
-  step,
-  placeholder,
-  as,
-  cols,
-  rows = 1,
-  autoFocus,
-}: FieldEntryProps) {
+export function FieldEntry({ name, label, readonly, invisible, inline, onChange, className, type = "text", min, step, placeholder, as, cols, rows = 1, autoFocus }: FieldEntryProps) {
   const { control } = useFormContext();
   const access = useAccess({ fieldName: name });
 
@@ -267,11 +247,7 @@ export function FieldEntry({
 
         return (
           <div className="mb-1 w-100">
-            <FloatingLabel
-              label={floatingText}
-              controlId={name}
-              className="w-100 fs-6 fw-bold"
-            >
+            <FloatingLabel label={floatingText} controlId={name} className="w-100 fs-6 fw-bold">
               {input}
             </FloatingLabel>
           </div>

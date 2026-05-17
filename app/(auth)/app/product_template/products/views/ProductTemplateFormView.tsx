@@ -224,8 +224,8 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
             <FormViewGroup>
               <FieldBoolean name="purchases" label="Se puede comprar" />
               <FormViewStack>
-                <FieldEntry name="lastCost" type="number" label="Último costo" readonly className="text-end" />
-                <FieldEntry name="uomIncomingAllowed" type="number" label="Múltiplo de compra" className="text-center" step="0.00" />
+                <FieldEntry name="lastCost" type="number" label="Último costo" readonly />
+                <FieldEntry name="uomIncomingAllowed" type="number" label="Múltiplo de compra" />
               </FormViewStack>
               <FieldRelation model="user" name="userId" label="Comprador" />
               <FieldRelation model="partner" name="supplierId" label="Proveedor" domain={[["displayType", "=", "SUPPLIER"]]} />
@@ -237,14 +237,14 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
             <FormViewGroup>
               <FieldBoolean name="sales" label="Se puede vender" />
               <FormViewStack>
-                <FieldEntry type="number" name="price1" label="Precio 1" className="text-end" step="0.00" />
-                <FieldEntry type="number" name="price2" label="Precio 2" className="text-end" step="0.00" />
-                <FieldEntry type="number" name="price3" label="Precio 3" className="text-end" step="0.00" />
+                <FieldEntry type="number" name="price1" label="Precio 1" />
+                <FieldEntry type="number" name="price2" label="Precio 2" />
+                <FieldEntry type="number" name="price3" label="Precio 3" />
               </FormViewStack>
               <FormViewStack>
-                <FieldEntry type="number" name="price4" label="Precio 4" className="text-end" step="0.00" />
-                <FieldEntry type="number" name="price5" label="Precio 5" className="text-end" step="0.00" />
-                <FieldEntry name="uomOutgoingAllowed" type="number" label="Múltiplo de venta" className="text-center" step="0.00" />
+                <FieldEntry type="number" name="price4" label="Precio 4" />
+                <FieldEntry type="number" name="price5" label="Precio 5" />
+                <FieldEntry name="uomOutgoingAllowed" type="number" label="Múltiplo de venta" />
               </FormViewStack>
             </FormViewGroup>
           </PageSheet>
@@ -254,13 +254,13 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
             <FormViewGroup>
               <h6>Dimensiones</h6>
               <FormViewStack>
-                <FieldEntry name="alto" label="Alto" type="number" step="0.00" />
-                <FieldEntry name="ancho" label="Ancho" type="number" step="0.00" />
-                <FieldEntry name="largo" label="Largo" type="number" step="0.00" />
+                <FieldEntry name="alto" label="Alto" type="number" />
+                <FieldEntry name="ancho" label="Ancho" type="number" />
+                <FieldEntry name="largo" label="Largo" type="number" />
               </FormViewStack>
               <FormViewStack>
-                <FieldEntry name="weight" label="Peso" type="number" step="0.00" />
-                <FieldEntry name="volume" label="Volumen" type="number" step="0.00" />
+                <FieldEntry name="weight" label="Peso" type="number" />
+                <FieldEntry name="volume" label="Volumen" type="number" />
               </FormViewStack>
             </FormViewGroup>
             <FormViewGroup>
@@ -286,7 +286,7 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                       <FieldRelation inline model="productPackaging" name={`ProductPackagingLines.${index}.packagingId`} />
                     </SimpleTD>
                     <SimpleTD name="linePackagingQty" colIdx={index}>
-                      <FieldEntry className="text-end" inline name={`ProductPackagingLines.${index}.qty`} type="number" step="0.00" />
+                      <FieldEntry className="text-end" inline name={`ProductPackagingLines.${index}.qty`} type="number" />
                     </SimpleTD>
                     <SimpleTD name="lineUomId" colIdx={index}>
                       <FieldRelation model="uomCategory" name={`ProductPackagingLines.${index}.uomId`} inline />
@@ -346,7 +346,7 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineReceiptQty">
-                      <FieldEntry inline type="number" step="0.00" className="text-end" name={`ReceiptLines.${index}.qty`} />
+                      <FieldEntry inline type="number" name={`ReceiptLines.${index}.qty`} />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineReceiptUomId">
                       <FieldRelation inline model="uomCategory" readonly name={`ReceiptLines.${index}.uomId`} />

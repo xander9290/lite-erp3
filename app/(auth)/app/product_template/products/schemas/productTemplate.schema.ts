@@ -60,7 +60,7 @@ export const productTemplateSchema = z.object({
       packagingId: z.object({ id: z.string().min(1, "Embalaje es requerido"), name: z.string() }),
       productId: z.object({ id: z.string(), name: z.string() }),
       qty: z.number().min(1, "Cantidad es requerida"),
-      uomId: z.object({ id: z.string(), name: z.string() }),
+      uomId: z.object({ id: z.string().min(1, "Unidad de medida en embalaje es requeridio"), name: z.string() }),
     }),
   ),
   ReceiptLines: z.array(
