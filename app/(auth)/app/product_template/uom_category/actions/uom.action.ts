@@ -6,21 +6,15 @@ import { ActionResponse } from "@/app/libs/definitions";
 import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { createAuditlog } from "../../../actions/auditlog-actions";
+import { serverLog } from "@/app/libs/helpers";
 
 export interface UomWithProps extends UomCategory {
   Products: { id: string; name: string }[];
 }
 
-export type UomActionProps = Omit<
-  UomSchemaType,
-  "createdAt" | "updatedAt" | "createdUid"
->;
+export type UomActionProps = Omit<UomSchemaType, "createdAt" | "updatedAt" | "createdUid">;
 
-export async function getUomById({
-  id,
-}: {
-  id: string | null;
-}): Promise<UomWithProps | null> {
+export async function getUomById({ id }: { id: string | null }): Promise<UomWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
     const uom = await prisma.uomCategory.findUnique({
@@ -34,6 +28,8 @@ export async function getUomById({
         },
       },
     });
+
+    serverLog({ action: "Fetching", model: "uom category", data: uom });
     return uom;
   } catch (error: any) {
     console.log(error);
@@ -41,16 +37,13 @@ export async function getUomById({
   }
 }
 
-export async function createUom({
-  data,
-}: {
-  data: UomActionProps;
-}): Promise<ActionResponse<UomWithProps>> {
+export async function createUom({ data }: { data: UomActionProps }): Promise<ActionResponse<UomWithProps>> {
   try {
     const { uid } = await sessionStore();
 
     const name = `[${data.code}] ${data.description}`;
 
+    serverLog({ action: "Creating", model: "uom category", data });
     const createdUom = await prisma.uomCategory.create({
       data: {
         name: name,
@@ -88,18 +81,13 @@ export async function createUom({
   }
 }
 
-export async function updateUom({
-  id,
-  data,
-}: {
-  id: string | null;
-  data: UomActionProps;
-}): Promise<ActionResponse<UomWithProps>> {
+export async function updateUom({ id, data }: { id: string | null; data: UomActionProps }): Promise<ActionResponse<UomWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
 
     const name = `[${data.code}] ${data.description}`;
 
+    serverLog({ action: "Updating", model: "uom category", data });
     const updatedUom = await prisma.uomCategory.update({
       where: { id },
       data: {

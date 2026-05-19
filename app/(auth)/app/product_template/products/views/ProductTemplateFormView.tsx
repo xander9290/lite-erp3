@@ -335,8 +335,14 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                         inline
                         model="productTemplate"
                         name={`ReceiptLines.${index}.productId`}
-                        searchColumns={[{ field: "name", label: "Nombre" }]}
-                        domain={[["id", "!=", id]]}
+                        searchColumns={[
+                          { field: "name", label: "Nombre" },
+                          { field: "sales", label: "Venta", type: "boolean" },
+                        ]}
+                        domain={[
+                          ["id", "!=", id],
+                          ["sales", "=", false],
+                        ]}
                         ponChange={async (val, record) => {
                           const rec = record as ProductTemplateWithProps;
                           const uomId = rec && rec.uomId;

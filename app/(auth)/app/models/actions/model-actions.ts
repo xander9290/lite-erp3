@@ -6,6 +6,7 @@ import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { FieldType, Model } from "@/generated/prisma/client";
 import { ModelSchemaType } from "../schemas/model.schema";
+import { serverLog } from "@/app/libs/helpers";
 
 export interface ModelWithProps extends Model {
   ModelFields: {
@@ -18,11 +19,7 @@ export interface ModelWithProps extends Model {
   }[];
 }
 
-export async function getModelById({
-  id,
-}: {
-  id: string | null;
-}): Promise<ModelWithProps | null> {
+export async function getModelById({ id }: { id: string | null }): Promise<ModelWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
     const model = await prisma.model.findUnique({
@@ -41,6 +38,7 @@ export async function getModelById({
       },
     });
 
+    serverLog({ action: "Fetching", model: "models", data: model });
     return model;
   } catch (error: any) {
     console.log(error);
@@ -48,16 +46,13 @@ export async function getModelById({
   }
 }
 
-export async function createModel({
-  data,
-}: {
-  data: ModelSchemaType;
-}): Promise<ActionResponse<ModelWithProps>> {
+export async function createModel({ data }: { data: ModelSchemaType }): Promise<ActionResponse<ModelWithProps>> {
   try {
     const { uid } = await sessionStore();
 
     const name = `[${data.label}] ${data.description}`;
 
+    serverLog({ action: "Creating", model: "models", data });
     const newModel = await prisma.model.create({
       data: {
         label: data.label,
@@ -115,16 +110,13 @@ export async function createModel({
   }
 }
 
-export async function updateModel({
-  data,
-}: {
-  data: ModelSchemaType & { id: string | null };
-}): Promise<ActionResponse<ModelWithProps>> {
+export async function updateModel({ data }: { data: ModelSchemaType & { id: string | null } }): Promise<ActionResponse<ModelWithProps>> {
   try {
     if (!data.id) throw new Error("ID not defined");
 
     const { uid } = await sessionStore();
 
+    serverLog({ action: "Updating", model: "models", data });
     const changedModel = await prisma.model.update({
       where: { id: data.id },
       data: {
@@ -135,9 +127,7 @@ export async function updateModel({
         ModelFields: {
           deleteMany: {
             id: {
-              notIn: data.lines
-                .filter((line) => line.id)
-                .map((line) => line.id!),
+              notIn: data.lines.filter((line) => line.id).map((line) => line.id!),
             },
           },
           upsert: data.lines.map((line) => ({

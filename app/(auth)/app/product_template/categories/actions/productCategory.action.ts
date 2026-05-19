@@ -6,22 +6,16 @@ import { ActionResponse } from "@/app/libs/definitions";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { createAuditlog } from "../../../actions/auditlog-actions";
 import { ProductCategorySchemaType } from "../schemas/productCategory.schema";
+import { serverLog } from "@/app/libs/helpers";
 
 export interface ProductCategoryWithProps extends ProductCategory {
   Products: { id: string; name: string }[];
   Parent: { id: string; name: string } | null;
 }
 
-type ProductCategoryActionProps = Omit<
-  ProductCategorySchemaType,
-  "createdAt" | "updatedAt" | "createdUid"
->;
+type ProductCategoryActionProps = Omit<ProductCategorySchemaType, "createdAt" | "updatedAt" | "createdUid">;
 
-export async function getProductCategoryById({
-  id,
-}: {
-  id: string | null;
-}): Promise<ProductCategoryWithProps | null> {
+export async function getProductCategoryById({ id }: { id: string | null }): Promise<ProductCategoryWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -43,6 +37,7 @@ export async function getProductCategoryById({
       },
     });
 
+    serverLog({ action: "Fetching", model: "product category", data: productCategory });
     return productCategory;
   } catch (error: any) {
     console.log(error);
@@ -50,11 +45,7 @@ export async function getProductCategoryById({
   }
 }
 
-export async function createProductCategory({
-  data,
-}: {
-  data: ProductCategoryActionProps;
-}): Promise<ActionResponse<ProductCategoryWithProps>> {
+export async function createProductCategory({ data }: { data: ProductCategoryActionProps }): Promise<ActionResponse<ProductCategoryWithProps>> {
   try {
     const { uid } = await sessionStore();
 
@@ -65,6 +56,7 @@ export async function createProductCategory({
       defineName = `${parentId?.name} / ${data.description}`;
     }
 
+    serverLog({ action: "Creating", model: "product category", data });
     const newProductCategory = await prisma.productCategory.create({
       data: {
         name: defineName,
@@ -112,13 +104,7 @@ export async function createProductCategory({
 }
 
 // Versión optimizada con límite de profundidad
-async function updateChildrenNames(
-  tx: Prisma.TransactionClient,
-  parentId: string,
-  parentPath: string,
-  depth: number = 0,
-  maxDepth: number = 10,
-): Promise<void> {
+async function updateChildrenNames(tx: Prisma.TransactionClient, parentId: string, parentPath: string, depth: number = 0, maxDepth: number = 10): Promise<void> {
   if (depth >= maxDepth) {
     throw new Error(`Max depth ${maxDepth} reached for category ${parentId}`);
   }
@@ -139,13 +125,7 @@ async function updateChildrenNames(
   }
 }
 
-export async function updateProductCategory({
-  id,
-  data,
-}: {
-  id: string | null;
-  data: ProductCategoryActionProps;
-}): Promise<ActionResponse<ProductCategoryWithProps>> {
+export async function updateProductCategory({ id, data }: { id: string | null; data: ProductCategoryActionProps }): Promise<ActionResponse<ProductCategoryWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -156,6 +136,7 @@ export async function updateProductCategory({
       defineName = `${parentId?.name} / ${data.description}`;
     }
 
+    serverLog({ action: "Updating", model: "product category", data });
     const updatedProductCategory = await prisma.$transaction(async (tx) => {
       // Actualizar la categoría actual
       const productCategory = await tx.productCategory.update({
@@ -164,9 +145,7 @@ export async function updateProductCategory({
           name: defineName,
           description: data.description,
           active: data.active,
-          Parent: data.parentId?.id
-            ? { connect: { id: data.parentId.id } }
-            : { disconnect: true },
+          Parent: data.parentId?.id ? { connect: { id: data.parentId.id } } : { disconnect: true },
         },
         include: {
           Products: {

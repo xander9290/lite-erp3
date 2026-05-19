@@ -104,6 +104,7 @@ export async function getProductById({ id }: { id: string | null }): Promise<Pro
       },
     });
 
+    console.log(`Fetching product: ${JSON.stringify(product)}`);
     return product;
   } catch (error: any) {
     console.log(error);
@@ -115,6 +116,7 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
   try {
     const { uid } = await sessionStore();
 
+    console.log(`Creating product: ${data}`);
     const newProduct = await prisma.productTemplate.create({
       data: {
         name: `[${data.defaultCode}] ${data.description}`,
@@ -267,6 +269,7 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
 
     const { uid } = await sessionStore();
 
+    console.log(`Updating product: ${JSON.stringify(data)}`);
     const updatedProduct = await prisma.productTemplate.update({
       where: { id },
       data: {

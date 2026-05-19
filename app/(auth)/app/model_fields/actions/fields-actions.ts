@@ -6,6 +6,7 @@ import { ModelFieldSchemaType } from "../schemas/modelFields.schema";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { ActionResponse } from "@/app/libs/definitions";
 import { createAuditlog } from "@/app/(auth)/app/actions/auditlog-actions";
+import { serverLog } from "@/app/libs/helpers";
 
 export interface ModelFieldWithProps extends ModelField {
   Model: {
@@ -14,11 +15,7 @@ export interface ModelFieldWithProps extends ModelField {
   };
 }
 
-export async function getModelFieldById({
-  id,
-}: {
-  id: string | null;
-}): Promise<ModelFieldWithProps | null> {
+export async function getModelFieldById({ id }: { id: string | null }): Promise<ModelFieldWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -34,6 +31,7 @@ export async function getModelFieldById({
       },
     });
 
+    serverLog({ action: "Fetching", model: "model fields", data: modelField });
     return modelField;
   } catch (error: any) {
     console.log(error);
@@ -41,19 +39,13 @@ export async function getModelFieldById({
   }
 }
 
-type NewModelFieldData = Pick<
-  ModelFieldSchemaType,
-  "label" | "description" | "fieldType" | "active" | "modelId"
->;
+type NewModelFieldData = Pick<ModelFieldSchemaType, "label" | "description" | "fieldType" | "active" | "modelId">;
 
-export async function createModelField({
-  data,
-}: {
-  data: NewModelFieldData;
-}): Promise<ActionResponse<ModelFieldWithProps>> {
+export async function createModelField({ data }: { data: NewModelFieldData }): Promise<ActionResponse<ModelFieldWithProps>> {
   try {
     const { uid } = await sessionStore();
 
+    serverLog({ action: "Creating", model: "model fields", data });
     const newModelField = await prisma.modelField.create({
       data: {
         name: `[${data.label}] ${data.description}`,
@@ -101,14 +93,11 @@ export async function createModelField({
   }
 }
 
-export async function updateModelField({
-  data,
-}: {
-  data: NewModelFieldData & { id: string | null };
-}): Promise<ActionResponse<ModelFieldWithProps>> {
+export async function updateModelField({ data }: { data: NewModelFieldData & { id: string | null } }): Promise<ActionResponse<ModelFieldWithProps>> {
   try {
     if (!data.id) throw new Error("ID not defined");
 
+    serverLog({ action: "Updating", model: "model fields", data });
     const updatedModelField = await prisma.modelField.update({
       where: { id: data.id },
       data: {
@@ -129,8 +118,7 @@ export async function updateModelField({
       },
     });
 
-    if (!updateModelField)
-      throw new Error("No fue posible actualizar el registro");
+    if (!updateModelField) throw new Error("No fue posible actualizar el registro");
 
     await createAuditlog({
       action: "update",
@@ -153,11 +141,7 @@ export async function updateModelField({
   }
 }
 
-export async function deleteModelFields({
-  ids,
-}: {
-  ids: string[];
-}): Promise<ActionResponse<boolean>> {
+export async function deleteModelFields({ ids }: { ids: string[] }): Promise<ActionResponse<boolean>> {
   try {
     const hasGroups = await prisma.group.findFirst({
       where: {
@@ -169,14 +153,15 @@ export async function deleteModelFields({
       },
     });
 
-    if (hasGroups)
-      throw new Error("No es posible eliminar registros con grupos asociados");
+    if (hasGroups) throw new Error("No es posible eliminar registros con grupos asociados");
 
     await prisma.modelField.deleteMany({
       where: {
         id: { in: ids },
       },
     });
+
+    serverLog({ action: "Deleting", model: "model fields", data: ids });
 
     return {
       success: true,

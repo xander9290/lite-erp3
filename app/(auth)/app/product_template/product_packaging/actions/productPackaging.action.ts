@@ -6,6 +6,7 @@ import { ActionResponse } from "@/app/libs/definitions";
 import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { createAuditlog } from "../../../actions/auditlog-actions";
+import { serverLog } from "@/app/libs/helpers";
 
 export interface ProductPackagingWithProps extends ProductPackaging {
   ProductPackagingLines: {
@@ -40,6 +41,7 @@ export async function getProductPackagingById({ id }: { id: string | null }): Pr
       },
     });
 
+    serverLog({ action: "Fetching", model: "product packaging", data: packaging });
     return packaging;
   } catch (error: any) {
     console.log(error);
@@ -50,6 +52,8 @@ export async function getProductPackagingById({ id }: { id: string | null }): Pr
 export async function createPackagingCategory({ data }: { data: ProductPackagingActionProps }): Promise<ActionResponse<ProductPackagingWithProps>> {
   try {
     const { uid } = await sessionStore();
+
+    serverLog({ action: "Creating", model: "product packaging", data });
     const newPackaging = await prisma.productPackaging.create({
       data: {
         name: data.name,
@@ -94,6 +98,7 @@ export async function updatePackagingCategory({ id, data }: { id: string | null;
   try {
     if (!id) throw new Error("ID not defined");
 
+    serverLog({ action: "Updating", model: "product packaging", data });
     const updatedPackaging = await prisma.productPackaging.update({
       where: { id },
       data: {

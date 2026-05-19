@@ -6,21 +6,15 @@ import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { ActionResponse } from "@/app/libs/definitions";
 import { createAuditlog } from "../../../actions/auditlog-actions";
+import { serverLog } from "@/app/libs/helpers";
 
 export interface ProductBrandWithProps extends ProductBrand {
   Products: { id: string; name: string }[];
 }
 
-export type ProductBrandActionProps = Omit<
-  ProductBrandSchemaType,
-  "createdAt" | "updatedAt" | "createdUid"
->;
+export type ProductBrandActionProps = Omit<ProductBrandSchemaType, "createdAt" | "updatedAt" | "createdUid">;
 
-export async function getProductBrandById({
-  id,
-}: {
-  id: string | null;
-}): Promise<ProductBrandWithProps | null> {
+export async function getProductBrandById({ id }: { id: string | null }): Promise<ProductBrandWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -33,6 +27,7 @@ export async function getProductBrandById({
       },
     });
 
+    serverLog({ action: "Fetching", model: "product brand", data: productBrand });
     return productBrand;
   } catch (error: any) {
     console.log(error);
@@ -40,14 +35,11 @@ export async function getProductBrandById({
   }
 }
 
-export async function createProductBrand({
-  data,
-}: {
-  data: ProductBrandActionProps;
-}): Promise<ActionResponse<ProductBrandWithProps>> {
+export async function createProductBrand({ data }: { data: ProductBrandActionProps }): Promise<ActionResponse<ProductBrandWithProps>> {
   try {
     const { uid } = await sessionStore();
 
+    serverLog({ action: "Creating", model: "product brand", data });
     const newProductBrand = await prisma.productBrand.create({
       data: {
         name: `[${data.code}] ${data.description}`,
@@ -84,18 +76,13 @@ export async function createProductBrand({
   }
 }
 
-export async function updateProductBrand({
-  id,
-  data,
-}: {
-  id: string | null;
-  data: ProductBrandActionProps;
-}): Promise<ActionResponse<ProductBrandWithProps>> {
+export async function updateProductBrand({ id, data }: { id: string | null; data: ProductBrandActionProps }): Promise<ActionResponse<ProductBrandWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
 
     const newName = `[${data.code}] ${data.description}`;
 
+    serverLog({ action: "Updating", model: "product brand", data });
     const updatedProductBrand = await prisma.productBrand.update({
       where: { id },
       data: {

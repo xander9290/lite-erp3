@@ -7,6 +7,7 @@ import { ActionResponse } from "@/app/libs/definitions";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { createAuditlog } from "@/app/(auth)/app/actions/auditlog-actions";
 import { GroupSchemaType } from "../schemas/group.schema";
+import { serverLog } from "@/app/libs/helpers";
 
 export interface GroupWithProps extends Group {
   Users: {
@@ -16,11 +17,7 @@ export interface GroupWithProps extends Group {
   GroupLines: GroupLine[];
 }
 
-export async function getGroupById({
-  id,
-}: {
-  id: string | null;
-}): Promise<GroupWithProps | null> {
+export async function getGroupById({ id }: { id: string | null }): Promise<GroupWithProps | null> {
   try {
     if (!id) return null;
 
@@ -37,6 +34,7 @@ export async function getGroupById({
       },
     });
 
+    serverLog({ action: "Fetching", model: "group", data: group });
     return group;
   } catch (error: any) {
     console.log(error);
@@ -46,22 +44,17 @@ export async function getGroupById({
 
 type GroupActionProps = Omit<GroupSchemaType, "createdAt" | "updatedAt">;
 
-export async function createGroup({
-  data,
-}: {
-  data: GroupActionProps;
-}): Promise<ActionResponse<GroupWithProps>> {
+export async function createGroup({ data }: { data: GroupActionProps }): Promise<ActionResponse<GroupWithProps>> {
   try {
     const { uid } = await sessionStore();
 
     for (const user of data.users) {
       const getUser = await getUserById({ id: user.id });
       if (getUser && getUser?.groupId !== null)
-        throw new Error(
-          `El usuario ${getUser?.Partner?.name} ya se encuentra asociado al grupo ${getUser?.Group?.name}. Es necesario removerlo del grupo para ser reasignado a ${data.name}.`,
-        );
+        throw new Error(`El usuario ${getUser?.Partner?.name} ya se encuentra asociado al grupo ${getUser?.Group?.name}. Es necesario removerlo del grupo para ser reasignado a ${data.name}.`);
     }
 
+    serverLog({ action: "Creating", model: "group", data });
     const newGroup = await prisma.$transaction(async (tx) => {
       const group = await tx.group.create({
         data: {
@@ -141,11 +134,7 @@ export async function createGroup({
   }
 }
 
-export async function updateGroup({
-  data,
-}: {
-  data: GroupActionProps & { id: string | null };
-}): Promise<ActionResponse<GroupWithProps>> {
+export async function updateGroup({ data }: { data: GroupActionProps & { id: string | null } }): Promise<ActionResponse<GroupWithProps>> {
   try {
     if (!data.id) throw new Error("ID not defined");
 
@@ -154,11 +143,10 @@ export async function updateGroup({
     for (const user of data.users) {
       const getUser = await getUserById({ id: user.id });
       if (getUser && getUser?.groupId !== null && getUser.groupId !== data.id)
-        throw new Error(
-          `El usuario ${getUser?.Partner?.name} ya se encuentra asociado al grupo ${getUser?.Group?.name}. Es necesario removerlo del grupo para ser reasignado a ${data.name}.`,
-        );
+        throw new Error(`El usuario ${getUser?.Partner?.name} ya se encuentra asociado al grupo ${getUser?.Group?.name}. Es necesario removerlo del grupo para ser reasignado a ${data.name}.`);
     }
 
+    serverLog({ action: "Updating", model: "group", data });
     const updatedGroup = await prisma.$transaction(async (tx) => {
       const group = await tx.group.update({
         where: { id: data.id! },
@@ -171,9 +159,7 @@ export async function updateGroup({
           GroupLines: {
             deleteMany: {
               id: {
-                notIn: data.lines
-                  .filter((line) => line.id)
-                  .map((line) => line.id!),
+                notIn: data.lines.filter((line) => line.id).map((line) => line.id!),
               },
             },
           },

@@ -7,6 +7,7 @@ import { sessionStore } from "@/app/libs/sessionStore";
 import type { User, GroupLine } from "@/generated/prisma/client";
 import bcrypt from "bcryptjs";
 import { UserSchemaType } from "../schemas/user.schema";
+import { serverLog } from "@/app/libs/helpers";
 
 export interface UserWithPartner extends User {
   Partner: {
@@ -40,11 +41,7 @@ export interface UserWithProps extends User {
   }[];
 }
 
-export async function getUserById({
-  id,
-}: {
-  id: string | null;
-}): Promise<UserWithProps | null> {
+export async function getUserById({ id }: { id: string | null }): Promise<UserWithProps | null> {
   try {
     if (!id) {
       throw new Error("user id undefined");
@@ -75,6 +72,7 @@ export async function getUserById({
       },
     });
 
+    serverLog({ action: "Fetching", model: "users", data: user });
     return user;
   } catch (error: any) {
     console.log(error);
@@ -82,11 +80,7 @@ export async function getUserById({
   }
 }
 
-export async function getUserByLogin({
-  login,
-}: {
-  login: string;
-}): Promise<UserWithProps | null> {
+export async function getUserByLogin({ login }: { login: string }): Promise<UserWithProps | null> {
   try {
     if (!login) {
       throw new Error("user login undefined");
@@ -108,19 +102,13 @@ export async function getUserByLogin({
   }
 }
 
-type UserActionProps = Omit<
-  UserSchemaType,
-  "createdAt" | "createdUid" | "updatedAt"
->;
+type UserActionProps = Omit<UserSchemaType, "createdAt" | "createdUid" | "updatedAt">;
 
-export async function createUser({
-  data,
-}: {
-  data: UserActionProps;
-}): Promise<ActionResponse<UserWithProps>> {
+export async function createUser({ data }: { data: UserActionProps }): Promise<ActionResponse<UserWithProps>> {
   try {
     const { uid } = await sessionStore();
 
+    serverLog({ action: "Creating", model: "users", data });
     const newUser = await prisma.user.create({
       data: {
         name: data.name,
@@ -191,25 +179,18 @@ export async function createUser({
   }
 }
 
-export async function updateUser({
-  id,
-  data,
-}: {
-  id: string | null;
-  data: UserActionProps;
-}): Promise<ActionResponse<UserWithProps>> {
+export async function updateUser({ id, data }: { id: string | null; data: UserActionProps }): Promise<ActionResponse<UserWithProps>> {
   try {
     if (!id) throw new Error("ID user is undefined");
 
+    serverLog({ action: "Updating", model: "users", data });
     const updatedUser = await prisma.user.update({
       where: { id },
       data: {
         name: data.name,
         login: data.login,
         active: data.active,
-        Group: data.groupId?.id
-          ? { connect: { id: data.groupId.id } }
-          : { disconnect: true },
+        Group: data.groupId?.id ? { connect: { id: data.groupId.id } } : { disconnect: true },
         Companies: {
           set: data.companies.map((c) => ({ id: c.id })),
         },
@@ -267,13 +248,7 @@ export async function updateUser({
   }
 }
 
-export async function updatePassword({
-  id,
-  password,
-}: {
-  id: string | null;
-  password: string;
-}): Promise<ActionResponse<boolean>> {
+export async function updatePassword({ id, password }: { id: string | null; password: string }): Promise<ActionResponse<boolean>> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -309,11 +284,7 @@ export async function updatePassword({
   }
 }
 
-export async function getUserAccess({
-  id,
-}: {
-  id: string | null;
-}): Promise<GroupLine[]> {
+export async function getUserAccess({ id }: { id: string | null }): Promise<GroupLine[]> {
   try {
     if (!id) throw new Error("ID NOT DEFINED");
 

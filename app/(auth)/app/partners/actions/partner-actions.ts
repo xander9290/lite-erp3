@@ -7,6 +7,7 @@ import prisma from "@/app/libs/prisma";
 import { createAuditlog } from "../../actions/auditlog-actions";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { sanitizePhoneNumber } from "@/app/libs/sanitize-phone";
+import { serverLog } from "@/app/libs/helpers";
 
 export interface PartnerWithProps extends Partner {
   UserManager: {
@@ -15,16 +16,9 @@ export interface PartnerWithProps extends Partner {
   } | null;
 }
 
-type PartnerActionProps = Omit<
-  PartnerSchemaType,
-  "createdAt" | "updatedAt" | "createdUid"
->;
+type PartnerActionProps = Omit<PartnerSchemaType, "createdAt" | "updatedAt" | "createdUid">;
 
-export async function getPartnerById({
-  id,
-}: {
-  id: string | null;
-}): Promise<PartnerWithProps | null> {
+export async function getPartnerById({ id }: { id: string | null }): Promise<PartnerWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -40,6 +34,7 @@ export async function getPartnerById({
       },
     });
 
+    serverLog({ action: "Fetching", model: "partners", data: partner });
     return partner;
   } catch (error: any) {
     console.log(error);
@@ -47,17 +42,14 @@ export async function getPartnerById({
   }
 }
 
-export async function craetePartner({
-  data,
-}: {
-  data: PartnerActionProps;
-}): Promise<ActionResponse<PartnerWithProps>> {
+export async function craetePartner({ data }: { data: PartnerActionProps }): Promise<ActionResponse<PartnerWithProps>> {
   try {
     const { uid } = await sessionStore();
 
     const sanitizedPhone = sanitizePhoneNumber(data.phone);
     const sanitizedMobile = sanitizePhoneNumber(data.mobile);
 
+    serverLog({ action: "Creating", model: "partners", data });
     const newPartner = await prisma.partner.create({
       data: {
         name: data.name,
@@ -112,19 +104,14 @@ export async function craetePartner({
   }
 }
 
-export async function updatePartner({
-  data,
-  id,
-}: {
-  data: PartnerActionProps;
-  id: string | null;
-}): Promise<ActionResponse<PartnerWithProps>> {
+export async function updatePartner({ data, id }: { data: PartnerActionProps; id: string | null }): Promise<ActionResponse<PartnerWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
 
     const sanitizedPhone = sanitizePhoneNumber(data.phone);
     const sanitizedMobile = sanitizePhoneNumber(data.mobile);
 
+    serverLog({ action: "Updating", model: "partners", data });
     const updatedPartner = await prisma.partner.update({
       where: { id },
       data: {
@@ -144,9 +131,7 @@ export async function updatePartner({
         province: data.province,
         country: data.country,
         vat: data.vat,
-        UserManager: data.userId?.id
-          ? { connect: { id: data.userId.id } }
-          : { disconnect: true },
+        UserManager: data.userId?.id ? { connect: { id: data.userId.id } } : { disconnect: true },
       },
       include: {
         UserManager: {

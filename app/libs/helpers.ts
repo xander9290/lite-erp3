@@ -140,3 +140,8 @@ export function roundToDecimals(value: number, decimals: number = 2): number {
   const factor = Math.pow(10, decimals);
   return Math.round(value * factor) / factor;
 }
+
+export const serverLog = ({ action, model, data }: { action: "Fetching" | "Creating" | "Updating" | "Deleting"; model: string; data: object | null }) => {
+  const output = `${action} ${model}: ${JSON.stringify(data)}`;
+  return console.log(output);
+};

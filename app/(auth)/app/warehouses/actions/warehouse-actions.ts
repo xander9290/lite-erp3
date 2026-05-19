@@ -6,6 +6,7 @@ import type { Warehouse } from "@/generated/prisma/client";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { ActionResponse } from "@/app/libs/definitions";
 import { createAuditlog } from "../../actions/auditlog-actions";
+import { serverLog } from "@/app/libs/helpers";
 
 export interface WarehouseWithProps extends Warehouse {
   Company: {
@@ -18,11 +19,7 @@ export interface WarehouseWithProps extends Warehouse {
   }[];
 }
 
-export async function getWarehouseById({
-  id,
-}: {
-  id: string | null;
-}): Promise<WarehouseWithProps | null> {
+export async function getWarehouseById({ id }: { id: string | null }): Promise<WarehouseWithProps | null> {
   try {
     if (!id) throw new Error("ID not definded");
 
@@ -44,6 +41,7 @@ export async function getWarehouseById({
       },
     });
 
+    serverLog({ action: "Fetching", model: "warehouses", data: warehouse });
     return warehouse;
   } catch (error: any) {
     console.log(error);
@@ -51,19 +49,13 @@ export async function getWarehouseById({
   }
 }
 
-type WarehouseActionProps = Omit<
-  WarehouseSchemaType,
-  "updatedAt" | "createdAt" | "createdUid"
->;
+type WarehouseActionProps = Omit<WarehouseSchemaType, "updatedAt" | "createdAt" | "createdUid">;
 
-export async function createWarehouse({
-  data,
-}: {
-  data: WarehouseActionProps;
-}): Promise<ActionResponse<WarehouseWithProps>> {
+export async function createWarehouse({ data }: { data: WarehouseActionProps }): Promise<ActionResponse<WarehouseWithProps>> {
   try {
     const { uid } = await sessionStore();
 
+    serverLog({ action: "Creating", model: "warehouses", data });
     const newWarehouse = await prisma.warehouse.create({
       data: {
         name: `[${data.code}] ${data.description}`,
@@ -116,16 +108,11 @@ export async function createWarehouse({
   }
 }
 
-export async function updateWarehouse({
-  id,
-  data,
-}: {
-  id: string | null;
-  data: WarehouseActionProps;
-}): Promise<ActionResponse<WarehouseWithProps>> {
+export async function updateWarehouse({ id, data }: { id: string | null; data: WarehouseActionProps }): Promise<ActionResponse<WarehouseWithProps>> {
   try {
     if (!id) throw new Error("ID not definded");
 
+    serverLog({ action: "Updating", model: "warehouses", data });
     const updatedWarehouse = await prisma.warehouse.update({
       where: { id },
       data: {
