@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
 import { Col } from "react-bootstrap";
 import { getUomById } from "../../uom_category/actions/uom.action";
+import type { WarehouseType } from "@/generated/prisma/enums";
 
 function ProductTemplateFormView({ id, product }: { id: string | null; product: ProductTemplateWithProps | null }) {
   const methods = useForm<ProductTemplateSchemaType>({
@@ -77,6 +78,14 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
     };
     await onSubmit(newData);
   });
+
+  const actionViewStocks = () => {
+    return null;
+  };
+
+  const actionViewStockMoves = () => {
+    return null;
+  };
 
   useEffect(() => {
     if (!product) {
@@ -147,6 +156,16 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
     originalValuesRef.current = values;
   }, [product, reset]);
 
+  const computeStocks = () => {
+    let qtyAvailable = 0.0;
+    const warehouseTypes = ["SALES", "PRODUCTION"] as WarehouseType[];
+    const saleWarehouses = product?.Stocks.filter((s) => warehouseTypes.includes(s.Warehouse.type)) || [];
+    for (const sale of saleWarehouses) {
+      qtyAvailable += sale.qty - sale.reservedQty;
+    }
+    return qtyAvailable.toFixed(2);
+  };
+
   return (
     <FormView
       methods={methods}
@@ -166,6 +185,20 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
           fieldName: "actionToggleState",
           string: product?.state === "AVAILABLE" ? "AGOTADO" : "DISPONIBLE",
           variant: "info",
+          invisible: id === "null",
+        },
+        {
+          action: actionViewStocks,
+          fieldName: "actionViewStocks",
+          string: `Existencias: ${computeStocks()}`,
+          variant: "outline-primary",
+          invisible: id === "null",
+        },
+        {
+          action: actionViewStockMoves,
+          fieldName: "actionViewStockMoves",
+          string: "Movimientos",
+          variant: "outline-primary",
           invisible: id === "null",
         },
       ]}

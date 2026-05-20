@@ -1,39 +1,20 @@
 "use client";
 
-import {
-  warehouseSchemaDefault,
-  WarehouseSchemaType,
-  warehouseSchema,
-} from "../schemas/warehouse.schema";
+import { warehouseSchemaDefault, WarehouseSchemaType, warehouseSchema } from "../schemas/warehouse.schema";
 
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { useModals } from "@/contexts/ModalContext";
-import {
-  createWarehouse,
-  updateWarehouse,
-  WarehouseWithProps,
-} from "../actions/warehouse-actions";
+import { createWarehouse, updateWarehouse, WarehouseWithProps } from "../actions/warehouse-actions";
 import { FormView, FormViewGroup } from "@/components/templates/FormView";
-import {
-  FieldBoolean,
-  FieldEntry,
-  FieldRelation,
-  FieldRelationTags,
-} from "@/components/templates/fields";
+import { FieldBoolean, FieldEntry, FieldRelation, FieldRelationTags } from "@/components/templates/fields";
 import { FieldOption } from "@/components/templates/fields/FielOption";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
 
-function WarehouseFormView({
-  id,
-  warehouse,
-}: {
-  id: string | null;
-  warehouse: WarehouseWithProps | null;
-}) {
+function WarehouseFormView({ id, warehouse }: { id: string | null; warehouse: WarehouseWithProps | null }) {
   const methods = useForm<WarehouseSchemaType>({
     resolver: zodResolver(warehouseSchema),
     defaultValues: warehouseSchemaDefault,
@@ -99,23 +80,11 @@ function WarehouseFormView({
   }, [warehouse, reset]);
 
   return (
-    <FormView
-      cleanUrl="/app/warehouses?view_type=form&id=null"
-      reverse={handleReverse}
-      auditLog="warehouses"
-      onSubmit={onSubmit}
-      methods={methods}
-      id={id}
-    >
+    <FormView cleanUrl="/app/warehouses?view_type=form&id=null" reverse={handleReverse} auditLog="warehouses" onSubmit={onSubmit} methods={methods} id={id}>
       <FormViewGroup>
         <FieldEntry name="description" label="Descripción" />
         <FieldEntry name="code" label="Código" />
-        <FieldRelationTags
-          model="warehouse"
-          name="internalIds"
-          label="Acepta internos de"
-          domain={[["id", "!=", id]]}
-        />
+        <FieldRelationTags model="warehouse" name="internalIds" label="Acepta internos de" domain={[["id", "!=", id]]} />
       </FormViewGroup>
       <FormViewGroup>
         <FieldOption
@@ -127,6 +96,7 @@ function WarehouseFormView({
             { option: "CUARENTENA", value: "QUARANTINE" },
             { option: "AJUSTES", value: "ADJUSTMENT" },
             { option: "TRÁNSITO", value: "TRANSIT" },
+            { option: "SALIDA", value: "OUTGOING" },
           ]}
           label="Tipo"
         />
@@ -137,18 +107,8 @@ function WarehouseFormView({
         <Page eventKey="otherInfo" title="Otra información">
           <PageSheet name="otherInfo">
             <FormViewGroup>
-              <FieldEntry
-                name="createdAt"
-                type="datetime-local"
-                label="Creado el"
-                readonly
-              />
-              <FieldEntry
-                name="updatedAt"
-                type="datetime-local"
-                label="Última actualización"
-                readonly
-              />
+              <FieldEntry name="createdAt" type="datetime-local" label="Creado el" readonly />
+              <FieldEntry name="updatedAt" type="datetime-local" label="Última actualización" readonly />
             </FormViewGroup>
           </PageSheet>
         </Page>

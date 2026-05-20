@@ -1,6 +1,6 @@
 "use server";
 
-import type { Company, Partner } from "@/generated/prisma/client";
+import type { Company, Partner, Warehouse } from "@/generated/prisma/client";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
 import { CompanySchemaType } from "../schemas/company.schema";
@@ -117,7 +117,7 @@ export async function createCompany({ data }: { data: CompanyActionProps }): Pro
             street: data.street,
             houseNumber: data.houseNumber,
             streets: data.street,
-            zip: data.zip,
+            zip: Number(data.zip),
             town: data.town,
             county: data.county,
             province: data.province,
@@ -128,14 +128,24 @@ export async function createCompany({ data }: { data: CompanyActionProps }): Pro
         },
         Warehouses: {
           createMany: {
-            data: {
-              code: `V${generateModelCode(data.name)}`,
-              description: `VENTAS ${data.name}`,
-              name: `[V${generateModelCode(data.name)}] VENTAS ${data.name}`,
-              active: true,
-              createdUid: uid || "",
-              type: "SALES",
-            },
+            data: [
+              {
+                code: `V${generateModelCode(data.name)}`,
+                description: `VENTAS ${data.name}`,
+                name: `[V${generateModelCode(data.name)}] VENTAS ${data.name}`,
+                active: true,
+                createdUid: uid || "",
+                type: "SALES",
+              },
+              {
+                code: `S${generateModelCode(data.name)}`,
+                description: `SALIDAS ${data.name}`,
+                name: `[S${generateModelCode(data.name)}] SALIDAS ${data.name}`,
+                active: true,
+                createdUid: uid || "",
+                type: "OUTGOING",
+              },
+            ],
           },
         },
         createdUid: uid || "",
@@ -225,7 +235,7 @@ export async function updateCompany({ data }: { data: CompanyActionProps & { id:
             street: data.street,
             houseNumber: data.houseNumber,
             streets: data.street,
-            zip: data.zip,
+            zip: Number(data.zip),
             town: data.town,
             county: data.county,
             province: data.province,

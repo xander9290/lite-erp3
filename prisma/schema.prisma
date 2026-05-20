@@ -77,6 +77,8 @@ model User {
 
   Auditlogs Auditlog[] @relation("UserAuditlogRel")
 
+  StockMoves StockMove[]
+
   createdUid String   @map("created_uid")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
@@ -247,6 +249,11 @@ model Warehouse {
   InternalsFrom Warehouse[] @relation("InternalsWarehouseRel")
   InternalsTo   Warehouse[] @relation("InternalsWarehouseRel")
 
+  OriginStockMoves StockMove[] @relation("OriginWarehouseMove")
+  DestStockMoves   StockMove[] @relation("DestWarehouseMove")
+
+  Stocks StockWarehouse[]
+
   createdUid String   @map("created_uid")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
@@ -261,6 +268,52 @@ enum WarehouseType {
   QUARANTINE
   ADJUSTMENT
   TRANSIT
+  OUTGOING
+}
+
+model StockWarehouse {
+  id           String  @id @default(cuid())
+  qty          Float   @default(0.0)
+  reservedQty  Float   @default(0.0) @map("reserved_qty")
+  locationName String?
+
+  productId String          @map("product_id")
+  Product   ProductTemplate @relation(fields: [productId], references: [id])
+
+  warehouseId String    @map("warehouse_id")
+  Warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+
+  createdUid String   @map("created_uid")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([productId, warehouseId], name: "productId_warehouseId")
+  @@map("stock_warehouse")
+}
+
+model StockMove {
+  id        String   @id @default(cuid())
+  name      String
+  reference String
+  quantity  Float    @default(0.0)
+  date      DateTime @default(now()) @db.Date
+
+  productId String          @map("product_id")
+  Product   ProductTemplate @relation(fields: [productId], references: [id])
+
+  warehouseId     String    @map("warehouse_id")
+  WarehouseOrigin Warehouse @relation("OriginWarehouseMove", fields: [warehouseId], references: [id])
+
+  warehouseDestId String    @map("warehouse_dest_id")
+  WarehouseDest   Warehouse @relation("DestWarehouseMove", fields: [warehouseDestId], references: [id])
+
+  userId String @map("user_id")
+  User   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("stock_move")
 }
 
 model ProductTemplate {
@@ -309,6 +362,10 @@ model ProductTemplate {
 
   ReceiptLines        ProductReceiptLine[] @relation("ParentProductReceipt")
   ProductReceiptLines ProductReceiptLine[] @relation("ProductReceipt")
+
+  StockMoves StockMove[]
+
+  Stocks StockWarehouse[]
 
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")

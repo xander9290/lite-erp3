@@ -1,48 +1,20 @@
 "use client";
 
-import {
-  createCompany,
-  updateCompany,
-  type CompanieWithProps,
-} from "../actions/companies-actions";
+import { createCompany, updateCompany, type CompanieWithProps } from "../actions/companies-actions";
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  companySchema,
-  companySchemaDefault,
-  CompanySchemaType,
-} from "../schemas/company.schema";
+import { companySchema, companySchemaDefault, CompanySchemaType } from "../schemas/company.schema";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import {
-  FormView,
-  FormViewGroup,
-  FormViewStack,
-} from "@/components/templates/FormView";
-import {
-  FieldBoolean,
-  FieldEntry,
-  FieldImage,
-  FieldRelation,
-  FieldRelationTags,
-} from "@/components/templates/fields";
-import {
-  BtnDeleteLine,
-  SimpleTable,
-  SimpleTD,
-} from "@/components/templates/simpletemplates";
+import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
+import { FieldBoolean, FieldEntry, FieldImage, FieldRelation, FieldRelationTags } from "@/components/templates/fields";
+import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
 import toast from "react-hot-toast";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import { Col } from "react-bootstrap";
 
-function CompaniesFormView({
-  company,
-  id,
-}: {
-  company: CompanieWithProps | null;
-  id: string | null;
-}) {
+function CompaniesFormView({ company, id }: { company: CompanieWithProps | null; id: string | null }) {
   const methods = useForm<CompanySchemaType>({
     resolver: zodResolver(companySchema),
     defaultValues: companySchemaDefault,
@@ -93,7 +65,7 @@ function CompaniesFormView({
         street: company.Partner.street || "",
         houseNumber: company.Partner.houseNumber || "",
         streets: company.Partner.streets || "",
-        zip: company.Partner.zip || 0,
+        zip: String(company.Partner.zip),
         town: company.Partner.town || "",
         county: company.Partner.county || "",
         province: company.Partner.province || "",
@@ -137,14 +109,7 @@ function CompaniesFormView({
   }, [company, reset]);
 
   return (
-    <FormView
-      cleanUrl="/app/companies?view_type=form&id=null"
-      reverse={handleReverse}
-      auditLog="companies"
-      onSubmit={onSubmit}
-      methods={methods}
-      id={id}
-    >
+    <FormView cleanUrl="/app/companies?view_type=form&id=null" reverse={handleReverse} auditLog="companies" onSubmit={onSubmit} methods={methods} id={id}>
       <FormViewGroup>
         <FieldImage folder="companies" name="imageUrl" />
         <FieldRelation
@@ -186,12 +151,7 @@ function CompaniesFormView({
         <FieldEntry name="street" label="Calle" />
         <FormViewStack>
           <FieldEntry name="houseNumber" label="No. Ext." />
-          <FieldEntry
-            name="zip"
-            label="C.P. #"
-            type="number"
-            className="text-center"
-          />
+          <FieldEntry name="zip" label="C.P. #" className="text-center" />
         </FormViewStack>
         <FieldEntry name="streets" label="Entre calles" />
         <FieldEntry name="town" label="Colonia" />
@@ -207,11 +167,7 @@ function CompaniesFormView({
           <PageSheet name="relationIds">
             <FormViewGroup>
               <FieldRelationTags model="user" name="userIds" label="Usuarios" />
-              <FieldRelationTags
-                model="warehouse"
-                name="warehouseIds"
-                label="Almacenes"
-              />
+              <FieldRelationTags model="warehouse" name="warehouseIds" label="Almacenes" />
             </FormViewGroup>
           </PageSheet>
         </Page>
@@ -256,19 +212,9 @@ function CompaniesFormView({
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineManagerId">
-                      <FieldRelation
-                        model="user"
-                        name={`childrenIds.${index}.managerId`}
-                        label="Gerente"
-                        readonly
-                        inline
-                      />
+                      <FieldRelation model="user" name={`childrenIds.${index}.managerId`} label="Gerente" readonly inline />
                     </SimpleTD>
-                    <SimpleTD
-                      name="lineDelete"
-                      colIdx={index}
-                      contentPosition="text-center"
-                    >
+                    <SimpleTD name="lineDelete" colIdx={index} contentPosition="text-center">
                       <BtnDeleteLine action={() => remove(index)} />
                     </SimpleTD>
                   </tr>

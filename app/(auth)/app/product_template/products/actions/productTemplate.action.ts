@@ -1,6 +1,6 @@
 "use server";
 
-import type { ProductTemplate } from "@/generated/prisma/client";
+import type { ProductTemplate, WarehouseType } from "@/generated/prisma/client";
 import { ProductTemplateSchemaType } from "../schemas/productTemplate.schema";
 import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
@@ -27,6 +27,29 @@ export interface ProductTemplateWithProps extends ProductTemplate {
     active: boolean;
     Product: { id: string; name: string };
     Uom: { id: string; name: string };
+  }[];
+  Stocks: {
+    qty: number;
+    reservedQty: number;
+    locationName: string | null;
+    Warehouse: {
+      id: string;
+      name: string;
+      type: WarehouseType;
+    };
+  }[];
+  StockMoves: {
+    reference: string;
+    quantity: number;
+    date: Date;
+    WarehouseOrigin: {
+      id: string;
+      name: string;
+    };
+    WarehouseDest: {
+      id: string;
+      name: string;
+    };
   }[];
 }
 
@@ -97,6 +120,29 @@ export async function getProductById({ id }: { id: string | null }): Promise<Pro
             qty: true,
             id: true,
             Uom: {
+              select: { id: true, name: true },
+            },
+          },
+        },
+        Stocks: {
+          select: {
+            qty: true,
+            reservedQty: true,
+            locationName: true,
+            Warehouse: {
+              select: { id: true, name: true, type: true },
+            },
+          },
+        },
+        StockMoves: {
+          select: {
+            reference: true,
+            quantity: true,
+            date: true,
+            WarehouseOrigin: {
+              select: { id: true, name: true },
+            },
+            WarehouseDest: {
               select: { id: true, name: true },
             },
           },
@@ -235,6 +281,29 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
             qty: true,
             id: true,
             Uom: {
+              select: { id: true, name: true },
+            },
+          },
+        },
+        Stocks: {
+          select: {
+            qty: true,
+            reservedQty: true,
+            locationName: true,
+            Warehouse: {
+              select: { id: true, name: true, type: true },
+            },
+          },
+        },
+        StockMoves: {
+          select: {
+            reference: true,
+            quantity: true,
+            date: true,
+            WarehouseOrigin: {
+              select: { id: true, name: true },
+            },
+            WarehouseDest: {
               select: { id: true, name: true },
             },
           },
@@ -405,6 +474,29 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
             qty: true,
             id: true,
             Uom: {
+              select: { id: true, name: true },
+            },
+          },
+        },
+        Stocks: {
+          select: {
+            qty: true,
+            reservedQty: true,
+            locationName: true,
+            Warehouse: {
+              select: { id: true, name: true, type: true },
+            },
+          },
+        },
+        StockMoves: {
+          select: {
+            reference: true,
+            quantity: true,
+            date: true,
+            WarehouseOrigin: {
+              select: { id: true, name: true },
+            },
+            WarehouseDest: {
               select: { id: true, name: true },
             },
           },
