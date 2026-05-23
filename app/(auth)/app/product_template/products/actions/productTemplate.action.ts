@@ -12,14 +12,14 @@ export interface ProductTemplateWithProps extends ProductTemplate {
   User: { id: string; name: string } | null;
   ProductCategory: { id: string; name: string } | null;
   ProductBrand: { id: string; name: string; description: string } | null;
-  Uom: { id: string; name: string; ratio: number } | null;
+  Uom: { id: string; name: string; ratio: number; code: string } | null;
   Tags: { id: string; name: string }[];
   ProductPackagingLines: {
     id: string;
     ProductPackaging: { id: string; name: string };
     Product: { id: string; name: string };
     qty: number;
-    Uom: { id: string; name: string };
+    Uom: { id: string; name: string; code: string };
   }[];
   ReceiptLines: {
     id: string;
@@ -94,7 +94,7 @@ export async function getProductById({ id }: { id: string | null }): Promise<Pro
           },
         },
         Uom: {
-          select: { id: true, name: true, ratio: true },
+          select: { id: true, name: true, ratio: true, code: true },
         },
         ProductPackagingLines: {
           select: {
@@ -105,7 +105,7 @@ export async function getProductById({ id }: { id: string | null }): Promise<Pro
               select: { id: true, name: true },
             },
             Uom: {
-              select: { id: true, name: true },
+              select: { id: true, name: true, code: true },
             },
             qty: true,
             id: true,
@@ -255,7 +255,7 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
           },
         },
         Uom: {
-          select: { id: true, name: true, ratio: true },
+          select: { id: true, name: true, ratio: true, code: true },
         },
         ProductPackagingLines: {
           select: {
@@ -266,7 +266,7 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
               select: { id: true, name: true },
             },
             Uom: {
-              select: { id: true, name: true },
+              select: { id: true, name: true, code: true },
             },
             qty: true,
             id: true,
@@ -448,7 +448,7 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
           },
         },
         Uom: {
-          select: { id: true, name: true, ratio: true },
+          select: { id: true, name: true, ratio: true, code: true },
         },
         ProductPackagingLines: {
           select: {
@@ -459,7 +459,7 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
               select: { id: true, name: true },
             },
             Uom: {
-              select: { id: true, name: true },
+              select: { id: true, name: true, code: true },
             },
             qty: true,
             id: true,

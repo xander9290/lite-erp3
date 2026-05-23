@@ -58,6 +58,8 @@ function ProductTemplateListView({ categoryId, brandId, uomId }: { categoryId: s
               ProductBrand: {
                 select: { id: true, name: true, description: true },
               },
+              Stocks: { select: { qty: true, reservedQty: true, Warehouse: { select: { type: true } } } },
+              Uom: { select: { code: true } },
             }}
           />
         </CardTemplateLite>

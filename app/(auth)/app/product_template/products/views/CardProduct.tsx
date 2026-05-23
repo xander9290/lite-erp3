@@ -4,6 +4,7 @@ import { Badge, Card, Col, Row } from "react-bootstrap";
 import { ProductTemplateWithProps } from "../actions/productTemplate.action";
 import { WidgetAvatar } from "@/components/widgets";
 import { FieldText } from "@/components/templates/fields";
+import { computeStocks } from "./ProductTemplateFormView";
 
 function CardProduct({ product }: { product: ProductTemplateWithProps }) {
   return (
@@ -22,25 +23,28 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
             </div>
             <Card.Text className="d-flex justify-content-between m-0 my-1">
               <FieldText name="defaultCode" output={`[${product.defaultCode}]`} />
-              <small className="text-truncate" title={product.ProductCategory?.name}>
+              <span className="text-truncate" title={product.ProductCategory?.name}>
                 <em>
                   <FieldText name="productCategory" output={`${product.ProductCategory?.name || ""}`} />
                 </em>
-              </small>
+              </span>
             </Card.Text>
             <Card.Text className="d-flex justify-content-between m-0 my-1">
               <FieldText name="price1" output={`$${product.price1.toFixed(2) || "0.00"}`} />
-              <small>
-                <em>
-                  <FieldText name="productBrand" output={product.ProductBrand?.description || ""} />
-                </em>
-              </small>
+              <em>
+                <FieldText name="productBrand" output={product.ProductBrand?.description || ""} />
+              </em>
             </Card.Text>
-            <div className="d-flex gap-1">
+            <Card.Text className="m-0">
+              <strong>Disponible: </strong>
+              {computeStocks({ product })}
+              <span> {product.Uom?.code}</span>
+            </Card.Text>
+            <Card.Text className="d-flex gap-1 m-0">
               {product.Tags.map((t) => (
                 <Badge key={t.name}>{t.name}</Badge>
               ))}
-            </div>
+            </Card.Text>
           </Card.Body>
         </Col>
       </Row>

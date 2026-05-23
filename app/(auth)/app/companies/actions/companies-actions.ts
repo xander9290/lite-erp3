@@ -1,6 +1,6 @@
 "use server";
 
-import type { Company, Partner, Warehouse } from "@/generated/prisma/client";
+import type { Company, Partner } from "@/generated/prisma/client";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
 import { CompanySchemaType } from "../schemas/company.schema";

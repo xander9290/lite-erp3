@@ -16,6 +16,15 @@ import { Col } from "react-bootstrap";
 import { getUomById } from "../../uom_category/actions/uom.action";
 import type { WarehouseType } from "@/generated/prisma/enums";
 
+export const computeStocks = ({ product, whType = ["SALES", "PRODUCTION"] }: { product: ProductTemplateWithProps | null; whType?: WarehouseType[] }) => {
+  let qtyAvailable = 0.0;
+  const saleWarehouses = product?.Stocks.filter((s) => whType.includes(s.Warehouse.type)) || [];
+  for (const sale of saleWarehouses) {
+    qtyAvailable += sale.qty - sale.reservedQty;
+  }
+  return qtyAvailable.toFixed(2);
+};
+
 function ProductTemplateFormView({ id, product }: { id: string | null; product: ProductTemplateWithProps | null }) {
   const methods = useForm<ProductTemplateSchemaType>({
     resolver: zodResolver(productTemplateSchema),
@@ -80,7 +89,7 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
   });
 
   const actionViewStocks = () => {
-    return null;
+    return router.push(`/app/stock_warehouse?view_type=list&id=null&product_id=${id}`);
   };
 
   const actionViewStockMoves = () => {
@@ -156,16 +165,6 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
     originalValuesRef.current = values;
   }, [product, reset]);
 
-  const computeStocks = () => {
-    let qtyAvailable = 0.0;
-    const warehouseTypes = ["SALES", "PRODUCTION"] as WarehouseType[];
-    const saleWarehouses = product?.Stocks.filter((s) => warehouseTypes.includes(s.Warehouse.type)) || [];
-    for (const sale of saleWarehouses) {
-      qtyAvailable += sale.qty - sale.reservedQty;
-    }
-    return qtyAvailable.toFixed(2);
-  };
-
   return (
     <FormView
       methods={methods}
@@ -190,7 +189,7 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
         {
           action: actionViewStocks,
           fieldName: "actionViewStocks",
-          string: `Existencias: ${computeStocks()}`,
+          string: `Existencias: ${computeStocks({ product })}`,
           variant: "outline-primary",
           invisible: id === "null",
         },

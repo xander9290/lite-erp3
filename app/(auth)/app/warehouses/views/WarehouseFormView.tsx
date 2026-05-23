@@ -79,8 +79,28 @@ function WarehouseFormView({ id, warehouse }: { id: string | null; warehouse: Wa
     originalValuesRef.current = values;
   }, [warehouse, reset]);
 
+  const actionViewStocks = () => {
+    return router.push(`/app/stock_warehouse?view_type=list&id=null&wh_id=${id}`);
+  };
+
   return (
-    <FormView cleanUrl="/app/warehouses?view_type=form&id=null" reverse={handleReverse} auditLog="warehouses" onSubmit={onSubmit} methods={methods} id={id}>
+    <FormView
+      cleanUrl="/app/warehouses?view_type=form&id=null"
+      reverse={handleReverse}
+      auditLog="warehouses"
+      onSubmit={onSubmit}
+      methods={methods}
+      id={id}
+      actions={[
+        {
+          action: actionViewStocks,
+          fieldName: "actionViewStocks",
+          string: `Existencias: ${warehouse?.Stocks.length}`,
+          invisible: id === "null",
+          variant: "outline-primary",
+        },
+      ]}
+    >
       <FormViewGroup>
         <FieldEntry name="description" label="Descripción" />
         <FieldEntry name="code" label="Código" />

@@ -17,6 +17,7 @@ export interface WarehouseWithProps extends Warehouse {
     id: string;
     name: string;
   }[];
+  Stocks: { qty: number; reservedQty: number; locationName: string | null }[];
 }
 
 export async function getWarehouseById({ id }: { id: string | null }): Promise<WarehouseWithProps | null> {
@@ -37,6 +38,9 @@ export async function getWarehouseById({ id }: { id: string | null }): Promise<W
             id: true,
             name: true,
           },
+        },
+        Stocks: {
+          select: { qty: true, reservedQty: true, locationName: true },
         },
       },
     });
@@ -83,6 +87,9 @@ export async function createWarehouse({ data }: { data: WarehouseActionProps }):
             id: true,
             name: true,
           },
+        },
+        Stocks: {
+          select: { qty: true, reservedQty: true, locationName: true },
         },
       },
     });
@@ -140,6 +147,9 @@ export async function updateWarehouse({ id, data }: { id: string | null; data: W
             id: true,
             name: true,
           },
+        },
+        Stocks: {
+          select: { qty: true, reservedQty: true, locationName: true },
         },
       },
     });
