@@ -104,19 +104,23 @@ export function generateModelCode(name: string): string {
  * Formatea un número para visualización
  * @example formatNumberForDisplay(1234.5, 2, true) // "1,234.50"
  */
-export function formatNumberForDisplay(value: number | null | undefined, decimals: number = 2, useThousandsSeparator: boolean = false): string {
+export function formatNumberForDisplay(
+  value: number | null | undefined,
+  decimals: number = 2,
+  useThousandsSeparator: boolean = true, // 👈 Cambiar default a true
+): string {
   if (value === null || value === undefined || isNaN(value)) return "";
 
-  const options: Intl.NumberFormatOptions = {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  };
-
-  if (useThousandsSeparator) {
-    options.useGrouping = true;
+  if (!useThousandsSeparator) {
+    return value.toFixed(decimals);
   }
 
-  return new Intl.NumberFormat("es-MX", options).format(value);
+  // Formato mexicano: separador de miles = coma
+  return value.toLocaleString("es-MX", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+    useGrouping: true, // Esto pone las comas como separador de miles
+  });
 }
 
 /**
@@ -124,10 +128,12 @@ export function formatNumberForDisplay(value: number | null | undefined, decimal
  * @example parseNumberFromDisplay("1,234.50") // 1234.5
  */
 export function parseNumberFromDisplay(value: string): number {
-  // Limpiar separadores de miles y reemplazar coma decimal
-  const cleanValue = value
-    .replace(/[^0-9.,-]/g, "") // Solo números, puntos, comas y guiones
-    .replace(/,/g, "."); // La coma pasa a ser punto decimal
+  if (!value || value === "") return 0;
+
+  // Para formato mexicano: 1,234,567.89
+  // 1. Quitar todas las comas (separadores de miles)
+  // 2. Dejar el punto como separador decimal
+  const cleanValue = value.replace(/,/g, ""); // Solo quita comas
 
   const parsed = parseFloat(cleanValue);
   return isNaN(parsed) ? 0 : parsed;
@@ -137,8 +143,8 @@ export function parseNumberFromDisplay(value: string): number {
  * Redondea a N decimales
  */
 export function roundToDecimals(value: number, decimals: number = 2): number {
-  const factor = Math.pow(10, decimals);
-  return Math.round(value * factor) / factor;
+  // const factor = Math.pow(10, decimals);
+  return Number(Math.round(Number(value + "e" + decimals)) + "e-" + decimals);
 }
 
 export const serverLog = ({ action, model, data }: { action: "Fetching" | "Creating" | "Updating" | "Deleting"; model: string; data: object | null }) => {

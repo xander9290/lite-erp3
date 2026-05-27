@@ -402,18 +402,7 @@ export type Many2OneValue = {
   name?: string | null;
 };
 
-export type DomainOperator =
-  | "="
-  | "!="
-  | "contains"
-  | "startsWith"
-  | "endsWith"
-  | "in"
-  | "notIn"
-  | ">"
-  | ">="
-  | "<"
-  | "<=";
+export type DomainOperator = "=" | "!=" | "contains" | "startsWith" | "endsWith" | "in" | "notIn" | ">" | ">=" | "<" | "<=";
 
 export type DomainItem = [field: string, operator: DomainOperator, value: any];
 export type Domain = DomainItem[];
@@ -505,9 +494,7 @@ export function FieldRelation<T extends Many2OneOption>({
 
     const top = openUpwards ? rect.top - dropdownHeight - 4 : rect.bottom + 4;
 
-    const maxHeight = openUpwards
-      ? rect.top - 10
-      : viewportHeight - rect.bottom - 10;
+    const maxHeight = openUpwards ? rect.top - 10 : viewportHeight - rect.bottom - 10;
 
     setMenuPosition({
       top,
@@ -537,10 +524,7 @@ export function FieldRelation<T extends Many2OneOption>({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -576,9 +560,7 @@ export function FieldRelation<T extends Many2OneOption>({
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setHighlightedIndex((prev) =>
-        prev + 1 < options.length ? prev + 1 : prev,
-      );
+      setHighlightedIndex((prev) => (prev + 1 < options.length ? prev + 1 : prev));
     }
 
     if (e.key === "ArrowUp") {
@@ -626,11 +608,7 @@ export function FieldRelation<T extends Many2OneOption>({
             }}
           >
             <Dropdown show className="w-100">
-              <Dropdown.Menu
-                show
-                className="p-0 mt-0"
-                style={{ maxHeight: 200, overflowY: "auto" }}
-              >
+              <Dropdown.Menu show className="p-0 mt-0" style={{ maxHeight: 200, overflowY: "auto" }}>
                 {options.map((opt, index) => (
                   <Dropdown.Item
                     key={opt.id}
@@ -725,23 +703,15 @@ export function FieldRelation<T extends Many2OneOption>({
   return (
     <div ref={containerRef} className="mb-1">
       <div className="d-flex align-items-stretch">
-        <FloatingLabel
-          label={label ?? name}
-          className="flex-grow-1 fs-6 fw-bold"
-          title={name}
-        >
+        <FloatingLabel label={label ?? name} className="flex-grow-1 fs-6 fw-bold" title={name}>
           {input}
         </FloatingLabel>
 
-        <Button
-          size="sm"
-          variant="light"
-          onClick={handleOff}
-          disabled={readonly || access?.readonly}
-          className="rounded-start-0"
-        >
-          <i className="bi bi-power"></i>
-        </Button>
+        {!readonly && (
+          <Button size="sm" variant="light" onClick={handleOff} disabled={readonly || access?.readonly} className="rounded-start-0">
+            <i className="bi bi-power"></i>
+          </Button>
+        )}
       </div>
 
       <Form.Control.Feedback type="invalid" className={error ? "d-block" : ""}>

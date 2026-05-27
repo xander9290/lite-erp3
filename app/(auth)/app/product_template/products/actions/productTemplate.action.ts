@@ -50,6 +50,10 @@ export interface ProductTemplateWithProps extends ProductTemplate {
       id: string;
       name: string;
     };
+    Company: {
+      id: string;
+      name: string;
+    };
   }[];
 }
 
@@ -145,6 +149,7 @@ export async function getProductById({ id }: { id: string | null }): Promise<Pro
             WarehouseDest: {
               select: { id: true, name: true },
             },
+            Company: { select: { id: true, name: true } },
           },
         },
       },
@@ -173,6 +178,7 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
         state: data.state,
         sales: data.sales,
         purchases: data.purchases,
+        manufacturing: data.manufacturing,
         imageUrl: data.imageUrl,
         price1: data.price1,
         price2: data.price2,
@@ -180,6 +186,7 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
         price4: data.price4,
         price5: data.price5,
         lastCost: data.lastCost,
+        yield: data.yield,
         weight: data.weight,
         alto: data.alto,
         ancho: data.ancho,
@@ -306,6 +313,7 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
             WarehouseDest: {
               select: { id: true, name: true },
             },
+            Company: { select: { id: true, name: true } },
           },
         },
       },
@@ -350,6 +358,7 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
         state: data.state,
         sales: data.sales,
         purchases: data.purchases,
+        manufacturing: data.manufacturing,
         imageUrl: data.imageUrl,
         price1: data.price1,
         price2: data.price2,
@@ -357,6 +366,7 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
         price4: data.price4,
         price5: data.price5,
         lastCost: data.lastCost,
+        yield: data.yield,
         weight: data.weight,
         alto: data.alto,
         ancho: data.ancho,
@@ -499,6 +509,7 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
             WarehouseDest: {
               select: { id: true, name: true },
             },
+            Company: { select: { id: true, name: true } },
           },
         },
       },

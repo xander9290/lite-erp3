@@ -5,6 +5,7 @@ import { ProductTemplateWithProps } from "../actions/productTemplate.action";
 import { WidgetAvatar } from "@/components/widgets";
 import { FieldText } from "@/components/templates/fields";
 import { computeStocks } from "./ProductTemplateFormView";
+import { formatCurrency } from "@/app/libs/helpers";
 
 function CardProduct({ product }: { product: ProductTemplateWithProps }) {
   return (
@@ -30,7 +31,7 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
               </span>
             </Card.Text>
             <Card.Text className="d-flex justify-content-between m-0 my-1">
-              <FieldText name="price1" output={`$${product.price1.toFixed(2) || "0.00"}`} />
+              <FieldText name="price1" output={formatCurrency(product.price1)} />
               <em>
                 <FieldText name="productBrand" output={product.ProductBrand?.description || ""} />
               </em>

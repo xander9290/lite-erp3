@@ -15,6 +15,7 @@ import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/sim
 import { Col } from "react-bootstrap";
 import { getUomById } from "../../uom_category/actions/uom.action";
 import type { WarehouseType } from "@/generated/prisma/enums";
+import { useAuth } from "@/hooks/sessionStore";
 
 export const computeStocks = ({ product, whType = ["SALES", "PRODUCTION"] }: { product: ProductTemplateWithProps | null; whType?: WarehouseType[] }) => {
   let qtyAvailable = 0.0;
@@ -22,10 +23,12 @@ export const computeStocks = ({ product, whType = ["SALES", "PRODUCTION"] }: { p
   for (const sale of saleWarehouses) {
     qtyAvailable += sale.qty - sale.reservedQty;
   }
-  return qtyAvailable.toFixed(2);
+  return qtyAvailable.toFixed(3);
 };
 
 function ProductTemplateFormView({ id, product }: { id: string | null; product: ProductTemplateWithProps | null }) {
+  const { companyId } = useAuth();
+
   const methods = useForm<ProductTemplateSchemaType>({
     resolver: zodResolver(productTemplateSchema),
     defaultValues: productTemplateSchemaDefault,
@@ -93,7 +96,7 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
   };
 
   const actionViewStockMoves = () => {
-    return null;
+    return router.push(`/app/stock_move?view_type=list&id=null&product_id=${id}`);
   };
 
   useEffect(() => {
@@ -110,6 +113,8 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
       active: product.active,
       sales: product.sales,
       purchases: product.purchases,
+      manufacturing: product.manufacturing,
+      yield: product.yield,
       displayType: product.displayType,
       state: product.state,
       imageUrl: product.imageUrl,
@@ -165,6 +170,11 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
     originalValuesRef.current = values;
   }, [product, reset]);
 
+  const stockMovesCount = () => {
+    const getMoves = product?.StockMoves.filter((s) => s.Company.id === companyId);
+    return getMoves?.length ?? 0;
+  };
+
   return (
     <FormView
       methods={methods}
@@ -196,9 +206,9 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
         {
           action: actionViewStockMoves,
           fieldName: "actionViewStockMoves",
-          string: "Movimientos",
+          string: `Movimientos: ${stockMovesCount()}`,
           variant: "outline-primary",
-          invisible: id === "null",
+          invisible: id === "null" || stockMovesCount() === 0,
         },
       ]}
     >
@@ -384,7 +394,7 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineReceiptQty">
-                      <FieldEntry inline type="number" name={`ReceiptLines.${index}.qty`} />
+                      <FieldEntry inline type="number" decimals={3} name={`ReceiptLines.${index}.qty`} />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineReceiptUomId">
                       <FieldRelation inline model="uomCategory" readonly name={`ReceiptLines.${index}.uomId`} />
@@ -408,6 +418,14 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                 }
               />
             </Col>
+          </PageSheet>
+        </Page>
+        <Page eventKey="manufacturing" title="Fabricación">
+          <PageSheet name="manufacturingPage">
+            <FormViewGroup>
+              <FieldBoolean name="manufacturing" label="Se puede fabricar" />
+              <FieldEntry name="yield" label="Rendimiento" type="number" decimals={3} />
+            </FormViewGroup>
           </PageSheet>
         </Page>
       </Notebook>

@@ -35,8 +35,8 @@ export function useAuth() {
     const user = session?.user;
     const uid = user?.id;
     const access = session?.user.access || [];
-    const companyCode =
-      session?.user.companies.find((c) => c.current)?.code || null;
+    const companyCode = session?.user.companies.find((c) => c.current)?.code || null;
+    const company = session?.user.companies.find((c) => c.current) || null;
 
     const companyId = session?.user.companies.find((c) => c.current)?.id || "";
 
@@ -49,6 +49,7 @@ export function useAuth() {
       changeCompany,
       companyCode,
       companyId,
+      company,
     };
   }, [session, status, changeCompany]);
 

@@ -17,9 +17,9 @@ function StockWarehouseListView({ productId, whId }: { productId: string | null;
           <Column field="Warehouse.name" label="Almacén" include={{ Warehouse: { select: { name: true } } }} />
           <Column field="locationName" label="Ubicación" type="string" />
           <Column field="Product.name" label="Producto" include={{ Product: { select: { name: true, Uom: { select: { name: true } } } } }} />
-          <Column field="qty" label="Cantidad" type="number" render={(_, stock) => <div className="text-end">{stock.qty}</div>} />
-          <Column field="reservedQty" label="Reservado" type="number" render={(_, stock) => <div className="text-end">{stock.reservedQty}</div>} />
-          <Column field="_" label="Disponible" type="number" render={(_, stock) => <div className="text-end">{stock.qty - stock.reservedQty}</div>} />
+          <Column field="qty" label="Cantidad" type="number" render={(_, stock) => <div className="text-end">{stock.qty.toFixed(3)}</div>} />
+          <Column field="reservedQty" label="Reservado" type="number" render={(_, stock) => <div className="text-end">{stock.reservedQty.toFixed(3)}</div>} />
+          <Column field="_" label="Disponible" type="number" render={(_, stock) => <div className="text-end">{(stock.qty - stock.reservedQty).toFixed(3)}</div>} />
           <Column field="Product.Uom.name" label="UdM" />
         </TableTemplateLite>
       </ListView.Body>

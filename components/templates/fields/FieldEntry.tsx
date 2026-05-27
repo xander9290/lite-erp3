@@ -2,9 +2,8 @@
 
 import { useFormContext, Controller } from "react-hook-form";
 import { Form, FloatingLabel } from "react-bootstrap";
-import { formatNumberForDisplay, parseNumberFromDisplay, roundToDecimals } from "@/app/libs/helpers";
 import { format } from "date-fns";
-import { ElementType, useEffect } from "react";
+import { ElementType, useEffect, useState } from "react";
 import { useAccess } from "@/contexts/AccessContext";
 import toast from "react-hot-toast";
 
@@ -19,13 +18,14 @@ interface FieldEntryProps {
   type?: React.HTMLInputTypeAttribute;
   step?: string | number;
   min?: string | number;
+  max?: string | number;
   placeholder?: string;
   as?: ElementType;
   cols?: number;
   rows?: number;
   autoFocus?: boolean;
-  decimals?: number; // 👈 Nueva prop: cantidad de decimales (ej: 2, 3, 4)
-  thousandsSeparator?: boolean; // 👈 Separador de miles
+  decimals?: number;
+  thousandsSeparator?: boolean;
 }
 
 interface FieldInputProps {
@@ -40,6 +40,7 @@ interface FieldInputProps {
   inline?: boolean;
   className?: string;
   min?: string | number;
+  max?: string | number;
   step?: string | number;
   rows?: number;
   cols?: number;
@@ -82,6 +83,32 @@ function datetimeLocalToISO(value: string): string {
   return d.toISOString();
 }
 
+/**
+ * Formatea un número con formato mexicano (miles con coma, decimales con punto)
+ */
+function formatMexicanNumber(value: number | null | undefined, decimals: number = 2): string {
+  if (value === null || value === undefined || isNaN(value)) return "";
+
+  return value.toLocaleString("es-MX", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+    useGrouping: true,
+  });
+}
+
+/**
+ * Parsea un string formateado (ej: "4,050.50") a número
+ */
+function parseMexicanNumber(value: string): number {
+  if (!value || value === "") return 0;
+
+  // Quitar comas (separadores de miles) y convertir a número
+  const cleanValue = value.replace(/,/g, "");
+  const parsed = parseFloat(cleanValue);
+
+  return isNaN(parsed) ? 0 : parsed;
+}
+
 function FieldInput({
   field,
   fieldState,
@@ -93,7 +120,8 @@ function FieldInput({
   access,
   inline,
   className,
-  min,
+  min = 0,
+  max = 999999.99,
   step = "0.00",
   rows = 1,
   cols,
@@ -101,8 +129,26 @@ function FieldInput({
   onChange,
   as,
   decimals = 2,
-  thousandsSeparator,
+  thousandsSeparator = true,
 }: FieldInputProps) {
+  // Estado local para el valor mostrado (solo para type="number")
+  const [displayValue, setDisplayValue] = useState<string>(() => {
+    if (type === "number" && typeof field.value === "number" && !isNaN(field.value)) {
+      return thousandsSeparator ? formatMexicanNumber(field.value, decimals) : field.value.toString();
+    }
+    return field.value ?? "";
+  });
+
+  // Sincronizar cuando el valor externo cambia
+  useEffect(() => {
+    if (type === "number" && typeof field.value === "number" && !isNaN(field.value)) {
+      const formatted = thousandsSeparator ? formatMexicanNumber(field.value, decimals) : field.value.toString();
+      setDisplayValue(formatted);
+    } else if (field.value !== displayValue && type !== "number") {
+      setDisplayValue(field.value ?? "");
+    }
+  }, [field.value, type, decimals, thousandsSeparator, displayValue]);
+
   // Toast para errores
   useEffect(() => {
     if (fieldState.error?.message) {
@@ -112,15 +158,6 @@ function FieldInput({
       });
     }
   }, [fieldState.error?.message, name]);
-
-  const inputValue = (() => {
-    if (type === "datetime-local") return toDatetimeLocalValue(field.value);
-    if (type === "date") return toDateInputValue(field.value);
-    if (type === "number" && typeof field.value === "number" && !isNaN(field.value)) {
-      return formatNumberForDisplay(field.value, decimals ?? 2, thousandsSeparator);
-    }
-    return field.value ?? "";
-  })();
 
   const isTextarea = as === "textarea" || type === "text";
 
@@ -136,12 +173,30 @@ function FieldInput({
 
     // Procesamiento según el tipo
     if (type === "number") {
-      const rawValue = e.target.value;
-      const numberValue = parseNumberFromDisplay(rawValue);
-      const rounded = roundToDecimals(numberValue, decimals ?? 2);
+      // Actualizar display inmediatamente
+      setDisplayValue(raw);
 
-      field.onChange(rounded); // Guarda el número crudo
-      onChange?.(formatNumberForDisplay(rounded, decimals ?? 2, thousandsSeparator));
+      // Si está vacío, guardar null
+      if (raw === "") {
+        field.onChange(null);
+        onChange?.("");
+        return;
+      }
+
+      // Parsear el valor formateado a número
+      const numberValue = parseMexicanNumber(raw);
+
+      // Validar rangos
+      let finalValue = numberValue;
+      if (typeof min === "number" && numberValue < min) finalValue = min;
+      if (typeof max === "number" && numberValue > max) finalValue = max;
+
+      // Redondear a los decimales especificados
+      const rounded = Number(finalValue.toFixed(decimals));
+
+      // Guardar en el formulario
+      field.onChange(rounded);
+      onChange?.(rounded.toString());
       return;
     }
 
@@ -163,6 +218,26 @@ function FieldInput({
     onChange?.(raw);
   };
 
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    // Formatear el valor al salir del campo
+    if (type === "number" && thousandsSeparator) {
+      const numValue = parseMexicanNumber(e.target.value);
+      if (!isNaN(numValue)) {
+        const formatted = formatMexicanNumber(numValue, decimals);
+        setDisplayValue(formatted);
+      }
+    }
+    field.onBlur();
+  };
+
+  // Determinar el valor a mostrar
+  const getValue = () => {
+    if (type === "datetime-local") return toDatetimeLocalValue(field.value);
+    if (type === "date") return toDateInputValue(field.value);
+    if (type === "number") return displayValue;
+    return field.value ?? "";
+  };
+
   return (
     <Form.Control
       ref={(el: HTMLInputElement | HTMLTextAreaElement | null) => {
@@ -174,12 +249,14 @@ function FieldInput({
       className={`${className ?? ""} ${type === "password" ? "text-center" : type === "number" ? "text-end" : ""} shadow-none w-100 overflow-hidden px-1 ${inline ? "border-0" : ""}`}
       title={name}
       as={as ?? (type === "text" ? "textarea" : undefined)}
-      type={type}
+      type={type === "number" ? "text" : type} // Usar text para number para evitar problemas del navegador
+      inputMode={type === "number" ? "decimal" : undefined}
       isInvalid={!!fieldState.error}
       placeholder={placeholder}
       readOnly={readonly || isSubmitting || access?.readonly}
-      value={inputValue}
+      value={getValue()}
       min={min}
+      max={max}
       step={step}
       rows={isTextarea ? rows : undefined}
       cols={cols}
@@ -190,13 +267,31 @@ function FieldInput({
       }}
       autoFocus={autoFocus}
       onChange={handleChange}
-      onBlur={field.onBlur}
+      onBlur={handleBlur}
       name={field.name}
     />
   );
 }
 
-export function FieldEntry({ name, label, readonly, invisible, inline, onChange, className, type = "text", min, step, placeholder, as, cols, rows = 1, autoFocus }: FieldEntryProps) {
+export function FieldEntry({
+  name,
+  label,
+  readonly,
+  invisible,
+  inline,
+  onChange,
+  className,
+  type = "text",
+  min = 0.0,
+  step = "0.00",
+  placeholder,
+  as,
+  cols,
+  rows = 1,
+  autoFocus,
+  decimals = 2,
+  thousandsSeparator = true,
+}: FieldEntryProps) {
   const { control } = useFormContext();
   const access = useAccess({ fieldName: name });
 
@@ -238,6 +333,8 @@ export function FieldEntry({ name, label, readonly, invisible, inline, onChange,
             autoFocus={autoFocus}
             onChange={onChange}
             as={as}
+            decimals={decimals}
+            thousandsSeparator={thousandsSeparator}
           />
         );
 

@@ -125,7 +125,12 @@ function TopNavItems() {
           <i className="bi bi-boxes me-1"></i>
           <span>Productos</span>
         </NavDropdown.Item>
-        <NavDropdown.Item title="inventoryManufacturing" disabled={fieldsAccess.find((field) => field.fieldName === "inventoryManufacturing")?.invisible}>
+        <NavDropdown.Item
+          title="inventoryManufacturing"
+          disabled={fieldsAccess.find((field) => field.fieldName === "inventoryManufacturing")?.invisible}
+          href="/app/manufacturing?view_type=list&id=null"
+          as={Link}
+        >
           <i className="bi bi-flask me-1"></i>
           <span>Fabricación</span>
         </NavDropdown.Item>
@@ -142,7 +147,12 @@ function TopNavItems() {
           <i className="bi bi-arrow-left-right me-1"></i>
           <span>Traslados</span>
         </NavDropdown.Item>
-        <NavDropdown.Item title="inventoryStockMoveLine" disabled={fieldsAccess.find((field) => field.fieldName === "inventoryStockMoveLine")?.invisible}>
+        <NavDropdown.Item
+          title="inventoryStockMoveLine"
+          disabled={fieldsAccess.find((field) => field.fieldName === "inventoryStockMoveLine")?.invisible}
+          href="/app/stock_move?view_type=list&id=null"
+          as={Link}
+        >
           <i className="bi bi-list-columns"></i> <span>Movimientos</span>
         </NavDropdown.Item>
       </NavDropdown>

@@ -228,6 +228,10 @@ model Company {
 
   Warehouses Warehouse[] @relation("WarehouseCompanyRel")
 
+  Manufacturings Manufacturing[]
+
+  stockMoves StockMove[]
+
   createdUid String   @map("created_uid")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
@@ -253,6 +257,9 @@ model Warehouse {
   DestStockMoves   StockMove[] @relation("DestWarehouseMove")
 
   Stocks StockWarehouse[]
+
+  ManufacturingsOrgin Manufacturing[] @relation("ManufacturingWhOrigin")
+  ManufacturingsDest  Manufacturing[] @relation("ManufacturingWhDes")
 
   createdUid String   @map("created_uid")
   createdAt  DateTime @default(now()) @map("created_at")
@@ -292,11 +299,12 @@ model StockWarehouse {
 }
 
 model StockMove {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   name      String
   reference String
-  quantity  Float    @default(0.0)
-  date      DateTime @default(now()) @db.Date
+  quantity  Float         @default(0.0)
+  date      DateTime      @default(now()) @db.Date
+  moveType  StockMoveType @map("move_type")
 
   productId String          @map("product_id")
   Product   ProductTemplate @relation(fields: [productId], references: [id])
@@ -310,10 +318,18 @@ model StockMove {
   userId String @map("user_id")
   User   User   @relation(fields: [userId], references: [id])
 
+  companyId String  @map("company_id")
+  Company   Company @relation(fields: [companyId], references: [id])
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("stock_move")
+}
+
+enum StockMoveType {
+  outgoing
+  incoming
 }
 
 model ProductTemplate {
@@ -326,6 +342,8 @@ model ProductTemplate {
   active             Boolean            @default(true)
   sales              Boolean            @default(true)
   purchases          Boolean            @default(true)
+  manufacturing      Boolean            @default(false)
+  yield              Float              @default(0.00)
   imageUrl           String?            @default("/image/avatar_default.svg") @map("image_url")
   price1             Float              @default(0.00) @map("price_1")
   price2             Float              @default(0.00) @map("price_2")
@@ -366,6 +384,10 @@ model ProductTemplate {
   StockMoves StockMove[]
 
   Stocks StockWarehouse[]
+
+  Manufacturings Manufacturing[]
+
+  ManufacturingLines ManufacturingLine[]
 
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")
@@ -434,6 +456,10 @@ model UomCategory {
   productPackagingLines ProductPackagingLine[]
   ProductReceiptLines   ProductReceiptLine[]
 
+  Manufacturings Manufacturing[]
+
+  ManufacturingLines ManufacturingLine[]
+
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -494,4 +520,71 @@ model ProductReceiptLine {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("product_receipt_line")
+}
+
+model Manufacturing {
+  id       String             @id @default(cuid())
+  name     String             @unique
+  state    ManufacturingState @default(draft)
+  date     DateTime           @default(now()) @db.Date
+  quantity Float              @default(0.0)
+  yield    Float              @default(0.0)
+
+  productId String          @map("product_id")
+  Product   ProductTemplate @relation(fields: [productId], references: [id])
+
+  uomId String      @map("uom_id")
+  Uom   UomCategory @relation(fields: [uomId], references: [id])
+
+  companyId String  @map("company_id")
+  Company   Company @relation(fields: [companyId], references: [id])
+
+  whOriginId String    @map("wh_origin_id")
+  WhOrigin   Warehouse @relation("ManufacturingWhOrigin", fields: [whOriginId], references: [id])
+
+  whDestId String    @map("wh_dest_id")
+  WhDest   Warehouse @relation("ManufacturingWhDes", fields: [whDestId], references: [id])
+
+  ManufacturingLines ManufacturingLine[]
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("manufacturing")
+}
+
+model ManufacturingLine {
+  id     String @id @default(cuid())
+  outQty Float  @default(0.0) @map("out_qty")
+
+  manufacturingId String        @map("manufacturing_id")
+  Manufacturing   Manufacturing @relation(fields: [manufacturingId], references: [id], onDelete: Cascade)
+
+  productIngredientId String          @map("product_ingredient_id")
+  Product             ProductTemplate @relation(fields: [productIngredientId], references: [id])
+
+  uomId String      @map("uom_id")
+  Uom   UomCategory @relation(fields: [uomId], references: [id])
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("manufacturing_line")
+}
+
+enum ManufacturingState {
+  draft
+  in_process
+  finished
+  affected
+  cancel
+}
+
+model Counter {
+  id    String @id // por ejemplo: "invoice", "order", etc.
+  value Int
+
+  @@map("counters")
 }
