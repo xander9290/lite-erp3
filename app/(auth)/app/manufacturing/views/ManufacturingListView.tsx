@@ -24,7 +24,7 @@ function ManufacturingListView() {
           onRowClick={(row) => router.push(`/app/manufacturing?view_type=form&id=${row.id}`)}
           baseDomain={[["companyId", "=", companyId]]}
         >
-          <Column field="name" label="Folio" />
+          <Column field="name" label="Folio" render={(name) => <div className="fw-semibold">{name}</div>} />
           <Column field="date" label="Fecha" type="date" render={(value) => <div className="text-end">{formatDate(value, "dd/MM/yyyy")}</div>} />
           <Column field="Product.name" label="Producto" include={{ Product: { select: { id: true, name: true } }, Uom: { select: { name: true, code: true } } }} />
           <Column
@@ -42,8 +42,8 @@ function ManufacturingListView() {
             label="Estado"
             render={(name) => {
               const outString = manufacturingStatesDisplay[name as ManufacturingState];
-              let bg = "primary";
-              if (outString === "En proceso") bg = "info";
+              let bg = "secondary";
+              if (outString === "En proceso") bg = "primary";
               if (outString === "Finalizado") bg = "warning";
               if (outString === "Creado") bg = "success";
               if (outString === "Cancelado") bg = "danger";

@@ -26,25 +26,14 @@ type ResizeState = {
   startWidth: number;
 } | null;
 
-export function SimpleTable<T>({
-  headers,
-  data,
-  renderRow,
-  action,
-  className,
-  resizable = true,
-}: SimpleTableTemplateProps<T>) {
+export function SimpleTable<T>({ headers, data, renderRow, action, className, resizable = true }: SimpleTableTemplateProps<T>) {
   const tableRef = useRef<HTMLTableElement | null>(null);
 
-  const [columnWidths, setColumnWidths] = useState<number[]>(
-    headers.map((header) => header.width ?? 140),
-  );
+  const [columnWidths, setColumnWidths] = useState<number[]>(headers.map((header) => header.width ?? 140));
   const [resizeState, setResizeState] = useState<ResizeState>(null);
 
   useEffect(() => {
-    setColumnWidths((prev) =>
-      headers.map((header, index) => prev[index] ?? header.width ?? 140),
-    );
+    setColumnWidths((prev) => headers.map((header, index) => prev[index] ?? header.width ?? 140));
   }, [headers]);
 
   useEffect(() => {
@@ -56,10 +45,7 @@ export function SimpleTable<T>({
       setColumnWidths((prev) => {
         const next = [...prev];
         const minWidth = headers[resizeState.columnIndex]?.minWidth ?? 60;
-        next[resizeState.columnIndex] = Math.max(
-          minWidth,
-          resizeState.startWidth + delta,
-        );
+        next[resizeState.columnIndex] = Math.max(minWidth, resizeState.startWidth + delta);
         return next;
       });
     };
@@ -84,10 +70,7 @@ export function SimpleTable<T>({
     };
   }, [resizeState, headers]);
 
-  const startResize = (
-    event: React.MouseEvent<HTMLDivElement>,
-    columnIndex: number,
-  ) => {
+  const startResize = (event: React.MouseEvent<HTMLDivElement>, columnIndex: number) => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -104,17 +87,11 @@ export function SimpleTable<T>({
 
     const minWidth = headers[columnIndex]?.minWidth ?? 60;
 
-    const headerCell = table.querySelector(
-      `thead th[data-column-index="${columnIndex}"]`,
-    ) as HTMLTableCellElement | null;
+    const headerCell = table.querySelector(`thead th[data-column-index="${columnIndex}"]`) as HTMLTableCellElement | null;
 
-    const bodyCells = Array.from(
-      table.querySelectorAll(`tbody td[data-column-index="${columnIndex}"]`),
-    ) as HTMLTableCellElement[];
+    const bodyCells = Array.from(table.querySelectorAll(`tbody td[data-column-index="${columnIndex}"]`)) as HTMLTableCellElement[];
 
-    const measureElements = [headerCell, ...bodyCells].filter(
-      Boolean,
-    ) as HTMLElement[];
+    const measureElements = [headerCell, ...bodyCells].filter(Boolean) as HTMLElement[];
 
     if (measureElements.length === 0) {
       setColumnWidths((prev) => {
@@ -214,10 +191,7 @@ export function SimpleTable<T>({
                   title={header.name}
                 >
                   <div className="position-relative w-100">
-                    <span
-                      className="d-block text-truncate pe-2"
-                      style={{ width: "100%" }}
-                    >
+                    <span className="d-block text-truncate pe-2" style={{ width: "100%" }}>
                       {header.string}
                     </span>
 
@@ -255,17 +229,8 @@ export function SimpleTable<T>({
 
           {action && (
             <tr>
-              <td
-                valign="middle"
-                colSpan={headers.length}
-                className="border-0 p-0"
-              >
-                <Button
-                  size="sm"
-                  variant="link"
-                  onClick={action}
-                  className="border-0 text-decoration-none shadow-none"
-                >
+              <td valign="middle" colSpan={headers.length} className="border-0 p-0">
+                <Button variant="link" onClick={action} className="border-0 text-decoration-none shadow-none">
                   Agregar
                 </Button>
               </td>

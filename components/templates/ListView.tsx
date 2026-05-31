@@ -2,17 +2,7 @@
 
 import Link from "next/link";
 import React, { ReactElement } from "react";
-import {
-  Alert,
-  Button,
-  ButtonGroup,
-  Card,
-  Col,
-  Container,
-  Dropdown,
-  DropdownButton,
-  Row,
-} from "react-bootstrap";
+import { Alert, Button, ButtonGroup, Card, Col, Container, Dropdown, DropdownButton, Row } from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/sessionStore";
 
@@ -46,29 +36,16 @@ function Header({ children, formView, title, actions }: HeaderProps) {
           <Col xs="12" sm="11" md="6" lg="6" xl="6">
             <div className="d-flex gap-2 align-items-center">
               {formView && !modelAccess?.notCreate && (
-                <Link
-                  className="btn btn-primary btn-sm fw-semibold"
-                  href={formView}
-                >
+                <Link className="btn btn-primary fw-semibold" href={formView}>
                   Nuevo
                 </Link>
               )}
               <Card.Title className="m-0 p-0">{title}</Card.Title>
               {actions && (
-                <DropdownButton
-                  variant="none"
-                  title={<i className="bi bi-gear-fill"></i>}
-                  as={ButtonGroup}
-                  size="sm"
-                >
+                <DropdownButton variant="none" title={<i className="bi bi-gear-fill"></i>} as={ButtonGroup} size="sm">
                   {actions.map((action, index) => {
                     return (
-                      <Dropdown.Item
-                        key={`action-list-${index}`}
-                        onClick={() => action.action()}
-                        eventKey={index}
-                        title={action.name}
-                      >
+                      <Dropdown.Item key={`action-list-${index}`} onClick={() => action.action()} eventKey={index} title={action.name}>
                         {action.string}
                       </Dropdown.Item>
                     );
@@ -80,7 +57,7 @@ function Header({ children, formView, title, actions }: HeaderProps) {
           <Col xs="12" sm="11" md="6" lg="6" xl="6">
             <div className="d-flex justify-content-end align-items-end gap-2">
               {children}
-              <Button size="sm" onClick={() => router.back()}>
+              <Button onClick={() => router.back()} variant="light">
                 <i className="bi bi-arrow-left"></i>
               </Button>
             </div>
@@ -92,11 +69,7 @@ function Header({ children, formView, title, actions }: HeaderProps) {
 }
 
 function Body({ children }: BodyProps) {
-  return (
-    <Card.Body className="p-0 flex-fill overflow-auto bg-body-tertiary">
-      {children}
-    </Card.Body>
-  );
+  return <Card.Body className="p-0 flex-fill overflow-auto bg-body-tertiary">{children}</Card.Body>;
 }
 
 function Footer({ children }: FooterProps) {
@@ -110,11 +83,7 @@ export type ListViewSubComponents = {
 };
 
 type ListViewProps = {
-  children:
-    | ReactElement<HeaderProps, typeof Header>
-    | ReactElement<BodyProps, typeof Body>
-    | ReactElement<FooterProps, typeof Footer>
-    | ReactElement<any>[];
+  children: ReactElement<HeaderProps, typeof Header> | ReactElement<BodyProps, typeof Body> | ReactElement<FooterProps, typeof Footer> | ReactElement<any>[];
   model: string;
 };
 

@@ -8,24 +8,29 @@ export function WidgetAvatar({
   name = "displayAvatar",
   width = 32,
   height = 32,
+  displayName,
 }: {
   imageUrl?: string | null;
   name?: string;
   width?: number;
   height?: number;
+  displayName?: boolean;
 }) {
   return (
     <Zoom>
-      <Image
-        title={name}
-        unoptimized
-        src={imageUrl ?? "/images/avatar_default.svg"}
-        width={width}
-        height={height}
-        alt="imageAvatar"
-        className="img-fluid rounded"
-        onClick={(e) => e.stopPropagation()}
-      />
+      <div className={displayName ? "d-flex align-items-center gap-1" : ""}>
+        <Image
+          title={name}
+          unoptimized
+          src={imageUrl ?? "/images/avatar_default.svg"}
+          width={width}
+          height={height}
+          alt="imageAvatar"
+          className="img-fluid rounded"
+          onClick={(e) => e.stopPropagation()}
+        />
+        {displayName && <span>{displayName}</span>}
+      </div>
     </Zoom>
   );
 }

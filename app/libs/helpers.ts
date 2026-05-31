@@ -80,10 +80,10 @@ export function esMultiplo(cant: number, uom: number) {
   return Math.abs(cant % uom) < precision;
 }
 
-export const formatCurrency = (value: number) => {
+export const formatCurrency = ({ value, currency = "MXN" }: { value: number; currency?: string }) => {
   return new Intl.NumberFormat("es-MX", {
     style: "currency",
-    currency: "MXN",
+    currency: currency,
   }).format(value);
 };
 

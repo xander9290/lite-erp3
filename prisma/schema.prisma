@@ -8,80 +8,58 @@ datasource db {
 }
 
 model Partner {
-  id       String  @id @default(cuid())
-  name     String
-  email    String?
-  imageUrl String?
-
-  phone       String?
-  mobile      String?
-  street      String?
-  houseNumber String? @map("house_number")
-  streets     String?
-  town        String?
-  zip         Int?
-  county      String?
-  province    String?
-  country     String?
-  vat         String?
-
-  displayType PartnerDisplayType @default(INTERNAL) @map("display_type")
-  active      Boolean            @default(true)
-
-  User User? @relation("PartnerUserRelated")
-
-  Company Company? @relation("PartnerCompanyRel")
-
-  userId      String? @map("user_id")
-  UserManager User?   @relation("PartnerManagerRel", references: [id], fields: [userId], onDelete: Cascade)
-
-  Products ProductTemplate[] @relation("ProductSupplierRel") //Proveedor en productos
-
-  createdUid String   @map("created_uid")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id             String             @id @default(cuid())
+  name           String
+  email          String?
+  imageUrl       String?
+  phone          String?
+  street         String?
+  houseNumber    String?            @map("house_number")
+  streets        String?
+  town           String?
+  zip            Int?
+  county         String?
+  province       String?
+  country        String?
+  vat            String?
+  displayType    PartnerDisplayType @default(INTERNAL) @map("display_type")
+  active         Boolean            @default(true)
+  createdUid     String             @map("created_uid")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  userId         String?            @map("user_id")
+  mobile         String?
+  Company        Company?           @relation("PartnerCompanyRel")
+  UserManager    User?              @relation("PartnerManagerRel", fields: [userId], references: [id], onDelete: Cascade)
+  Products       ProductTemplate[]  @relation("ProductSupplierRel")
+  PurchaseOrders PurchaseOrder[]
+  User           User?              @relation("PartnerUserRelated")
 
   @@index([name])
   @@map("partners")
 }
 
-enum PartnerDisplayType {
-  INTERNAL
-  CUSTOMER
-  SUPPLIER
-  CONTACT
-  DELIVERY
-}
-
 model User {
-  id        String    @id @default(cuid())
-  name      String
-  login     String    @unique
-  password  String
-  lastLogin DateTime? @map("last_login")
-  active    Boolean   @default(true)
-
-  partnerId String?  @unique @map("partner_id")
-  Partner   Partner? @relation("PartnerUserRelated", fields: [partnerId], references: [id], onDelete: Cascade)
-
-  Group   Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  groupId String? @map("group_id")
-
-  ManagedCompanies Company[] @relation("UserManageCompanyRel")
-
-  Companies Company[] @relation("UserCompanyRel")
-
-  PartnerManager Partner[] @relation("PartnerManagerRel")
-
-  Products ProductTemplate[] @relation("ProductUserRel") //Comprador designado en productos
-
-  Auditlogs Auditlog[] @relation("UserAuditlogRel")
-
-  StockMoves StockMove[]
-
-  createdUid String   @map("created_uid")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id               String            @id @default(cuid())
+  name             String
+  login            String            @unique
+  password         String
+  lastLogin        DateTime?         @map("last_login")
+  active           Boolean           @default(true)
+  partnerId        String?           @unique @map("partner_id")
+  groupId          String?           @map("group_id")
+  createdUid       String            @map("created_uid")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  Auditlogs        Auditlog[]        @relation("UserAuditlogRel")
+  ManagedCompanies Company[]         @relation("UserManageCompanyRel")
+  PartnerManager   Partner[]         @relation("PartnerManagerRel")
+  Products         ProductTemplate[] @relation("ProductUserRel")
+  PurchaseOrders   PurchaseOrder[]
+  StockMoves       StockMove[]
+  Group            Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  Partner          Partner?          @relation("PartnerUserRelated", fields: [partnerId], references: [id], onDelete: Cascade)
+  Companies        Company[]         @relation("UserCompanyRel")
 
   @@map("users")
 }
@@ -92,149 +70,109 @@ model Auditlog {
   entityType String          @map("entity_type")
   entityId   String          @map("entity_id")
   log        String
-
-  userId String @map("user_id")
-  User   User   @relation("UserAuditlogRel", fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  userId     String          @map("user_id")
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+  User       User            @relation("UserAuditlogRel", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([entityType, entityId, createdAt])
   @@index([userId])
   @@map("auditlogs")
 }
 
-enum AuditlogActions {
-  create
-  update
-  read
-  delete
-}
-
 model Group {
-  id     String  @id @default(cuid())
-  name   String  @unique
-  active Boolean @default(true)
-
-  Users User[]
-
+  id         String      @id @default(cuid())
+  name       String      @unique
+  active     Boolean     @default(true)
+  createdUid String      @map("created_uid")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
   GroupLines GroupLine[] @relation("GroupLineRel")
-
-  createdUid String   @map("created_uid")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  Users      User[]
 
   @@map("groups")
 }
 
 model GroupLine {
-  id         String  @id @default(cuid())
-  entityType String  @map("entity_type")
-  fieldName  String  @map("field_name")
-  invisible  Boolean @default(false)
-  readonly   Boolean @default(false)
-  required   Boolean @default(false)
-  notCreate  Boolean @default(false) @map("not_create")
-  notEdit    Boolean @default(false) @map("not_edit")
-
-  modelId String @map("model_id")
-  fieldId String @map("field_id")
-
-  groupId String @map("group_id")
-  Group   Group  @relation("GroupLineRel", fields: [groupId], references: [id], onDelete: Cascade)
-
+  id         String   @id @default(cuid())
+  entityType String   @map("entity_type")
+  fieldName  String   @map("field_name")
+  invisible  Boolean  @default(false)
+  readonly   Boolean  @default(false)
+  required   Boolean  @default(false)
+  notCreate  Boolean  @default(false) @map("not_create")
+  notEdit    Boolean  @default(false) @map("not_edit")
+  modelId    String   @map("model_id")
+  fieldId    String   @map("field_id")
+  groupId    String   @map("group_id")
   createdUid String   @map("created_uid")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
+  Group      Group    @relation("GroupLineRel", fields: [groupId], references: [id], onDelete: Cascade)
 
   @@index([entityType, fieldName])
 }
 
 model Model {
-  id          String  @id @default(cuid())
-  name        String  @unique // [label] description
-  label       String  @unique
+  id          String       @id @default(cuid())
+  name        String       @unique
+  label       String       @unique
   description String
-  active      Boolean @default(false)
-
+  active      Boolean      @default(false)
+  createdUid  String       @map("created_uid")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
   ModelFields ModelField[] @relation("ModelFieldRel")
-
-  createdUid String   @map("created_uid")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("models")
 }
 
 model ModelField {
   id          String    @id @default(cuid())
-  name        String // [label] description
+  name        String
   label       String
   description String
   fieldType   FieldType @map("field_type")
   active      Boolean   @default(false)
-
-  modelId String @map("model_id")
-  Model   Model  @relation("ModelFieldRel", fields: [modelId], references: [id], onDelete: Cascade)
-
-  createdUid String   @map("created_uid")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  modelId     String    @map("model_id")
+  createdUid  String    @map("created_uid")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  Model       Model     @relation("ModelFieldRel", fields: [modelId], references: [id], onDelete: Cascade)
 
   @@index([name])
   @@map("model_fields")
 }
 
-enum FieldType {
-  string
-  number
-  relation
-  action
-  link
-  boolean
-  date
-  datetime
-}
-
 model Tag {
-  id         String @id @default(cuid())
-  name       String
-  entityName String @map("entity_name")
-
-  ProductTemplate ProductTemplate[]
+  id              String            @id @default(cuid())
+  name            String
+  entityName      String            @map("entity_name")
+  ProductTemplate ProductTemplate[] @relation("ProductTemplateToTag")
 
   @@index([name, entityName])
   @@map("tags")
 }
 
 model Company {
-  id     String  @id @default(cuid())
-  name   String  @unique
-  code   String  @unique
-  active Boolean @default(true)
-
-  Users User[] @relation("UserCompanyRel")
-
-  managerId String? @map("manager_id")
-  Manager   User?   @relation("UserManageCompanyRel", fields: [managerId], references: [id], onDelete: Cascade)
-
-  partnerId String  @unique @map("partner_id")
-  Partner   Partner @relation("PartnerCompanyRel", fields: [partnerId], references: [id], onDelete: Cascade)
-
-  //Es sucursal de o empresa Matriz   
-  parentId String?   @map("parent_id")
-  Company  Company?  @relation("ParentChildrenCompany", fields: [parentId], references: [id], onDelete: Cascade)
-  Children Company[] @relation("ParentChildrenCompany")
-
-  Warehouses Warehouse[] @relation("WarehouseCompanyRel")
-
+  id             String          @id @default(cuid())
+  name           String          @unique
+  code           String          @unique
+  active         Boolean         @default(true)
+  managerId      String?         @map("manager_id")
+  partnerId      String          @unique @map("partner_id")
+  parentId       String?         @map("parent_id")
+  createdUid     String          @map("created_uid")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  Manager        User?           @relation("UserManageCompanyRel", fields: [managerId], references: [id], onDelete: Cascade)
+  Company        Company?        @relation("ParentChildrenCompany", fields: [parentId], references: [id], onDelete: Cascade)
+  Children       Company[]       @relation("ParentChildrenCompany")
+  Partner        Partner         @relation("PartnerCompanyRel", fields: [partnerId], references: [id], onDelete: Cascade)
   Manufacturings Manufacturing[]
-
-  stockMoves StockMove[]
-
-  createdUid String   @map("created_uid")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  stockMoves     StockMove[]
+  Warehouses     Warehouse[]     @relation("WarehouseCompanyRel")
+  Users          User[]          @relation("UserCompanyRel")
 
   @@map("companies")
 }
@@ -261,11 +199,321 @@ model Warehouse {
   ManufacturingsOrgin Manufacturing[] @relation("ManufacturingWhOrigin")
   ManufacturingsDest  Manufacturing[] @relation("ManufacturingWhDes")
 
-  createdUid String   @map("created_uid")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  createdUid     String          @map("created_uid")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  purchaseOrders PurchaseOrder[]
 
   @@map("warehouses")
+}
+
+model StockWarehouse {
+  id           String          @id @default(cuid())
+  qty          Float           @default(0.0)
+  reservedQty  Float           @default(0.0) @map("reserved_qty")
+  locationName String?
+  productId    String          @map("product_id")
+  warehouseId  String          @map("warehouse_id")
+  createdUid   String          @map("created_uid")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  Product      ProductTemplate @relation(fields: [productId], references: [id])
+  Warehouse    Warehouse       @relation(fields: [warehouseId], references: [id])
+
+  @@unique([productId, warehouseId], name: "productId_warehouseId")
+  @@map("stock_warehouse")
+}
+
+model StockMove {
+  id              String          @id @default(cuid())
+  name            String
+  reference       String
+  quantity        Float           @default(0.0)
+  date            DateTime        @default(now()) @db.Date
+  productId       String          @map("product_id")
+  warehouseId     String          @map("warehouse_id")
+  warehouseDestId String          @map("warehouse_dest_id")
+  userId          String          @map("user_id")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  moveType        StockMoveType   @map("move_type")
+  companyId       String          @map("company_id")
+  Company         Company         @relation(fields: [companyId], references: [id])
+  Product         ProductTemplate @relation(fields: [productId], references: [id])
+  User            User            @relation(fields: [userId], references: [id])
+  WarehouseDest   Warehouse       @relation("DestWarehouseMove", fields: [warehouseDestId], references: [id])
+  WarehouseOrigin Warehouse       @relation("OriginWarehouseMove", fields: [warehouseId], references: [id])
+
+  @@map("stock_move")
+}
+
+model ProductTemplate {
+  id                    String                 @id @default(cuid())
+  name                  String                 @unique
+  description           String                 @unique
+  defaultCode           String                 @unique @map("default_code")
+  active                Boolean                @default(true)
+  sales                 Boolean                @default(true)
+  purchases             Boolean                @default(true)
+  imageUrl              String?                @default("/image/avatar_default.svg") @map("image_url")
+  price1                Float                  @default(0.00) @map("price_1")
+  price2                Float                  @default(0.00) @map("price_2")
+  price3                Float                  @default(0.00) @map("price_3")
+  price4                Float                  @default(0.00) @map("price_4")
+  price5                Float                  @default(0.00) @map("price_5")
+  lastCost              Float                  @default(0.00) @map("last_cost")
+  weight                Float                  @default(0.00)
+  volume                Float                  @default(0.00)
+  ancho                 Float                  @default(0.00)
+  alto                  Float                  @default(0.00)
+  largo                 Float                  @default(0.00)
+  uomIncomingAllowed    Float                  @default(1.0) @map("uom_incoming_allowed")
+  uomOutgoingAllowed    Float                  @default(1.0) @map("uom_outgoing_allowed")
+  supplierId            String?                @map("supplier_id")
+  userId                String?                @map("user_id")
+  createUid             String                 @map("create_uid")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  displayType           ProductDisplayType     @default(PRODUCT) @map("display_type")
+  state                 ProductStateType       @default(AVAILABLE)
+  productCategoryId     String?                @map("product_category_id")
+  productBrandId        String?                @map("product_brand_id")
+  uomId                 String?                @map("uom_id")
+  manufacturing         Boolean                @default(false)
+  yield                 Float                  @default(0.00)
+  Manufacturings        Manufacturing[]
+  ManufacturingLines    ManufacturingLine[]
+  ProductPackagingLines ProductPackagingLine[]
+  ReceiptLines          ProductReceiptLine[]   @relation("ParentProductReceipt")
+  ProductReceiptLines   ProductReceiptLine[]   @relation("ProductReceipt")
+  ProductBrand          ProductBrand?          @relation(fields: [productBrandId], references: [id])
+  ProductCategory       ProductCategory?       @relation(fields: [productCategoryId], references: [id])
+  Supplier              Partner?               @relation("ProductSupplierRel", fields: [supplierId], references: [id])
+  Uom                   UomCategory?           @relation(fields: [uomId], references: [id])
+  User                  User?                  @relation("ProductUserRel", fields: [userId], references: [id])
+  StockMoves            StockMove[]
+  Stocks                StockWarehouse[]
+  Tags                  Tag[]                  @relation("ProductTemplateToTag")
+  purchaseOrderLines    PurchaseOrderLine[]
+
+  @@map("product_template")
+}
+
+model ProductCategory {
+  id          String            @id @default(cuid())
+  name        String            @unique
+  createUid   String            @map("create_uid")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  parentId    String?           @map("parent_id")
+  description String
+  active      Boolean           @default(true)
+  Parent      ProductCategory?  @relation("ParentProductCategoryRel", fields: [parentId], references: [id], onDelete: Cascade)
+  Children    ProductCategory[] @relation("ParentProductCategoryRel")
+  Products    ProductTemplate[]
+
+  @@map("product_category")
+}
+
+model ProductBrand {
+  id          String            @id @default(cuid())
+  name        String            @unique
+  description String            @unique
+  code        String            @unique
+  active      Boolean           @default(true)
+  createUid   String            @map("create_uid")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  Products    ProductTemplate[]
+
+  @@map("product_brand")
+}
+
+model UomCategory {
+  id                    String                 @id @default(cuid())
+  name                  String                 @unique
+  description           String                 @unique
+  code                  String                 @unique
+  ratio                 Float                  @default(0.0)
+  isBaseUnit            Boolean                @default(false) @map("is_base_unit")
+  active                Boolean                @default(true)
+  createUid             String                 @map("create_uid")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  Manufacturings        Manufacturing[]
+  ManufacturingLines    ManufacturingLine[]
+  productPackagingLines ProductPackagingLine[]
+  ProductReceiptLines   ProductReceiptLine[]
+  Products              ProductTemplate[]
+  purchaseOrderLines    PurchaseOrderLine[]
+
+  @@map("product_uom_category")
+}
+
+model ProductPackaging {
+  id                    String                 @id @default(cuid())
+  name                  String                 @unique
+  active                Boolean                @default(true)
+  createUid             String                 @map("create_uid")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  ProductPackagingLines ProductPackagingLine[]
+
+  @@map("product_packaging")
+}
+
+model ProductPackagingLine {
+  id               String           @id @default(cuid())
+  qty              Float            @default(0.0)
+  packagingId      String           @map("packagin_id")
+  productId        String           @map("product_id")
+  createUid        String           @map("create_uid")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  uomId            String           @map("uom_id")
+  ProductPackaging ProductPackaging @relation(fields: [packagingId], references: [id])
+  Product          ProductTemplate  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  Uom              UomCategory      @relation(fields: [uomId], references: [id])
+
+  @@map("product_packaging_line")
+}
+
+model ProductReceiptLine {
+  id        String          @id @default(cuid())
+  qty       Float           @default(0.0)
+  productId String          @map("product_id")
+  uomId     String          @map("uom_id")
+  createUid String          @map("create_uid")
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+  active    Boolean         @default(true)
+  parentId  String          @map("parent_id")
+  Parent    ProductTemplate @relation("ParentProductReceipt", fields: [parentId], references: [id])
+  Product   ProductTemplate @relation("ProductReceipt", fields: [productId], references: [id])
+  Uom       UomCategory     @relation(fields: [uomId], references: [id])
+
+  @@map("product_receipt_line")
+}
+
+model Manufacturing {
+  id                 String              @id @default(cuid())
+  name               String              @unique
+  state              ManufacturingState  @default(draft)
+  quantity           Float               @default(0.0)
+  productId          String              @map("product_id")
+  companyId          String              @map("company_id")
+  whOriginId         String              @map("wh_origin_id")
+  whDestId           String              @map("wh_dest_id")
+  createUid          String              @map("create_uid")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  date               DateTime            @default(now()) @db.Date
+  uomId              String              @map("uom_id")
+  yield              Float               @default(0.0)
+  Company            Company             @relation(fields: [companyId], references: [id])
+  Product            ProductTemplate     @relation(fields: [productId], references: [id])
+  Uom                UomCategory         @relation(fields: [uomId], references: [id])
+  WhDest             Warehouse           @relation("ManufacturingWhDes", fields: [whDestId], references: [id])
+  WhOrigin           Warehouse           @relation("ManufacturingWhOrigin", fields: [whOriginId], references: [id])
+  ManufacturingLines ManufacturingLine[]
+
+  @@map("manufacturing")
+}
+
+model ManufacturingLine {
+  id                  String          @id @default(cuid())
+  outQty              Float           @default(0.0) @map("out_qty")
+  manufacturingId     String          @map("manufacturing_id")
+  productIngredientId String          @map("product_ingredient_id")
+  createUid           String          @map("create_uid")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+  uomId               String          @map("uom_id")
+  Manufacturing       Manufacturing   @relation(fields: [manufacturingId], references: [id], onDelete: Cascade)
+  Product             ProductTemplate @relation(fields: [productIngredientId], references: [id])
+  Uom                 UomCategory     @relation(fields: [uomId], references: [id])
+
+  @@map("manufacturing_line")
+}
+
+model Counter {
+  id    String @id
+  value Int
+
+  @@map("counters")
+}
+
+model PurchaseOrder {
+  id              String               @id @default(cuid())
+  name            String               @unique
+  supplierId      String               @map("supplier_id")
+  userId          String               @map("user_id")
+  warehouseDestId String               @map("wh_dest_id")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  state           PurchaseOrderState   @default(draft)
+  subtotal        Float                @default(0.0)
+  total           Float                @default(0.0)
+  date            DateTime             @db.Date
+  dateOrder       DateTime             @map("date_order") @db.Date
+  datePlanned     DateTime?            @map("date_planned") @db.Date
+  Supplier        Partner              @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  User            User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  WarehouseDest   Warehouse            @relation(fields: [warehouseDestId], references: [id], onDelete: Restrict)
+  paymentTermId   String               @map("payment_term_id")
+  PaymentTerm     InvoicingPaymentTerm @relation(fields: [paymentTermId], references: [id], onDelete: Restrict)
+  OrderLines      PurchaseOrderLine[]
+
+  @@map("purchase_order")
+}
+
+model PurchaseOrderLine {
+  id        String @id @default(cuid())
+  priceUnit Float  @default(0.0) @map("price_unit")
+  quantity  Float  @default(0.0)
+  subtotal  Float  @default(0.0)
+  total     Float  @default(0.0)
+
+  orderId      String        @map("order_id")
+  PurcaseOrder PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  productId String          @map("product_id")
+  Product   ProductTemplate @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  uomId String      @map("uom_id")
+  Uom   UomCategory @relation(fields: [uomId], references: [id], onDelete: Restrict)
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("purchase_order_line")
+}
+
+enum PartnerDisplayType {
+  INTERNAL
+  CUSTOMER
+  SUPPLIER
+  CONTACT
+  DELIVERY
+}
+
+enum AuditlogActions {
+  create
+  update
+  read
+  delete
+}
+
+enum FieldType {
+  string
+  number
+  relation
+  action
+  link
+  boolean
+  date
+  datetime
 }
 
 enum WarehouseType {
@@ -278,157 +526,9 @@ enum WarehouseType {
   OUTGOING
 }
 
-model StockWarehouse {
-  id           String  @id @default(cuid())
-  qty          Float   @default(0.0)
-  reservedQty  Float   @default(0.0) @map("reserved_qty")
-  locationName String?
-
-  productId String          @map("product_id")
-  Product   ProductTemplate @relation(fields: [productId], references: [id])
-
-  warehouseId String    @map("warehouse_id")
-  Warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
-
-  createdUid String   @map("created_uid")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
-  @@unique([productId, warehouseId], name: "productId_warehouseId")
-  @@map("stock_warehouse")
-}
-
-model StockMove {
-  id        String        @id @default(cuid())
-  name      String
-  reference String
-  quantity  Float         @default(0.0)
-  date      DateTime      @default(now()) @db.Date
-  moveType  StockMoveType @map("move_type")
-
-  productId String          @map("product_id")
-  Product   ProductTemplate @relation(fields: [productId], references: [id])
-
-  warehouseId     String    @map("warehouse_id")
-  WarehouseOrigin Warehouse @relation("OriginWarehouseMove", fields: [warehouseId], references: [id])
-
-  warehouseDestId String    @map("warehouse_dest_id")
-  WarehouseDest   Warehouse @relation("DestWarehouseMove", fields: [warehouseDestId], references: [id])
-
-  userId String @map("user_id")
-  User   User   @relation(fields: [userId], references: [id])
-
-  companyId String  @map("company_id")
-  Company   Company @relation(fields: [companyId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("stock_move")
-}
-
 enum StockMoveType {
   outgoing
   incoming
-}
-
-model ProductTemplate {
-  id                 String             @id @default(cuid())
-  name               String             @unique
-  description        String             @unique
-  defaultCode        String             @unique @map("default_code")
-  displayType        ProductDisplayType @default(PRODUCT) @map("display_type")
-  state              ProductStateType   @default(AVAILABLE)
-  active             Boolean            @default(true)
-  sales              Boolean            @default(true)
-  purchases          Boolean            @default(true)
-  manufacturing      Boolean            @default(false)
-  yield              Float              @default(0.00)
-  imageUrl           String?            @default("/image/avatar_default.svg") @map("image_url")
-  price1             Float              @default(0.00) @map("price_1")
-  price2             Float              @default(0.00) @map("price_2")
-  price3             Float              @default(0.00) @map("price_3")
-  price4             Float              @default(0.00) @map("price_4")
-  price5             Float              @default(0.00) @map("price_5")
-  lastCost           Float              @default(0.00) @map("last_cost")
-  weight             Float              @default(0.00)
-  volume             Float              @default(0.00)
-  ancho              Float              @default(0.00)
-  alto               Float              @default(0.00)
-  largo              Float              @default(0.00)
-  uomIncomingAllowed Float              @default(1.0) @map("uom_incoming_allowed")
-  uomOutgoingAllowed Float              @default(1.0) @map("uom_outgoing_allowed")
-
-  productCategoryId String?          @map("product_category_id")
-  ProductCategory   ProductCategory? @relation(fields: [productCategoryId], references: [id])
-
-  supplierId String?  @map("supplier_id")
-  Supplier   Partner? @relation("ProductSupplierRel", fields: [supplierId], references: [id])
-
-  userId String? @map("user_id")
-  User   User?   @relation("ProductUserRel", fields: [userId], references: [id])
-
-  productBrandId String?       @map("product_brand_id")
-  ProductBrand   ProductBrand? @relation(fields: [productBrandId], references: [id])
-
-  Tags Tag[]
-
-  uomId String?      @map("uom_id")
-  Uom   UomCategory? @relation(fields: [uomId], references: [id])
-
-  ProductPackagingLines ProductPackagingLine[]
-
-  ReceiptLines        ProductReceiptLine[] @relation("ParentProductReceipt")
-  ProductReceiptLines ProductReceiptLine[] @relation("ProductReceipt")
-
-  StockMoves StockMove[]
-
-  Stocks StockWarehouse[]
-
-  Manufacturings Manufacturing[]
-
-  ManufacturingLines ManufacturingLine[]
-
-  createUid String   @map("create_uid")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("product_template")
-}
-
-model ProductCategory {
-  id          String  @id @default(cuid())
-  name        String  @unique
-  description String
-  active      Boolean @default(true)
-
-  parentId String?           @map("parent_id")
-  Parent   ProductCategory?  @relation("ParentProductCategoryRel", fields: [parentId], references: [id], onDelete: Cascade)
-  Children ProductCategory[] @relation("ParentProductCategoryRel")
-
-  Products ProductTemplate[]
-
-  createUid String   @map("create_uid")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("product_category")
-}
-
-model ProductBrand {
-  id          String  @id @default(cuid())
-  name        String  @unique
-  description String  @unique
-  code        String  @unique
-  active      Boolean @default(true)
-
-  Products ProductTemplate[]
-
-  createUid String   @map("create_uid")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("product_brand")
 }
 
 enum ProductDisplayType {
@@ -442,138 +542,6 @@ enum ProductStateType {
   NOT_AVAILABLE
 }
 
-model UomCategory {
-  id          String  @id @default(cuid())
-  name        String  @unique
-  description String  @unique
-  code        String  @unique
-  ratio       Float   @default(0.0)
-  isBaseUnit  Boolean @default(false) @map("is_base_unit")
-  active      Boolean @default(true)
-
-  Products ProductTemplate[]
-
-  productPackagingLines ProductPackagingLine[]
-  ProductReceiptLines   ProductReceiptLine[]
-
-  Manufacturings Manufacturing[]
-
-  ManufacturingLines ManufacturingLine[]
-
-  createUid String   @map("create_uid")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("product_uom_category")
-}
-
-model ProductPackaging {
-  id     String  @id @default(cuid())
-  name   String  @unique
-  active Boolean @default(true)
-
-  ProductPackagingLines ProductPackagingLine[]
-
-  createUid String   @map("create_uid")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("product_packaging")
-}
-
-model ProductPackagingLine {
-  id  String @id @default(cuid())
-  qty Float  @default(0.0)
-
-  uomId String      @map("uom_id")
-  Uom   UomCategory @relation(fields: [uomId], references: [id])
-
-  packagingId      String           @map("packagin_id")
-  ProductPackaging ProductPackaging @relation(fields: [packagingId], references: [id])
-
-  productId String          @map("product_id")
-  Product   ProductTemplate @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  createUid String   @map("create_uid")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("product_packaging_line")
-}
-
-model ProductReceiptLine {
-  id     String  @id @default(cuid())
-  qty    Float   @default(0.0)
-  active Boolean @default(true)
-
-  parentId String          @map("parent_id")
-  Parent   ProductTemplate @relation("ParentProductReceipt", fields: [parentId], references: [id])
-
-  productId String          @map("product_id")
-  Product   ProductTemplate @relation("ProductReceipt", fields: [productId], references: [id])
-
-  uomId String      @map("uom_id")
-  Uom   UomCategory @relation(fields: [uomId], references: [id])
-
-  createUid String   @map("create_uid")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("product_receipt_line")
-}
-
-model Manufacturing {
-  id       String             @id @default(cuid())
-  name     String             @unique
-  state    ManufacturingState @default(draft)
-  date     DateTime           @default(now()) @db.Date
-  quantity Float              @default(0.0)
-  yield    Float              @default(0.0)
-
-  productId String          @map("product_id")
-  Product   ProductTemplate @relation(fields: [productId], references: [id])
-
-  uomId String      @map("uom_id")
-  Uom   UomCategory @relation(fields: [uomId], references: [id])
-
-  companyId String  @map("company_id")
-  Company   Company @relation(fields: [companyId], references: [id])
-
-  whOriginId String    @map("wh_origin_id")
-  WhOrigin   Warehouse @relation("ManufacturingWhOrigin", fields: [whOriginId], references: [id])
-
-  whDestId String    @map("wh_dest_id")
-  WhDest   Warehouse @relation("ManufacturingWhDes", fields: [whDestId], references: [id])
-
-  ManufacturingLines ManufacturingLine[]
-
-  createUid String   @map("create_uid")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("manufacturing")
-}
-
-model ManufacturingLine {
-  id     String @id @default(cuid())
-  outQty Float  @default(0.0) @map("out_qty")
-
-  manufacturingId String        @map("manufacturing_id")
-  Manufacturing   Manufacturing @relation(fields: [manufacturingId], references: [id], onDelete: Cascade)
-
-  productIngredientId String          @map("product_ingredient_id")
-  Product             ProductTemplate @relation(fields: [productIngredientId], references: [id])
-
-  uomId String      @map("uom_id")
-  Uom   UomCategory @relation(fields: [uomId], references: [id])
-
-  createUid String   @map("create_uid")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("manufacturing_line")
-}
-
 enum ManufacturingState {
   draft
   in_process
@@ -582,9 +550,25 @@ enum ManufacturingState {
   cancel
 }
 
-model Counter {
-  id    String @id // por ejemplo: "invoice", "order", etc.
-  value Int
+enum PurchaseOrderState {
+  draft
+  purchase
+  done
+  cancel
+}
 
-  @@map("counters")
+model InvoicingPaymentTerm {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  amount Float   @default(1000)
+  days   Int     @default(0)
+  active Boolean @default(true)
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  purchaseOrders PurchaseOrder[]
+
+  @@map("invoicing_payment_term")
 }

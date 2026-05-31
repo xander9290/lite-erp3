@@ -2,7 +2,6 @@
 
 import { useFormContext, Controller } from "react-hook-form";
 import { Form, FloatingLabel } from "react-bootstrap";
-import { format } from "date-fns";
 import { ElementType, useEffect, useState } from "react";
 import { useAccess } from "@/contexts/AccessContext";
 import toast from "react-hot-toast";
@@ -57,7 +56,13 @@ function toDateInputValue(value: unknown): string {
   const d = value instanceof Date ? value : typeof value === "string" || typeof value === "number" ? new Date(value) : null;
 
   if (!d || isNaN(d.getTime())) return "";
-  return format(d, "yyyy-MM-dd");
+
+  // ✅ Usar los componentes UTC directamente en lugar de format()
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 function toDatetimeLocalValue(value: unknown): string {
@@ -66,22 +71,30 @@ function toDatetimeLocalValue(value: unknown): string {
   const d = value instanceof Date ? value : typeof value === "string" || typeof value === "number" ? new Date(value) : null;
 
   if (!d || isNaN(d.getTime())) return "";
-  return format(d, "yyyy-MM-dd'T'HH:mm");
+
+  // ✅ Usar UTC para mantener consistencia
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  const hours = String(d.getUTCHours()).padStart(2, "0");
+  const minutes = String(d.getUTCMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-function dateInputToISO(value: string): string {
-  if (!value) return "";
-  const d = new Date(`${value}T00:00`);
-  if (isNaN(d.getTime())) return "";
-  return d.toISOString();
-}
+// function dateInputToISO(value: string): string {
+//   if (!value) return "";
+//   const d = new Date(`${value}T00:00`);
+//   if (isNaN(d.getTime())) return "";
+//   return d.toISOString();
+// }
 
-function datetimeLocalToISO(value: string): string {
-  if (!value) return "";
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return "";
-  return d.toISOString();
-}
+// function datetimeLocalToISO(value: string): string {
+//   if (!value) return "";
+//   const d = new Date(value);
+//   if (isNaN(d.getTime())) return "";
+//   return d.toISOString();
+// }
 
 /**
  * Formatea un número con formato mexicano (miles con coma, decimales con punto)
@@ -200,20 +213,20 @@ function FieldInput({
       return;
     }
 
-    if (type === "datetime-local") {
-      const iso = datetimeLocalToISO(raw);
-      field.onChange(iso);
-      onChange?.(iso);
-      return;
-    }
-
     if (type === "date") {
-      const iso = dateInputToISO(raw);
-      field.onChange(iso);
-      onChange?.(iso);
+      // ✅ Crear la fecha como UTC al mediodía para evitar problemas de zona horaria
+      const [year, month, day] = raw.split("-").map(Number);
+      const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+      field.onChange(date);
       return;
     }
 
+    if (type === "datetime-local") {
+      // ✅ Parsear como UTC
+      const date = new Date(raw + "Z"); // Agregar Z para indicar UTC
+      field.onChange(date);
+      return;
+    }
     field.onChange(raw);
     onChange?.(raw);
   };

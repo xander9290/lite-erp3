@@ -34,10 +34,20 @@ function TopNavItems() {
         }
         disabled={fieldsAccess.find((field) => field.fieldName === "purchaseMenu")?.invisible}
       >
-        <NavDropdown.Item title="purchaseQuotsMenu" disabled={fieldsAccess.find((field) => field.fieldName === "purchaseQuotsMenu")?.invisible}>
+        <NavDropdown.Item
+          title="purchaseQuotsMenu"
+          disabled={fieldsAccess.find((field) => field.fieldName === "purchaseQuotsMenu")?.invisible}
+          href="/app/purchase_order?view_type=list&id=null&state=draft"
+          as={Link}
+        >
           Cotizaciones
         </NavDropdown.Item>
-        <NavDropdown.Item title="purchaseOrdersMenu" disabled={fieldsAccess.find((field) => field.fieldName === "purchaseOrdersMenu")?.invisible}>
+        <NavDropdown.Item
+          title="purchaseOrdersMenu"
+          disabled={fieldsAccess.find((field) => field.fieldName === "purchaseOrdersMenu")?.invisible}
+          href="/app/purchase_order?view_type=list&id=null"
+          as={Link}
+        >
           Compras
         </NavDropdown.Item>
       </NavDropdown>
@@ -54,9 +64,18 @@ function TopNavItems() {
           <i className="bi bi-person-vcard-fill me-1"></i>
           <span>Clietes</span>
         </NavDropdown.Item>
-        <NavDropdown.Item title="invoicingSuppliersMenu" disabled={fieldsAccess.find((field) => field.fieldName === "invoicingSuppliersMen")?.invisible}>
+        <NavDropdown.Item title="invoicingSuppliersMenu" disabled={fieldsAccess.find((field) => field.fieldName === "invoicingSuppliersMenu")?.invisible}>
           <i className="bi bi-building me-1"></i>
           <span>Proveedores</span>
+        </NavDropdown.Item>
+        <NavDropdown.Item
+          title="invoicingSettings"
+          disabled={fieldsAccess.find((field) => field.fieldName === "invoicingSettings")?.invisible}
+          href="/app/invoicing_settings?view_type=list&id=null"
+          as={Link}
+        >
+          <i className="bi bi-gear-fill me-1"></i>
+          <span>Configuración</span>
         </NavDropdown.Item>
       </NavDropdown>
 

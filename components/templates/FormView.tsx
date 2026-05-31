@@ -61,6 +61,15 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [dirty]);
 
+  const handleReverseExtended = () => {
+    if (id && id === "null") {
+      reverse();
+      router.back();
+    } else {
+      reverse();
+    }
+  };
+
   if (!id || id === "") {
     return <NotFound />;
   }
@@ -96,28 +105,19 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
                       router.replace(cleanUrl);
                     }}
                     className="fw-semibold"
-                    size="sm"
                     disabled={modelAccess?.notCreate}
                   >
                     Nuevo
                   </Button>
                 )}
 
-                <Button type="button" disabled={!dirty || modelAccess?.notEdit} onClick={handleSubmit(onSubmit)} size="sm" variant="none">
+                <Button type="button" disabled={!dirty || modelAccess?.notEdit} onClick={handleSubmit(onSubmit)} variant={`${isDirty ? "warning" : "outline-secondary"}`}>
                   {isSubmitting ? <Spinner size="sm" animation="border" /> : <i className="bi bi-cloud-arrow-up-fill"></i>}
                 </Button>
 
-                <Button type="button" onClick={reverse} disabled={!dirty} title="Deshacer cambios" size="sm" variant="none">
+                <Button type="button" onClick={handleReverseExtended} disabled={!dirty} title="Deshacer cambios" variant={`${isDirty ? "warning" : "outline-secondary"}`}>
                   <i className="bi bi-arrow-counterclockwise"></i>
                 </Button>
-                <div>
-                  {dirty && (
-                    <div className="text-warning small">
-                      <i className="bi bi-exclamation-triangle-fill"></i>
-                      <span className="ms-1">Cambios sin guardar</span>
-                    </div>
-                  )}
-                </div>
               </div>
 
               {/* BOTONES VISTA ESCRITORIO */}
@@ -160,8 +160,7 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
               </div>
 
               <Button
-                size="sm"
-                variant="none"
+                variant={`${dirty ? "warning" : "light"}`}
                 onClick={() => {
                   if (dirty) {
                     const confirmLeave = confirm("Tienes cambios sin guardar. ¿Salir?");
@@ -171,7 +170,13 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
                 }}
                 disabled={dirty}
               >
-                <i className="bi bi-arrow-left"></i>
+                {dirty ? (
+                  <div className="small">
+                    <i className="bi bi-exclamation-triangle-fill"></i>
+                  </div>
+                ) : (
+                  <i className="bi bi-arrow-left"></i>
+                )}
               </Button>
             </div>
             <div className="card-body p-0 flex-fill" style={{ overflowX: "hidden", overflowY: "auto" }}>

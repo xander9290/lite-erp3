@@ -1,44 +1,19 @@
 "use client";
 
-import {
-  craetePartner,
-  PartnerWithProps,
-  updatePartner,
-} from "../actions/partner-actions";
+import { craetePartner, PartnerWithProps, updatePartner } from "../actions/partner-actions";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  partnerSchema,
-  partnerSchemaDefault,
-  PartnerSchemaType,
-} from "../schemas/partner.schema";
+import { partnerSchema, partnerSchemaDefault, PartnerSchemaType } from "../schemas/partner.schema";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
 import { PartnerDisplayType } from "@/generated/prisma/enums";
-import {
-  FormView,
-  FormViewGroup,
-  FormViewStack,
-} from "@/components/templates/FormView";
-import {
-  FieldBoolean,
-  FieldEntry,
-  FieldImage,
-  FieldRelation,
-} from "@/components/templates/fields";
+import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
+import { FieldBoolean, FieldEntry, FieldImage, FieldRelation } from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
 
-function PartnersFormView({
-  display,
-  partner,
-  id,
-}: {
-  display: string;
-  partner: PartnerWithProps | null;
-  id: string | null;
-}) {
+function PartnersFormView({ display, partner, id }: { display: string; partner: PartnerWithProps | null; id: string | null }) {
   const methods = useForm<PartnerSchemaType>({
     resolver: zodResolver(partnerSchema),
     defaultValues: partnerSchemaDefault,
@@ -57,9 +32,7 @@ function PartnersFormView({
         data: { ...data, displayType: display as PartnerDisplayType },
       });
       if (!res.success) return modalError(res.message);
-      router.replace(
-        `/app/partners?view_type=form&id=${res.data?.id}&display=${res.data?.displayType}`,
-      );
+      router.replace(`/app/partners?view_type=form&id=${res.data?.id}&display=${res.data?.displayType}`);
       toast.success(res.message);
     } else {
       const res = await updatePartner({ id, data });
@@ -114,14 +87,7 @@ function PartnersFormView({
   }, [reset, display, partner]);
 
   return (
-    <FormView
-      cleanUrl={`/app/partners?view_type=form&display=${display}&id=null`}
-      reverse={handleReverse}
-      auditLog="partners"
-      onSubmit={onSubmit}
-      methods={methods}
-      id={id}
-    >
+    <FormView cleanUrl={`/app/partners?view_type=form&display=${display}&id=null`} reverse={handleReverse} auditLog="partners" onSubmit={onSubmit} methods={methods} id={id}>
       <FormViewGroup>
         <FieldImage folder="partners" name="imageUrl" />
         <FieldEntry name="name" label="Nombre" />
@@ -136,12 +102,7 @@ function PartnersFormView({
         <FieldEntry name="street" label="Calle" />
         <FormViewStack>
           <FieldEntry name="houseNumber" label="No. Ext." />
-          <FieldEntry
-            name="zip"
-            label="C.P. #"
-            type="number"
-            className="text-center"
-          />
+          <FieldEntry name="zip" label="C.P. #" type="number" decimals={0} step="0" className="text-center" />
         </FormViewStack>
         <FieldEntry name="streets" label="Entre calles" />
         <FormViewStack>
@@ -158,12 +119,7 @@ function PartnersFormView({
         <Page eventKey="salePurchase" title="Cartera">
           <PageSheet name="salePurchase">
             <FormViewGroup>
-              <FieldRelation
-                name="userId"
-                model="user"
-                label="Responsable"
-                domain={[["name", "!=", "bot"]]}
-              />
+              <FieldRelation name="userId" model="user" label="Responsable" domain={[["name", "!=", "bot"]]} />
             </FormViewGroup>
           </PageSheet>
         </Page>

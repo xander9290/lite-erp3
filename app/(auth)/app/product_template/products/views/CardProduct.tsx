@@ -31,7 +31,7 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
               </span>
             </Card.Text>
             <Card.Text className="d-flex justify-content-between m-0 my-1">
-              <FieldText name="price1" output={formatCurrency(product.price1)} />
+              <FieldText name="price1" output={formatCurrency({ value: product.price1 })} />
               <em>
                 <FieldText name="productBrand" output={product.ProductBrand?.description || ""} />
               </em>
