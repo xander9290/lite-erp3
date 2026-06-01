@@ -80,6 +80,27 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
         supplierId: data.supplierId.id,
         warehouseDestId: data.warehouseDestId.id,
         paymentTermId: data.paymentTermId.id,
+        subtotal: round(
+          data.OrderLines.reduce((acc, line) => acc + line.subtotal, 0),
+          2,
+        ),
+        total: round(
+          data.OrderLines.reduce((acc, line) => acc + line.total, 0),
+          2,
+        ),
+        OrderLines: {
+          createMany: {
+            data: data.OrderLines.map((line) => ({
+              productId: line.productId.id,
+              uomId: line.uomId.id,
+              priceUnit: line.priceUnit,
+              quantity: line.quantity,
+              subtotal: line.subtotal,
+              total: line.total,
+              createUid: uid || "",
+            })),
+          },
+        },
         userId: uid!,
       },
       include: {
