@@ -55,6 +55,8 @@ export interface ProductTemplateWithProps extends ProductTemplate {
       name: string;
     };
   }[];
+  TaxSale: { id: string; name: string; amount: number } | null;
+  TaxPurchase: { id: string; name: string; amount: number } | null;
 }
 
 type ProductTemplateActionProps = Omit<ProductTemplateSchemaType, "createdAt" | "updatedAt" | "createdUid">;
@@ -152,6 +154,12 @@ export async function getProductById({ id }: { id: string | null }): Promise<Pro
             Company: { select: { id: true, name: true } },
           },
         },
+        TaxSale: {
+          select: { id: true, name: true, amount: true },
+        },
+        TaxPurchase: {
+          select: { id: true, name: true, amount: true },
+        },
       },
     });
 
@@ -205,6 +213,12 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
         }),
         ...(data.productBrandId?.id && {
           ProductBrand: { connect: { id: data.productBrandId.id } },
+        }),
+        ...(data.taxSaleId?.id && {
+          TaxSale: { connect: { id: data.taxSaleId.id } },
+        }),
+        ...(data.taxPurchaseId?.id && {
+          TaxPurchase: { connect: { id: data.taxPurchaseId.id } },
         }),
         ProductPackagingLines: {
           createMany: {
@@ -316,6 +330,12 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
             Company: { select: { id: true, name: true } },
           },
         },
+        TaxSale: {
+          select: { id: true, name: true, amount: true },
+        },
+        TaxPurchase: {
+          select: { id: true, name: true, amount: true },
+        },
       },
     });
 
@@ -380,6 +400,8 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
         ProductCategory: data.productCategoryId?.id ? { connect: { id: data.productCategoryId.id } } : { disconnect: true },
         ProductBrand: data.productBrandId?.id ? { connect: { id: data.productBrandId.id } } : { disconnect: true },
         Uom: data.uomId?.id ? { connect: { id: data.uomId.id } } : { disconnect: true },
+        TaxPurchase: data.taxPurchaseId?.id ? { connect: { id: data.taxPurchaseId.id } } : { disconnect: true },
+        TaxSale: data.taxSaleId?.id ? { connect: { id: data.taxSaleId.id } } : { disconnect: true },
         ProductPackagingLines: {
           deleteMany: {
             id: {
@@ -511,6 +533,12 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
             },
             Company: { select: { id: true, name: true } },
           },
+        },
+        TaxSale: {
+          select: { id: true, name: true, amount: true },
+        },
+        TaxPurchase: {
+          select: { id: true, name: true, amount: true },
         },
       },
     });

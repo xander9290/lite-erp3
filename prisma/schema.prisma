@@ -295,6 +295,10 @@ model ProductTemplate {
   Stocks                StockWarehouse[]
   Tags                  Tag[]                  @relation("ProductTemplateToTag")
   purchaseOrderLines    PurchaseOrderLine[]
+  taxSaleId             String?                @map("tax_sale_id")
+  TaxSale               InvoicingTax?          @relation("PTSaleTax", fields: [taxSaleId], references: [id], onDelete: Restrict)
+  taxPurchaseId         String?                @map("tax_purchase_id")
+  TaxPurchase           InvoicingTax?          @relation("PTPurchaseTax", fields: [taxPurchaseId], references: [id], onDelete: Restrict)
 
   @@map("product_template")
 }
@@ -581,9 +585,11 @@ model InvoicingTax {
   active      Boolean    @default(true)
   typeUse     TaxTypeUse @default(sale) @map("type_use")
 
-  createUid String   @map("create_uid")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createUid  String            @map("create_uid")
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+  PTSale     ProductTemplate[] @relation("PTSaleTax")
+  PTPurchase ProductTemplate[] @relation("PTPurchaseTax")
 
   @@map("invoicing_tax")
 }

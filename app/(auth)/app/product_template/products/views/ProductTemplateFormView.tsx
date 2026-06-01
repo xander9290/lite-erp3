@@ -161,6 +161,14 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
         productId: { id: line.Product.id, name: line.Product.name },
         uomId: { id: line.Uom.id, name: line.Uom.name },
       })),
+      taxSaleId: {
+        id: product.TaxSale?.id || "",
+        name: product.TaxSale?.name || "",
+      },
+      taxPurchaseId: {
+        id: product.TaxPurchase?.id || "",
+        name: product.TaxPurchase?.name || "",
+      },
       createdAt: product.createdAt,
       createdUid: product.createUid,
       updatedAt: product.updatedAt,
@@ -266,9 +274,10 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
             <FormViewGroup>
               <FieldBoolean name="purchases" label="Se puede comprar" />
               <FormViewStack>
-                <FieldEntry name="lastCost" type="number" label="Último costo" readonly />
-                <FieldEntry name="uomIncomingAllowed" type="number" label="Múltiplo de compra" />
+                <FieldEntry name="lastCost" type="number" label="Ú. Costo" readonly />
+                <FieldEntry name="uomIncomingAllowed" type="number" label="MdC" />
               </FormViewStack>
+              <FieldRelation model="invoicingTax" name="taxPurchaseId" label="Impuestos compra" />
               <FieldRelation model="user" name="userId" label="Comprador" />
               <FieldRelation model="partner" name="supplierId" label="Proveedor" domain={[["displayType", "=", "SUPPLIER"]]} />
             </FormViewGroup>
@@ -288,6 +297,7 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                 <FieldEntry type="number" name="price5" label="Precio 5" />
                 <FieldEntry name="uomOutgoingAllowed" type="number" label="Múltiplo de venta" />
               </FormViewStack>
+              <FieldRelation model="invoicingTax" name="taxSaleId" label="Impuestos venta" />
             </FormViewGroup>
           </PageSheet>
         </Page>

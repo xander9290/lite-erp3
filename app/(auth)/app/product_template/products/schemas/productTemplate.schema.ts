@@ -75,6 +75,18 @@ export const productTemplateSchema = z.object({
     }),
   ),
   Tags: z.array(z.string()),
+  taxSaleId: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .nullable(),
+  taxPurchaseId: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .nullable(),
   createdUid: z.string().nullable(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
@@ -121,6 +133,8 @@ export const productTemplateSchemaDefault: ProductTemplateSchemaType = {
   ProductPackagingLines: [],
   ReceiptLines: [],
   uomId: { id: "", name: "" },
+  taxSaleId: { id: "", name: "" },
+  taxPurchaseId: { id: "", name: "" },
   createdAt: null,
   createdUid: null,
   updatedAt: null,
