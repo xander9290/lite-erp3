@@ -568,7 +568,27 @@ model InvoicingPaymentTerm {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  purchaseOrders PurchaseOrder[]
+  PurchaseOrders PurchaseOrder[]
 
   @@map("invoicing_payment_term")
+}
+
+model InvoicingTax {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String
+  amount      Float      @default(0.0)
+  active      Boolean    @default(true)
+  typeUse     TaxTypeUse @default(sale) @map("type_use")
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("invoicing_tax")
+}
+
+enum TaxTypeUse {
+  sale
+  purchase
 }
