@@ -2,7 +2,7 @@ import { TaxTypeUse } from "@/generated/prisma/enums";
 import { z } from "zod";
 
 export const invoicingTaxSchema = z.object({
-  name: z.string().min(1, "Nombre es requerido"),
+  name: z.string(),
   description: z.string(),
   amount: z.number(),
   active: z.boolean(),

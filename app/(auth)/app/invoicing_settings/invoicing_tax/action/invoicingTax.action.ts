@@ -26,10 +26,11 @@ export async function createInvoicingTax({ data }: { data: InvoicinTaxSchemaType
   try {
     const { uid } = await sessionStore();
 
+    const name = `${data.amount}% ${data.description}`;
     const newInvoicingTax = await prisma.invoicingTax.create({
       data: {
         ...data,
-        name: `[${data.name}] ${data.description}`,
+        name,
         createUid: uid || "",
       },
     });
@@ -55,10 +56,12 @@ export async function createInvoicingTax({ data }: { data: InvoicinTaxSchemaType
 export async function updateInvoicingTax({ data, id }: { id: string | null; data: InvoicinTaxSchemaType }): Promise<ActionResponse<InvoicingTax>> {
   try {
     if (!id) throw new Error("ID not defined");
+    const name = `${data.amount}% ${data.description}`;
     const newInvoicingTax = await prisma.invoicingTax.update({
       where: { id },
       data: {
         ...data,
+        name,
       },
     });
 

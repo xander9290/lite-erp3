@@ -68,7 +68,6 @@ function ITaxFormView({ id, invoicingTax }: { id: string | null; invoicingTax: I
   return (
     <FormView auditLog="invoicingTax" reverse={handleReverse} onSubmit={onSubmit} id={id} methods={methods} cleanUrl="/app/invoicing_settings/invoicing_tax?view_type=form&id=null">
       <FormViewGroup>
-        <FieldEntry name="name" label="Nombre" />
         <FieldEntry name="description" label="Descripción" />
         <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
