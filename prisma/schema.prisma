@@ -477,6 +477,8 @@ model PurchaseOrderLine {
   quantity  Float  @default(0.0)
   subtotal  Float  @default(0.0)
   total     Float  @default(0.0)
+  taxRate   Float  @map("tax_rate")
+  taxAmount Float  @map("tax_amount")
 
   orderId      String        @map("order_id")
   PurcaseOrder PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)

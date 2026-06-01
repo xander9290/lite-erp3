@@ -19,6 +19,8 @@ export interface PurchaseOrderWithProps extends PurchaseOrder {
     Product: { id: string; name: string };
     Uom: { id: string; name: string };
     priceUnit: number;
+    taxRate: number;
+    taxAmount: number;
     quantity: number;
     subtotal: number;
     total: number;
@@ -52,6 +54,8 @@ export async function getPurchaseById({ id }: { id: string | null }): Promise<Pu
             Uom: { select: { id: true, name: true } },
             priceUnit: true,
             total: true,
+            taxRate: true,
+            taxAmount: true,
             subtotal: true,
             quantity: true,
           },
@@ -95,6 +99,8 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
               uomId: line.uomId.id,
               priceUnit: line.priceUnit,
               quantity: line.quantity,
+              taxRate: line.taxRate,
+              taxAmount: line.taxAmount,
               subtotal: line.subtotal,
               total: line.total,
               createUid: uid || "",
@@ -123,6 +129,8 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
             Uom: { select: { id: true, name: true } },
             priceUnit: true,
             total: true,
+            taxRate: true,
+            taxAmount: true,
             subtotal: true,
             quantity: true,
           },
@@ -184,6 +192,8 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
               quantity: line.quantity,
               uomId: line.uomId.id,
               priceUnit: line.priceUnit,
+              taxRate: line.taxRate,
+              taxAmount: line.taxAmount,
               subtotal: round(line.subtotal, 2),
               total: round(line.total, 2),
             },
@@ -192,6 +202,8 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
               quantity: line.quantity,
               uomId: line.uomId.id,
               priceUnit: line.priceUnit,
+              taxRate: line.taxRate,
+              taxAmount: line.taxAmount,
               subtotal: round(line.subtotal, 2),
               total: round(line.total, 2),
               createUid: uid || "",
@@ -219,6 +231,8 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
             Uom: { select: { id: true, name: true } },
             priceUnit: true,
             total: true,
+            taxRate: true,
+            taxAmount: true,
             subtotal: true,
             quantity: true,
           },

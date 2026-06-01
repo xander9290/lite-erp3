@@ -65,13 +65,17 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
       const productId = await getProductById({ id: value });
       if (productId) {
         const unitPrice = productId.lastCost; // ✅ ya viene sin IVA
+        const taxRate = productId.TaxPurchase?.amount ?? 0.0;
         const qty = getValues().OrderLines[line].quantity;
 
         const subtotal = qty * unitPrice; // ✅ base gravable (sin IVA)
-        const total = subtotal * 1.16; // ✅ total con IVA incluido
+        const total = subtotal * (1 + taxRate); // ✅ total con IVA incluido
+        const taxAmount = subtotal * taxRate; // opcional: monto del impuesto
 
         setValue(`OrderLines.${line}.uomId`, { id: productId.Uom?.id || "", name: productId.Uom?.name || "" });
         setValue(`OrderLines.${line}.priceUnit`, unitPrice);
+        setValue(`OrderLines.${line}.taxRate`, taxRate);
+        setValue(`OrderLines.${line}.taxAmount`, taxAmount);
         setValue(`OrderLines.${line}.subtotal`, subtotal);
         setValue(`OrderLines.${line}.total`, total);
       }
@@ -80,11 +84,14 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
 
   const computeQuantityLine = ({ value, line }: { value: number; line: number }) => {
     const priceUnit = getValues().OrderLines[line].priceUnit; // ✅ ya viene sin IVA
+    const taxRate = getValues().OrderLines[line].taxRate ?? 0.0;
     const qty = value;
 
     const subtotal = qty * priceUnit; // ✅ base gravable (sin IVA)
-    const total = subtotal * 1.16; // ✅ total con IVA incluido
+    const total = subtotal * (1 + taxRate); // ✅ total con IVA incluido
+    const taxAmount = subtotal * taxRate;
 
+    setValue(`OrderLines.${line}.taxAmount`, taxAmount);
     setValue(`OrderLines.${line}.subtotal`, subtotal);
     setValue(`OrderLines.${line}.total`, total);
   };
@@ -92,10 +99,14 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
   const computePriceUnit = ({ value, line }: { value: number; line: number }) => {
     const priceUnit = value; // ✅ precio sin IVA
     const qty = getValues().OrderLines[line].quantity;
+    const taxRate = getValues().OrderLines[line].taxRate ?? 0.0;
 
     const subtotal = qty * priceUnit; // ✅ base gravable (sin IVA)
-    const total = subtotal * 1.16; // ✅ total con IVA incluido
+    const total = subtotal * (1 + taxRate); // ✅ total con IVA incluido
+    const taxAmount = subtotal * taxRate;
 
+    setValue(`OrderLines.${line}.priceUnit`, priceUnit);
+    setValue(`OrderLines.${line}.taxAmount`, taxAmount);
     setValue(`OrderLines.${line}.subtotal`, subtotal);
     setValue(`OrderLines.${line}.total`, total);
   };
@@ -143,6 +154,8 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
         },
         priceUnit: line.priceUnit,
         quantity: line.quantity,
+        taxRate: line.taxRate,
+        taxAmount: line.taxAmount,
         subtotal: line.subtotal,
         total: line.total,
       })),
@@ -186,6 +199,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
                   { string: "UdM", name: "uomId", width: 50, minWidth: 50 },
                   { string: "Precio U.", name: "priceUnit", width: 50, minWidth: 50 },
                   { string: "Subtotal", name: "subtotal", width: 50, minWidth: 50 },
+                  { string: "IVA", name: "taxRate", width: 40, minWidth: 40 },
                   { string: "Total", name: "total", width: 50, minWidth: 50 },
                   {
                     string: <i className="bi bi-trash"></i>,
@@ -225,6 +239,10 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
                     <SimpleTD colIdx={index} name="lineSubtotal">
                       <FieldEntry inline name={`OrderLines.${index}.subtotal`} type="number" decimals={2} readonly />
                     </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineTaxRate">
+                      <FieldEntry inline name={`OrderLines.${index}.taxRate`} type="number" decimals={2} readonly invisible />
+                      <FieldEntry inline name={`OrderLines.${index}.taxAmount`} type="number" decimals={2} readonly />
+                    </SimpleTD>
                     <SimpleTD colIdx={index} name="lineTotal">
                       <FieldEntry inline name={`OrderLines.${index}.total`} type="number" decimals={2} readonly />
                     </SimpleTD>
@@ -240,6 +258,8 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
                     uomId: { id: "", name: "" },
                     quantity: 1.0,
                     priceUnit: 0.0,
+                    taxRate: 0.0,
+                    taxAmount: 0.0,
                     subtotal: 0.0,
                     total: 0.0,
                   })

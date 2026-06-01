@@ -32,6 +32,8 @@ export const purchaseOrderSchema = z.object({
       uomId: z.object({ id: z.string(), name: z.string() }),
       priceUnit: z.number(),
       quantity: z.number(),
+      taxRate: z.number(),
+      taxAmount: z.number(),
       subtotal: z.number(),
       total: z.number(),
     }),
