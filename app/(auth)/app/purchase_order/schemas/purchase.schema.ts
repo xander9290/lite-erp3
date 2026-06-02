@@ -44,10 +44,13 @@ export const purchaseOrderSchema = z.object({
 
 export type PurchaseOrderSchemaType = z.infer<typeof purchaseOrderSchema>;
 
+const now = new Date();
+const getDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
 export const purchaseOrderSchemaDefault: PurchaseOrderSchemaType = {
   name: "",
-  date: new Date(),
-  dateOrder: new Date(),
+  date: new Date(getDate),
+  dateOrder: new Date(getDate),
   datePlanned: null,
   state: "draft",
   subtotal: 0.0,

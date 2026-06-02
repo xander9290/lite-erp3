@@ -82,20 +82,6 @@ function toDatetimeLocalValue(value: unknown): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-// function dateInputToISO(value: string): string {
-//   if (!value) return "";
-//   const d = new Date(`${value}T00:00`);
-//   if (isNaN(d.getTime())) return "";
-//   return d.toISOString();
-// }
-
-// function datetimeLocalToISO(value: string): string {
-//   if (!value) return "";
-//   const d = new Date(value);
-//   if (isNaN(d.getTime())) return "";
-//   return d.toISOString();
-// }
-
 /**
  * Formatea un número con formato mexicano (miles con coma, decimales con punto)
  */
@@ -215,16 +201,22 @@ function FieldInput({
 
     if (type === "date") {
       // ✅ Crear la fecha como UTC al mediodía para evitar problemas de zona horaria
-      const [year, month, day] = raw.split("-").map(Number);
-      const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-      field.onChange(date);
+      //const [year, month, day] = raw.split("-").map(Number);
+      //const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+
+      const now = new Date(raw);
+
+      field.onChange(now);
       return;
     }
 
     if (type === "datetime-local") {
       // ✅ Parsear como UTC
-      const date = new Date(raw + "Z"); // Agregar Z para indicar UTC
-      field.onChange(date);
+      //const date = new Date(raw + "Z"); // Agregar Z para indicar UTC
+      //field.onChange(date);
+      const now = new Date(raw);
+
+      field.onChange(now);
       return;
     }
     field.onChange(raw);
