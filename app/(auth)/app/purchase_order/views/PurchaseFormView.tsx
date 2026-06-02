@@ -32,7 +32,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
     defaultValues: purchaseOrderSchemaDefault,
   });
 
-  const { reset, control, setValue, getValues } = methods;
+  const { reset, control, setValue, getValues, handleSubmit } = methods;
 
   const {
     append,
@@ -200,10 +200,63 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
     computeTotals();
   }, [lines]);
 
+  const actionConfirm = handleSubmit(async () => {
+    const newData: PurchaseOrderSchemaType = {
+      ...getValues(),
+      state: "purchase",
+    };
+    await onSubmit(newData);
+  });
+
   return (
-    <FormView auditLog="purchaseOrder" reverse={handleReverse} onSubmit={onSubmit} id={id} methods={methods} cleanUrl="/app/purchase_order?view_type=form&id=null">
+    <FormView
+      auditLog="purchaseOrder"
+      reverse={handleReverse}
+      onSubmit={onSubmit}
+      id={id}
+      methods={methods}
+      cleanUrl="/app/purchase_order?view_type=form&id=null"
+      state={purchase?.state}
+      formStates={[
+        {
+          name: "draft",
+          label: "Cotización",
+          decoration: "secondary",
+        },
+        {
+          name: "purchase",
+          label: "Compra",
+          decoration: "info",
+        },
+        {
+          name: "done",
+          label: "Recibido",
+          decoration: "success",
+        },
+        {
+          name: "cancel",
+          label: "Cancelado",
+          decoration: "danger",
+        },
+      ]}
+      actions={[
+        {
+          action: actionConfirm,
+          fieldName: "actionConfirm",
+          string: "Confirmar",
+          invisible: getValues().state !== "draft",
+        },
+      ]}
+    >
       <FormViewGroup>
-        <FieldRelation model="partner" name="supplierId" label="Proveedor" domain={[["displayType", "=", "SUPPLIER"]]} searchColumns={[{ field: "name", label: "Nombre" }]} />
+        <FieldRelation
+          model="partner"
+          name="supplierId"
+          label="Proveedor"
+          domain={[["displayType", "=", "SUPPLIER"]]}
+          searchColumns={[{ field: "name", label: "Nombre" }]}
+          readonly={getValues().state !== "draft"}
+        />
         <FieldRelation
           model="warehouse"
           name="warehouseDestId"
@@ -212,17 +265,18 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
             ["type", "=", "SUPPLY"],
             ["companyId", "=", companyId],
           ]}
+          readonly={getValues().state !== "draft"}
         />
         <FieldRelation model="users" name="userId" label="Comprador" readonly />
       </FormViewGroup>
       <FormViewGroup>
         <FieldEntry name="date" label="Creación" type="date" readonly />
-        <FieldEntry name="dateOrder" label="Confirmar el" type="date" />
+        <FieldEntry name="dateOrder" label="Confirmar el" type="date" readonly={getValues().state !== "draft"} />
         <FieldEntry name="datePlanned" label="Fecha esperada" type="date" />
       </FormViewGroup>
       <Notebook defaultActiveKey="orderLine">
         <Page eventKey="orderLine" title="Productos">
-          <PageSheet name="purchaseOrderLine">
+          <PageSheet name="purchaseOrderLine" readonly={getValues().state !== "draft"}>
             <Col md="12" className="p-0 m-0 overflow-auto">
               <SimpleTable
                 data={lines}
@@ -289,6 +343,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
                             line: index,
                           })
                         }
+                        readonly={getValues().state !== "draft"}
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineQuantity">
@@ -303,6 +358,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
                             line: index,
                           })
                         }
+                        readonly={getValues().state !== "draft"}
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineUomId">
@@ -320,6 +376,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
                             line: index,
                           })
                         }
+                        readonly={getValues().state !== "draft"}
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineSubtotal">
@@ -337,8 +394,9 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
                     </SimpleTD>
                   </tr>
                 )}
-                action={() =>
-                  append({
+                action={() => {
+                  if (getValues().state !== "draft") return;
+                  return append({
                     id: null,
                     productId: { id: "", name: "" },
                     uomId: { id: "", name: "" },
@@ -348,8 +406,8 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
                     taxAmount: 0.0,
                     subtotal: 0.0,
                     total: 0.0,
-                  })
-                }
+                  });
+                }}
               />
               <div className="text-end pe-2">
                 <p className="m-1">

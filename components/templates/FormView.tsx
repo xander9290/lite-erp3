@@ -129,13 +129,12 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
                   return (
                     <Button
                       key={`${action.string}-${index}`}
-                      variant={action.variant ?? "light"}
+                      variant={action.variant ?? "info"}
                       type="button"
                       onClick={action.action}
                       disabled={action.readonly}
                       title={action.fieldName}
-                      className="fw-semibold"
-                      size="sm"
+                      className="fw-bold"
                     >
                       {action.string}
                     </Button>

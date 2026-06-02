@@ -49,8 +49,8 @@ const getDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
 export const purchaseOrderSchemaDefault: PurchaseOrderSchemaType = {
   name: "",
-  date: new Date(getDate),
-  dateOrder: new Date(getDate),
+  date: getDate,
+  dateOrder: getDate,
   datePlanned: null,
   state: "draft",
   subtotal: 0.0,
