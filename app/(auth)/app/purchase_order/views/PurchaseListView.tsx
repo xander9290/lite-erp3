@@ -54,7 +54,7 @@ function PurchaseListView({ state }: { state: string | null }) {
           <Column
             field="name"
             label="Folio"
-            render={(name) => <div className="fw-semibold">{name}</div>}
+            render={(name) => <div className="fw-bold">{name}</div>}
           />
           <Column
             field="date"
@@ -79,21 +79,29 @@ function PurchaseListView({ state }: { state: string | null }) {
             field="dateOrder"
             label="Confirmar el"
             type="date"
-            render={(name, row) =>
-              row.state === "draft" ? (
+            render={(name, row) => {
+              if (row.state === "cancel") {
+                return null;
+              }
+              return row.state === "draft" ? (
                 <WidgetDeadline date={name} warnAfter={3} />
               ) : (
                 <div className="text-center">
-                  <Badge bg="success">Confirmado</Badge>
+                  <Badge bg="success">Hecho</Badge>
                 </div>
-              )
-            }
+              );
+            }}
           />
           <Column
             field="datePlanned"
             label="LLega el"
             type="date"
-            render={(name) => <WidgetDeadline date={name} warnAfter={2} />}
+            render={(name, row) => {
+              if (row.state === "cancel") {
+                return null;
+              }
+              return <WidgetDeadline date={name} warnAfter={2} />;
+            }}
           />
           <Column
             field="User.name"

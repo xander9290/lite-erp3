@@ -192,6 +192,7 @@ function PurchaseFormView({
       date: purchase.date,
       dateOrder: purchase.dateOrder,
       datePlanned: purchase.datePlanned,
+      confirmedDate: purchase.confirmedDate,
       subtotal: purchase.subtotal,
       total: purchase.total,
       paymentTermId: {
@@ -261,9 +262,13 @@ function PurchaseFormView({
   }, [companyId, user]);
 
   const actionConfirm = handleSubmit(async () => {
+    const lines = getValues().OrderLines;
+    if (lines.length === 0)
+      return modalError("No hay productos en la orden de compra");
     const newData: PurchaseOrderSchemaType = {
       ...getValues(),
       state: "purchase",
+      confirmedDate: new Date(),
     };
     await onSubmit(newData);
   });
@@ -298,7 +303,7 @@ function PurchaseFormView({
         },
         {
           name: "done",
-          label: "Recibido",
+          label: "Terminado",
           decoration: "success",
         },
         {
@@ -319,7 +324,7 @@ function PurchaseFormView({
           fieldName: "actionCancel",
           string: "Cancelar",
           variant: "danger",
-          invisible: id === "null",
+          invisible: id === "null" || ["cancel"].includes(getValues().state),
         },
       ]}
     >
@@ -346,6 +351,7 @@ function PurchaseFormView({
           model="invoicingPaymentTerm"
           name="paymentTermId"
           label="Término de pago"
+          readonly={["done", "cancel"].includes(getValues().state)}
         />
       </FormViewGroup>
       <FormViewGroup>
@@ -355,8 +361,21 @@ function PurchaseFormView({
           label="Confirmar el"
           type="date"
           readonly={getValues().state !== "draft"}
+          invisible={getValues().confirmedDate !== null}
         />
-        <FieldEntry name="datePlanned" label="Fecha esperada" type="date" />
+        <FieldEntry
+          name="confirmedDate"
+          label="Orden confirmada"
+          type="datetime-local"
+          readonly
+          invisible={getValues().confirmedDate === null}
+        />
+        <FieldEntry
+          name="datePlanned"
+          label="Fecha esperada"
+          type="date"
+          readonly={["done", "cancel"].includes(getValues().state)}
+        />
       </FormViewGroup>
       <Notebook defaultActiveKey="orderLine">
         <Page eventKey="orderLine" title="Productos">

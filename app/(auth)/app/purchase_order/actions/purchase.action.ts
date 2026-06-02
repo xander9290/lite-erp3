@@ -12,7 +12,11 @@ import { round } from "@/app/libs/helpers";
 export interface PurchaseOrderWithProps extends PurchaseOrder {
   Supplier: { id: string; name: string };
   User: { id: string; name: string };
-  WarehouseDest: { id: string; name: string; Company: { id: string; name: string } };
+  WarehouseDest: {
+    id: string;
+    name: string;
+    Company: { id: string; name: string };
+  };
   PaymentTerm: { id: string; name: string } | null;
   OrderLines: {
     id: string;
@@ -27,9 +31,16 @@ export interface PurchaseOrderWithProps extends PurchaseOrder {
   }[];
 }
 
-export type PurchaseOrderActionProps = Omit<PurchaseOrderSchemaType, "createdAt" | "updatedAt">;
+export type PurchaseOrderActionProps = Omit<
+  PurchaseOrderSchemaType,
+  "createdAt" | "updatedAt"
+>;
 
-export async function getPurchaseById({ id }: { id: string | null }): Promise<PurchaseOrderWithProps | null> {
+export async function getPurchaseById({
+  id,
+}: {
+  id: string | null;
+}): Promise<PurchaseOrderWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
     const purchase = await prisma.purchaseOrder.findUnique({
@@ -42,7 +53,11 @@ export async function getPurchaseById({ id }: { id: string | null }): Promise<Pu
           select: { id: true, name: true },
         },
         WarehouseDest: {
-          select: { id: true, name: true, Company: { select: { id: true, name: true } } },
+          select: {
+            id: true,
+            name: true,
+            Company: { select: { id: true, name: true } },
+          },
         },
         PaymentTerm: {
           select: { id: true, name: true },
@@ -69,11 +84,18 @@ export async function getPurchaseById({ id }: { id: string | null }): Promise<Pu
   }
 }
 
-export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function createPurchaseOrder({
+  data,
+}: {
+  data: PurchaseOrderActionProps;
+}): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
-    const name = await getNextValue(`P/${company.code}/`, `${company.code}-purchase`);
+    const name = await getNextValue(
+      `P/${company.code}/`,
+      `${company.code}-purchase`,
+    );
     const newPurchase = await prisma.purchaseOrder.create({
       data: {
         name,
@@ -84,6 +106,7 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
         supplierId: data.supplierId.id,
         warehouseDestId: data.warehouseDestId.id,
         paymentTermId: data.paymentTermId.id,
+        confirmedDate: data.confirmedDate,
         subtotal: round(
           data.OrderLines.reduce((acc, line) => acc + line.subtotal, 0),
           2,
@@ -121,7 +144,11 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
           select: { id: true, name: true },
         },
         WarehouseDest: {
-          select: { id: true, name: true, Company: { select: { id: true, name: true } } },
+          select: {
+            id: true,
+            name: true,
+            Company: { select: { id: true, name: true } },
+          },
         },
         PaymentTerm: {
           select: { id: true, name: true },
@@ -160,7 +187,13 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
   }
 }
 
-export async function updatePurchaseOrder({ id, data }: { id: string | null; data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function updatePurchaseOrder({
+  id,
+  data,
+}: {
+  id: string | null;
+  data: PurchaseOrderActionProps;
+}): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     if (!id) throw new Error("ID not define");
 
@@ -175,6 +208,7 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
         supplierId: data.supplierId.id,
         warehouseDestId: data.warehouseDestId.id,
         paymentTermId: data.paymentTermId.id,
+        confirmedDate: data.confirmedDate,
         subtotal: round(
           data.OrderLines.reduce((acc, line) => acc + line.subtotal, 0),
           2,
@@ -227,7 +261,11 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
           select: { id: true, name: true },
         },
         WarehouseDest: {
-          select: { id: true, name: true, Company: { select: { id: true, name: true } } },
+          select: {
+            id: true,
+            name: true,
+            Company: { select: { id: true, name: true } },
+          },
         },
         PaymentTerm: {
           select: { id: true, name: true },

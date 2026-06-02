@@ -27,19 +27,18 @@ export const parserDate = (date: Date | string) => {
   return new Date(date).toISOString().slice(0, 16) || new Date();
 };
 
-export const toDatetimeLocal = (date: Date | null) => {
-  if (!date) return null;
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + "T" + pad(date.getHours()) + ":" + pad(date.getMinutes());
-};
-
 export function round(value: number, decimals: number) {
   return Math.round(value * 10 ** decimals) / 10 ** decimals;
 }
 
 type CompareOperator = ">" | ">=" | "<" | "<=" | "==" | "===" | "!=" | "!==";
 
-export function compareDates(date1: Date | string, operator: CompareOperator, date2: Date | string, compareTime: boolean = true): boolean {
+export function compareDates(
+  date1: Date | string,
+  operator: CompareOperator,
+  date2: Date | string,
+  compareTime: boolean = true,
+): boolean {
   let d1 = new Date(date1);
   let d2 = new Date(date2);
 
@@ -80,7 +79,13 @@ export function esMultiplo(cant: number, uom: number) {
   return Math.abs(cant % uom) < precision;
 }
 
-export const formatCurrency = ({ value, currency = "MXN" }: { value: number; currency?: string }) => {
+export const formatCurrency = ({
+  value,
+  currency = "MXN",
+}: {
+  value: number;
+  currency?: string;
+}) => {
   return new Intl.NumberFormat("es-MX", {
     style: "currency",
     currency: currency,
@@ -147,7 +152,15 @@ export function roundToDecimals(value: number, decimals: number = 2): number {
   return Number(Math.round(Number(value + "e" + decimals)) + "e-" + decimals);
 }
 
-export const serverLog = ({ action, model, data }: { action: "Fetching" | "Creating" | "Updating" | "Deleting"; model: string; data: object | null }) => {
+export const serverLog = ({
+  action,
+  model,
+  data,
+}: {
+  action: "Fetching" | "Creating" | "Updating" | "Deleting";
+  model: string;
+  data: object | null;
+}) => {
   const output = `${action} ${model}: ${JSON.stringify(data)}`;
   return console.log(output);
 };

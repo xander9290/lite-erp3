@@ -462,6 +462,7 @@ model PurchaseOrder {
   date            DateTime             @db.Date
   dateOrder       DateTime             @map("date_order") @db.Date
   datePlanned     DateTime?            @map("date_planned") @db.Date
+  confirmedDate   DateTime?            @map("confirmed_date")
   Supplier        Partner              @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   User            User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
   WarehouseDest   Warehouse            @relation(fields: [warehouseDestId], references: [id], onDelete: Restrict)

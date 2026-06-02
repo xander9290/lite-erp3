@@ -6,6 +6,7 @@ export const purchaseOrderSchema = z.object({
   date: z.date(),
   dateOrder: z.date(),
   datePlanned: z.date().nullable(),
+  confirmedDate: z.date().nullable(),
   state: z.enum(PurchaseOrderState),
   subtotal: z.number(),
   total: z.number(),
@@ -28,7 +29,10 @@ export const purchaseOrderSchema = z.object({
   OrderLines: z.array(
     z.object({
       id: z.string().nullable(),
-      productId: z.object({ id: z.string().min(1, "Producto es requerido"), name: z.string() }),
+      productId: z.object({
+        id: z.string().min(1, "Producto es requerido"),
+        name: z.string(),
+      }),
       uomId: z.object({ id: z.string(), name: z.string() }),
       priceUnit: z.number(),
       quantity: z.number(),
@@ -52,6 +56,7 @@ export const purchaseOrderSchemaDefault: PurchaseOrderSchemaType = {
   date: getDate,
   dateOrder: getDate,
   datePlanned: null,
+  confirmedDate: null,
   state: "draft",
   subtotal: 0.0,
   total: 0.0,
