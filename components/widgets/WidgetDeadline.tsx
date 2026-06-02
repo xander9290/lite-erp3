@@ -1,12 +1,12 @@
 "use client";
 
-import { differenceInCalendarDays, format } from "date-fns";
+import { differenceInCalendarDays, differenceInMonths, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Badge } from "react-bootstrap";
 
 interface WidgetDeadlineProps {
   date: Date | null;
-  warnAfter?: number;
+  warnAfter?: number; // en días
 }
 
 export function WidgetDeadline({ date, warnAfter = 15 }: WidgetDeadlineProps) {
@@ -22,34 +22,67 @@ export function WidgetDeadline({ date, warnAfter = 15 }: WidgetDeadlineProps) {
   const day = dateObj.getUTCDate();
   const month = dateObj.getUTCMonth();
   const year = dateObj.getUTCFullYear();
-  const localDate = new Date(year, month, day, 12); // Mediodía para evitar ambigüedades
+  const localDate = new Date(year, month, day, 12);
 
-  // ✅ Crear "hoy" en UTC para comparar manzanas con manzanas
+  // ✅ Crear "hoy" en UTC para comparar
   const now = new Date();
-  // const todayUTC = new Date(
-  //   Date.UTC(
-  //     now.getUTCFullYear(),
-  //     now.getUTCMonth(),
-  //     now.getUTCDate(),
-  //     12, // Mediodía UTC
-  //   ),
-  // );
 
-  // ✅ Comparar fechas en el mismo "plano" (ambas a mediodía UTC)
+  // ✅ Calcular diferencias
   const daysLeft = differenceInCalendarDays(localDate, now);
+  const monthsLeft = differenceInMonths(localDate, now);
+  const yearsLeft = Math.floor(monthsLeft / 12);
 
-  const bg = daysLeft <= 0 ? "danger" : daysLeft <= warnAfter ? "warning" : "success";
+  // ✅ Determinar el texto y color
+  let label = "";
+  let bg = "success";
 
-  const label = daysLeft < 0 ? `Vencido ${Math.abs(daysLeft)}d` : daysLeft === 0 ? "Hoy" : `${daysLeft}d`;
+  if (daysLeft < 0) {
+    // Vencido
+    const absDays = Math.abs(daysLeft);
+    label = `Vencido ${absDays}d`;
+    bg = "danger";
+  } else if (daysLeft === 0) {
+    label = "Hoy";
+    bg = "warning";
+  } else if (daysLeft > 30) {
+    // Más de 30 días - mostrar meses o años
+    if (yearsLeft > 0) {
+      const remainingMonths = monthsLeft % 12;
+      if (remainingMonths === 0) {
+        label = `${yearsLeft}a`;
+      } else {
+        label = `${yearsLeft}a ${remainingMonths}m`;
+      }
+    } else {
+      label = `${monthsLeft}m`;
+    }
 
-  // ✅ Determinar formato según si es el mismo año o no
+    // ⚠️ warnAfter es en días, convertimos a meses para la comparación
+    // Si warnAfter=15 días, significa que queremos mostrar warning cuando falten <=15 días
+    // Pero si estamos mostrando meses, significa que faltan >30 días, entonces es "success"
+    // (a menos que warnAfter sea mayor a 30 días)
+    if (warnAfter > 30) {
+      const monthsWarning = Math.ceil(warnAfter / 30);
+      bg = monthsLeft <= monthsWarning ? "warning" : "success";
+    } else {
+      // Si warnAfter <= 30, cuando mostramos meses (>30 días) siempre es success
+      bg = "success";
+    }
+  } else {
+    // 1-30 días
+    label = `${daysLeft}d`;
+    bg = daysLeft <= warnAfter ? "warning" : "success";
+  }
+
+  // ✅ Determinar formato de fecha
   const currentYear = now.getUTCFullYear();
   const dateFormat = year === currentYear ? "dd MMM" : "dd MMM yyyy";
 
   return (
     <div className="text-center">
-      <span className="me-2">{format(localDate, dateFormat, { locale: es })}</span>
-
+      <span className="me-2">
+        {format(localDate, dateFormat, { locale: es })}
+      </span>
       <Badge bg={bg}>{label}</Badge>
     </div>
   );
