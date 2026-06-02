@@ -457,6 +457,7 @@ model PurchaseOrder {
   updatedAt       DateTime             @updatedAt @map("updated_at")
   state           PurchaseOrderState   @default(draft)
   subtotal        Float                @default(0.0)
+  amountTax       Float                @default(0.0) @map("amount_tax")
   total           Float                @default(0.0)
   date            DateTime             @db.Date
   dateOrder       DateTime             @map("date_order") @db.Date

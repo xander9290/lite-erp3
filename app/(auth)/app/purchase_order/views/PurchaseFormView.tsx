@@ -1,18 +1,10 @@
 "use client";
 
-import {
-  createPurchaseOrder,
-  PurchaseOrderWithProps,
-  updatePurchaseOrder,
-} from "../actions/purchase.action";
+import { createPurchaseOrder, PurchaseOrderWithProps, updatePurchaseOrder } from "../actions/purchase.action";
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  purchaseOrderSchema,
-  purchaseOrderSchemaDefault,
-  PurchaseOrderSchemaType,
-} from "../schemas/purchase.schema";
-import { useEffect, useRef } from "react";
+import { purchaseOrderSchema, purchaseOrderSchemaDefault, PurchaseOrderSchemaType } from "../schemas/purchase.schema";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
 import { FormView, FormViewGroup } from "@/components/templates/FormView";
@@ -21,22 +13,19 @@ import { useAuth } from "@/hooks/sessionStore";
 import toast from "react-hot-toast";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import { Col } from "react-bootstrap";
-import {
-  BtnDeleteLine,
-  SimpleTable,
-  SimpleTD,
-} from "@/components/templates/simpletemplates";
+import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
 import type { ProductTemplate } from "@/generated/prisma/client";
 import { getProductById } from "../../product_template/products/actions/productTemplate.action";
+import { formatCurrency } from "@/app/libs/helpers";
 
-function PurchaseFormView({
-  id,
-  purchase,
-}: {
-  id: string | null;
-  purchase: PurchaseOrderWithProps | null;
-}) {
+function PurchaseFormView({ id, purchase }: { id: string | null; purchase: PurchaseOrderWithProps | null }) {
   const { companyId } = useAuth();
+
+  const [totals, setTotals] = useState({
+    subtotal: 0.0,
+    taxes: 0.0,
+    total: 0.0,
+  });
 
   const methods = useForm({
     resolver: zodResolver(purchaseOrderSchema),
@@ -78,15 +67,7 @@ function PurchaseFormView({
     }
   };
 
-  const computeProductLine = async ({
-    value,
-    record,
-    line,
-  }: {
-    value: string | null;
-    record: ProductTemplate | null;
-    line: number;
-  }) => {
+  const computeProductLine = async ({ value, record, line }: { value: string | null; record: ProductTemplate | null; line: number }) => {
     if (record) {
       const productId = await getProductById({ id: value });
       if (productId) {
@@ -107,17 +88,13 @@ function PurchaseFormView({
         setValue(`OrderLines.${line}.taxAmount`, taxAmount);
         setValue(`OrderLines.${line}.subtotal`, subtotal);
         setValue(`OrderLines.${line}.total`, total);
+
+        computeTotals();
       }
     }
   };
 
-  const computeQuantityLine = ({
-    value,
-    line,
-  }: {
-    value: number;
-    line: number;
-  }) => {
+  const computeQuantityLine = ({ value, line }: { value: number; line: number }) => {
     const priceUnit = getValues().OrderLines[line].priceUnit; // ✅ ya viene sin IVA
     const taxRate = getValues().OrderLines[line].taxRate ?? 0.0;
     const qty = value;
@@ -129,15 +106,11 @@ function PurchaseFormView({
     setValue(`OrderLines.${line}.taxAmount`, taxAmount);
     setValue(`OrderLines.${line}.subtotal`, subtotal);
     setValue(`OrderLines.${line}.total`, total);
+
+    computeTotals();
   };
 
-  const computePriceUnit = ({
-    value,
-    line,
-  }: {
-    value: number;
-    line: number;
-  }) => {
+  const computePriceUnit = ({ value, line }: { value: number; line: number }) => {
     const priceUnit = value; // ✅ precio sin IVA
     const qty = getValues().OrderLines[line].quantity;
     const taxRate = getValues().OrderLines[line].taxRate ?? 0.0;
@@ -150,6 +123,21 @@ function PurchaseFormView({
     setValue(`OrderLines.${line}.taxAmount`, taxAmount);
     setValue(`OrderLines.${line}.subtotal`, subtotal);
     setValue(`OrderLines.${line}.total`, total);
+
+    computeTotals();
+  };
+
+  const computeTotals = () => {
+    const { OrderLines } = getValues();
+    let subtotal = 0.0;
+    let taxes = 0.0;
+    let total = 0.0;
+    for (const line of OrderLines) {
+      subtotal += line.subtotal;
+      taxes += line.taxAmount;
+      total += line.total;
+    }
+    setTotals({ subtotal, taxes, total });
   };
 
   useEffect(() => {
@@ -205,25 +193,17 @@ function PurchaseFormView({
     };
     reset(values);
     originalValuesRef.current = values;
+    computeTotals();
   }, [purchase, reset]);
 
+  useEffect(() => {
+    computeTotals();
+  }, [lines]);
+
   return (
-    <FormView
-      auditLog="purchaseOrder"
-      reverse={handleReverse}
-      onSubmit={onSubmit}
-      id={id}
-      methods={methods}
-      cleanUrl="/app/purchase_order?view_type=form&id=null"
-    >
+    <FormView auditLog="purchaseOrder" reverse={handleReverse} onSubmit={onSubmit} id={id} methods={methods} cleanUrl="/app/purchase_order?view_type=form&id=null">
       <FormViewGroup>
-        <FieldRelation
-          model="partner"
-          name="supplierId"
-          label="Proveedor"
-          domain={[["displayType", "=", "SUPPLIER"]]}
-          searchColumns={[{ field: "name", label: "Nombre" }]}
-        />
+        <FieldRelation model="partner" name="supplierId" label="Proveedor" domain={[["displayType", "=", "SUPPLIER"]]} searchColumns={[{ field: "name", label: "Nombre" }]} />
         <FieldRelation
           model="warehouse"
           name="warehouseDestId"
@@ -326,12 +306,7 @@ function PurchaseFormView({
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineUomId">
-                      <FieldRelation
-                        inline
-                        model="uomCategory"
-                        name={`OrderLines.${index}.uomId`}
-                        readonly
-                      />
+                      <FieldRelation inline model="uomCategory" name={`OrderLines.${index}.uomId`} readonly />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="linePriceUnit">
                       <FieldEntry
@@ -348,49 +323,17 @@ function PurchaseFormView({
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineSubtotal">
-                      <FieldEntry
-                        inline
-                        name={`OrderLines.${index}.subtotal`}
-                        type="number"
-                        decimals={2}
-                        readonly
-                      />
+                      <FieldEntry inline name={`OrderLines.${index}.subtotal`} type="number" decimals={2} readonly />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineTaxRate">
-                      <FieldEntry
-                        inline
-                        name={`OrderLines.${index}.taxRate`}
-                        type="number"
-                        decimals={2}
-                        readonly
-                        invisible
-                      />
-                      <FieldEntry
-                        inline
-                        name={`OrderLines.${index}.taxAmount`}
-                        type="number"
-                        decimals={2}
-                        readonly
-                      />
+                      <FieldEntry inline name={`OrderLines.${index}.taxRate`} type="number" decimals={2} readonly invisible />
+                      <FieldEntry inline name={`OrderLines.${index}.taxAmount`} type="number" decimals={2} readonly />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineTotal">
-                      <FieldEntry
-                        inline
-                        name={`OrderLines.${index}.total`}
-                        type="number"
-                        decimals={2}
-                        readonly
-                      />
+                      <FieldEntry inline name={`OrderLines.${index}.total`} type="number" decimals={2} readonly />
                     </SimpleTD>
-                    <SimpleTD
-                      contentPosition="text-center"
-                      name="lineDelete"
-                      colIdx={index}
-                    >
-                      <BtnDeleteLine
-                        action={() => remove(index)}
-                        disabled={getValues().state !== "draft"}
-                      />
+                    <SimpleTD contentPosition="text-center" name="lineDelete" colIdx={index}>
+                      <BtnDeleteLine action={() => remove(index)} disabled={getValues().state !== "draft"} />
                     </SimpleTD>
                   </tr>
                 )}
@@ -408,17 +351,27 @@ function PurchaseFormView({
                   })
                 }
               />
+              <div className="text-end pe-2">
+                <p className="m-1">
+                  <strong>Subtotal: </strong>
+                  <span>{formatCurrency({ value: totals.subtotal })}</span>
+                </p>
+                <p className="m-1">
+                  <strong>IVA: </strong>
+                  <span>{formatCurrency({ value: totals.taxes })}</span>
+                </p>
+                <p className="fs-5 m-1">
+                  <strong>Total: </strong>
+                  <span className="fw-semibold">{formatCurrency({ value: totals.total })}</span>
+                </p>
+              </div>
             </Col>
           </PageSheet>
         </Page>
         <Page eventKey="otherInfo" title="Contabilidad">
           <PageSheet name="otherInfoPage">
             <FormViewGroup>
-              <FieldRelation
-                model="invoicingPaymentTerm"
-                name="paymentTermId"
-                label="Término de pago"
-              />
+              <FieldRelation model="invoicingPaymentTerm" name="paymentTermId" label="Término de pago" />
             </FormViewGroup>
           </PageSheet>
         </Page>

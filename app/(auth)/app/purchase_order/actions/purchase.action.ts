@@ -92,6 +92,10 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
           data.OrderLines.reduce((acc, line) => acc + line.total, 0),
           2,
         ),
+        amountTax: round(
+          data.OrderLines.reduce((acc, line) => acc + line.taxAmount, 0),
+          2,
+        ),
         OrderLines: {
           createMany: {
             data: data.OrderLines.map((line) => ({
@@ -177,6 +181,10 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
         ),
         total: round(
           data.OrderLines.reduce((acc, line) => acc + line.total, 0),
+          2,
+        ),
+        amountTax: round(
+          data.OrderLines.reduce((sum, line) => sum + line.taxAmount, 0),
           2,
         ),
         OrderLines: {

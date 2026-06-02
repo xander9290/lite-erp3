@@ -26,17 +26,17 @@ export function WidgetDeadline({ date, warnAfter = 15 }: WidgetDeadlineProps) {
 
   // ✅ Crear "hoy" en UTC para comparar manzanas con manzanas
   const now = new Date();
-  const todayUTC = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate(),
-      12, // Mediodía UTC
-    ),
-  );
+  // const todayUTC = new Date(
+  //   Date.UTC(
+  //     now.getUTCFullYear(),
+  //     now.getUTCMonth(),
+  //     now.getUTCDate(),
+  //     12, // Mediodía UTC
+  //   ),
+  // );
 
   // ✅ Comparar fechas en el mismo "plano" (ambas a mediodía UTC)
-  const daysLeft = differenceInCalendarDays(localDate, todayUTC);
+  const daysLeft = differenceInCalendarDays(localDate, now);
 
   const bg = daysLeft <= 0 ? "danger" : daysLeft <= warnAfter ? "warning" : "success";
 
