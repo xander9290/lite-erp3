@@ -7,7 +7,8 @@ import { ActionResponse } from "@/app/libs/definitions";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { getNextValue } from "@/app/libs/sequence";
 import { createAuditlog } from "../../actions/auditlog-actions";
-import { round } from "@/app/libs/helpers";
+import { esMultiplo, round } from "@/app/libs/helpers";
+import { getProductById } from "../../product_template/products/actions/productTemplate.action";
 
 export interface PurchaseOrderWithProps extends PurchaseOrder {
   Supplier: { id: string; name: string };
@@ -31,16 +32,9 @@ export interface PurchaseOrderWithProps extends PurchaseOrder {
   }[];
 }
 
-export type PurchaseOrderActionProps = Omit<
-  PurchaseOrderSchemaType,
-  "createdAt" | "updatedAt"
->;
+export type PurchaseOrderActionProps = Omit<PurchaseOrderSchemaType, "createdAt" | "updatedAt">;
 
-export async function getPurchaseById({
-  id,
-}: {
-  id: string | null;
-}): Promise<PurchaseOrderWithProps | null> {
+export async function getPurchaseById({ id }: { id: string | null }): Promise<PurchaseOrderWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
     const purchase = await prisma.purchaseOrder.findUnique({
@@ -84,18 +78,13 @@ export async function getPurchaseById({
   }
 }
 
-export async function createPurchaseOrder({
-  data,
-}: {
-  data: PurchaseOrderActionProps;
-}): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
-    const name = await getNextValue(
-      `P/${company.code}/`,
-      `${company.code}-purchase`,
-    );
+    await validateMultiplo(data.OrderLines);
+
+    const name = await getNextValue(`P/${company.code}/`, `${company.code}-purchase`);
     const newPurchase = await prisma.purchaseOrder.create({
       data: {
         name,
@@ -187,17 +176,13 @@ export async function createPurchaseOrder({
   }
 }
 
-export async function updatePurchaseOrder({
-  id,
-  data,
-}: {
-  id: string | null;
-  data: PurchaseOrderActionProps;
-}): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function updatePurchaseOrder({ id, data }: { id: string | null; data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     if (!id) throw new Error("ID not define");
 
     const { uid } = await sessionStore();
+
+    await validateMultiplo(data.OrderLines);
 
     const newPurchase = await prisma.purchaseOrder.update({
       where: { id },
@@ -303,3 +288,16 @@ export async function updatePurchaseOrder({
     return { success: false, message: error.message };
   }
 }
+
+const validateMultiplo = async (lines: PurchaseOrderActionProps["OrderLines"]) => {
+  for (const line of lines) {
+    const productId = await getProductById({ id: line.productId.id });
+    if (productId) {
+      const allowedQty = productId.uomIncomingAllowed;
+      const qty = line.quantity;
+      if (!esMultiplo(qty, allowedQty)) {
+        throw new Error(`El producto ${productId.name} se compra por múltiplo de ${allowedQty} ${productId.Uom?.code}`);
+      }
+    }
+  }
+};
