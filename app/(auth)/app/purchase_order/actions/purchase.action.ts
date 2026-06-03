@@ -1,6 +1,6 @@
 "use server";
 
-import type { PurchaseOrder } from "@/generated/prisma/client";
+import type { PurchaseOrder, StockWarehouse } from "@/generated/prisma/client";
 import { PurchaseOrderSchemaType } from "../schemas/purchase.schema";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
@@ -29,12 +29,20 @@ export interface PurchaseOrderWithProps extends PurchaseOrder {
     quantity: number;
     subtotal: number;
     total: number;
+    receivedQty: number;
   }[];
 }
 
-export type PurchaseOrderActionProps = Omit<PurchaseOrderSchemaType, "createdAt" | "updatedAt">;
+export type PurchaseOrderActionProps = Omit<
+  PurchaseOrderSchemaType,
+  "createdAt" | "updatedAt"
+>;
 
-export async function getPurchaseById({ id }: { id: string | null }): Promise<PurchaseOrderWithProps | null> {
+export async function getPurchaseById({
+  id,
+}: {
+  id: string | null;
+}): Promise<PurchaseOrderWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
     const purchase = await prisma.purchaseOrder.findUnique({
@@ -67,6 +75,7 @@ export async function getPurchaseById({ id }: { id: string | null }): Promise<Pu
             taxAmount: true,
             subtotal: true,
             quantity: true,
+            receivedQty: true,
           },
         },
       },
@@ -78,13 +87,20 @@ export async function getPurchaseById({ id }: { id: string | null }): Promise<Pu
   }
 }
 
-export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function createPurchaseOrder({
+  data,
+}: {
+  data: PurchaseOrderActionProps;
+}): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
     await validateMultiplo(data.OrderLines);
 
-    const name = await getNextValue(`P/${company.code}/`, `${company.code}-purchase`);
+    const name = await getNextValue(
+      `P/${company.code}/`,
+      `${company.code}-purchase`,
+    );
     const newPurchase = await prisma.purchaseOrder.create({
       data: {
         name,
@@ -153,6 +169,7 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
             taxAmount: true,
             subtotal: true,
             quantity: true,
+            receivedQty: true,
           },
         },
       },
@@ -176,7 +193,13 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
   }
 }
 
-export async function updatePurchaseOrder({ id, data }: { id: string | null; data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function updatePurchaseOrder({
+  id,
+  data,
+}: {
+  id: string | null;
+  data: PurchaseOrderActionProps;
+}): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     if (!id) throw new Error("ID not define");
 
@@ -266,6 +289,7 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
             taxAmount: true,
             subtotal: true,
             quantity: true,
+            receivedQty: true,
           },
         },
       },
@@ -289,14 +313,79 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
   }
 }
 
-const validateMultiplo = async (lines: PurchaseOrderActionProps["OrderLines"]) => {
+export async function createStockWarehousePurchase({
+  id,
+}: {
+  id: string | null;
+}): Promise<ActionResponse<true>> {
+  try {
+    if (!id) throw new Error("ID not defined");
+    const { uid } = await sessionStore();
+
+    const orderLines = await prisma.purchaseOrderLine.findMany({
+      where: {
+        orderId: id,
+      },
+      include: {
+        PurcaseOrder: {
+          select: {
+            warehouseDestId: true,
+          },
+        },
+      },
+    });
+
+    for (const line of orderLines) {
+      await prisma.stockWarehouse.upsert({
+        where: {
+          productId_warehouseId: {
+            productId: line.productId,
+            warehouseId: line.PurcaseOrder.warehouseDestId,
+          },
+        },
+        update: {
+          qty: {
+            increment: line.receivedQty,
+          },
+          reservedQty: {
+            increment: line.receivedQty,
+          },
+        },
+        create: {
+          productId: line.productId,
+          warehouseId: line.PurcaseOrder.warehouseDestId,
+          qty: line.receivedQty,
+          reservedQty: line.receivedQty,
+          createdUid: uid || "",
+        },
+      });
+    }
+
+    return {
+      success: true,
+      message: "Se ha creado el regristro",
+    };
+  } catch (error: any) {
+    console.log(error);
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
+}
+
+const validateMultiplo = async (
+  lines: PurchaseOrderActionProps["OrderLines"],
+) => {
   for (const line of lines) {
     const productId = await getProductById({ id: line.productId.id });
     if (productId) {
       const allowedQty = productId.uomIncomingAllowed;
       const qty = line.quantity;
       if (!esMultiplo(qty, allowedQty)) {
-        throw new Error(`El producto ${productId.name} se compra por múltiplo de ${allowedQty} ${productId.Uom?.code}`);
+        throw new Error(
+          `El producto ${productId.name} se compra por múltiplo de ${allowedQty} ${productId.Uom?.code}`,
+        );
       }
     }
   }
