@@ -106,7 +106,7 @@ function formatMexicanNumber(
 /**
  * Parsea un string formateado (ej: "4,050.50") a número
  */
-function parseMexicanNumber(value: string): number {
+export function parseMexicanNumber(value: string): number {
   if (!value || value === "") return 0;
 
   // Quitar comas (separadores de miles) y convertir a número
