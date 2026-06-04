@@ -33,9 +33,16 @@ export interface PurchaseOrderWithProps extends PurchaseOrder {
   }[];
 }
 
-export type PurchaseOrderActionProps = Omit<PurchaseOrderSchemaType, "createdAt" | "updatedAt">;
+export type PurchaseOrderActionProps = Omit<
+  PurchaseOrderSchemaType,
+  "createdAt" | "updatedAt"
+>;
 
-export async function getPurchaseById({ id }: { id: string | null }): Promise<PurchaseOrderWithProps | null> {
+export async function getPurchaseById({
+  id,
+}: {
+  id: string | null;
+}): Promise<PurchaseOrderWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
     const purchase = await prisma.purchaseOrder.findUnique({
@@ -80,13 +87,20 @@ export async function getPurchaseById({ id }: { id: string | null }): Promise<Pu
   }
 }
 
-export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function createPurchaseOrder({
+  data,
+}: {
+  data: PurchaseOrderActionProps;
+}): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
     await validateMultiplo(data.OrderLines);
 
-    const name = await getNextValue(`P/${company.code}/`, `${company.code}-purchase`);
+    const name = await getNextValue(
+      `P/${company.code}/`,
+      `${company.code}-purchase`,
+    );
     const newPurchase = await prisma.purchaseOrder.create({
       data: {
         name,
@@ -180,7 +194,13 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
   }
 }
 
-export async function updatePurchaseOrder({ id, data }: { id: string | null; data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function updatePurchaseOrder({
+  id,
+  data,
+}: {
+  id: string | null;
+  data: PurchaseOrderActionProps;
+}): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     if (!id) throw new Error("ID not define");
 
@@ -226,7 +246,7 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
               taxRate: line.taxRate,
               taxAmount: line.taxAmount,
               subtotal: round(line.subtotal, 2),
-              receivedQty: line.quantity,
+              receivedQty: line.receivedQty,
               total: round(line.total, 2),
             },
             create: {
@@ -296,7 +316,11 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
   }
 }
 
-export async function createStockWarehousePurchase({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<true>> {
+export async function confirmStockWarehousePurchase({
+  data,
+}: {
+  data: PurchaseOrderActionProps;
+}): Promise<ActionResponse<true>> {
   try {
     const { uid } = await sessionStore();
 
@@ -312,15 +336,11 @@ export async function createStockWarehousePurchase({ data }: { data: PurchaseOrd
           qty: {
             increment: line.quantity,
           },
-          reservedQty: {
-            increment: line.quantity,
-          },
         },
         create: {
           productId: line.productId.id,
           warehouseId: data.warehouseDestId.id,
           qty: line.quantity,
-          reservedQty: line.quantity,
           createdUid: uid || "",
         },
       });
@@ -339,14 +359,71 @@ export async function createStockWarehousePurchase({ data }: { data: PurchaseOrd
   }
 }
 
-const validateMultiplo = async (lines: PurchaseOrderActionProps["OrderLines"]) => {
+export async function cancelStockWarehousePurchase({
+  orderId,
+  data,
+}: {
+  orderId: string | null;
+  data: PurchaseOrderActionProps;
+}): Promise<ActionResponse<true>> {
+  try {
+    if (!orderId) throw new Error("ID not defined");
+
+    await prisma.$transaction(async (tx) => {
+      for (const line of data.OrderLines) {
+        await tx.stockWarehouse.update({
+          where: {
+            productId_warehouseId: {
+              productId: line.productId.id,
+              warehouseId: data.warehouseDestId.id,
+            },
+          },
+          data: {
+            qty: {
+              decrement: line.quantity,
+            },
+          },
+        });
+      }
+      await tx.purchaseOrderLine.updateMany({
+        where: {
+          orderId,
+        },
+        data: {
+          state: "cancel",
+        },
+      });
+    });
+
+    return {
+      success: true,
+      message: "Se ha completado la acción",
+    };
+  } catch (error: any) {
+    console.log(error);
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
+}
+
+const validateMultiplo = async (
+  lines: PurchaseOrderActionProps["OrderLines"],
+) => {
   for (const line of lines) {
+    if (line.receivedQty > line.quantity)
+      throw new Error(
+        `La cantidad recbida del product ${line.productId.name} no debe ser mayor a la ordenada.`,
+      );
     const productId = await getProductById({ id: line.productId.id });
     if (productId) {
       const allowedQty = productId.uomIncomingAllowed;
       const qty = line.quantity;
       if (!esMultiplo(qty, allowedQty)) {
-        throw new Error(`El producto ${productId.name} se compra por múltiplo de ${allowedQty} ${productId.Uom?.code}`);
+        throw new Error(
+          `El producto ${productId.name} se compra por múltiplo de ${allowedQty} ${productId.Uom?.code}`,
+        );
       }
     }
   }

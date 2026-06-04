@@ -26,6 +26,7 @@ export const purchaseOrderStateDisplay: Record<
 
 function PurchaseListView({ state }: { state: string | null }) {
   const { companyId } = useAuth();
+
   const domain: any[] = [["WarehouseDest.companyId", "=", companyId]];
   if (state === "draft") {
     domain.push(["state", "in", ["draft", "cancel"]]);
@@ -133,13 +134,13 @@ function PurchaseListView({ state }: { state: string | null }) {
             label="Estado"
             render={(name) => {
               let bg = "secondary";
-              if (name === "purchase") bg = "primary";
+              if (name === "purchase") bg = "info";
               if (name === "done") bg = "success";
               if (name === "cancel") bg = "danger";
 
               return (
                 <div className="text-center">
-                  <Badge bg={bg}>
+                  <Badge bg={bg} pill>
                     {
                       purchaseOrderStateDisplay[
                         name as PurchaseOrderSchemaType["state"]

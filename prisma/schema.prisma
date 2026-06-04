@@ -504,8 +504,9 @@ model PurchaseOrderLine {
 
 enum PurchaseLineStates {
   pending
-  invoiced
   done
+  invoiced
+  cancel
 }
 
 enum PartnerDisplayType {

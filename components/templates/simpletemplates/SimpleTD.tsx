@@ -33,7 +33,7 @@ export function SimpleTD({
     <td
       title={name}
       valign="middle"
-      className={`p-0 text-truncate ${contentPosition}`}
+      className={`p-0 text-truncate ${contentPosition} border`}
       style={{
         whiteSpace: "nowrap",
         overflow: "hidden",

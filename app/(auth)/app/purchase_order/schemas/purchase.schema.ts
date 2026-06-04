@@ -40,6 +40,7 @@ export const purchaseOrderSchema = z.object({
       taxAmount: z.number(),
       subtotal: z.number(),
       total: z.number(),
+      receivedQty: z.number(),
     }),
   ),
   createdAt: z.date().nullable(),
