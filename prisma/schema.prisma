@@ -482,10 +482,6 @@ model PurchaseOrderLine {
   taxRate   Float  @map("tax_rate")
   taxAmount Float  @map("tax_amount")
 
-  receivedQty Float              @default(0.0) @map("received_qty")
-  invoicedQty Float              @default(0.0) @map("invoiced_qty")
-  state       PurchaseLineStates @default(pending)
-
   orderId      String        @map("order_id")
   PurcaseOrder PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
 
@@ -500,12 +496,6 @@ model PurchaseOrderLine {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("purchase_order_line")
-}
-
-enum PurchaseLineStates {
-  pending
-  invoiced
-  done
 }
 
 enum PartnerDisplayType {
