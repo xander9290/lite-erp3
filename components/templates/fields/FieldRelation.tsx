@@ -1,8 +1,14 @@
 // // "use client";
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import { createPortal } from "react-dom";
-import { useController, useFormContext } from "react-hook-form";
+import { FieldError, useController, useFormContext } from "react-hook-form";
 import { Form, Dropdown, FloatingLabel } from "react-bootstrap";
 import { useAccess } from "@/contexts/AccessContext";
 import { ColumnConfig } from "@/app/libs/definitions";
@@ -22,7 +28,18 @@ export type Many2OneValue = {
   name?: string | null;
 };
 
-export type DomainOperator = "=" | "!=" | "contains" | "startsWith" | "endsWith" | "in" | "notIn" | ">" | ">=" | "<" | "<=";
+export type DomainOperator =
+  | "="
+  | "!="
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "in"
+  | "notIn"
+  | ">"
+  | ">="
+  | "<"
+  | "<=";
 
 export type DomainItem = [field: string, operator: DomainOperator, value: any];
 export type Domain = DomainItem[];
@@ -49,6 +66,12 @@ interface MenuPosition {
   maxHeight: number;
 }
 
+type FieldErrorWithId = FieldError & {
+  id?: {
+    message?: string;
+  };
+};
+
 export function FieldRelation<T extends Many2OneOption>({
   name,
   model,
@@ -68,8 +91,10 @@ export function FieldRelation<T extends Many2OneOption>({
 
   const {
     field: { value, onChange, onBlur },
-    fieldState: { error },
+    fieldState: { error: err },
   } = useController({ name, control });
+
+  const error: FieldErrorWithId | undefined = err;
 
   const { options, search } = useRelation<T>({
     model,
@@ -95,7 +120,7 @@ export function FieldRelation<T extends Many2OneOption>({
   // 📍 Mostrar toast cuando hay error (solo una vez por error)
   useEffect(() => {
     if (error && error.id && !errorShownRef.current) {
-      toast.error(error.id.message);
+      toast.error(error.id?.message || "Error");
       errorShownRef.current = true;
     }
 
@@ -127,9 +152,13 @@ export function FieldRelation<T extends Many2OneOption>({
 
     const openUpwards = spaceBelow < DROPDOWN_HEIGHT && spaceAbove > spaceBelow;
 
-    const top = openUpwards ? rect.top - DROPDOWN_HEIGHT - SPACING : rect.bottom + SPACING;
+    const top = openUpwards
+      ? rect.top - DROPDOWN_HEIGHT - SPACING
+      : rect.bottom + SPACING;
 
-    const maxHeight = openUpwards ? rect.top - 10 : viewportHeight - rect.bottom - 10;
+    const maxHeight = openUpwards
+      ? rect.top - 10
+      : viewportHeight - rect.bottom - 10;
 
     setMenuPosition({
       top,
@@ -180,7 +209,10 @@ export function FieldRelation<T extends Many2OneOption>({
   // 📍 Optimizado: Event listener con cleanup
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -354,7 +386,11 @@ export function FieldRelation<T extends Many2OneOption>({
         }}
       >
         <Dropdown show className="w-100">
-          <Dropdown.Menu show className="p-0 mt-0" style={{ maxHeight: 200, overflowY: "auto" }}>
+          <Dropdown.Menu
+            show
+            className="p-0 mt-0"
+            style={{ maxHeight: 200, overflowY: "auto" }}
+          >
             {options.length === 0 ? (
               <Dropdown.Item disabled className="text-muted">
                 <small>No hay resultados</small>
@@ -393,7 +429,17 @@ export function FieldRelation<T extends Many2OneOption>({
       </div>,
       document.body,
     );
-  }, [mounted, isOpen, readonly, access?.readonly, menuPosition, options, highlightedIndex, handleSelect, searchColumns]);
+  }, [
+    mounted,
+    isOpen,
+    readonly,
+    access?.readonly,
+    menuPosition,
+    options,
+    highlightedIndex,
+    handleSelect,
+    searchColumns,
+  ]);
 
   if (invisible || access?.invisible) return null;
 
@@ -445,7 +491,11 @@ export function FieldRelation<T extends Many2OneOption>({
   return (
     <div ref={containerRef} className="mb-1">
       <div className="d-flex align-items-stretch">
-        <FloatingLabel label={label ?? name} className="flex-grow-1 fs-6 fw-bold" title={name}>
+        <FloatingLabel
+          label={label ?? name}
+          className="flex-grow-1 fs-6 fw-bold"
+          title={name}
+        >
           {input}
         </FloatingLabel>
       </div>
