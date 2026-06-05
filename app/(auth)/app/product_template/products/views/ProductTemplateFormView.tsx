@@ -1,32 +1,69 @@
 "use client";
 
-import { createProduct, ProductTemplateWithProps, updateProduct } from "../actions/productTemplate.action";
+import {
+  createProduct,
+  ProductTemplateWithProps,
+  updateProduct,
+} from "../actions/productTemplate.action";
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { productTemplateSchema, productTemplateSchemaDefault, ProductTemplateSchemaType } from "../schemas/productTemplate.schema";
+import {
+  productTemplateSchema,
+  productTemplateSchemaDefault,
+  ProductTemplateSchemaType,
+} from "../schemas/productTemplate.schema";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
-import { FieldBoolean, FieldEntry, FieldImage, FieldRelation, FieldSelect, FieldTags } from "@/components/templates/fields";
+import {
+  FormView,
+  FormViewGroup,
+  FormViewStack,
+} from "@/components/templates/FormView";
+import {
+  FieldBoolean,
+  FieldEntry,
+  FieldImage,
+  FieldRelation,
+  FieldSelect,
+  FieldTags,
+} from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
-import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
+import {
+  BtnDeleteLine,
+  SimpleTable,
+  SimpleTD,
+} from "@/components/templates/simpletemplates";
 import { Col } from "react-bootstrap";
 import { getUomById } from "../../uom_category/actions/uom.action";
 import type { WarehouseType } from "@/generated/prisma/enums";
 import { useAuth } from "@/hooks/sessionStore";
+import { formatNumberForDisplay } from "@/app/libs/helpers";
 
-export const computeStocks = ({ product, whType = ["SALES", "PRODUCTION"] }: { product: ProductTemplateWithProps | null; whType?: WarehouseType[] }) => {
+export const computeStocks = ({
+  product,
+  whType = ["SALES", "PRODUCTION"],
+}: {
+  product: ProductTemplateWithProps | null;
+  whType?: WarehouseType[];
+}) => {
   let qtyAvailable = 0.0;
-  const saleWarehouses = product?.Stocks.filter((s) => whType.includes(s.Warehouse.type)) || [];
+  const saleWarehouses =
+    product?.Stocks.filter((s) => whType.includes(s.Warehouse.type)) || [];
   for (const sale of saleWarehouses) {
     qtyAvailable += sale.qty - sale.reservedQty;
   }
-  return qtyAvailable.toFixed(3);
+  return formatNumberForDisplay(qtyAvailable, 3);
 };
 
-function ProductTemplateFormView({ id, product }: { id: string | null; product: ProductTemplateWithProps | null }) {
+function ProductTemplateFormView({
+  id,
+  product,
+}: {
+  id: string | null;
+  product: ProductTemplateWithProps | null;
+}) {
   const { companyId } = useAuth();
 
   const methods = useForm<ProductTemplateSchemaType>({
@@ -66,7 +103,9 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
       const res = await createProduct({ data });
       if (!res.success) return modalError(res.message);
 
-      router.replace(`/app/product_template/products?view_type=form&id=${res.data?.id}`);
+      router.replace(
+        `/app/product_template/products?view_type=form&id=${res.data?.id}`,
+      );
       toast.success(res.message);
     } else {
       const res = await updateProduct({ data, id });
@@ -92,11 +131,15 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
   });
 
   const actionViewStocks = () => {
-    return router.push(`/app/stock_warehouse?view_type=list&id=null&product_id=${id}`);
+    return router.push(
+      `/app/stock_warehouse?view_type=list&id=null&product_id=${id}`,
+    );
   };
 
   const actionViewStockMoves = () => {
-    return router.push(`/app/stock_move?view_type=list&id=null&product_id=${id}`);
+    return router.push(
+      `/app/stock_move?view_type=list&id=null&product_id=${id}`,
+    );
   };
 
   useEffect(() => {
@@ -149,7 +192,10 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
       ProductPackagingLines:
         product.ProductPackagingLines.map((p) => ({
           id: p.id,
-          packagingId: { id: p.ProductPackaging.id, name: p.ProductPackaging.name },
+          packagingId: {
+            id: p.ProductPackaging.id,
+            name: p.ProductPackaging.name,
+          },
           productId: { id: p.Product.id, name: p.Product.name },
           uomId: { id: p.Uom.id, name: p.Uom.name },
           qty: p.qty,
@@ -179,7 +225,9 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
   }, [product, reset]);
 
   const stockMovesCount = () => {
-    const getMoves = product?.StockMoves.filter((s) => s.Company.id === companyId);
+    const getMoves = product?.StockMoves.filter(
+      (s) => s.Company.id === companyId,
+    );
     return getMoves?.length ?? 0;
   };
 
@@ -274,12 +322,30 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
             <FormViewGroup>
               <FieldBoolean name="purchases" label="Se puede comprar" />
               <FormViewStack>
-                <FieldEntry name="lastCost" type="number" label="Ú. Costo" readonly />
-                <FieldEntry name="uomIncomingAllowed" type="number" label="MdC" />
+                <FieldEntry
+                  name="lastCost"
+                  type="number"
+                  label="Ú. Costo"
+                  readonly
+                />
+                <FieldEntry
+                  name="uomIncomingAllowed"
+                  type="number"
+                  label="MdC"
+                />
               </FormViewStack>
-              <FieldRelation model="invoicingTax" name="taxPurchaseId" label="Impuestos compra" />
+              <FieldRelation
+                model="invoicingTax"
+                name="taxPurchaseId"
+                label="Impuestos compra"
+              />
               <FieldRelation model="user" name="userId" label="Comprador" />
-              <FieldRelation model="partner" name="supplierId" label="Proveedor" domain={[["displayType", "=", "SUPPLIER"]]} />
+              <FieldRelation
+                model="partner"
+                name="supplierId"
+                label="Proveedor"
+                domain={[["displayType", "=", "SUPPLIER"]]}
+              />
             </FormViewGroup>
           </PageSheet>
         </Page>
@@ -295,9 +361,17 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
               <FormViewStack>
                 <FieldEntry type="number" name="price4" label="Precio 4" />
                 <FieldEntry type="number" name="price5" label="Precio 5" />
-                <FieldEntry name="uomOutgoingAllowed" type="number" label="Múltiplo de venta" />
+                <FieldEntry
+                  name="uomOutgoingAllowed"
+                  type="number"
+                  label="Múltiplo de venta"
+                />
               </FormViewStack>
-              <FieldRelation model="invoicingTax" name="taxSaleId" label="Impuestos venta" />
+              <FieldRelation
+                model="invoicingTax"
+                name="taxSaleId"
+                label="Impuestos venta"
+              />
             </FormViewGroup>
           </PageSheet>
         </Page>
@@ -335,15 +409,32 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                 renderRow={(row, index) => (
                   <tr key={row.id} className="border-bottom">
                     <SimpleTD name="linePackagingName" colIdx={index}>
-                      <FieldRelation inline model="productPackaging" name={`ProductPackagingLines.${index}.packagingId`} />
+                      <FieldRelation
+                        inline
+                        model="productPackaging"
+                        name={`ProductPackagingLines.${index}.packagingId`}
+                      />
                     </SimpleTD>
                     <SimpleTD name="linePackagingQty" colIdx={index}>
-                      <FieldEntry className="text-end" inline name={`ProductPackagingLines.${index}.qty`} type="number" />
+                      <FieldEntry
+                        className="text-end"
+                        inline
+                        name={`ProductPackagingLines.${index}.qty`}
+                        type="number"
+                      />
                     </SimpleTD>
                     <SimpleTD name="lineUomId" colIdx={index}>
-                      <FieldRelation model="uomCategory" name={`ProductPackagingLines.${index}.uomId`} inline />
+                      <FieldRelation
+                        model="uomCategory"
+                        name={`ProductPackagingLines.${index}.uomId`}
+                        inline
+                      />
                     </SimpleTD>
-                    <SimpleTD name="lineDelete" colIdx={index} contentPosition="text-center">
+                    <SimpleTD
+                      name="lineDelete"
+                      colIdx={index}
+                      contentPosition="text-center"
+                    >
                       <BtnDeleteLine action={() => remove(index)} />
                     </SimpleTD>
                   </tr>
@@ -398,21 +489,44 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                         ponChange={async (val, record) => {
                           const rec = record as ProductTemplateWithProps;
                           const uomId = rec && rec.uomId;
-                          const getUom = (await getUomById({ id: uomId })) || { id: "", name: "" };
-                          setValue(`ReceiptLines.${index}.uomId`, { id: getUom.id, name: getUom.name });
+                          const getUom = (await getUomById({ id: uomId })) || {
+                            id: "",
+                            name: "",
+                          };
+                          setValue(`ReceiptLines.${index}.uomId`, {
+                            id: getUom.id,
+                            name: getUom.name,
+                          });
                         }}
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineReceiptQty">
-                      <FieldEntry inline type="number" decimals={3} name={`ReceiptLines.${index}.qty`} />
+                      <FieldEntry
+                        inline
+                        type="number"
+                        decimals={3}
+                        name={`ReceiptLines.${index}.qty`}
+                      />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineReceiptUomId">
-                      <FieldRelation inline model="uomCategory" readonly name={`ReceiptLines.${index}.uomId`} />
+                      <FieldRelation
+                        inline
+                        model="uomCategory"
+                        readonly
+                        name={`ReceiptLines.${index}.uomId`}
+                      />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineReceiptActive">
-                      <FieldBoolean inline name={`ReceiptLines.${index}.active`} />
+                      <FieldBoolean
+                        inline
+                        name={`ReceiptLines.${index}.active`}
+                      />
                     </SimpleTD>
-                    <SimpleTD name="lineDelete" colIdx={index} contentPosition="text-center">
+                    <SimpleTD
+                      name="lineDelete"
+                      colIdx={index}
+                      contentPosition="text-center"
+                    >
                       <BtnDeleteLine action={() => removeReceipt(index)} />
                     </SimpleTD>
                   </tr>
@@ -434,7 +548,12 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
           <PageSheet name="manufacturingPage">
             <FormViewGroup>
               <FieldBoolean name="manufacturing" label="Se puede fabricar" />
-              <FieldEntry name="yield" label="Rendimiento" type="number" decimals={3} />
+              <FieldEntry
+                name="yield"
+                label="Rendimiento"
+                type="number"
+                decimals={3}
+              />
             </FormViewGroup>
           </PageSheet>
         </Page>

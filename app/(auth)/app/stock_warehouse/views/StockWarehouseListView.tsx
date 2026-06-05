@@ -1,5 +1,6 @@
 "use client";
 
+import { formatNumberForDisplay } from "@/app/libs/helpers";
 import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
@@ -48,7 +49,9 @@ function StockWarehouseListView({
             label="Cantidad"
             type="number"
             render={(_, stock) => (
-              <div className="text-end">{stock.qty.toFixed(3)}</div>
+              <div className="text-end fw-semibold">
+                {formatNumberForDisplay(stock.qty, 3)}
+              </div>
             )}
           />
           <Column
@@ -56,7 +59,9 @@ function StockWarehouseListView({
             label="Reservado"
             type="number"
             render={(_, stock) => (
-              <div className="text-end">{stock.reservedQty.toFixed(3)}</div>
+              <div className="text-end fw-semibold">
+                {formatNumberForDisplay(stock.reservedQty, 3)}
+              </div>
             )}
           />
           <Column
@@ -64,8 +69,8 @@ function StockWarehouseListView({
             label="Disponible"
             type="number"
             render={(_, stock) => (
-              <div className="text-end">
-                {(stock.qty - stock.reservedQty).toFixed(3)}
+              <div className="text-end fw-semibold">
+                {formatNumberForDisplay(stock.qty - stock.reservedQty, 3)}
               </div>
             )}
           />

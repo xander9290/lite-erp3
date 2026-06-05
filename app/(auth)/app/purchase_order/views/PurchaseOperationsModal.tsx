@@ -1,7 +1,11 @@
 "use client";
 
 import { ModalBasicProps } from "@/app/libs/definitions";
-import { FieldBoolean, FieldEntry, FieldRelation } from "@/components/templates/fields";
+import {
+  FieldBoolean,
+  FieldEntry,
+  FieldRelation,
+} from "@/components/templates/fields";
 import { FormViewGroup } from "@/components/templates/FormView";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import { SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
@@ -51,7 +55,12 @@ function PurchaseOperationsModal({
               <Container className="mb-3">
                 <Row>
                   <FormViewGroup>
-                    <FieldRelation model="warehouse" name="warehouseDestId" label="Origen" readonly />
+                    <FieldRelation
+                      model="warehouse"
+                      name="warehouseDestId"
+                      label="Origen"
+                      readonly
+                    />
                   </FormViewGroup>
                   <FormViewGroup>
                     <FieldRelation
@@ -67,7 +76,9 @@ function PurchaseOperationsModal({
                 </Row>
                 <Row>
                   <FormViewGroup>
-                    <Button onClick={handleSelectAllAsReady}>Todos listos</Button>
+                    <Button onClick={handleSelectAllAsReady}>
+                      Todos listos
+                    </Button>
                   </FormViewGroup>
                 </Row>
               </Container>
@@ -90,7 +101,12 @@ function PurchaseOperationsModal({
                           width: 30,
                           minWidth: 30,
                         },
-                        { string: "UdM", name: "uomId", width: 50, minWidth: 50 },
+                        {
+                          string: "UdM",
+                          name: "uomId",
+                          width: 50,
+                          minWidth: 50,
+                        },
                         {
                           string: "Recibido",
                           name: "receivedQty",
@@ -106,20 +122,59 @@ function PurchaseOperationsModal({
                       ]}
                       renderRow={(row, index) => (
                         <tr key={row.id} className="border-bottom">
-                          <SimpleTD colIdx={index} name="purchaseOperationProduct">
-                            <FieldRelation inline model="productTemplate" name={`OrderLines.${index}.productId`} readonly />
+                          <SimpleTD
+                            colIdx={index}
+                            name="purchaseOperationProduct"
+                          >
+                            <FieldRelation
+                              inline
+                              model="productTemplate"
+                              name={`OrderLines.${index}.productId`}
+                              readonly
+                            />
                           </SimpleTD>
                           <SimpleTD colIdx={index} name="purchaseOperationQty">
-                            <FieldEntry inline type="number" decimals={3} name={`OrderLines.${index}.quantity`} readonly />
+                            <FieldEntry
+                              inline
+                              type="number"
+                              decimals={3}
+                              name={`OrderLines.${index}.quantity`}
+                              readonly
+                            />
                           </SimpleTD>
                           <SimpleTD colIdx={index} name="lineUomId">
-                            <FieldRelation inline model="uomCategory" name={`OrderLines.${index}.uomId`} readonly />
+                            <FieldRelation
+                              inline
+                              model="uomCategory"
+                              name={`OrderLines.${index}.uomId`}
+                              readonly
+                            />
                           </SimpleTD>
                           <SimpleTD colIdx={index} name="purchaseOperationQty">
-                            <FieldEntry inline type="number" decimals={3} name={`OrderLines.${index}.receivedQty`} />
+                            <FieldEntry
+                              inline
+                              type="number"
+                              decimals={3}
+                              name={`OrderLines.${index}.receivedQty`}
+                              readonly={
+                                getValues().OrderLines[index].state !==
+                                "pending"
+                              }
+                            />
                           </SimpleTD>
-                          <SimpleTD colIdx={index} name="purchaseOperationReady" contentPosition="text-center">
-                            <FieldBoolean inline name={`OrderLines.${index}.ready`} />
+                          <SimpleTD
+                            colIdx={index}
+                            name="purchaseOperationReady"
+                            contentPosition="text-center"
+                          >
+                            <FieldBoolean
+                              inline
+                              name={`OrderLines.${index}.ready`}
+                              readonly={
+                                getValues().OrderLines[index].state !==
+                                "pending"
+                              }
+                            />
                           </SimpleTD>
                         </tr>
                       )}

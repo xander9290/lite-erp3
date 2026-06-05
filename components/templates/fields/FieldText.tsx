@@ -19,8 +19,8 @@ export function FieldText({
   if (access?.invisible) return null;
 
   return (
-    <span className={className} title={name}>
+    <p className={`text-truncate m-0 ${className}`} title={name}>
       {output}
-    </span>
+    </p>
   );
 }
