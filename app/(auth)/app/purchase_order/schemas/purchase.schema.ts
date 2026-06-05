@@ -1,4 +1,4 @@
-import { PurchaseOrderState } from "@/generated/prisma/enums";
+import { PurchaseLineStates, PurchaseOrderState } from "@/generated/prisma/enums";
 import { z } from "zod";
 
 export const purchaseOrderSchema = z.object({
@@ -48,6 +48,7 @@ export const purchaseOrderSchema = z.object({
       total: z.number(),
       receivedQty: z.number(),
       ready: z.boolean(),
+      state: z.enum(PurchaseLineStates),
     }),
   ),
   createdAt: z.date().nullable(),

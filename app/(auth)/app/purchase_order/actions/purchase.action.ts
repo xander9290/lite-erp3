@@ -1,6 +1,6 @@
 "use server";
 
-import type { PurchaseOrder } from "@/generated/prisma/client";
+import type { PurchaseLineStates, PurchaseOrder } from "@/generated/prisma/client";
 import { PurchaseOrderSchemaType } from "../schemas/purchase.schema";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
@@ -36,6 +36,7 @@ export interface PurchaseOrderWithProps extends PurchaseOrder {
     total: number;
     receivedQty: number;
     ready: boolean;
+    state: PurchaseLineStates;
   }[];
 }
 
@@ -83,6 +84,7 @@ export async function getPurchaseById({ id }: { id: string | null }): Promise<Pu
             quantity: true,
             receivedQty: true,
             ready: true,
+            state: true,
           },
         },
       },
@@ -179,6 +181,7 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
             quantity: true,
             receivedQty: true,
             ready: true,
+            state: true,
           },
         },
       },
@@ -264,7 +267,7 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
               total: round(line.total, 2),
               receivedQty: line.quantity,
               ready: line.ready,
-              createUid: uid || "",
+              createUid: uid!,
             },
           })),
         },
@@ -306,6 +309,7 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
             quantity: true,
             receivedQty: true,
             ready: true,
+            state: true,
           },
         },
       },
@@ -368,7 +372,7 @@ export async function confirmStockWarehousePurchase({ data }: { data: PurchaseOr
   }
 }
 
-export async function cancelStockWarehousePurchase({ orderId, data }: { orderId: string | null; data: PurchaseOrderActionProps }): Promise<ActionResponse<true>> {
+export async function cancelStockWarehousePurchase({ orderId, data }: { orderId: string | null; data: PurchaseOrderActionProps }): Promise<ActionResponse<boolean>> {
   try {
     if (!orderId) throw new Error("ID not defined");
 
@@ -411,6 +415,122 @@ export async function cancelStockWarehousePurchase({ orderId, data }: { orderId:
   }
 }
 
+export async function createAffectStock({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<boolean>> {
+  try {
+    if (data.warehouseAffectedId?.id === undefined) throw new Error("Almacén Destino para afectar existencias no definido");
+    const { uid, company } = await sessionStore();
+    await prisma.$transaction(async (tx) => {
+      const getReadyLines = await tx.purchaseOrderLine.findMany({
+        where: {
+          ready: true,
+          state: "pending",
+        },
+        include: {
+          Product: {
+            select: { name: true },
+          },
+        },
+      });
+
+      for (const line of getReadyLines) {
+        //ENTRADA AL ALMACÉN DE VENTAS O PRODUCCIÓN DEFINIDO
+        console.log("-Afectando almacén");
+        await tx.stockWarehouse.upsert({
+          where: {
+            productId_warehouseId: {
+              productId: line.productId,
+              warehouseId: data.warehouseAffectedId?.id || "",
+            },
+          },
+          update: {
+            qty: {
+              increment: line.receivedQty,
+            },
+          },
+          create: {
+            productId: line.productId,
+            warehouseId: data.warehouseAffectedId?.id || "",
+            qty: line.receivedQty,
+            createdUid: uid!,
+          },
+        });
+
+        // CAMBIO DE ESTADO DE LA LÍNEA DE COMPRAS
+        await tx.purchaseOrderLine.update({
+          where: {
+            id: line.id,
+          },
+          data: {
+            state: "done",
+          },
+        });
+
+        // MOVIMIENTO DE ALMACÉN (ENTRADA)
+        console.log(`-Creando líneas de movimiento de almacén: ${data.warehouseAffectedId?.name} - ${line.Product.name} - ${line.receivedQty}`);
+        await tx.stockMove.create({
+          data: {
+            moveType: "incoming",
+            name: "COMPRA",
+            reference: data.name,
+            companyId: company.id,
+            productId: line.productId,
+            quantity: line.receivedQty,
+            userId: uid!,
+            warehouseId: data.warehouseDestId.id,
+            warehouseDestId: data.warehouseAffectedId?.id || "",
+          },
+        });
+
+        //REMOVER EXISTENCIAS EN ALMACÉN COMPRAS
+        console.log("-Limpiando almacén compras");
+        await tx.stockWarehouse.update({
+          where: {
+            productId_warehouseId: {
+              productId: line.productId,
+              warehouseId: data.warehouseDestId.id,
+            },
+          },
+          data: {
+            qty: {
+              decrement: line.quantity,
+            },
+          },
+        });
+      }
+
+      // VERIFICA EL NUEVO ESTADO DE LA ORDEN DE COMPRA
+      const orderLines = await tx.purchaseOrderLine.findMany({
+        where: {
+          PurcaseOrder: {
+            name: data.name,
+          },
+        },
+      });
+
+      const isCompleted = orderLines.every((line) => line.state === "done" && line.ready === true);
+      if (isCompleted) {
+        await tx.purchaseOrder.update({
+          where: {
+            name: data.name,
+          },
+          data: {
+            state: "done",
+          },
+        });
+      }
+    });
+
+    return {
+      success: true,
+      message: "Se ha completado la acción",
+    };
+  } catch (error: any) {
+    console.log(error);
+    return { success: false, message: error.message };
+  }
+}
+
+// AQUI TAMBIÉN SE COLOCAN CONSTRAINS
 const validateMultiplo = async (lines: PurchaseOrderActionProps["OrderLines"]) => {
   for (const line of lines) {
     if (line.receivedQty > line.quantity) throw new Error(`La cantidad recbida del product ${line.productId.name} no debe ser mayor a la ordenada.`);

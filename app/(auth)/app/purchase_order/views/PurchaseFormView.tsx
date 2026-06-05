@@ -1,6 +1,6 @@
 "use client";
 
-import { cancelStockWarehousePurchase, confirmStockWarehousePurchase, createPurchaseOrder, PurchaseOrderWithProps, updatePurchaseOrder } from "../actions/purchase.action";
+import { cancelStockWarehousePurchase, confirmStockWarehousePurchase, createAffectStock, createPurchaseOrder, PurchaseOrderWithProps, updatePurchaseOrder } from "../actions/purchase.action";
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { purchaseOrderSchema, purchaseOrderSchemaDefault, PurchaseOrderSchemaType } from "../schemas/purchase.schema";
@@ -29,6 +29,8 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
     total: 0.0,
   });
 
+  const [readyToAffect, setReadyToAffect] = useState(false);
+
   const [modalOperation, setModalOperation] = useState(false);
 
   const methods = useForm({
@@ -36,7 +38,14 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
     defaultValues: purchaseOrderSchemaDefault,
   });
 
-  const { reset, control, setValue, getValues, handleSubmit } = methods;
+  const {
+    reset,
+    control,
+    setValue,
+    getValues,
+    handleSubmit,
+    formState: { isDirty },
+  } = methods;
 
   const {
     append,
@@ -147,6 +156,12 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
     setTotals({ subtotal, taxes, total });
   };
 
+  const verfiyReadyToAffect = () => {
+    const lines = getValues().OrderLines;
+    const isReady = lines.some((line) => line.ready === true && line.state === "pending");
+    setReadyToAffect(isReady);
+  };
+
   useEffect(() => {
     if (!purchase) {
       reset(purchaseOrderSchemaDefault);
@@ -201,14 +216,15 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
         taxAmount: line.taxAmount,
         subtotal: line.subtotal,
         total: line.total,
+        state: line.state,
       })),
       createdAt: purchase.createdAt,
       updatedAt: purchase.updatedAt,
     };
     reset(values);
     originalValuesRef.current = values;
-    console.log(purchase.confirmedDate?.toISOString());
     computeTotals();
+    verfiyReadyToAffect();
   }, [purchase, reset]);
 
   useEffect(() => {
@@ -260,6 +276,13 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
     await onSubmit(newData);
   });
 
+  const handleAffect = handleSubmit(async () => {
+    const whAffected = getValues().warehouseAffectedId?.id;
+    if (!whAffected) return modalError("No se ha definido el almacén destino de existencias");
+    await createAffectStock({ data: getValues() });
+    router.refresh();
+  });
+
   return (
     <>
       <FormView
@@ -303,14 +326,21 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
             action: () => setModalOperation(!modalOperation),
             fieldName: "actionOperations",
             string: "Operaciones",
-            invisible: getValues().state === "draft",
+            invisible: getValues().state === "draft" || getValues().state === "cancel",
+          },
+          {
+            action: handleAffect,
+            fieldName: "handleAffect",
+            string: "Afectar",
+            invisible: !readyToAffect || getValues().state === "done" || getValues().state === "cancel",
+            readonly: isDirty,
           },
           {
             action: actionCancel,
             fieldName: "actionCancel",
             string: "Cancelar",
             variant: "danger",
-            invisible: id === "null" || ["cancel"].includes(getValues().state),
+            invisible: id === "null" || ["cancel", "done"].includes(getValues().state),
           },
         ]}
       >
@@ -475,6 +505,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
                       total: 0.0,
                       receivedQty: 0.0,
                       ready: false,
+                      state: "pending",
                     });
                   }}
                 />
