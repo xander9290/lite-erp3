@@ -1,6 +1,6 @@
 "use server";
 
-import type { PurchaseOrder, StockWarehouse } from "@/generated/prisma/client";
+import type { PurchaseOrder } from "@/generated/prisma/client";
 import { PurchaseOrderSchemaType } from "../schemas/purchase.schema";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
@@ -18,6 +18,11 @@ export interface PurchaseOrderWithProps extends PurchaseOrder {
     name: string;
     Company: { id: string; name: string };
   };
+  WarehouseAffected: {
+    id: string;
+    name: string;
+    Company: { id: string; name: string };
+  } | null;
   PaymentTerm: { id: string; name: string } | null;
   OrderLines: {
     id: string;
@@ -30,19 +35,13 @@ export interface PurchaseOrderWithProps extends PurchaseOrder {
     subtotal: number;
     total: number;
     receivedQty: number;
+    ready: boolean;
   }[];
 }
 
-export type PurchaseOrderActionProps = Omit<
-  PurchaseOrderSchemaType,
-  "createdAt" | "updatedAt"
->;
+export type PurchaseOrderActionProps = Omit<PurchaseOrderSchemaType, "createdAt" | "updatedAt">;
 
-export async function getPurchaseById({
-  id,
-}: {
-  id: string | null;
-}): Promise<PurchaseOrderWithProps | null> {
+export async function getPurchaseById({ id }: { id: string | null }): Promise<PurchaseOrderWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
     const purchase = await prisma.purchaseOrder.findUnique({
@@ -55,6 +54,13 @@ export async function getPurchaseById({
           select: { id: true, name: true },
         },
         WarehouseDest: {
+          select: {
+            id: true,
+            name: true,
+            Company: { select: { id: true, name: true } },
+          },
+        },
+        WarehouseAffected: {
           select: {
             id: true,
             name: true,
@@ -76,6 +82,7 @@ export async function getPurchaseById({
             subtotal: true,
             quantity: true,
             receivedQty: true,
+            ready: true,
           },
         },
       },
@@ -87,20 +94,13 @@ export async function getPurchaseById({
   }
 }
 
-export async function createPurchaseOrder({
-  data,
-}: {
-  data: PurchaseOrderActionProps;
-}): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
     await validateMultiplo(data.OrderLines);
 
-    const name = await getNextValue(
-      `P/${company.code}/`,
-      `${company.code}-purchase`,
-    );
+    const name = await getNextValue(`P/${company.code}/`, `${company.code}-purchase`);
     const newPurchase = await prisma.purchaseOrder.create({
       data: {
         name,
@@ -132,8 +132,8 @@ export async function createPurchaseOrder({
               priceUnit: line.priceUnit,
               quantity: line.quantity,
               receivedQty: line.quantity,
-              taxRate: line.taxRate,
-              taxAmount: line.taxAmount,
+              taxRate: round(line.taxRate, 2),
+              taxAmount: round(line.taxAmount, 2),
               subtotal: line.subtotal,
               total: line.total,
               createUid: uid || "",
@@ -156,6 +156,13 @@ export async function createPurchaseOrder({
             Company: { select: { id: true, name: true } },
           },
         },
+        WarehouseAffected: {
+          select: {
+            id: true,
+            name: true,
+            Company: { select: { id: true, name: true } },
+          },
+        },
         PaymentTerm: {
           select: { id: true, name: true },
         },
@@ -171,6 +178,7 @@ export async function createPurchaseOrder({
             subtotal: true,
             quantity: true,
             receivedQty: true,
+            ready: true,
           },
         },
       },
@@ -194,13 +202,7 @@ export async function createPurchaseOrder({
   }
 }
 
-export async function updatePurchaseOrder({
-  id,
-  data,
-}: {
-  id: string | null;
-  data: PurchaseOrderActionProps;
-}): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function updatePurchaseOrder({ id, data }: { id: string | null; data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     if (!id) throw new Error("ID not define");
 
@@ -216,6 +218,7 @@ export async function updatePurchaseOrder({
         state: data.state,
         supplierId: data.supplierId.id,
         warehouseDestId: data.warehouseDestId.id,
+        warehouseAffectedId: data.warehouseAffectedId?.id ? data.warehouseAffectedId.id : null,
         paymentTermId: data.paymentTermId.id,
         confirmedDate: data.confirmedDate,
         subtotal: round(
@@ -243,22 +246,24 @@ export async function updatePurchaseOrder({
               quantity: line.quantity,
               uomId: line.uomId.id,
               priceUnit: line.priceUnit,
-              taxRate: line.taxRate,
-              taxAmount: line.taxAmount,
+              taxRate: round(line.taxRate, 2),
+              taxAmount: round(line.taxAmount, 2),
               subtotal: round(line.subtotal, 2),
               receivedQty: line.receivedQty,
               total: round(line.total, 2),
+              ready: line.ready,
             },
             create: {
               productId: line.productId.id,
               quantity: line.quantity,
               uomId: line.uomId.id,
               priceUnit: line.priceUnit,
-              taxRate: line.taxRate,
-              taxAmount: line.taxAmount,
+              taxRate: round(line.taxRate, 2),
+              taxAmount: round(line.taxAmount, 2),
               subtotal: round(line.subtotal, 2),
               total: round(line.total, 2),
               receivedQty: line.quantity,
+              ready: line.ready,
               createUid: uid || "",
             },
           })),
@@ -272,6 +277,13 @@ export async function updatePurchaseOrder({
           select: { id: true, name: true },
         },
         WarehouseDest: {
+          select: {
+            id: true,
+            name: true,
+            Company: { select: { id: true, name: true } },
+          },
+        },
+        WarehouseAffected: {
           select: {
             id: true,
             name: true,
@@ -293,6 +305,7 @@ export async function updatePurchaseOrder({
             subtotal: true,
             quantity: true,
             receivedQty: true,
+            ready: true,
           },
         },
       },
@@ -316,11 +329,7 @@ export async function updatePurchaseOrder({
   }
 }
 
-export async function confirmStockWarehousePurchase({
-  data,
-}: {
-  data: PurchaseOrderActionProps;
-}): Promise<ActionResponse<true>> {
+export async function confirmStockWarehousePurchase({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<true>> {
   try {
     const { uid } = await sessionStore();
 
@@ -359,13 +368,7 @@ export async function confirmStockWarehousePurchase({
   }
 }
 
-export async function cancelStockWarehousePurchase({
-  orderId,
-  data,
-}: {
-  orderId: string | null;
-  data: PurchaseOrderActionProps;
-}): Promise<ActionResponse<true>> {
+export async function cancelStockWarehousePurchase({ orderId, data }: { orderId: string | null; data: PurchaseOrderActionProps }): Promise<ActionResponse<true>> {
   try {
     if (!orderId) throw new Error("ID not defined");
 
@@ -408,22 +411,15 @@ export async function cancelStockWarehousePurchase({
   }
 }
 
-const validateMultiplo = async (
-  lines: PurchaseOrderActionProps["OrderLines"],
-) => {
+const validateMultiplo = async (lines: PurchaseOrderActionProps["OrderLines"]) => {
   for (const line of lines) {
-    if (line.receivedQty > line.quantity)
-      throw new Error(
-        `La cantidad recbida del product ${line.productId.name} no debe ser mayor a la ordenada.`,
-      );
+    if (line.receivedQty > line.quantity) throw new Error(`La cantidad recbida del product ${line.productId.name} no debe ser mayor a la ordenada.`);
     const productId = await getProductById({ id: line.productId.id });
     if (productId) {
       const allowedQty = productId.uomIncomingAllowed;
       const qty = line.quantity;
       if (!esMultiplo(qty, allowedQty)) {
-        throw new Error(
-          `El producto ${productId.name} se compra por múltiplo de ${allowedQty} ${productId.Uom?.code}`,
-        );
+        throw new Error(`El producto ${productId.name} se compra por múltiplo de ${allowedQty} ${productId.Uom?.code}`);
       }
     }
   }

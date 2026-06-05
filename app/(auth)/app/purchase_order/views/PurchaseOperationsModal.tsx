@@ -1,31 +1,30 @@
 "use client";
 
 import { ModalBasicProps } from "@/app/libs/definitions";
-import { FieldEntry, FieldRelation } from "@/components/templates/fields";
+import { FieldBoolean, FieldEntry, FieldRelation } from "@/components/templates/fields";
 import { FormViewGroup } from "@/components/templates/FormView";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import { SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
-import { fields } from "@hookform/resolvers/ajv/src/__tests__/__fixtures__/data.js";
-import { handleLog } from "next/dist/server/dev/browser-logs/receive-logs";
-import { Button, Container, Form, Modal, Row, Spinner } from "react-bootstrap";
+import { useAuth } from "@/hooks/sessionStore";
+import { Button, Container, Form, Modal, Row } from "react-bootstrap";
 import { FormProvider, UseFormReturn, useFieldArray } from "react-hook-form";
 
 function PurchaseOperationsModal({
   onHide,
   show,
   methods,
-  onSubmit,
   reverse,
 }: ModalBasicProps & {
   methods: UseFormReturn<any>;
-  onSubmit: (data: any) => void;
   reverse: () => void;
 }) {
+  const { companyId } = useAuth();
+
   const {
-    handleSubmit,
     getValues,
-    formState: { isSubmitting, isDirty },
+    formState: { isDirty },
     control,
+    setValue,
   } = methods;
 
   const { fields: lines } = useFieldArray({
@@ -33,24 +32,41 @@ function PurchaseOperationsModal({
     name: "OrderLines",
   });
 
+  const handleSelectAllAsReady = () => {
+    const lines = getValues().OrderLines;
+    lines.forEach((line: any, index: number) => {
+      setValue(`OrderLines.${index}.ready`, !line.ready, { shouldDirty: true });
+    });
+  };
+
   return (
     <Modal onHide={onHide} show={show} size="xl" backdrop="static" centered>
       <Modal.Header closeButton>
-        Operaciones de la orden
-        <span className="fw-bolder ms-1">{getValues().name}</span>
+        <span className="fw-bolder ms-1">#{getValues().name}</span>
       </Modal.Header>
       <Modal.Body className="p-0">
         <FormProvider {...methods}>
-          <Form>
-            <Container>
+          <Form className="bg-body-tertiary">
+            <Container className="mb-3">
               <Row>
+                <FormViewGroup>
+                  <FieldRelation model="warehouse" name="warehouseDestId" label="Origen" readonly />
+                </FormViewGroup>
                 <FormViewGroup>
                   <FieldRelation
                     model="warehouse"
-                    name="warehouseDestId"
-                    label="Origen"
-                    readonly
+                    name="warehouseAffectedId"
+                    label="Destino"
+                    domain={[
+                      ["type", "in", ["SALES", "PRODUCTION"]],
+                      ["companyId", "=", companyId],
+                    ]}
                   />
+                </FormViewGroup>
+              </Row>
+              <Row>
+                <FormViewGroup>
+                  <Button onClick={handleSelectAllAsReady}>Todos listos</Button>
                 </FormViewGroup>
               </Row>
             </Container>
@@ -68,7 +84,7 @@ function PurchaseOperationsModal({
                         minWidth: 170,
                       },
                       {
-                        string: "Cantidad",
+                        string: "Ordenado",
                         name: "quantity",
                         width: 30,
                         minWidth: 30,
@@ -80,44 +96,29 @@ function PurchaseOperationsModal({
                         width: 30,
                         minWidth: 30,
                       },
+                      {
+                        string: "Listo",
+                        name: "ready",
+                        width: 30,
+                        minWidth: 30,
+                      },
                     ]}
                     renderRow={(row, index) => (
                       <tr key={row.id} className="border-bottom">
-                        <SimpleTD
-                          colIdx={index}
-                          name="purchaseOperationProduct"
-                        >
-                          <FieldRelation
-                            inline
-                            model="productTemplate"
-                            name={`OrderLines.${index}.productId`}
-                            readonly
-                          />
+                        <SimpleTD colIdx={index} name="purchaseOperationProduct">
+                          <FieldRelation inline model="productTemplate" name={`OrderLines.${index}.productId`} readonly />
                         </SimpleTD>
                         <SimpleTD colIdx={index} name="purchaseOperationQty">
-                          <FieldEntry
-                            inline
-                            type="number"
-                            decimals={3}
-                            name={`OrderLines.${index}.quantity`}
-                            readonly
-                          />
+                          <FieldEntry inline type="number" decimals={3} name={`OrderLines.${index}.quantity`} readonly />
                         </SimpleTD>
                         <SimpleTD colIdx={index} name="lineUomId">
-                          <FieldRelation
-                            inline
-                            model="uomCategory"
-                            name={`OrderLines.${index}.uomId`}
-                            readonly
-                          />
+                          <FieldRelation inline model="uomCategory" name={`OrderLines.${index}.uomId`} readonly />
                         </SimpleTD>
                         <SimpleTD colIdx={index} name="purchaseOperationQty">
-                          <FieldEntry
-                            inline
-                            type="number"
-                            decimals={3}
-                            name={`OrderLines.${index}.receivedQty`}
-                          />
+                          <FieldEntry inline type="number" decimals={3} name={`OrderLines.${index}.receivedQty`} />
+                        </SimpleTD>
+                        <SimpleTD colIdx={index} name="purchaseOperationReady" contentPosition="text-center">
+                          <FieldBoolean inline name={`OrderLines.${index}.ready`} />
                         </SimpleTD>
                       </tr>
                     )}

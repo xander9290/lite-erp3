@@ -5,6 +5,7 @@ import { Form, FloatingLabel } from "react-bootstrap";
 import { ElementType, useEffect, useState } from "react";
 import { useAccess } from "@/contexts/AccessContext";
 import toast from "react-hot-toast";
+import { formatISO, format } from "date-fns";
 
 interface FieldEntryProps {
   name: string;
@@ -53,12 +54,7 @@ interface FieldInputProps {
 function toDateInputValue(value: unknown): string {
   if (value == null || value === "") return "";
 
-  const d =
-    value instanceof Date
-      ? value
-      : typeof value === "string" || typeof value === "number"
-        ? new Date(value)
-        : null;
+  const d = value instanceof Date ? value : typeof value === "string" || typeof value === "number" ? new Date(value) : null;
 
   if (!d || isNaN(d.getTime())) return "";
 
@@ -70,30 +66,19 @@ function toDateInputValue(value: unknown): string {
   return `${year}-${month}-${day}`;
 }
 
-function toDatetimeLocalValue(value: string): string {
-  if (value == null || value === "") return "";
+function parseLocalDate(value: Date) {
+  const date = value.toISOString();
+  const iso = formatISO(date);
+  const dateISO = format(iso, "yyyy-MM-dd");
+  const hourISO = format(iso, "HH:mm:ss");
 
-  // const d = value instanceof Date ? value : new Date(value);
-  const d = new Date(value);
-  if (!d || isNaN(d.getTime())) return "";
-
-  // Mantener los valores UTC originales
-  const year = d.getUTCFullYear();
-  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  const hours = String(d.getUTCHours() - 6).padStart(2, "0");
-  const minutes = String(d.getUTCMinutes()).padStart(2, "0");
-
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  return `${dateISO}T${hourISO}`;
 }
 
 /**
  * Formatea un número con formato mexicano (miles con coma, decimales con punto)
  */
-function formatMexicanNumber(
-  value: number | null | undefined,
-  decimals: number = 2,
-): string {
+function formatMexicanNumber(value: number | null | undefined, decimals: number = 2): string {
   if (value === null || value === undefined || isNaN(value)) return "";
 
   return value.toLocaleString("es-MX", {
@@ -140,28 +125,16 @@ function FieldInput({
 }: FieldInputProps) {
   // Estado local para el valor mostrado (solo para type="number")
   const [displayValue, setDisplayValue] = useState<string>(() => {
-    if (
-      type === "number" &&
-      typeof field.value === "number" &&
-      !isNaN(field.value)
-    ) {
-      return thousandsSeparator
-        ? formatMexicanNumber(field.value, decimals)
-        : field.value.toString();
+    if (type === "number" && typeof field.value === "number" && !isNaN(field.value)) {
+      return thousandsSeparator ? formatMexicanNumber(field.value, decimals) : field.value.toString();
     }
     return field.value ?? "";
   });
 
   // Sincronizar cuando el valor externo cambia
   useEffect(() => {
-    if (
-      type === "number" &&
-      typeof field.value === "number" &&
-      !isNaN(field.value)
-    ) {
-      const formatted = thousandsSeparator
-        ? formatMexicanNumber(field.value, decimals)
-        : field.value.toString();
+    if (type === "number" && typeof field.value === "number" && !isNaN(field.value)) {
+      const formatted = thousandsSeparator ? formatMexicanNumber(field.value, decimals) : field.value.toString();
       setDisplayValue(formatted);
     } else if (field.value !== displayValue && type !== "number") {
       setDisplayValue(field.value ?? "");
@@ -180,9 +153,7 @@ function FieldInput({
 
   const isTextarea = as === "textarea" || type === "text";
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const el = e.target;
     const raw = el.value;
 
@@ -225,7 +196,7 @@ function FieldInput({
       // ✅ Crear la fecha como UTC al mediodía para evitar problemas de zona horaria
       //const [year, month, day] = raw.split("-").map(Number);
       //const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-
+      console.log(raw);
       field.onChange(new Date(raw));
       return;
     }
@@ -235,7 +206,6 @@ function FieldInput({
       //const date = new Date(raw + "Z"); // Agregar Z para indicar UTC
       //field.onChange(date);
       const now = new Date(raw);
-
       field.onChange(now);
       return;
     }
@@ -243,9 +213,7 @@ function FieldInput({
     onChange?.(raw);
   };
 
-  const handleBlur = (
-    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     // Formatear el valor al salir del campo
     if (type === "number" && thousandsSeparator) {
       const numValue = parseMexicanNumber(e.target.value);
@@ -259,7 +227,7 @@ function FieldInput({
 
   // Determinar el valor a mostrar
   const getValue = () => {
-    if (type === "datetime-local") return toDatetimeLocalValue(field.value);
+    if (type === "datetime-local") return parseLocalDate(field.value);
     if (type === "date") return toDateInputValue(field.value);
     if (type === "number") return displayValue;
     return field.value ?? "";
@@ -371,11 +339,7 @@ export function FieldEntry({
 
         return (
           <div className="mb-1 w-100">
-            <FloatingLabel
-              label={floatingText}
-              controlId={name}
-              className="w-100 fs-6 fw-bold"
-            >
+            <FloatingLabel label={floatingText} controlId={name} className="w-100 fs-6 fw-bold">
               {input}
             </FloatingLabel>
           </div>

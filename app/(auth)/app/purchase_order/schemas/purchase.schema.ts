@@ -22,6 +22,12 @@ export const purchaseOrderSchema = z.object({
     id: z.string().min(1, "Almacén destino es requerido"),
     name: z.string(),
   }),
+  warehouseAffectedId: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .nullable(),
   paymentTermId: z.object({
     id: z.string().min(1, "Términos de pago es requerido"),
     name: z.string(),
@@ -41,6 +47,7 @@ export const purchaseOrderSchema = z.object({
       subtotal: z.number(),
       total: z.number(),
       receivedQty: z.number(),
+      ready: z.boolean(),
     }),
   ),
   createdAt: z.date().nullable(),
@@ -71,6 +78,10 @@ export const purchaseOrderSchemaDefault: PurchaseOrderSchemaType = {
     name: "",
   },
   warehouseDestId: {
+    id: "",
+    name: "",
+  },
+  warehouseAffectedId: {
     id: "",
     name: "",
   },

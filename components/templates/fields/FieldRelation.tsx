@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { useController, useFormContext, FieldError } from "react-hook-form";
+import { useController, useFormContext } from "react-hook-form";
 import { Form, Dropdown, FloatingLabel } from "react-bootstrap";
 import { useAccess } from "@/contexts/AccessContext";
 import { ColumnConfig } from "@/app/libs/definitions";
