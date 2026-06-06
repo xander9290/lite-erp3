@@ -3,13 +3,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { ActionResponse } from "../../../libs/definitions";
 
-export async function createImage({
-  formData,
-  folder,
-}: {
-  formData: FormData;
-  folder: string | null;
-}): Promise<ActionResponse<string>> {
+export async function createImage({ formData, folder }: { formData: FormData; folder: string | null }): Promise<ActionResponse<string>> {
   console.log("- Subiendo imagen a Supabase...");
 
   const file = formData.get("image") as File | null;
@@ -26,10 +20,7 @@ export async function createImage({
   }
 
   // 👉 Cliente de Supabase (Service Role, solo en server)
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
   // Nombre único para evitar colisiones
   const filePath = `${folder}/${Date.now()}-${file.name}`;
@@ -40,7 +31,7 @@ export async function createImage({
 
     // 👉 Subir archivo al bucket
     const { data, error } = await supabase.storage
-      .from("lite-erp1-images") // <-- tu bucket real
+      .from("lite-erp3-images") // <-- tu bucket real
       .upload(filePath, buffer, {
         contentType: file.type,
         upsert: false,
@@ -52,9 +43,7 @@ export async function createImage({
     }
 
     // 👉 Obtener URL pública
-    const { data: publicUrlData } = supabase.storage
-      .from("lite-erp1-images")
-      .getPublicUrl(data.path);
+    const { data: publicUrlData } = supabase.storage.from("lite-erp3-images").getPublicUrl(data.path);
 
     console.log("- Imagen subida [Supabase] OK:", publicUrlData.publicUrl);
 
@@ -95,12 +84,10 @@ export async function deleteImage(path: string): Promise<ActionResponse<null>> {
     if (path.startsWith("http")) {
       const url = new URL(path);
       // todo lo que está después de `/object/public/lite-erp1-images/`
-      filePath = url.pathname.split("/object/public/lite-erp1-images/")[1];
+      filePath = url.pathname.split("/object/public/lite-erp3-images/")[1];
     }
 
-    const { error } = await supabase.storage
-      .from("lite-erp1-images")
-      .remove([filePath]);
+    const { error } = await supabase.storage.from("lite-erp3-images").remove([filePath]);
 
     if (error) {
       console.error("Error al borrar imagen:", error);
