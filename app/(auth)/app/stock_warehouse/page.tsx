@@ -1,6 +1,11 @@
 import LoadingPage from "@/app/loading-page";
 import NotFound from "@/app/not-found";
+import { Metadata } from "next";
 import { lazy, Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Existencias de almacén",
+};
 
 const StockWarehouseListView = lazy(() => import("./views/StockWarehouseListView"));
 const StockWarehouseFormView = lazy(() => import("./views/StockWarehouseFormView"));

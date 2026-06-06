@@ -2,6 +2,12 @@ import LoadingPage from "@/app/loading-page";
 import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
 import { getManufacturingById } from "./actions/manufacturing.action";
+import { Metadata } from "next/types";
+
+export const metadata: Metadata = {
+  title: "Fabricación",
+  description: "Crea productos para venta",
+};
 
 const ManufacturingListView = lazy(() => import("./views/ManufacturingListView"));
 const ManufacturingFormView = lazy(() => import("./views/ManufacturingFormView"));

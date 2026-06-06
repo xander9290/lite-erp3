@@ -2,6 +2,11 @@ import LoadingPage from "@/app/loading-page";
 import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
 import { getInvoicingTaxById } from "./action/invoicingTax.action";
+import { Metadata } from "next/types";
+
+export const metadata: Metadata = {
+  title: "Facturación -> Impuestos",
+};
 
 const ITaxListView = lazy(() => import("./views/ITaxListView"));
 const ITaxFormView = lazy(() => import("./views/ITaxFormView"));

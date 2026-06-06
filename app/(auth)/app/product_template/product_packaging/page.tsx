@@ -2,6 +2,11 @@ import LoadingPage from "@/app/loading-page";
 import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
 import { getProductPackagingById } from "./actions/productPackaging.action";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Productos -> Embalajes",
+};
 
 const ProductPackagingListView = lazy(() => import("./views/ProductPackagingListView"));
 const ProductPackagingFormView = lazy(() => import("./views/ProductPackagingFormView"));

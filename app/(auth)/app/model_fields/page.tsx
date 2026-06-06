@@ -2,19 +2,19 @@ import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
 import { getModelFieldById } from "./actions/fields-actions";
 import LoadingPage from "@/app/loading-page";
+import { Metadata } from "next/types";
+
+export const metadata: Metadata = {
+  title: "Campos de modelo",
+};
 
 const ModelFieldsListView = lazy(() => import("./views/ModelFieldsListView"));
 const ModelFieldsFormView = lazy(() => import("./views/ModelFieldsFormView"));
 
-async function PageModelFields({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string }>;
-}) {
+async function PageModelFields({ searchParams }: { searchParams: Promise<{ [key: string]: string }> }) {
   const { view_type: ViewType, id } = await searchParams;
 
-  const modelField =
-    id && id !== "null" ? await getModelFieldById({ id }) : null;
+  const modelField = id && id !== "null" ? await getModelFieldById({ id }) : null;
 
   if (ViewType === "list") {
     return <ModelFieldsListView />;

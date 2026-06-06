@@ -2,15 +2,16 @@ import LoadingPage from "@/app/loading-page";
 import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
 import { getCompanyById } from "./actions/companies-actions";
+import { Metadata } from "next/types";
+
+export const metadata: Metadata = {
+  title: "Empresas",
+};
 
 const CompaniesListView = lazy(() => import("./views/CompaniesListView"));
 const CompaniesFormView = lazy(() => import("./views/CompaniesFormView"));
 
-async function PageCompanies({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string }>;
-}) {
+async function PageCompanies({ searchParams }: { searchParams: Promise<{ [key: string]: string }> }) {
   const { view_type: viewType, id } = await searchParams;
 
   const company = id && id !== "null" ? await getCompanyById({ id }) : null;

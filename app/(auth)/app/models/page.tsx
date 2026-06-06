@@ -2,15 +2,16 @@ import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
 import { getModelById } from "./actions/model-actions";
 import LoadingPage from "@/app/loading-page";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Modelos de la aplicación",
+};
 
 const ModelListView = lazy(() => import("./views/ModelListView"));
 const ModelFormView = lazy(() => import("./views/ModelFormView"));
 
-async function PageModels({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string }>;
-}) {
+async function PageModels({ searchParams }: { searchParams: Promise<{ [key: string]: string }> }) {
   const { view_type: viewType, id } = await searchParams;
 
   const entity = id && id !== "null" ? await getModelById({ id }) : null;

@@ -2,6 +2,11 @@ import LoadingPage from "@/app/loading-page";
 import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
 import { getUomById } from "./actions/uom.action";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Productos -> Unidades de medida",
+};
 
 const UomListView = lazy(() => import("./views/UomListView"));
 const UomFormView = lazy(() => import("./views/UomFormView"));

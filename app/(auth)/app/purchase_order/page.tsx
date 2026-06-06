@@ -2,6 +2,11 @@ import LoadingPage from "@/app/loading-page";
 import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
 import { getPurchaseById } from "./actions/purchase.action";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Órdenes de compra",
+};
 
 const PurchaseListView = lazy(() => import("./views/PurchaseListView"));
 const PurchaseFormView = lazy(() => import("./views/PurchaseFormView"));

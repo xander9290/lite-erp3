@@ -2,16 +2,17 @@ import LoadingPage from "@/app/loading-page";
 import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
 import { getUserById } from "./actions/user-actions";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Usuarios",
+};
 
 const UsersFormView = lazy(() => import("./views/UsersFormView"));
 const UsersListView = lazy(() => import("./views/UsersListView"));
 const UsersKanbanView = lazy(() => import("./views/UsersKanbanView"));
 
-async function PageUsers({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string }>;
-}) {
+async function PageUsers({ searchParams }: { searchParams: Promise<{ [key: string]: string }> }) {
   const { id, view_type: viewType } = await searchParams;
 
   const user = id && id !== "null" ? await getUserById({ id }) : null;

@@ -15,7 +15,7 @@ function ManufacturingListView() {
   const router = useRouter();
   return (
     <ListView model="manufacturing">
-      <ListView.Header title={`Fabricación: ${company?.name}`} formView="/app/manufacturing?view_type=form&id=null" />
+      <ListView.Header title={`Fabricación: ${company?.name ?? ""}`} formView="/app/manufacturing?view_type=form&id=null" />
       <ListView.Body>
         <TableTemplateLite
           model="manufacturing"

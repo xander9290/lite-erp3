@@ -2,6 +2,11 @@ import LoadingPage from "@/app/loading-page";
 import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
 import { getProductById } from "./actions/productTemplate.action";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Productos",
+};
 
 const ProductTemplateListView = lazy(() => import("./views/ProductTemplateListView"));
 

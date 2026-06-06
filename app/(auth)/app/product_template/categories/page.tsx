@@ -1,24 +1,20 @@
 import LoadingPage from "@/app/loading-page";
 import { lazy, Suspense } from "react";
 import { getProductCategoryById } from "./actions/productCategory.action";
+import { Metadata } from "next";
 
-const ProductCategoryListView = lazy(
-  () => import("./views/ProductCategoryListView"),
-);
+export const metadata: Metadata = {
+  title: "Productos -> Categorías",
+};
 
-const ProductCategoryFormView = lazy(
-  () => import("./views/ProductCategoryFormView"),
-);
+const ProductCategoryListView = lazy(() => import("./views/ProductCategoryListView"));
 
-async function PageCategories({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string }>;
-}) {
+const ProductCategoryFormView = lazy(() => import("./views/ProductCategoryFormView"));
+
+async function PageCategories({ searchParams }: { searchParams: Promise<{ [key: string]: string }> }) {
   const { id, view_type: viewType } = await searchParams;
 
-  const productCategory =
-    id && id !== "null" ? await getProductCategoryById({ id }) : null;
+  const productCategory = id && id !== "null" ? await getProductCategoryById({ id }) : null;
 
   if (viewType === "list") {
     return (

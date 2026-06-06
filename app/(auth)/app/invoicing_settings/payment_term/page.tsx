@@ -2,6 +2,11 @@ import LoadingPage from "@/app/loading-page";
 import NotFound from "@/app/not-found";
 import { lazy, Suspense } from "react";
 import { getIPaymentTermById } from "./actions/ipaymentTerm.action";
+import { Metadata } from "next/types";
+
+export const metadata: Metadata = {
+  title: "Facturación -> Términos de pago",
+};
 
 const IPaymentTermListView = lazy(() => import("./views/IPaymentTermListView"));
 const IPaymentTermFormView = lazy(() => import("./views/IPaymentTermFormView"));
