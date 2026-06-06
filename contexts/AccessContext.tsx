@@ -67,27 +67,12 @@ export const useAccess = ({
 export const extractEntityFromPath = (pathname: string): string | null => {
   if (!pathname) return null;
 
-  const segments = pathname.split("/").filter(Boolean);
+  const cleanPath = pathname.split("?")[0];
+  const segments = cleanPath.split("/").filter(Boolean);
 
-  // Casos comunes:
-  // /app/users -> users
-  // /app/users/new -> users
-  // /app/invoicing_settings/payment_term -> payment_term (último segmento)
-  // /app/invoicing_settings/payment_term/edit -> payment_term
-
-  if (segments.length < 2) return null;
-
-  // Buscar el índice de 'app' (primer segmento suele ser 'app')
-  const appIndex = segments.findIndex((s) => s === "app");
-  const startIndex = appIndex !== -1 ? appIndex + 1 : 1;
-
-  if (segments.length <= startIndex) return null;
-
-  const potentialEntity = segments[startIndex];
-  const nextSegment = segments[startIndex + 1];
-
-  // Si el siguiente segmento es una acción CRUD común, tomar el actual
-  const commonActions = new Set([
+  // Acciones y palabras reservadas (no son entidades)
+  const SKIP_WORDS = new Set([
+    "app",
     "new",
     "edit",
     "view",
@@ -95,19 +80,48 @@ export const extractEntityFromPath = (pathname: string): string | null => {
     "delete",
     "form",
     "list",
+    "show",
+    "settings",
+    "config",
+    "admin",
   ]);
 
-  if (nextSegment && commonActions.has(nextSegment)) {
-    return potentialEntity;
+  // Encontrar dónde empiezan los segmentos relevantes (después de 'app')
+  const startIndex = segments.findIndex((s) => s === "app") + 1;
+
+  if (startIndex === 0 || startIndex >= segments.length) return null;
+
+  // Estrategia: Buscar el primer segmento que no sea una palabra reservada
+  // y que tenga sentido como entidad
+  for (let i = startIndex; i < segments.length; i++) {
+    const current = segments[i];
+    const next = segments[i + 1];
+
+    // Saltar palabras reservadas
+    if (SKIP_WORDS.has(current)) continue;
+
+    // Si el siguiente es una acción, el actual es la entidad
+    if (next && SKIP_WORDS.has(next)) {
+      return current;
+    }
+
+    // Si es el último o el siguiente no es reservada, es candidato
+    if (!next || !SKIP_WORDS.has(next)) {
+      // Para casos como /app/product_template/products, tomar el último
+      // que no sea product_template (si product_template es un contenedor)
+      if (i < segments.length - 1 && current.includes("_template")) {
+        continue; // Saltar templates, buscar siguiente
+      }
+      return current;
+    }
   }
 
-  // Para rutas como invoicing_settings/payment_term, tomar el último segmento significativo
-  if (
-    potentialEntity?.includes("_settings") ||
-    potentialEntity === "settings"
-  ) {
-    return segments[segments.length - 1];
+  // Fallback: retornar el último segmento que no sea reservado
+  for (let i = segments.length - 1; i >= startIndex; i--) {
+    if (!SKIP_WORDS.has(segments[i])) {
+      return segments[i];
+    }
   }
 
-  return potentialEntity;
+  return null;
 };
