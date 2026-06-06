@@ -1,5 +1,8 @@
 "use client";
 
+import { extractEntityFromPath } from "@/contexts/AccessContext";
+import { useAuth } from "@/hooks/sessionStore";
+import { usePathname } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Table } from "react-bootstrap";
 
@@ -26,14 +29,31 @@ type ResizeState = {
   startWidth: number;
 } | null;
 
-export function SimpleTable<T>({ headers, data, renderRow, action, className, resizable = true }: SimpleTableTemplateProps<T>) {
+export function SimpleTable<T>({
+  headers,
+  data,
+  renderRow,
+  action,
+  className,
+  resizable = true,
+}: SimpleTableTemplateProps<T>) {
   const tableRef = useRef<HTMLTableElement | null>(null);
 
-  const [columnWidths, setColumnWidths] = useState<number[]>(headers.map((header) => header.width ?? 140));
+  const { access } = useAuth();
+
+  const pathName = usePathname();
+  const entity = extractEntityFromPath(pathName);
+  const modelAccess = access.filter((acc) => acc.entityType === entity);
+
+  const [columnWidths, setColumnWidths] = useState<number[]>(
+    headers.map((header) => header.width ?? 140),
+  );
   const [resizeState, setResizeState] = useState<ResizeState>(null);
 
   useEffect(() => {
-    setColumnWidths((prev) => headers.map((header, index) => prev[index] ?? header.width ?? 140));
+    setColumnWidths((prev) =>
+      headers.map((header, index) => prev[index] ?? header.width ?? 140),
+    );
   }, [headers]);
 
   useEffect(() => {
@@ -45,7 +65,10 @@ export function SimpleTable<T>({ headers, data, renderRow, action, className, re
       setColumnWidths((prev) => {
         const next = [...prev];
         const minWidth = headers[resizeState.columnIndex]?.minWidth ?? 60;
-        next[resizeState.columnIndex] = Math.max(minWidth, resizeState.startWidth + delta);
+        next[resizeState.columnIndex] = Math.max(
+          minWidth,
+          resizeState.startWidth + delta,
+        );
         return next;
       });
     };
@@ -70,7 +93,10 @@ export function SimpleTable<T>({ headers, data, renderRow, action, className, re
     };
   }, [resizeState, headers]);
 
-  const startResize = (event: React.MouseEvent<HTMLDivElement>, columnIndex: number) => {
+  const startResize = (
+    event: React.MouseEvent<HTMLDivElement>,
+    columnIndex: number,
+  ) => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -87,11 +113,17 @@ export function SimpleTable<T>({ headers, data, renderRow, action, className, re
 
     const minWidth = headers[columnIndex]?.minWidth ?? 60;
 
-    const headerCell = table.querySelector(`thead th[data-column-index="${columnIndex}"]`) as HTMLTableCellElement | null;
+    const headerCell = table.querySelector(
+      `thead th[data-column-index="${columnIndex}"]`,
+    ) as HTMLTableCellElement | null;
 
-    const bodyCells = Array.from(table.querySelectorAll(`tbody td[data-column-index="${columnIndex}"]`)) as HTMLTableCellElement[];
+    const bodyCells = Array.from(
+      table.querySelectorAll(`tbody td[data-column-index="${columnIndex}"]`),
+    ) as HTMLTableCellElement[];
 
-    const measureElements = [headerCell, ...bodyCells].filter(Boolean) as HTMLElement[];
+    const measureElements = [headerCell, ...bodyCells].filter(
+      Boolean,
+    ) as HTMLElement[];
 
     if (measureElements.length === 0) {
       setColumnWidths((prev) => {
@@ -176,6 +208,10 @@ export function SimpleTable<T>({ headers, data, renderRow, action, className, re
         <thead>
           <tr className="border-end border-bottom table-active">
             {headers.map((header, idx) => {
+              const fieldRow = modelAccess.find(
+                (acc) => acc.fieldName === header.name,
+              );
+              if (fieldRow && fieldRow.invisible) return null;
               return (
                 <th
                   key={idx}
@@ -191,7 +227,10 @@ export function SimpleTable<T>({ headers, data, renderRow, action, className, re
                   title={header.name}
                 >
                   <div className="position-relative w-100">
-                    <span className="d-block text-truncate pe-2" style={{ width: "100%" }}>
+                    <span
+                      className="d-block text-truncate pe-2"
+                      style={{ width: "100%" }}
+                    >
                       {header.string}
                     </span>
 
@@ -229,8 +268,16 @@ export function SimpleTable<T>({ headers, data, renderRow, action, className, re
 
           {action && (
             <tr>
-              <td valign="middle" colSpan={headers.length} className="border-0 p-0">
-                <Button variant="link" onClick={action} className="border-0 text-decoration-none shadow-none">
+              <td
+                valign="middle"
+                colSpan={headers.length}
+                className="border-0 p-0"
+              >
+                <Button
+                  variant="link"
+                  onClick={action}
+                  className="border-0 text-decoration-none shadow-none"
+                >
                   Agregar
                 </Button>
               </td>

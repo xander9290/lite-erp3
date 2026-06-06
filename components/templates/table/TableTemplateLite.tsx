@@ -7,6 +7,9 @@ import { SortIndicator } from "./SortIndicator";
 import { GroupByControl } from "./GroupByControl";
 import { Pagination } from "./Pagination";
 import { ColumnConfig, FilterValue, TableData } from "@/app/libs/definitions";
+import { extractEntityFromPath } from "@/contexts/AccessContext";
+import { useAuth } from "@/hooks/sessionStore";
+import { usePathname } from "next/navigation";
 
 interface TableTemplateProps {
   model: string;
@@ -37,6 +40,12 @@ export function TableTemplateLite({
   showSelection = true,
   onSelectionChange,
 }: TableTemplateProps) {
+  const { access } = useAuth();
+
+  const pathName = usePathname();
+  const entity = extractEntityFromPath(pathName);
+  const modelAccess = access.filter((acc) => acc.entityType === entity);
+
   // Extraer columnas
   const columns: ColumnConfig[] = React.Children.toArray(children)
     .filter((child) => React.isValidElement(child))
@@ -62,9 +71,11 @@ export function TableTemplateLite({
   const [groupBy, setGroupBy] = useState<string | null>(null);
 
   // Columnas visibles
-  const visibleColumns = columns.filter(
-    (col) => col.sortable !== false || col.field !== "id",
-  );
+  const visibleColumns = columns.filter((col) => {
+    const getAccess = modelAccess.find((acc) => acc.fieldName === col.field);
+    if (getAccess && getAccess.invisible) return null;
+    return col.sortable !== false || col.field !== "id";
+  });
 
   // Construir URL de API
   const sortForApi = buildSortForApi(sort.field, sort.dir);
@@ -258,6 +269,7 @@ export function TableTemplateLite({
                   onClick={() =>
                     col.sortable !== false && handleSort(col.field)
                   }
+                  title={col.field}
                   style={{
                     cursor: col.sortable !== false ? "pointer" : "default",
                     userSelect: "none",

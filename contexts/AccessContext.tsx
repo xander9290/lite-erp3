@@ -27,23 +27,9 @@ function AccessProviderInner({ children }: { children: ReactNode }) {
   const pathName = usePathname();
 
   const { access: acc } = useAuth();
-  // const [access, setAccess] = useState<GroupLine[]>([]);
 
-  // useEffect(() => {
-  //   const entityType = pathName.split("/")[2];
-
-  //   if (!entityType) {
-  //     setAccess([]);
-
-  //     return;
-  //   }
-
-  //   const getAccess = acc.filter((acc) => acc.entityType === entityType);
-
-  //   setAccess(getAccess || []);
-  // }, [pathName, acc]);
-
-  const entityType = pathName.split("/")[2];
+  // const entityType = pathName.split("/")[2];
+  const entityType = extractEntityFromPath(pathName);
 
   const access = useMemo(() => {
     if (!entityType) return [];
@@ -76,4 +62,52 @@ export const useAccess = ({
   );
 
   return fieldAccessProps;
+};
+
+export const extractEntityFromPath = (pathname: string): string | null => {
+  if (!pathname) return null;
+
+  const segments = pathname.split("/").filter(Boolean);
+
+  // Casos comunes:
+  // /app/users -> users
+  // /app/users/new -> users
+  // /app/invoicing_settings/payment_term -> payment_term (último segmento)
+  // /app/invoicing_settings/payment_term/edit -> payment_term
+
+  if (segments.length < 2) return null;
+
+  // Buscar el índice de 'app' (primer segmento suele ser 'app')
+  const appIndex = segments.findIndex((s) => s === "app");
+  const startIndex = appIndex !== -1 ? appIndex + 1 : 1;
+
+  if (segments.length <= startIndex) return null;
+
+  const potentialEntity = segments[startIndex];
+  const nextSegment = segments[startIndex + 1];
+
+  // Si el siguiente segmento es una acción CRUD común, tomar el actual
+  const commonActions = new Set([
+    "new",
+    "edit",
+    "view",
+    "create",
+    "delete",
+    "form",
+    "list",
+  ]);
+
+  if (nextSegment && commonActions.has(nextSegment)) {
+    return potentialEntity;
+  }
+
+  // Para rutas como invoicing_settings/payment_term, tomar el último segmento significativo
+  if (
+    potentialEntity?.includes("_settings") ||
+    potentialEntity === "settings"
+  ) {
+    return segments[segments.length - 1];
+  }
+
+  return potentialEntity;
 };

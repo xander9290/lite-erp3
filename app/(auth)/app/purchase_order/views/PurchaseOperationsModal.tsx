@@ -91,41 +91,38 @@ function PurchaseOperationsModal({
                       headers={[
                         {
                           string: "Producto",
-                          name: "productId",
+                          name: "opeartionProductId",
                           width: 270,
                           minWidth: 170,
                         },
                         {
                           string: "Ordenado",
-                          name: "quantity",
+                          name: "operationQuantity",
                           width: 30,
                           minWidth: 30,
                         },
                         {
                           string: "UdM",
-                          name: "uomId",
+                          name: "opeartionUomId",
                           width: 50,
                           minWidth: 50,
                         },
                         {
                           string: "Recibido",
-                          name: "receivedQty",
+                          name: "operationReceivedQty",
                           width: 30,
                           minWidth: 30,
                         },
                         {
                           string: "Listo",
-                          name: "ready",
+                          name: "operationReady",
                           width: 30,
                           minWidth: 30,
                         },
                       ]}
                       renderRow={(row, index) => (
                         <tr key={row.id} className="border-bottom">
-                          <SimpleTD
-                            colIdx={index}
-                            name="purchaseOperationProduct"
-                          >
+                          <SimpleTD colIdx={index} name="operationProductId">
                             <FieldRelation
                               inline
                               model="productTemplate"
@@ -133,7 +130,7 @@ function PurchaseOperationsModal({
                               readonly
                             />
                           </SimpleTD>
-                          <SimpleTD colIdx={index} name="purchaseOperationQty">
+                          <SimpleTD colIdx={index} name="operationQuantity">
                             <FieldEntry
                               inline
                               type="number"
@@ -142,7 +139,7 @@ function PurchaseOperationsModal({
                               readonly
                             />
                           </SimpleTD>
-                          <SimpleTD colIdx={index} name="lineUomId">
+                          <SimpleTD colIdx={index} name="opeartionUomId">
                             <FieldRelation
                               inline
                               model="uomCategory"
@@ -150,7 +147,7 @@ function PurchaseOperationsModal({
                               readonly
                             />
                           </SimpleTD>
-                          <SimpleTD colIdx={index} name="purchaseOperationQty">
+                          <SimpleTD colIdx={index} name="operationReceivedQty">
                             <FieldEntry
                               inline
                               type="number"
@@ -164,7 +161,7 @@ function PurchaseOperationsModal({
                           </SimpleTD>
                           <SimpleTD
                             colIdx={index}
-                            name="purchaseOperationReady"
+                            name="operationReady"
                             contentPosition="text-center"
                           >
                             <FieldBoolean
