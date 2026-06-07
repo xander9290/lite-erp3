@@ -317,9 +317,9 @@ function ManufacturingFormView({ id, manufacturing }: { id: string | null; manuf
               <SimpleTable
                 data={fields}
                 headers={[
-                  { string: "Insumo", name: "productIngredientId", width: 200, minWidth: 100 },
-                  { string: "Cantidad", name: "outQty", width: 80, minWidth: 50 },
-                  { string: "UdM", name: "uomId", width: 50, minWidth: 45 },
+                  { string: "Insumo", name: "lineIngredientId", width: 200, minWidth: 100 },
+                  { string: "Cantidad", name: "lineOutQty", width: 80, minWidth: 50 },
+                  { string: "UdM", name: "lineUomId", width: 50, minWidth: 45 },
                   {
                     string: <i className="bi bi-trash"></i>,
                     className: "text-center",
@@ -331,7 +331,7 @@ function ManufacturingFormView({ id, manufacturing }: { id: string | null; manuf
                 resizable
                 renderRow={(field, row) => (
                   <tr key={field.id} className="border-0 border-bottom">
-                    <SimpleTD colIdx={row} name="lineProductIngredientId">
+                    <SimpleTD colIdx={row} name="lineIngredientId">
                       <FieldRelation
                         inline
                         model="productTemplate"

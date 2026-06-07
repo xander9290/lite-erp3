@@ -149,21 +149,6 @@ export function FieldRelation<T extends Many2OneOption>({
 
   useEffect(() => setMounted(true), []);
 
-  // const handleSelect = useCallback(
-  //   (record: T) => {
-  //     const newValue = {
-  //       id: record.id,
-  //       name: record.displayName ?? record.name,
-  //     };
-
-  //     onChange(newValue);
-  //     ponChange?.(record.id, record);
-  //     setQuery(newValue.name ?? "");
-  //     setIsOpen(false);
-  //   },
-  //   [onChange, ponChange],
-  // );
-
   const handleSelect = useCallback(
     (record: T) => {
       const newValue = {
@@ -453,14 +438,14 @@ export function FieldRelation<T extends Many2OneOption>({
 
   if (inline) {
     return (
-      <div ref={containerRef} title={name} className="m-0 p-0">
+      <div ref={containerRef} title={name} className="m-0 p-0 w-100">
         {input}
       </div>
     );
   }
 
   return (
-    <div ref={containerRef} className="mb-1">
+    <div ref={containerRef} className="mb-1 w-100">
       <div className="d-flex align-items-stretch">
         <FloatingLabel label={label ?? name} className="flex-grow-1 fs-6 fw-bold" title={name}>
           {input}
