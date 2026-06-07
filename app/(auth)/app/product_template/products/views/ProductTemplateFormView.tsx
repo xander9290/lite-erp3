@@ -279,7 +279,7 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
               <FieldBoolean name="purchases" label="Se puede comprar" />
               <FormViewStack>
                 <FieldEntry name="lastCost" type="number" label="Ú. Costo" readonly />
-                <FieldEntry name="uomIncomingAllowed" type="number" label="MdC" />
+                <FieldEntry name="uomIncomingAllowed" type="number" label="MdC" decimals={3} />
               </FormViewStack>
               <FieldRelation model="invoicingTax" name="taxPurchaseId" label="Impuestos compra" />
               <FieldRelation model="user" name="userId" label="Comprador" />

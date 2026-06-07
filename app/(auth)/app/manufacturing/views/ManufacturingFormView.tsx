@@ -1,6 +1,14 @@
 "use client";
 
-import { createManufacturing, ManufacturingWithProps, updateManufacturing } from "../actions/manufacturing.action";
+import {
+  createManufacturing,
+  manufacturingActionAffect,
+  manufacturingActionCancel,
+  manufacturingActionFinish,
+  manufacturingActionProcess,
+  ManufacturingWithProps,
+  updateManufacturing,
+} from "../actions/manufacturing.action";
 import { SubmitHandler, useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { manufacturingSchema, manufacturingSchemaDefault, ManufacturingSchemaType } from "../schemas/manufacturing.schema";
@@ -191,6 +199,13 @@ function ManufacturingFormView({ id, manufacturing }: { id: string | null; manuf
       ...getValues(),
       state: "in_process",
     };
+
+    const res = await manufacturingActionProcess({ data: newData });
+    if (!res.success) {
+      modalError(res.message);
+      return;
+    }
+
     await onSubmit(newData);
   });
 
@@ -199,6 +214,12 @@ function ManufacturingFormView({ id, manufacturing }: { id: string | null; manuf
       ...getValues(),
       state: "finished",
     };
+
+    const res = await manufacturingActionFinish({ data: newData });
+    if (!res.success) {
+      modalError(res.message);
+      return;
+    }
     await onSubmit(newData);
   });
 
@@ -207,6 +228,13 @@ function ManufacturingFormView({ id, manufacturing }: { id: string | null; manuf
       ...getValues(),
       state: "affected",
     };
+
+    const res = await manufacturingActionAffect({ data: newData });
+    if (!res.success) {
+      modalError(res.message);
+      return;
+    }
+
     await onSubmit(newData);
   });
 
@@ -215,6 +243,11 @@ function ManufacturingFormView({ id, manufacturing }: { id: string | null; manuf
       ...getValues(),
       state: "cancel",
     };
+    const res = await manufacturingActionCancel({ data: newData });
+    if (!res.success) {
+      modalError(res.message);
+      return;
+    }
     await onSubmit(newData);
   });
 
@@ -246,7 +279,7 @@ function ManufacturingFormView({ id, manufacturing }: { id: string | null; manuf
         {
           action: actionAffected,
           fieldName: "actionAffected",
-          string: "Crear",
+          string: "Afectar",
           variant: "info",
           invisible: getValues().state !== "finished" || getValues().state === "cancel",
         },

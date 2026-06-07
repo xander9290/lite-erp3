@@ -63,8 +63,6 @@ export async function createManufacturing({ data }: { data: ManufacturingActionP
     serverLog({ action: "Creating", model: "manufacturint", data });
     const { uid, company } = await sessionStore();
 
-    await validateStates({ data });
-
     const name = await getNextValue(`MF/${company.code}/`, `${company.code}-manufacturing`);
     const newManufacturing = await prisma.manufacturing.create({
       data: {
@@ -133,8 +131,6 @@ export async function updateManufacturing({ id, data }: { id: string | null; dat
 
     serverLog({ action: "Updating", model: "manufacturint", data });
     const { uid, company } = await sessionStore();
-
-    await validateStates({ data });
 
     const updatedManufacturing = await prisma.manufacturing.update({
       where: { id },
@@ -208,134 +204,185 @@ export async function updateManufacturing({ id, data }: { id: string | null; dat
   }
 }
 
-async function validateStates({ data }: { data: ManufacturingActionProps }) {
-  const { uid, company } = await sessionStore();
-
-  if (data.state === "in_process") {
-    for (const line of data.ManufacturingLines) {
-      //VALIDAR LA DISPONIBILIDAD DEL INSUMO
-      const getStock = await prisma.stockWarehouse.findUnique({
-        where: {
-          productId_warehouseId: {
-            productId: line.productIngredientId.id,
-            warehouseId: data.whOriginId.id,
+export async function manufacturingActionProcess({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<boolean>> {
+  try {
+    await prisma.$transaction(async (tx) => {
+      for (const line of data.ManufacturingLines) {
+        //VALIDAR LA DISPONIBILIDAD DEL INSUMO
+        console.log(line);
+        const getStock = await tx.stockWarehouse.findUnique({
+          where: {
+            productId_warehouseId: {
+              productId: line.productIngredientId.id,
+              warehouseId: data.whOriginId.id,
+            },
           },
-        },
-        select: {
-          qty: true,
-          reservedQty: true,
-          Product: {
-            include: {
-              Uom: {
-                select: {
-                  code: true,
+          select: {
+            qty: true,
+            reservedQty: true,
+            Product: {
+              include: {
+                Uom: {
+                  select: {
+                    code: true,
+                  },
                 },
               },
             },
           },
-        },
-      });
+        });
 
-      if (!getStock) throw new Error(`${line.productIngredientId.name} no cuenta con existencia actual.`);
+        if (!getStock) throw new Error(`${line.productIngredientId.name} no cuenta con existencia actual.`);
 
-      const qtyAvailabe = round(getStock.qty - getStock.reservedQty, 2);
-      if (qtyAvailabe < line.outQty) throw new Error(`${line.productIngredientId.name} no cuenta con disponibilidad suficiente. Cantidad disponible: ${qtyAvailabe} ${getStock.Product.Uom?.code}`);
+        const qtyAvailabe = round(getStock.qty - getStock.reservedQty, 2);
+        if (qtyAvailabe < line.outQty) throw new Error(`${line.productIngredientId.name} no cuenta con disponibilidad suficiente. Cantidad disponible: ${qtyAvailabe} ${getStock.Product.Uom?.code}`);
 
-      await prisma.stockWarehouse.update({
+        await tx.stockWarehouse.update({
+          where: {
+            productId_warehouseId: {
+              productId: line.productIngredientId.id,
+              warehouseId: data.whOriginId.id,
+            },
+          },
+          data: {
+            reservedQty: {
+              increment: line.outQty,
+            },
+          },
+        });
+      }
+    });
+
+    return {
+      success: true,
+      message: "Proceso completado",
+    };
+  } catch (error: any) {
+    console.log(error);
+    return { success: false, message: error.message };
+  }
+}
+
+export async function manufacturingActionFinish({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<boolean>> {
+  try {
+    const { uid, company } = await sessionStore();
+
+    await prisma.$transaction(async (tx) => {
+      for (const line of data.ManufacturingLines) {
+        await tx.stockWarehouse.update({
+          where: {
+            productId_warehouseId: {
+              productId: line.productIngredientId.id,
+              warehouseId: data.whOriginId.id,
+            },
+          },
+          data: {
+            reservedQty: {
+              decrement: line.outQty,
+            },
+            qty: {
+              decrement: line.outQty,
+            },
+          },
+        });
+
+        await tx.stockMove.create({
+          data: {
+            moveType: "outgoing",
+            name: "FABRICACIÓN",
+            reference: data.name,
+            warehouseId: data.whOriginId.id,
+            warehouseDestId: data.whDestId.id,
+            productId: line.productIngredientId.id,
+            quantity: line.outQty,
+            userId: uid!,
+            companyId: company.id,
+          },
+        });
+      }
+    });
+    return {
+      success: true,
+      message: "Se ha completado el proceso",
+    };
+  } catch (error: any) {
+    console.log(error);
+    return { success: false, message: error.message };
+  }
+}
+
+export async function manufacturingActionAffect({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<boolean>> {
+  try {
+    const { uid, company } = await sessionStore();
+
+    await prisma.$transaction(async (tx) => {
+      await tx.stockWarehouse.upsert({
         where: {
           productId_warehouseId: {
-            productId: line.productIngredientId.id,
-            warehouseId: data.whOriginId.id,
+            productId: data.productId.id,
+            warehouseId: data.whDestId.id,
           },
         },
-        data: {
-          reservedQty: {
-            increment: line.outQty,
-          },
-        },
-      });
-    }
-  } else if (data.state === "cancel") {
-    for (const line of data.ManufacturingLines) {
-      await prisma.stockWarehouse.update({
-        where: {
-          productId_warehouseId: {
-            productId: line.productIngredientId.id,
-            warehouseId: data.whOriginId.id,
-          },
-        },
-        data: {
-          reservedQty: {
-            decrement: line.outQty,
-          },
-        },
-      });
-    }
-  } else if (data.state === "finished") {
-    for (const line of data.ManufacturingLines) {
-      await prisma.stockWarehouse.update({
-        where: {
-          productId_warehouseId: {
-            productId: line.productIngredientId.id,
-            warehouseId: data.whOriginId.id,
-          },
-        },
-        data: {
-          reservedQty: {
-            decrement: line.outQty,
-          },
+        update: {
           qty: {
-            decrement: line.outQty,
+            increment: data.yield,
           },
         },
+        create: {
+          productId: data.productId.id,
+          warehouseId: data.whDestId.id,
+          qty: data.yield,
+          createdUid: uid!,
+        },
       });
-
-      await prisma.stockMove.create({
+      await tx.stockMove.create({
         data: {
-          moveType: "outgoing",
+          moveType: "incoming",
           name: "FABRICACIÓN",
           reference: data.name,
           warehouseId: data.whOriginId.id,
           warehouseDestId: data.whDestId.id,
-          productId: line.productIngredientId.id,
-          quantity: line.outQty,
+          productId: data.productId.id,
+          quantity: data.yield,
           userId: uid!,
           companyId: company.id,
         },
       });
+    });
+
+    return {
+      success: true,
+      message: "Se ha completado el proceso",
+    };
+  } catch (error: any) {
+    console.log(error);
+    return { success: false, message: error.message };
+  }
+}
+
+export async function manufacturingActionCancel({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<boolean>> {
+  try {
+    for (const line of data.ManufacturingLines) {
+      await prisma.stockWarehouse.update({
+        where: {
+          productId_warehouseId: {
+            productId: line.productIngredientId.id,
+            warehouseId: data.whOriginId.id,
+          },
+        },
+        data: {
+          reservedQty: {
+            decrement: line.outQty,
+          },
+        },
+      });
     }
-  } else if (data.state === "affected") {
-    await prisma.stockWarehouse.upsert({
-      where: {
-        productId_warehouseId: {
-          productId: data.productId.id,
-          warehouseId: data.whDestId.id,
-        },
-      },
-      update: {
-        qty: {
-          increment: data.yield,
-        },
-      },
-      create: {
-        productId: data.productId.id,
-        warehouseId: data.whDestId.id,
-        qty: data.yield,
-        createdUid: uid || "",
-      },
-    });
-    await prisma.stockMove.create({
-      data: {
-        moveType: "incoming",
-        name: "FABRICACIÓN",
-        reference: data.name,
-        warehouseId: data.whOriginId.id,
-        warehouseDestId: data.whDestId.id,
-        productId: data.productId.id,
-        quantity: data.yield,
-        userId: uid!,
-        companyId: company.id,
-      },
-    });
+    return {
+      success: true,
+      message: "Se ha completado el proceso",
+    };
+  } catch (error: any) {
+    console.log(error);
+    return { success: false, message: error.message };
   }
 }
