@@ -7,7 +7,6 @@ import { sessionStore } from "@/app/libs/sessionStore";
 import type { User, GroupLine } from "@/generated/prisma/client";
 import bcrypt from "bcryptjs";
 import { UserSchemaType } from "../schemas/user.schema";
-import { serverLog } from "@/app/libs/helpers";
 
 export interface UserWithPartner extends User {
   Partner: {
@@ -72,7 +71,6 @@ export async function getUserById({ id }: { id: string | null }): Promise<UserWi
       },
     });
 
-    serverLog({ action: "Fetching", model: "users", data: user });
     return user;
   } catch (error: any) {
     console.log(error);
@@ -108,7 +106,6 @@ export async function createUser({ data }: { data: UserActionProps }): Promise<A
   try {
     const { uid } = await sessionStore();
 
-    serverLog({ action: "Creating", model: "users", data });
     const newUser = await prisma.user.create({
       data: {
         name: data.name,
@@ -183,7 +180,6 @@ export async function updateUser({ id, data }: { id: string | null; data: UserAc
   try {
     if (!id) throw new Error("ID user is undefined");
 
-    serverLog({ action: "Updating", model: "users", data });
     const updatedUser = await prisma.user.update({
       where: { id },
       data: {

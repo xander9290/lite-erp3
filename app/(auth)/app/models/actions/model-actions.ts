@@ -6,7 +6,6 @@ import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { FieldType, Model } from "@/generated/prisma/client";
 import { ModelSchemaType } from "../schemas/model.schema";
-import { serverLog } from "@/app/libs/helpers";
 
 export interface ModelWithProps extends Model {
   ModelFields: {
@@ -38,7 +37,6 @@ export async function getModelById({ id }: { id: string | null }): Promise<Model
       },
     });
 
-    serverLog({ action: "Fetching", model: "models", data: model });
     return model;
   } catch (error: any) {
     console.log(error);
@@ -52,7 +50,6 @@ export async function createModel({ data }: { data: ModelSchemaType }): Promise<
 
     const name = `[${data.label}] ${data.description}`;
 
-    serverLog({ action: "Creating", model: "models", data });
     const newModel = await prisma.model.create({
       data: {
         label: data.label,
@@ -116,7 +113,6 @@ export async function updateModel({ data }: { data: ModelSchemaType & { id: stri
 
     const { uid } = await sessionStore();
 
-    serverLog({ action: "Updating", model: "models", data });
     const changedModel = await prisma.model.update({
       where: { id: data.id },
       data: {

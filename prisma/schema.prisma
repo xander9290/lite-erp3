@@ -464,6 +464,7 @@ model PurchaseOrder {
   dateOrder           DateTime             @map("date_order") @db.Date
   datePlanned         DateTime?            @map("date_planned") @db.Date
   confirmedDate       DateTime?            @map("confirmed_date")
+  doneDate            DateTime?            @map("done_date")
   Supplier            Partner              @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   User                User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
   WarehouseDest       Warehouse            @relation(fields: [warehouseDestId], references: [id], onDelete: Restrict)
@@ -486,6 +487,7 @@ model PurchaseOrderLine {
   taxAmount Float  @map("tax_amount")
 
   receivedQty Float              @default(0.0) @map("received_qty")
+  pendingQty  Float              @default(0.0) @map("pending_qty")
   invoicedQty Float              @default(0.0) @map("invoiced_qty")
   state       PurchaseLineStates @default(pending)
 
@@ -577,6 +579,7 @@ enum ManufacturingState {
 enum PurchaseOrderState {
   draft
   purchase
+  pending
   done
   cancel
 }

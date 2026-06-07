@@ -6,7 +6,6 @@ import type { Warehouse } from "@/generated/prisma/client";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { ActionResponse } from "@/app/libs/definitions";
 import { createAuditlog } from "../../actions/auditlog-actions";
-import { serverLog } from "@/app/libs/helpers";
 
 export interface WarehouseWithProps extends Warehouse {
   Company: {
@@ -45,7 +44,6 @@ export async function getWarehouseById({ id }: { id: string | null }): Promise<W
       },
     });
 
-    serverLog({ action: "Fetching", model: "warehouses", data: warehouse });
     return warehouse;
   } catch (error: any) {
     console.log(error);
@@ -59,7 +57,6 @@ export async function createWarehouse({ data }: { data: WarehouseActionProps }):
   try {
     const { uid } = await sessionStore();
 
-    serverLog({ action: "Creating", model: "warehouses", data });
     const newWarehouse = await prisma.warehouse.create({
       data: {
         name: `[${data.code}] ${data.description}`,
@@ -119,7 +116,6 @@ export async function updateWarehouse({ id, data }: { id: string | null; data: W
   try {
     if (!id) throw new Error("ID not definded");
 
-    serverLog({ action: "Updating", model: "warehouses", data });
     const updatedWarehouse = await prisma.warehouse.update({
       where: { id },
       data: {

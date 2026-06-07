@@ -129,7 +129,6 @@ export async function updateManufacturing({ id, data }: { id: string | null; dat
   try {
     if (!id) throw new Error("ID not defined");
 
-    serverLog({ action: "Updating", model: "manufacturint", data });
     const { uid, company } = await sessionStore();
 
     const updatedManufacturing = await prisma.manufacturing.update({

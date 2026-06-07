@@ -7,7 +7,6 @@ import prisma from "@/app/libs/prisma";
 import { createAuditlog } from "../../actions/auditlog-actions";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { sanitizePhoneNumber } from "@/app/libs/sanitize-phone";
-import { serverLog } from "@/app/libs/helpers";
 
 export interface PartnerWithProps extends Partner {
   UserManager: {
@@ -34,7 +33,6 @@ export async function getPartnerById({ id }: { id: string | null }): Promise<Par
       },
     });
 
-    serverLog({ action: "Fetching", model: "partners", data: partner });
     return partner;
   } catch (error: any) {
     console.log(error);
@@ -49,7 +47,6 @@ export async function craetePartner({ data }: { data: PartnerActionProps }): Pro
     const sanitizedPhone = sanitizePhoneNumber(data.phone);
     const sanitizedMobile = sanitizePhoneNumber(data.mobile);
 
-    serverLog({ action: "Creating", model: "partners", data });
     const newPartner = await prisma.partner.create({
       data: {
         name: data.name,
@@ -111,7 +108,6 @@ export async function updatePartner({ data, id }: { data: PartnerActionProps; id
     const sanitizedPhone = sanitizePhoneNumber(data.phone);
     const sanitizedMobile = sanitizePhoneNumber(data.mobile);
 
-    serverLog({ action: "Updating", model: "partners", data });
     const updatedPartner = await prisma.partner.update({
       where: { id },
       data: {

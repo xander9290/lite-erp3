@@ -35,6 +35,7 @@ export interface PurchaseOrderWithProps extends PurchaseOrder {
     subtotal: number;
     total: number;
     receivedQty: number;
+    pendingQty: number;
     ready: boolean;
     state: PurchaseLineStates;
   }[];
@@ -83,6 +84,7 @@ export async function getPurchaseById({ id }: { id: string | null }): Promise<Pu
             subtotal: true,
             quantity: true,
             receivedQty: true,
+            pendingQty: true,
             ready: true,
             state: true,
           },
@@ -99,8 +101,6 @@ export async function getPurchaseById({ id }: { id: string | null }): Promise<Pu
 export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     const { uid, company } = await sessionStore();
-
-    await validateMultiplo(data.OrderLines);
 
     const name = await getNextValue(`P/${company.code}/`, `${company.code}-purchase`);
     const newPurchase = await prisma.purchaseOrder.create({
@@ -134,6 +134,7 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
               priceUnit: line.priceUnit,
               quantity: line.quantity,
               receivedQty: line.quantity,
+              pendingQty: line.quantity,
               taxRate: round(line.taxRate, 2),
               taxAmount: round(line.taxAmount, 2),
               subtotal: line.subtotal,
@@ -180,6 +181,7 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
             subtotal: true,
             quantity: true,
             receivedQty: true,
+            pendingQty: true,
             ready: true,
             state: true,
           },
@@ -210,8 +212,6 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
     if (!id) throw new Error("ID not define");
 
     const { uid } = await sessionStore();
-
-    await validateMultiplo(data.OrderLines);
 
     const newPurchase = await prisma.purchaseOrder.update({
       where: { id },
@@ -253,7 +253,9 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
               taxAmount: round(line.taxAmount, 2),
               subtotal: round(line.subtotal, 2),
               receivedQty: line.receivedQty,
+              pendingQty: round(line.quantity, 3) - round(line.receivedQty, 3),
               total: round(line.total, 2),
+              state: data.state === "cancel" ? "cancel" : line.state,
               ready: line.ready,
             },
             create: {
@@ -266,7 +268,9 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
               subtotal: round(line.subtotal, 2),
               total: round(line.total, 2),
               receivedQty: line.quantity,
+              pendingQty: round(line.quantity, 3) - round(line.receivedQty, 3),
               ready: line.ready,
+              state: data.state === "cancel" ? "cancel" : line.state,
               createUid: uid!,
             },
           })),
@@ -308,6 +312,7 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
             subtotal: true,
             quantity: true,
             receivedQty: true,
+            pendingQty: true,
             ready: true,
             state: true,
           },
@@ -336,6 +341,8 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
 export async function confirmStockWarehousePurchase({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<true>> {
   try {
     const { uid } = await sessionStore();
+
+    await validateMultiplo(data.OrderLines);
 
     for (const line of data.OrderLines) {
       await prisma.stockWarehouse.upsert({
@@ -465,6 +472,15 @@ export async function createAffectStock({ data }: { data: PurchaseOrderActionPro
           },
         });
 
+        // SE ACTUALIZA ULTIMO PRECIO EN PRODUCTOS
+        console.log("-ACTUALIZANDO ÚLTIMO PRECIO EN PRODUCTO: ", line.Product.name);
+        await tx.productTemplate.update({
+          where: { id: line.productId },
+          data: {
+            lastCost: line.priceUnit,
+          },
+        });
+
         // MOVIMIENTO DE ALMACÉN (ENTRADA)
         console.log(`-Creando líneas de movimiento de almacén: ${data.warehouseAffectedId?.name} - ${line.Product.name} - ${line.receivedQty}`);
         await tx.stockMove.create({
@@ -508,13 +524,26 @@ export async function createAffectStock({ data }: { data: PurchaseOrderActionPro
       });
 
       const isCompleted = orderLines.every((line) => line.state === "done" && line.ready === true);
-      if (isCompleted) {
+      const isReceivedQtyCompleted = orderLines.every((line) => round(line.quantity, 3) === round(line.receivedQty, 3));
+
+      if (isCompleted && isReceivedQtyCompleted) {
         await tx.purchaseOrder.update({
           where: {
             name: data.name,
           },
           data: {
             state: "done",
+            doneDate: new Date(),
+          },
+        });
+      } else {
+        await tx.purchaseOrder.update({
+          where: {
+            name: data.name,
+          },
+          data: {
+            state: "pending",
+            doneDate: new Date(),
           },
         });
       }

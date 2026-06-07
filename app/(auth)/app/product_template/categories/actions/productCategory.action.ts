@@ -6,7 +6,6 @@ import { ActionResponse } from "@/app/libs/definitions";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { createAuditlog } from "../../../actions/auditlog-actions";
 import { ProductCategorySchemaType } from "../schemas/productCategory.schema";
-import { serverLog } from "@/app/libs/helpers";
 
 export interface ProductCategoryWithProps extends ProductCategory {
   Products: { id: string; name: string }[];
@@ -37,7 +36,6 @@ export async function getProductCategoryById({ id }: { id: string | null }): Pro
       },
     });
 
-    serverLog({ action: "Fetching", model: "product category", data: productCategory });
     return productCategory;
   } catch (error: any) {
     console.log(error);
@@ -56,7 +54,6 @@ export async function createProductCategory({ data }: { data: ProductCategoryAct
       defineName = `${parentId?.name} / ${data.description}`;
     }
 
-    serverLog({ action: "Creating", model: "product category", data });
     const newProductCategory = await prisma.productCategory.create({
       data: {
         name: defineName,
@@ -136,7 +133,6 @@ export async function updateProductCategory({ id, data }: { id: string | null; d
       defineName = `${parentId?.name} / ${data.description}`;
     }
 
-    serverLog({ action: "Updating", model: "product category", data });
     const updatedProductCategory = await prisma.$transaction(async (tx) => {
       // Actualizar la categoría actual
       const productCategory = await tx.productCategory.update({

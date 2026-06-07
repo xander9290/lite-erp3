@@ -6,7 +6,6 @@ import { ModelFieldSchemaType } from "../schemas/modelFields.schema";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { ActionResponse } from "@/app/libs/definitions";
 import { createAuditlog } from "@/app/(auth)/app/actions/auditlog-actions";
-import { serverLog } from "@/app/libs/helpers";
 
 export interface ModelFieldWithProps extends ModelField {
   Model: {
@@ -31,7 +30,6 @@ export async function getModelFieldById({ id }: { id: string | null }): Promise<
       },
     });
 
-    serverLog({ action: "Fetching", model: "model fields", data: modelField });
     return modelField;
   } catch (error: any) {
     console.log(error);
@@ -45,7 +43,6 @@ export async function createModelField({ data }: { data: NewModelFieldData }): P
   try {
     const { uid } = await sessionStore();
 
-    serverLog({ action: "Creating", model: "model fields", data });
     const newModelField = await prisma.modelField.create({
       data: {
         name: `[${data.label}] ${data.description}`,
@@ -97,7 +94,6 @@ export async function updateModelField({ data }: { data: NewModelFieldData & { i
   try {
     if (!data.id) throw new Error("ID not defined");
 
-    serverLog({ action: "Updating", model: "model fields", data });
     const updatedModelField = await prisma.modelField.update({
       where: { id: data.id },
       data: {
@@ -160,8 +156,6 @@ export async function deleteModelFields({ ids }: { ids: string[] }): Promise<Act
         id: { in: ids },
       },
     });
-
-    serverLog({ action: "Deleting", model: "model fields", data: ids });
 
     return {
       success: true,

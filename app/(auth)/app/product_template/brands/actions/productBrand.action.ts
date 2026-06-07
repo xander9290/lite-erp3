@@ -6,7 +6,6 @@ import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { ActionResponse } from "@/app/libs/definitions";
 import { createAuditlog } from "../../../actions/auditlog-actions";
-import { serverLog } from "@/app/libs/helpers";
 
 export interface ProductBrandWithProps extends ProductBrand {
   Products: { id: string; name: string }[];
@@ -27,7 +26,6 @@ export async function getProductBrandById({ id }: { id: string | null }): Promis
       },
     });
 
-    serverLog({ action: "Fetching", model: "product brand", data: productBrand });
     return productBrand;
   } catch (error: any) {
     console.log(error);
@@ -39,7 +37,6 @@ export async function createProductBrand({ data }: { data: ProductBrandActionPro
   try {
     const { uid } = await sessionStore();
 
-    serverLog({ action: "Creating", model: "product brand", data });
     const newProductBrand = await prisma.productBrand.create({
       data: {
         name: `[${data.code}] ${data.description}`,
@@ -82,7 +79,6 @@ export async function updateProductBrand({ id, data }: { id: string | null; data
 
     const newName = `[${data.code}] ${data.description}`;
 
-    serverLog({ action: "Updating", model: "product brand", data });
     const updatedProductBrand = await prisma.productBrand.update({
       where: { id },
       data: {

@@ -7,7 +7,6 @@ import { ActionResponse } from "@/app/libs/definitions";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { createAuditlog } from "@/app/(auth)/app/actions/auditlog-actions";
 import { GroupSchemaType } from "../schemas/group.schema";
-import { serverLog } from "@/app/libs/helpers";
 
 export interface GroupWithProps extends Group {
   Users: {
@@ -34,7 +33,6 @@ export async function getGroupById({ id }: { id: string | null }): Promise<Group
       },
     });
 
-    serverLog({ action: "Fetching", model: "group", data: group });
     return group;
   } catch (error: any) {
     console.log(error);
@@ -54,7 +52,6 @@ export async function createGroup({ data }: { data: GroupActionProps }): Promise
         throw new Error(`El usuario ${getUser?.Partner?.name} ya se encuentra asociado al grupo ${getUser?.Group?.name}. Es necesario removerlo del grupo para ser reasignado a ${data.name}.`);
     }
 
-    serverLog({ action: "Creating", model: "group", data });
     const newGroup = await prisma.$transaction(async (tx) => {
       const group = await tx.group.create({
         data: {
@@ -146,7 +143,6 @@ export async function updateGroup({ data }: { data: GroupActionProps & { id: str
         throw new Error(`El usuario ${getUser?.Partner?.name} ya se encuentra asociado al grupo ${getUser?.Group?.name}. Es necesario removerlo del grupo para ser reasignado a ${data.name}.`);
     }
 
-    serverLog({ action: "Updating", model: "group", data });
     const updatedGroup = await prisma.$transaction(async (tx) => {
       const group = await tx.group.update({
         where: { id: data.id! },

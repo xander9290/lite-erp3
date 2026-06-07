@@ -6,7 +6,6 @@ import { ActionResponse } from "@/app/libs/definitions";
 import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { createAuditlog } from "../../../actions/auditlog-actions";
-import { serverLog } from "@/app/libs/helpers";
 
 export interface UomWithProps extends UomCategory {
   Products: { id: string; name: string }[];
@@ -29,7 +28,6 @@ export async function getUomById({ id }: { id: string | null }): Promise<UomWith
       },
     });
 
-    serverLog({ action: "Fetching", model: "uom category", data: uom });
     return uom;
   } catch (error: any) {
     console.log(error);
@@ -43,7 +41,6 @@ export async function createUom({ data }: { data: UomActionProps }): Promise<Act
 
     const name = `[${data.code}] ${data.description}`;
 
-    serverLog({ action: "Creating", model: "uom category", data });
     const createdUom = await prisma.uomCategory.create({
       data: {
         name: name,
@@ -87,7 +84,6 @@ export async function updateUom({ id, data }: { id: string | null; data: UomActi
 
     const name = `[${data.code}] ${data.description}`;
 
-    serverLog({ action: "Updating", model: "uom category", data });
     const updatedUom = await prisma.uomCategory.update({
       where: { id },
       data: {

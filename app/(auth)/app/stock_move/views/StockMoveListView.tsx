@@ -1,5 +1,6 @@
 "use client";
 
+import { formatNumberForDisplay } from "@/app/libs/helpers";
 import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
@@ -26,7 +27,7 @@ function StockMoveListView({ productId }: { productId: string | null }) {
             type="number"
             render={(_, move) => (
               <div className={`text-end ${move.moveType === "incoming" ? "text-success" : "text-danger"}`}>
-                {move.quantity.toFixed(4)} {move.Product.Uom.code}
+                {formatNumberForDisplay(move.quantity, 3)} {move.Product.Uom.code}
               </div>
             )}
           />

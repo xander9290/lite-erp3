@@ -1,16 +1,12 @@
 "use server";
 
-import type {
-  Company,
-  Partner,
-  WarehouseType,
-} from "@/generated/prisma/client";
+import type { Company, Partner, WarehouseType } from "@/generated/prisma/client";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
 import { CompanySchemaType } from "../schemas/company.schema";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { createAuditlog } from "@/app/(auth)/app/actions/auditlog-actions";
-import { generateModelCode, serverLog } from "@/app/libs/helpers";
+import { generateModelCode } from "@/app/libs/helpers";
 
 export interface CompanieWithProps extends Company {
   Users: {
@@ -41,11 +37,7 @@ export interface CompanieWithProps extends Company {
   }[];
 }
 
-export async function getCompanyById({
-  id,
-}: {
-  id: string | null;
-}): Promise<CompanieWithProps | null> {
+export async function getCompanyById({ id }: { id: string | null }): Promise<CompanieWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -87,7 +79,6 @@ export async function getCompanyById({
       },
     });
 
-    serverLog({ action: "Fetching", model: "company", data: company });
     return company;
   } catch (error: any) {
     console.log(error);
@@ -95,20 +86,12 @@ export async function getCompanyById({
   }
 }
 
-type CompanyActionProps = Omit<
-  CompanySchemaType,
-  "createdUid" | "createdAt" | "updatedAt"
->;
+type CompanyActionProps = Omit<CompanySchemaType, "createdUid" | "createdAt" | "updatedAt">;
 
-export async function createCompany({
-  data,
-}: {
-  data: CompanyActionProps;
-}): Promise<ActionResponse<CompanieWithProps>> {
+export async function createCompany({ data }: { data: CompanyActionProps }): Promise<ActionResponse<CompanieWithProps>> {
   try {
     const { uid } = await sessionStore();
 
-    serverLog({ action: "Creating", model: "company", data });
     const newCompany = await prisma.company.create({
       data: {
         name: data.name,
@@ -226,15 +209,10 @@ export async function createCompany({
   }
 }
 
-export async function updateCompany({
-  data,
-}: {
-  data: CompanyActionProps & { id: string | null };
-}): Promise<ActionResponse<CompanieWithProps>> {
+export async function updateCompany({ data }: { data: CompanyActionProps & { id: string | null } }): Promise<ActionResponse<CompanieWithProps>> {
   try {
     if (!data.id) throw new Error("ID not defined");
 
-    serverLog({ action: "Updating", model: "company", data });
     const updatedCompany = await prisma.company.update({
       where: { id: data.id },
       data: {
@@ -244,12 +222,8 @@ export async function updateCompany({
         Users: {
           set: data.userIds.map((u) => ({ id: u.id })),
         },
-        Manager: data.managerId?.id
-          ? { connect: { id: data.managerId.id } }
-          : { disconnect: true },
-        Company: data.parentId?.id
-          ? { connect: { id: data.parentId.id } }
-          : { disconnect: true },
+        Manager: data.managerId?.id ? { connect: { id: data.managerId.id } } : { disconnect: true },
+        Company: data.parentId?.id ? { connect: { id: data.parentId.id } } : { disconnect: true },
         Children: {
           set: data.childrenIds.map((ch) => ({ id: ch.companyId.id })),
         },

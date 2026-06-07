@@ -176,6 +176,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
       dateOrder: purchase.dateOrder,
       datePlanned: purchase.datePlanned,
       confirmedDate: purchase.confirmedDate,
+      doneDate: purchase.doneDate,
       subtotal: purchase.subtotal,
       total: purchase.total,
       paymentTermId: {
@@ -212,6 +213,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
         priceUnit: line.priceUnit,
         quantity: line.quantity,
         receivedQty: line.receivedQty,
+        pendingQty: line.pendingQty,
         taxRate: line.taxRate,
         taxAmount: line.taxAmount,
         subtotal: line.subtotal,
@@ -248,7 +250,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
     setValue(`userId`, { id: user?.id || "", name: user?.name || "" });
 
     setWarehouse();
-  }, [companyId, user]);
+  }, [companyId, user, id]);
 
   const actionConfirm = handleSubmit(async () => {
     const lines = getValues().OrderLines;
@@ -308,6 +310,11 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
             decoration: "info",
           },
           {
+            name: "pending",
+            label: "Incompleto",
+            decoration: "warning",
+          },
+          {
             name: "done",
             label: "Terminado",
             decoration: "success",
@@ -343,7 +350,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
             fieldName: "actionCancel",
             string: "Cancelar",
             variant: "danger",
-            invisible: id === "null" || ["cancel", "done"].includes(getValues().state),
+            invisible: id === "null" || ["cancel", "pending", "done"].includes(getValues().state),
           },
         ]}
       >
@@ -372,7 +379,8 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
           <FieldEntry name="date" label="Creación" type="date" readonly />
           <FieldEntry name="dateOrder" label="Confirmar el" type="date" readonly={getValues().state !== "draft"} invisible={getValues().confirmedDate !== null} />
           <FieldEntry name="confirmedDate" label="Orden confirmada" type="datetime-local" readonly invisible={getValues().confirmedDate === null} />
-          <FieldEntry name="datePlanned" label="Fecha esperada" type="date" readonly={["done", "cancel"].includes(getValues().state)} />
+          <FieldEntry name="datePlanned" label="Fecha esperada" type="date" readonly={["done", "cancel"].includes(getValues().state)} invisible={getValues().doneDate !== null} />
+          <FieldEntry name="doneDate" label="Última entrega" type="datetime-local" readonly invisible={getValues().doneDate == null} />
         </FormViewGroup>
         <Notebook defaultActiveKey="orderLine">
           <Page eventKey="orderLine" title="Productos">
@@ -507,6 +515,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
                       subtotal: 0.0,
                       total: 0.0,
                       receivedQty: 0.0,
+                      pendingQty: 0.0,
                       ready: false,
                       state: "pending",
                     });
