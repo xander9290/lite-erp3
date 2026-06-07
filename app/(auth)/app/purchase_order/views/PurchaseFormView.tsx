@@ -258,7 +258,8 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
       state: "purchase",
       confirmedDate: new Date(),
     };
-    await confirmStockWarehousePurchase({ data: newData });
+    const res = await confirmStockWarehousePurchase({ data: newData });
+    if (!res.success) return modalError(res.message);
     await onSubmit(newData);
   });
 
@@ -270,7 +271,8 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
     };
 
     if (currentState === "purchase") {
-      await cancelStockWarehousePurchase({ data: newData, orderId: id });
+      const res = await cancelStockWarehousePurchase({ data: newData, orderId: id });
+      if (!res.success) return modalError(res.message);
     }
 
     await onSubmit(newData);
@@ -279,7 +281,8 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
   const handleAffect = handleSubmit(async () => {
     const whAffected = getValues().warehouseAffectedId?.id;
     if (!whAffected) return modalError("No se ha definido el almacén destino de existencias");
-    await createAffectStock({ data: getValues() });
+    const res = await createAffectStock({ data: getValues() });
+    if (!res.success) return modalError(res.message);
     router.refresh();
   });
 
