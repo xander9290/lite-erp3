@@ -19,6 +19,7 @@ export const productTemplateSchema = z.object({
   price4: z.number(),
   price5: z.number(),
   lastCost: z.number(),
+  standardPrice: z.number(),
   weight: z.number(),
   volume: z.number(),
   ancho: z.number(),
@@ -59,10 +60,16 @@ export const productTemplateSchema = z.object({
   ProductPackagingLines: z.array(
     z.object({
       id: z.string(),
-      packagingId: z.object({ id: z.string().min(1, "Embalaje es requerido"), name: z.string() }),
+      packagingId: z.object({
+        id: z.string().min(1, "Embalaje es requerido"),
+        name: z.string(),
+      }),
       productId: z.object({ id: z.string(), name: z.string() }),
       qty: z.number().min(1, "Cantidad es requerida"),
-      uomId: z.object({ id: z.string().min(1, "Unidad de medida en embalaje es requeridio"), name: z.string() }),
+      uomId: z.object({
+        id: z.string().min(1, "Unidad de medida en embalaje es requeridio"),
+        name: z.string(),
+      }),
     }),
   ),
   ReceiptLines: z.array(
@@ -70,7 +77,10 @@ export const productTemplateSchema = z.object({
       id: z.string(),
       qty: z.number(),
       active: z.boolean(),
-      productId: z.object({ id: z.string().min(1, "Producto es requerido"), name: z.string() }),
+      productId: z.object({
+        id: z.string().min(1, "Producto es requerido"),
+        name: z.string(),
+      }),
       uomId: z.object({ id: z.string(), name: z.string() }),
     }),
   ),
@@ -107,6 +117,7 @@ export const productTemplateSchemaDefault: ProductTemplateSchemaType = {
   state: "AVAILABLE",
   imageUrl: null,
   lastCost: 0.0,
+  standardPrice: 0.0,
   price1: 0.0,
   price2: 0.0,
   price3: 0.0,

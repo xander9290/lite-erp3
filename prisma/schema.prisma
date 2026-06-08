@@ -263,6 +263,7 @@ model ProductTemplate {
   price4                Float                  @default(0.00) @map("price_4")
   price5                Float                  @default(0.00) @map("price_5")
   lastCost              Float                  @default(0.00) @map("last_cost")
+  standarPrice          Float                  @default(0.0) @map("standard_price")
   weight                Float                  @default(0.00)
   volume                Float                  @default(0.00)
   ancho                 Float                  @default(0.00)

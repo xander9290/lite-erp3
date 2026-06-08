@@ -1,6 +1,9 @@
 "use server";
 
-import type { PurchaseLineStates, PurchaseOrder } from "@/generated/prisma/client";
+import type {
+  PurchaseLineStates,
+  PurchaseOrder,
+} from "@/generated/prisma/client";
 import { PurchaseOrderSchemaType } from "../schemas/purchase.schema";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
@@ -41,9 +44,16 @@ export interface PurchaseOrderWithProps extends PurchaseOrder {
   }[];
 }
 
-export type PurchaseOrderActionProps = Omit<PurchaseOrderSchemaType, "createdAt" | "updatedAt">;
+export type PurchaseOrderActionProps = Omit<
+  PurchaseOrderSchemaType,
+  "createdAt" | "updatedAt"
+>;
 
-export async function getPurchaseById({ id }: { id: string | null }): Promise<PurchaseOrderWithProps | null> {
+export async function getPurchaseById({
+  id,
+}: {
+  id: string | null;
+}): Promise<PurchaseOrderWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
     const purchase = await prisma.purchaseOrder.findUnique({
@@ -98,11 +108,18 @@ export async function getPurchaseById({ id }: { id: string | null }): Promise<Pu
   }
 }
 
-export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function createPurchaseOrder({
+  data,
+}: {
+  data: PurchaseOrderActionProps;
+}): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
-    const name = await getNextValue(`P/${company.code}/`, `${company.code}-purchase`);
+    const name = await getNextValue(
+      `P/${company.code}/`,
+      `${company.code}-purchase`,
+    );
     const newPurchase = await prisma.purchaseOrder.create({
       data: {
         name,
@@ -207,7 +224,13 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
   }
 }
 
-export async function updatePurchaseOrder({ id, data }: { id: string | null; data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function updatePurchaseOrder({
+  id,
+  data,
+}: {
+  id: string | null;
+  data: PurchaseOrderActionProps;
+}): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     if (!id) throw new Error("ID not define");
 
@@ -221,7 +244,9 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
         state: data.state,
         supplierId: data.supplierId.id,
         warehouseDestId: data.warehouseDestId.id,
-        warehouseAffectedId: data.warehouseAffectedId?.id ? data.warehouseAffectedId.id : null,
+        warehouseAffectedId: data.warehouseAffectedId?.id
+          ? data.warehouseAffectedId.id
+          : null,
         paymentTermId: data.paymentTermId.id,
         confirmedDate: data.confirmedDate,
         subtotal: round(
@@ -338,7 +363,11 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
   }
 }
 
-export async function confirmStockWarehousePurchase({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<true>> {
+export async function confirmStockWarehousePurchase({
+  data,
+}: {
+  data: PurchaseOrderActionProps;
+}): Promise<ActionResponse<true>> {
   try {
     const { uid } = await sessionStore();
 
@@ -379,7 +408,13 @@ export async function confirmStockWarehousePurchase({ data }: { data: PurchaseOr
   }
 }
 
-export async function cancelStockWarehousePurchase({ orderId, data }: { orderId: string | null; data: PurchaseOrderActionProps }): Promise<ActionResponse<boolean>> {
+export async function cancelStockWarehousePurchase({
+  orderId,
+  data,
+}: {
+  orderId: string | null;
+  data: PurchaseOrderActionProps;
+}): Promise<ActionResponse<boolean>> {
   try {
     if (!orderId) throw new Error("ID not defined");
 
@@ -422,9 +457,14 @@ export async function cancelStockWarehousePurchase({ orderId, data }: { orderId:
   }
 }
 
-export async function createAffectStock({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<boolean>> {
+export async function createAffectStock({
+  data,
+}: {
+  data: PurchaseOrderActionProps;
+}): Promise<ActionResponse<boolean>> {
   try {
-    if (data.warehouseAffectedId?.id === undefined) throw new Error("Almacén Destino para afectar existencias no definido");
+    if (data.warehouseAffectedId?.id === undefined)
+      throw new Error("Almacén Destino para afectar existencias no definido");
     const { uid, company } = await sessionStore();
     await prisma.$transaction(async (tx) => {
       const getReadyLines = await tx.purchaseOrderLine.findMany({
@@ -434,12 +474,57 @@ export async function createAffectStock({ data }: { data: PurchaseOrderActionPro
         },
         include: {
           Product: {
-            select: { name: true },
+            select: { name: true, standarPrice: true, id: true },
           },
         },
       });
 
       for (const line of getReadyLines) {
+        // ============================================
+        // 1. OBTENER INVENTARIO ACTUAL Y COSTO PROMEDIO
+        // ============================================
+        const currentStock = await tx.stockWarehouse.findUnique({
+          where: {
+            productId_warehouseId: {
+              productId: line.Product.id,
+              warehouseId: data.warehouseAffectedId?.id || "",
+            },
+          },
+        });
+
+        const currentQty = currentStock?.qty || 0;
+        const currentStandardPrice = line.Product.standarPrice || 0;
+        const newPurchasePrice = line.priceUnit; // Precio sin IVA de la compra
+        const newQty = line.receivedQty;
+
+        // ============================================
+        // 2. CALCULAR NUEVO COSTO PROMEDIO PONDERADO
+        // ============================================
+        let newStandardPrice = newPurchasePrice; // Si no hay inventario, el nuevo precio es el de la compra
+
+        if (currentQty + newQty > 0) {
+          // Fórmula: (inventario actual × costo promedio actual + compra nueva × precio nuevo) / (inventario actual + cantidad nueva)
+          const totalValue =
+            currentQty * currentStandardPrice + newQty * newPurchasePrice;
+          const totalQty = currentQty + newQty;
+          newStandardPrice = round(totalValue / totalQty, 2);
+        }
+
+        console.log(
+          `-Costos: Actual: $${currentStandardPrice}, Nuevo: $${newPurchasePrice}, Promedio: $${newStandardPrice}`,
+        );
+
+        // ============================================
+        // 3. ACTUALIZAR COSTO PROMEDIO (standard_price)
+        // ============================================
+        await tx.productTemplate.update({
+          where: { id: line.Product.id },
+          data: {
+            lastCost: newPurchasePrice, // Último costo de compra
+            standarPrice: newStandardPrice, // Costo promedio ponderado
+          },
+        });
+
         //ENTRADA AL ALMACÉN DE VENTAS O PRODUCCIÓN DEFINIDO
         console.log("-Afectando almacén");
         await tx.stockWarehouse.upsert({
@@ -473,7 +558,10 @@ export async function createAffectStock({ data }: { data: PurchaseOrderActionPro
         });
 
         // SE ACTUALIZA ULTIMO PRECIO EN PRODUCTOS
-        console.log("-ACTUALIZANDO ÚLTIMO PRECIO EN PRODUCTO: ", line.Product.name);
+        console.log(
+          "-ACTUALIZANDO ÚLTIMO PRECIO EN PRODUCTO: ",
+          line.Product.name,
+        );
         await tx.productTemplate.update({
           where: { id: line.productId },
           data: {
@@ -482,7 +570,9 @@ export async function createAffectStock({ data }: { data: PurchaseOrderActionPro
         });
 
         // MOVIMIENTO DE ALMACÉN (ENTRADA)
-        console.log(`-Creando líneas de movimiento de almacén: ${data.warehouseAffectedId?.name} - ${line.Product.name} - ${line.receivedQty}`);
+        console.log(
+          `-Creando líneas de movimiento de almacén: ${data.warehouseAffectedId?.name} - ${line.Product.name} - ${line.receivedQty}`,
+        );
         await tx.stockMove.create({
           data: {
             moveType: "incoming",
@@ -523,8 +613,12 @@ export async function createAffectStock({ data }: { data: PurchaseOrderActionPro
         },
       });
 
-      const isCompleted = orderLines.every((line) => line.state === "done" && line.ready === true);
-      const isReceivedQtyCompleted = orderLines.every((line) => round(line.quantity, 3) === round(line.receivedQty, 3));
+      const isCompleted = orderLines.every(
+        (line) => line.state === "done" && line.ready === true,
+      );
+      const isReceivedQtyCompleted = orderLines.every(
+        (line) => round(line.quantity, 3) === round(line.receivedQty, 3),
+      );
 
       if (isCompleted && isReceivedQtyCompleted) {
         await tx.purchaseOrder.update({
@@ -560,15 +654,22 @@ export async function createAffectStock({ data }: { data: PurchaseOrderActionPro
 }
 
 // AQUI TAMBIÉN SE COLOCAN CONSTRAINS
-const validateMultiplo = async (lines: PurchaseOrderActionProps["OrderLines"]) => {
+const validateMultiplo = async (
+  lines: PurchaseOrderActionProps["OrderLines"],
+) => {
   for (const line of lines) {
-    if (line.receivedQty > line.quantity) throw new Error(`La cantidad recbida del product ${line.productId.name} no debe ser mayor a la ordenada.`);
+    if (line.receivedQty > line.quantity)
+      throw new Error(
+        `La cantidad recbida del product ${line.productId.name} no debe ser mayor a la ordenada.`,
+      );
     const productId = await getProductById({ id: line.productId.id });
     if (productId) {
       const allowedQty = productId.uomIncomingAllowed;
       const qty = line.quantity;
       if (!esMultiplo(qty, allowedQty)) {
-        throw new Error(`El producto ${productId.name} se compra por múltiplo de ${allowedQty} ${productId.Uom?.code}`);
+        throw new Error(
+          `El producto ${productId.name} se compra por múltiplo de ${allowedQty} ${productId.Uom?.code}`,
+        );
       }
     }
   }
