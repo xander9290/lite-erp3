@@ -416,6 +416,7 @@ model Manufacturing {
   date               DateTime            @default(now()) @db.Date
   uomId              String              @map("uom_id")
   yield              Float               @default(0.0)
+  priceUnit          Float               @default(0.0) @map("price_unit")
   Company            Company             @relation(fields: [companyId], references: [id])
   Product            ProductTemplate     @relation(fields: [productId], references: [id])
   Uom                UomCategory         @relation(fields: [uomId], references: [id])
@@ -435,6 +436,7 @@ model ManufacturingLine {
   createdAt           DateTime        @default(now()) @map("created_at")
   updatedAt           DateTime        @updatedAt @map("updated_at")
   uomId               String          @map("uom_id")
+  priceUnit           Float           @default(0.0) @map("price_unit")
   Manufacturing       Manufacturing   @relation(fields: [manufacturingId], references: [id], onDelete: Cascade)
   Product             ProductTemplate @relation(fields: [productIngredientId], references: [id])
   Uom                 UomCategory     @relation(fields: [uomId], references: [id])

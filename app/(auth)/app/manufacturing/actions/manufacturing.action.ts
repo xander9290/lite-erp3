@@ -18,15 +18,23 @@ export interface ManufacturingWithProps extends Manufacturing {
   ManufacturingLines: {
     id: string;
     outQty: number;
+    priceUnit: number;
     Manufacturing: { id: string; name: string };
     Product: { id: string; name: string };
     Uom: { id: string; name: string };
   }[];
 }
 
-export type ManufacturingActionProps = Omit<ManufacturingSchemaType, "createdAt" | "createdUid" | "updatedAt">;
+export type ManufacturingActionProps = Omit<
+  ManufacturingSchemaType,
+  "createdAt" | "createdUid" | "updatedAt"
+>;
 
-export async function getManufacturingById({ id }: { id: string | null }): Promise<ManufacturingWithProps | null> {
+export async function getManufacturingById({
+  id,
+}: {
+  id: string | null;
+}): Promise<ManufacturingWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
     const manufacturing = await prisma.manufacturing.findUnique({
@@ -46,7 +54,14 @@ export async function getManufacturingById({ id }: { id: string | null }): Promi
           select: { id: true, name: true },
         },
         ManufacturingLines: {
-          select: { id: true, outQty: true, Manufacturing: { select: { id: true, name: true } }, Product: { select: { id: true, name: true } }, Uom: { select: { id: true, name: true } } },
+          select: {
+            id: true,
+            outQty: true,
+            priceUnit: true,
+            Manufacturing: { select: { id: true, name: true } },
+            Product: { select: { id: true, name: true } },
+            Uom: { select: { id: true, name: true } },
+          },
         },
       },
     });
@@ -58,12 +73,19 @@ export async function getManufacturingById({ id }: { id: string | null }): Promi
   }
 }
 
-export async function createManufacturing({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<ManufacturingWithProps>> {
+export async function createManufacturing({
+  data,
+}: {
+  data: ManufacturingActionProps;
+}): Promise<ActionResponse<ManufacturingWithProps>> {
   try {
     serverLog({ action: "Creating", model: "manufacturint", data });
     const { uid, company } = await sessionStore();
 
-    const name = await getNextValue(`MF/${company.code}/`, `${company.code}-manufacturing`);
+    const name = await getNextValue(
+      `MF/${company.code}/`,
+      `${company.code}-manufacturing`,
+    );
     const newManufacturing = await prisma.manufacturing.create({
       data: {
         name,
@@ -80,6 +102,7 @@ export async function createManufacturing({ data }: { data: ManufacturingActionP
             data: data.ManufacturingLines.map((line) => ({
               productIngredientId: line.productIngredientId.id,
               outQty: line.outQty,
+              priceUnit: line.priceUnit * line.outQty,
               uomId: line.uomId.id,
               createUid: uid || "",
             })),
@@ -102,7 +125,14 @@ export async function createManufacturing({ data }: { data: ManufacturingActionP
           select: { id: true, name: true },
         },
         ManufacturingLines: {
-          select: { id: true, outQty: true, Manufacturing: { select: { id: true, name: true } }, Product: { select: { id: true, name: true } }, Uom: { select: { id: true, name: true } } },
+          select: {
+            id: true,
+            outQty: true,
+            priceUnit: true,
+            Manufacturing: { select: { id: true, name: true } },
+            Product: { select: { id: true, name: true } },
+            Uom: { select: { id: true, name: true } },
+          },
         },
       },
     });
@@ -125,7 +155,13 @@ export async function createManufacturing({ data }: { data: ManufacturingActionP
   }
 }
 
-export async function updateManufacturing({ id, data }: { id: string | null; data: ManufacturingActionProps }): Promise<ActionResponse<ManufacturingWithProps>> {
+export async function updateManufacturing({
+  id,
+  data,
+}: {
+  id: string | null;
+  data: ManufacturingActionProps;
+}): Promise<ActionResponse<ManufacturingWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -145,7 +181,9 @@ export async function updateManufacturing({ id, data }: { id: string | null; dat
         ManufacturingLines: {
           deleteMany: {
             id: {
-              notIn: data.ManufacturingLines.filter((l) => l.id).map((l) => l.id!),
+              notIn: data.ManufacturingLines.filter((l) => l.id).map(
+                (l) => l.id!,
+              ),
             },
           },
           upsert: data.ManufacturingLines.map((line) => ({
@@ -153,11 +191,13 @@ export async function updateManufacturing({ id, data }: { id: string | null; dat
             update: {
               productIngredientId: line.productIngredientId.id,
               outQty: line.outQty,
+              priceUnit: line.priceUnit * line.outQty,
               uomId: line.uomId.id,
             },
             create: {
               productIngredientId: line.productIngredientId.id,
               outQty: line.outQty,
+              priceUnit: line.priceUnit * line.outQty,
               uomId: line.uomId.id,
               createUid: uid || "",
             },
@@ -180,7 +220,14 @@ export async function updateManufacturing({ id, data }: { id: string | null; dat
           select: { id: true, name: true },
         },
         ManufacturingLines: {
-          select: { id: true, outQty: true, Manufacturing: { select: { id: true, name: true } }, Product: { select: { id: true, name: true } }, Uom: { select: { id: true, name: true } } },
+          select: {
+            id: true,
+            outQty: true,
+            priceUnit: true,
+            Manufacturing: { select: { id: true, name: true } },
+            Product: { select: { id: true, name: true } },
+            Uom: { select: { id: true, name: true } },
+          },
         },
       },
     });
@@ -203,7 +250,11 @@ export async function updateManufacturing({ id, data }: { id: string | null; dat
   }
 }
 
-export async function manufacturingActionProcess({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<boolean>> {
+export async function manufacturingActionProcess({
+  data,
+}: {
+  data: ManufacturingActionProps;
+}): Promise<ActionResponse<boolean>> {
   try {
     await prisma.$transaction(async (tx) => {
       for (const line of data.ManufacturingLines) {
@@ -231,10 +282,16 @@ export async function manufacturingActionProcess({ data }: { data: Manufacturing
           },
         });
 
-        if (!getStock) throw new Error(`${line.productIngredientId.name} no cuenta con existencia actual.`);
+        if (!getStock)
+          throw new Error(
+            `${line.productIngredientId.name} no cuenta con existencia actual.`,
+          );
 
         const qtyAvailabe = round(getStock.qty - getStock.reservedQty, 2);
-        if (qtyAvailabe < line.outQty) throw new Error(`${line.productIngredientId.name} no cuenta con disponibilidad suficiente. Cantidad disponible: ${qtyAvailabe} ${getStock.Product.Uom?.code}`);
+        if (qtyAvailabe < line.outQty)
+          throw new Error(
+            `${line.productIngredientId.name} no cuenta con disponibilidad suficiente. Cantidad disponible: ${qtyAvailabe} ${getStock.Product.Uom?.code}`,
+          );
 
         await tx.stockWarehouse.update({
           where: {
@@ -262,7 +319,11 @@ export async function manufacturingActionProcess({ data }: { data: Manufacturing
   }
 }
 
-export async function manufacturingActionFinish({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<boolean>> {
+export async function manufacturingActionFinish({
+  data,
+}: {
+  data: ManufacturingActionProps;
+}): Promise<ActionResponse<boolean>> {
   try {
     const { uid, company } = await sessionStore();
 
@@ -310,7 +371,11 @@ export async function manufacturingActionFinish({ data }: { data: ManufacturingA
   }
 }
 
-export async function manufacturingActionAffect({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<boolean>> {
+export async function manufacturingActionAffect({
+  data,
+}: {
+  data: ManufacturingActionProps;
+}): Promise<ActionResponse<boolean>> {
   try {
     const { uid, company } = await sessionStore();
 
@@ -334,6 +399,7 @@ export async function manufacturingActionAffect({ data }: { data: ManufacturingA
           createdUid: uid!,
         },
       });
+
       await tx.stockMove.create({
         data: {
           moveType: "incoming",
@@ -359,7 +425,11 @@ export async function manufacturingActionAffect({ data }: { data: ManufacturingA
   }
 }
 
-export async function manufacturingActionCancel({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<boolean>> {
+export async function manufacturingActionCancel({
+  data,
+}: {
+  data: ManufacturingActionProps;
+}): Promise<ActionResponse<boolean>> {
   try {
     for (const line of data.ManufacturingLines) {
       await prisma.stockWarehouse.update({
@@ -385,3 +455,23 @@ export async function manufacturingActionCancel({ data }: { data: ManufacturingA
     return { success: false, message: error.message };
   }
 }
+
+export const calcIngridientPriceUnit = async ({
+  productId,
+  qty,
+}: {
+  productId: string;
+  qty: number;
+}) => {
+  let total = 0.0;
+
+  const product = await prisma.productTemplate.findUnique({
+    where: { id: productId },
+  });
+
+  if (product) {
+    total = product.lastCost * qty;
+  }
+
+  return round(total, 2);
+};
