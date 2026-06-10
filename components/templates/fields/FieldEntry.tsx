@@ -6,6 +6,7 @@ import { ElementType, useEffect, useState } from "react";
 import { useAccess } from "@/contexts/AccessContext";
 import toast from "react-hot-toast";
 import { formatISO, format } from "date-fns";
+import useNumberInput from "@/hooks/useNumberInput";
 
 interface FieldEntryProps {
   name: string;
@@ -54,12 +55,7 @@ interface FieldInputProps {
 function toDateInputValue(value: unknown): string {
   if (value == null || value === "") return "";
 
-  const d =
-    value instanceof Date
-      ? value
-      : typeof value === "string" || typeof value === "number"
-        ? new Date(value)
-        : null;
+  const d = value instanceof Date ? value : typeof value === "string" || typeof value === "number" ? new Date(value) : null;
 
   if (!d || isNaN(d.getTime())) return "";
 
@@ -83,10 +79,7 @@ function parseLocalDate(value: Date) {
 /**
  * Formatea un número con formato mexicano (miles con coma, decimales con punto)
  */
-function formatMexicanNumber(
-  value: number | null | undefined,
-  decimals: number = 2,
-): string {
+function formatMexicanNumber(value: number | null | undefined, decimals: number = 2): string {
   if (value === null || value === undefined || isNaN(value)) return "";
 
   return value.toLocaleString("es-MX", {
@@ -131,30 +124,30 @@ function FieldInput({
   decimals = 2,
   thousandsSeparator = true,
 }: FieldInputProps) {
+  // Solo aplicar lógica especial para type="number"
+  const numberInput = useNumberInput({
+    initialValue: type === "number" ? (field.value as number | null) : null,
+    decimals,
+    min: typeof min === "number" ? min : undefined,
+    max: typeof max === "number" ? max : undefined,
+    onChange: (value: number | null) => {
+      field.onChange(value);
+      onChange?.(value?.toString() ?? "");
+    },
+  });
+
   // Estado local para el valor mostrado (solo para type="number")
   const [displayValue, setDisplayValue] = useState<string>(() => {
-    if (
-      type === "number" &&
-      typeof field.value === "number" &&
-      !isNaN(field.value)
-    ) {
-      return thousandsSeparator
-        ? formatMexicanNumber(field.value, decimals)
-        : field.value.toString();
+    if (type === "number" && typeof field.value === "number" && !isNaN(field.value)) {
+      return thousandsSeparator ? formatMexicanNumber(field.value, decimals) : field.value.toString();
     }
     return field.value ?? "";
   });
 
   // Sincronizar cuando el valor externo cambia
   useEffect(() => {
-    if (
-      type === "number" &&
-      typeof field.value === "number" &&
-      !isNaN(field.value)
-    ) {
-      const formatted = thousandsSeparator
-        ? formatMexicanNumber(field.value, decimals)
-        : field.value.toString();
+    if (type === "number" && typeof field.value === "number" && !isNaN(field.value)) {
+      const formatted = thousandsSeparator ? formatMexicanNumber(field.value, decimals) : field.value.toString();
       setDisplayValue(formatted);
     } else if (field.value !== displayValue && type !== "number") {
       setDisplayValue(field.value ?? "");
@@ -173,11 +166,14 @@ function FieldInput({
 
   const isTextarea = as === "textarea" || type === "text";
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const el = e.target;
     const raw = el.value;
+
+    if (type === "number") {
+      numberInput.handleInput(e as React.ChangeEvent<HTMLInputElement>);
+      return;
+    }
 
     // Auto-ajuste para textarea
     if (el.tagName === "TEXTAREA") {
@@ -235,9 +231,7 @@ function FieldInput({
     onChange?.(raw);
   };
 
-  const handleBlur = (
-    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     // Formatear el valor al salir del campo
     if (type === "number" && thousandsSeparator) {
       const numValue = parseMexicanNumber(e.target.value);
@@ -249,13 +243,22 @@ function FieldInput({
     field.onBlur();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (type === "number") {
+      numberInput.handleKeyDown(e as React.KeyboardEvent<HTMLInputElement>);
+    }
+  };
+
   // Determinar el valor a mostrar
   const getValue = () => {
     if (type === "datetime-local") return parseLocalDate(field.value);
     if (type === "date") return toDateInputValue(field.value);
-    if (type === "number") return displayValue;
+    if (type === "number") return numberInput.displayValue;
     return field.value ?? "";
   };
+
+  const inputType = type === "number" ? "text" : type;
+  const inputMode = type === "number" ? "decimal" : undefined;
 
   return (
     <Form.Control
@@ -268,8 +271,8 @@ function FieldInput({
       className={`${className ?? ""} ${type === "password" ? "text-center" : type === "number" ? "text-end" : ""} shadow-none w-100 overflow-hidden px-1 ${inline ? "border-0" : ""}`}
       title={name}
       as={as ?? (type === "text" ? "textarea" : undefined)}
-      type={type === "number" ? "text" : type} // Usar text para number para evitar problemas del navegador
-      inputMode={type === "number" ? "decimal" : undefined}
+      type={inputType}
+      inputMode={inputMode}
       isInvalid={!!fieldState.error}
       placeholder={placeholder}
       readOnly={readonly || isSubmitting || access?.readonly}
@@ -287,6 +290,7 @@ function FieldInput({
       autoFocus={autoFocus}
       onChange={handleChange}
       onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
       name={field.name}
     />
   );
@@ -363,11 +367,7 @@ export function FieldEntry({
 
         return (
           <div className="mb-1 w-100">
-            <FloatingLabel
-              label={floatingText}
-              controlId={name}
-              className="w-100 fs-6 fw-bold"
-            >
+            <FloatingLabel label={floatingText} controlId={name} className="w-100 fs-6 fw-bold">
               {input}
             </FloatingLabel>
           </div>
