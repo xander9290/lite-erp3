@@ -25,9 +25,16 @@ export interface ManufacturingWithProps extends Manufacturing {
   }[];
 }
 
-export type ManufacturingActionProps = Omit<ManufacturingSchemaType, "createdAt" | "createdUid" | "updatedAt">;
+export type ManufacturingActionProps = Omit<
+  ManufacturingSchemaType,
+  "createdAt" | "createdUid" | "updatedAt"
+>;
 
-export async function getManufacturingById({ id }: { id: string | null }): Promise<ManufacturingWithProps | null> {
+export async function getManufacturingById({
+  id,
+}: {
+  id: string | null;
+}): Promise<ManufacturingWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
     const manufacturing = await prisma.manufacturing.findUnique({
@@ -66,12 +73,19 @@ export async function getManufacturingById({ id }: { id: string | null }): Promi
   }
 }
 
-export async function createManufacturing({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<ManufacturingWithProps>> {
+export async function createManufacturing({
+  data,
+}: {
+  data: ManufacturingActionProps;
+}): Promise<ActionResponse<ManufacturingWithProps>> {
   try {
     serverLog({ action: "Creating", model: "manufacturint", data });
     const { uid, company } = await sessionStore();
 
-    const name = await getNextValue(`MF/${company.code}/`, `${company.code}-manufacturing`);
+    const name = await getNextValue(
+      `MF/${company.code}/`,
+      `${company.code}-manufacturing`,
+    );
     const newManufacturing = await prisma.manufacturing.create({
       data: {
         name,
@@ -88,7 +102,7 @@ export async function createManufacturing({ data }: { data: ManufacturingActionP
             data: data.ManufacturingLines.map((line) => ({
               productIngredientId: line.productIngredientId.id,
               outQty: line.outQty,
-              priceUnit: line.priceUnit * line.outQty,
+              priceUnit: 0.0,
               uomId: line.uomId.id,
               createUid: uid || "",
             })),
@@ -143,7 +157,13 @@ export async function createManufacturing({ data }: { data: ManufacturingActionP
   }
 }
 
-export async function updateManufacturing({ id, data }: { id: string | null; data: ManufacturingActionProps }): Promise<ActionResponse<ManufacturingWithProps>> {
+export async function updateManufacturing({
+  id,
+  data,
+}: {
+  id: string | null;
+  data: ManufacturingActionProps;
+}): Promise<ActionResponse<ManufacturingWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -163,7 +183,9 @@ export async function updateManufacturing({ id, data }: { id: string | null; dat
         ManufacturingLines: {
           deleteMany: {
             id: {
-              notIn: data.ManufacturingLines.filter((l) => l.id).map((l) => l.id!),
+              notIn: data.ManufacturingLines.filter((l) => l.id).map(
+                (l) => l.id!,
+              ),
             },
           },
           upsert: data.ManufacturingLines.map((line) => ({
@@ -171,13 +193,13 @@ export async function updateManufacturing({ id, data }: { id: string | null; dat
             update: {
               productIngredientId: line.productIngredientId.id,
               outQty: line.outQty,
-              priceUnit: line.priceUnit * line.outQty,
+              priceUnit: 0.0,
               uomId: line.uomId.id,
             },
             create: {
               productIngredientId: line.productIngredientId.id,
               outQty: line.outQty,
-              priceUnit: line.priceUnit * line.outQty,
+              priceUnit: 0.0,
               uomId: line.uomId.id,
               createUid: uid || "",
             },
@@ -232,7 +254,11 @@ export async function updateManufacturing({ id, data }: { id: string | null; dat
   }
 }
 
-export async function manufacturingActionProcess({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<boolean>> {
+export async function manufacturingActionProcess({
+  data,
+}: {
+  data: ManufacturingActionProps;
+}): Promise<ActionResponse<boolean>> {
   try {
     await prisma.$transaction(async (tx) => {
       for (const line of data.ManufacturingLines) {
@@ -260,10 +286,16 @@ export async function manufacturingActionProcess({ data }: { data: Manufacturing
           },
         });
 
-        if (!getStock) throw new Error(`${line.productIngredientId.name} no cuenta con existencia actual.`);
+        if (!getStock)
+          throw new Error(
+            `${line.productIngredientId.name} no cuenta con existencia actual.`,
+          );
 
         const qtyAvailabe = round(getStock.qty - getStock.reservedQty, 2);
-        if (qtyAvailabe < line.outQty) throw new Error(`${line.productIngredientId.name} no cuenta con disponibilidad suficiente. Cantidad disponible: ${qtyAvailabe} ${getStock.Product.Uom?.code}`);
+        if (qtyAvailabe < line.outQty)
+          throw new Error(
+            `${line.productIngredientId.name} no cuenta con disponibilidad suficiente. Cantidad disponible: ${qtyAvailabe} ${getStock.Product.Uom?.code}`,
+          );
 
         await tx.stockWarehouse.update({
           where: {
@@ -291,7 +323,11 @@ export async function manufacturingActionProcess({ data }: { data: Manufacturing
   }
 }
 
-export async function manufacturingActionFinish({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<boolean>> {
+export async function manufacturingActionFinish({
+  data,
+}: {
+  data: ManufacturingActionProps;
+}): Promise<ActionResponse<boolean>> {
   try {
     const { uid, company } = await sessionStore();
 
@@ -339,12 +375,16 @@ export async function manufacturingActionFinish({ data }: { data: ManufacturingA
   }
 }
 
-export async function manufacturingActionAffect({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<boolean>> {
+export async function manufacturingActionAffect({
+  data,
+}: {
+  data: ManufacturingActionProps;
+}): Promise<ActionResponse<boolean>> {
   try {
     const { uid, company } = await sessionStore();
 
     await prisma.$transaction(async (tx) => {
-      await tx.stockWarehouse.upsert({
+      const currentProduct = await tx.stockWarehouse.upsert({
         where: {
           productId_warehouseId: {
             productId: data.productId.id,
@@ -362,6 +402,11 @@ export async function manufacturingActionAffect({ data }: { data: ManufacturingA
           qty: data.yield,
           createdUid: uid!,
         },
+        include: {
+          Product: {
+            select: { lastCost: true, standarPrice: true },
+          },
+        },
       });
 
       await tx.stockMove.create({
@@ -377,6 +422,54 @@ export async function manufacturingActionAffect({ data }: { data: ManufacturingA
           companyId: company.id,
         },
       });
+
+      const currentStock = await tx.stockWarehouse.findMany({
+        where: {
+          AND: [
+            { productId: data.productId.id },
+            {
+              Warehouse: {
+                type: { in: ["PRODUCTION", "SALES", "QUARANTINE"] },
+              },
+            },
+          ],
+        },
+      });
+
+      for (const current of currentStock) {
+        const currentQty = current?.qty || 0;
+        const currentStandardPrice = currentProduct.Product.standarPrice || 0;
+        const newPurchasePrice = data.priceUnit; // Precio sin IVA de la compra
+        const newQty = data.yield;
+
+        // ============================================
+        // 2. CALCULAR NUEVO COSTO PROMEDIO PONDERADO
+        // ============================================
+        let newStandardPrice = newPurchasePrice; // Si no hay inventario, el nuevo precio es el de la compra
+
+        if (currentQty + newQty > 0) {
+          // Fórmula: (inventario actual × costo promedio actual + compra nueva × precio nuevo) / (inventario actual + cantidad nueva)
+          const totalValue =
+            currentQty * currentStandardPrice + newQty * newPurchasePrice;
+          const totalQty = currentQty + newQty;
+          newStandardPrice = round(totalValue / totalQty, 2);
+        }
+
+        console.log(
+          `-Costos: Actual: $${currentStandardPrice}, Nuevo: $${newPurchasePrice}, Promedio: $${newStandardPrice}`,
+        );
+
+        // ============================================
+        // 3. ACTUALIZAR COSTO PROMEDIO (standard_price)
+        // ============================================
+        await tx.productTemplate.update({
+          where: { id: data.productId.id },
+          data: {
+            lastCost: newPurchasePrice, // Último costo de compra
+            standarPrice: newStandardPrice, // Costo promedio ponderado
+          },
+        });
+      }
     });
 
     return {
@@ -389,7 +482,11 @@ export async function manufacturingActionAffect({ data }: { data: ManufacturingA
   }
 }
 
-export async function manufacturingActionCancel({ data }: { data: ManufacturingActionProps }): Promise<ActionResponse<boolean>> {
+export async function manufacturingActionCancel({
+  data,
+}: {
+  data: ManufacturingActionProps;
+}): Promise<ActionResponse<boolean>> {
   try {
     for (const line of data.ManufacturingLines) {
       await prisma.stockWarehouse.update({
@@ -416,7 +513,11 @@ export async function manufacturingActionCancel({ data }: { data: ManufacturingA
   }
 }
 
-export const calcIngridientPriceUnit = async ({ manufacturingId }: { manufacturingId: string }) => {
+export const calcIngridientPriceUnit = async ({
+  manufacturingId,
+}: {
+  manufacturingId: string;
+}) => {
   await prisma.$transaction(async (tx) => {
     // extraer las líneas de la orden
     const lines = await tx.manufacturingLine.findMany({

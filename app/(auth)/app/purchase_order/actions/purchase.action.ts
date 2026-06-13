@@ -483,47 +483,53 @@ export async function createAffectStock({
         // ============================================
         // 1. OBTENER INVENTARIO ACTUAL Y COSTO PROMEDIO
         // ============================================
-        const currentStock = await tx.stockWarehouse.findUnique({
+        const currentStock = await tx.stockWarehouse.findMany({
           where: {
-            productId_warehouseId: {
-              productId: line.Product.id,
-              warehouseId: data.warehouseAffectedId?.id || "",
+            AND: [
+              { productId: line.Product.id },
+              {
+                Warehouse: {
+                  type: { in: ["PRODUCTION", "SALES", "QUARANTINE"] },
+                },
+              },
+            ],
+          },
+        });
+
+        for (const current of currentStock) {
+          const currentQty = current?.qty || 0;
+          const currentStandardPrice = line.Product.standarPrice || 0;
+          const newPurchasePrice = line.priceUnit; // Precio sin IVA de la compra
+          const newQty = line.receivedQty;
+
+          // ============================================
+          // 2. CALCULAR NUEVO COSTO PROMEDIO PONDERADO
+          // ============================================
+          let newStandardPrice = newPurchasePrice; // Si no hay inventario, el nuevo precio es el de la compra
+
+          if (currentQty + newQty > 0) {
+            // Fórmula: (inventario actual × costo promedio actual + compra nueva × precio nuevo) / (inventario actual + cantidad nueva)
+            const totalValue =
+              currentQty * currentStandardPrice + newQty * newPurchasePrice;
+            const totalQty = currentQty + newQty;
+            newStandardPrice = round(totalValue / totalQty, 2);
+          }
+
+          console.log(
+            `-Costos: Actual: $${currentStandardPrice}, Nuevo: $${newPurchasePrice}, Promedio: $${newStandardPrice}`,
+          );
+
+          // ============================================
+          // 3. ACTUALIZAR COSTO PROMEDIO (standard_price)
+          // ============================================
+          await tx.productTemplate.update({
+            where: { id: line.Product.id },
+            data: {
+              lastCost: newPurchasePrice, // Último costo de compra
+              standarPrice: newStandardPrice, // Costo promedio ponderado
             },
-          },
-        });
-
-        const currentQty = currentStock?.qty || 0;
-        const currentStandardPrice = line.Product.standarPrice || 0;
-        const newPurchasePrice = line.priceUnit; // Precio sin IVA de la compra
-        const newQty = line.receivedQty;
-
-        // ============================================
-        // 2. CALCULAR NUEVO COSTO PROMEDIO PONDERADO
-        // ============================================
-        let newStandardPrice = newPurchasePrice; // Si no hay inventario, el nuevo precio es el de la compra
-
-        if (currentQty + newQty > 0) {
-          // Fórmula: (inventario actual × costo promedio actual + compra nueva × precio nuevo) / (inventario actual + cantidad nueva)
-          const totalValue =
-            currentQty * currentStandardPrice + newQty * newPurchasePrice;
-          const totalQty = currentQty + newQty;
-          newStandardPrice = round(totalValue / totalQty, 2);
+          });
         }
-
-        console.log(
-          `-Costos: Actual: $${currentStandardPrice}, Nuevo: $${newPurchasePrice}, Promedio: $${newStandardPrice}`,
-        );
-
-        // ============================================
-        // 3. ACTUALIZAR COSTO PROMEDIO (standard_price)
-        // ============================================
-        await tx.productTemplate.update({
-          where: { id: line.Product.id },
-          data: {
-            lastCost: newPurchasePrice, // Último costo de compra
-            standarPrice: newStandardPrice, // Costo promedio ponderado
-          },
-        });
 
         //ENTRADA AL ALMACÉN DE VENTAS O PRODUCCIÓN DEFINIDO
         console.log("-Afectando almacén");
