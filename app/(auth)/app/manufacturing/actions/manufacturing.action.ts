@@ -345,7 +345,7 @@ export async function manufacturingActionAffect({ data }: { data: ManufacturingA
 
     await prisma.$transaction(async (tx) => {
       // 1. Actualizar inventario del almacén destino
-      const currentProduct = await tx.stockWarehouse.upsert({
+      await tx.stockWarehouse.upsert({
         where: {
           productId_warehouseId: {
             productId: data.productId.id,

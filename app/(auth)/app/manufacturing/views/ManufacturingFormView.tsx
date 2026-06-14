@@ -11,40 +11,20 @@ import {
 } from "../actions/manufacturing.action";
 import { SubmitHandler, useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  manufacturingSchema,
-  manufacturingSchemaDefault,
-  ManufacturingSchemaType,
-} from "../schemas/manufacturing.schema";
+import { manufacturingSchema, manufacturingSchemaDefault, ManufacturingSchemaType } from "../schemas/manufacturing.schema";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import {
-  FormView,
-  FormViewGroup,
-  FormViewStack,
-  TFormState,
-} from "@/components/templates/FormView";
+import { FormView, FormViewGroup, FormViewStack, TFormState } from "@/components/templates/FormView";
 import { FieldEntry, FieldRelation } from "@/components/templates/fields";
 import { getUomById } from "../../product_template/uom_category/actions/uom.action";
 import { useAuth } from "@/hooks/sessionStore";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import { Col } from "react-bootstrap";
-import {
-  BtnDeleteLine,
-  SimpleTable,
-  SimpleTD,
-} from "@/components/templates/simpletemplates";
+import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
 import toast from "react-hot-toast";
-import type {
-  ManufacturingState,
-  ProductTemplate,
-} from "@/generated/prisma/client";
-import {
-  getProductById,
-  ProductTemplateWithProps,
-} from "../../product_template/products/actions/productTemplate.action";
-import { round } from "@/app/libs/helpers";
+import type { ManufacturingState, ProductTemplate } from "@/generated/prisma/client";
+import { getProductById, ProductTemplateWithProps } from "../../product_template/products/actions/productTemplate.action";
 
 const manufacturingStates: TFormState = [
   {
@@ -85,13 +65,7 @@ export const manufacturingStatesDisplay: Record<ManufacturingState, string> = {
 let staticYield = 0.0;
 let staticIngridients: ProductTemplateWithProps["ReceiptLines"] = [];
 
-function ManufacturingFormView({
-  id,
-  manufacturing,
-}: {
-  id: string | null;
-  manufacturing: ManufacturingWithProps | null;
-}) {
+function ManufacturingFormView({ id, manufacturing }: { id: string | null; manufacturing: ManufacturingWithProps | null }) {
   const methods = useForm<ManufacturingSchemaType>({
     resolver: zodResolver(manufacturingSchema),
     defaultValues: manufacturingSchemaDefault,
@@ -99,7 +73,7 @@ function ManufacturingFormView({
   const { reset, getValues, setValue, control, handleSubmit } = methods;
   const { state: stateValue } = getValues();
 
-  const { remove, fields, append, replace } = useFieldArray({
+  const { remove, fields, append } = useFieldArray({
     control,
     name: "ManufacturingLines",
   });
@@ -183,13 +157,7 @@ function ManufacturingFormView({
     originalValuesRef.current = values;
   }, [reset, manufacturing]);
 
-  const handleChangeProduct = async ({
-    id,
-    record,
-  }: {
-    id: string | null;
-    record: ProductTemplate;
-  }) => {
+  const handleChangeProduct = async ({ id, record }: { id: string | null; record: ProductTemplate }) => {
     const uom = await getUomById({ id: record?.uomId || null });
     setValue("uomId", { id: uom?.id || "", name: uom?.name || "" });
     const getProduct = await getProductById({ id });
@@ -197,8 +165,7 @@ function ManufacturingFormView({
       staticIngridients = getProduct.ReceiptLines;
       setValue("quantity", 1);
       staticYield = getProduct.yield;
-      if (staticYield < 0.1)
-        return modalError("El rendimiento del producto debe ser mayor a 0.0");
+      if (staticYield < 0.1) return modalError("El rendimiento del producto debe ser mayor a 0.0");
       setValue("yield", getValues().quantity * staticYield);
       remove();
       for (const receipt of staticIngridients) {
@@ -318,17 +285,14 @@ function ManufacturingFormView({
           fieldName: "actionFinish",
           string: "Finalizar",
           variant: "info",
-          invisible:
-            getValues().state !== "in_process" ||
-            getValues().state === "cancel",
+          invisible: getValues().state !== "in_process" || getValues().state === "cancel",
         },
         {
           action: actionAffected,
           fieldName: "actionAffected",
           string: "Afectar",
           variant: "info",
-          invisible:
-            getValues().state !== "finished" || getValues().state === "cancel",
+          invisible: getValues().state !== "finished" || getValues().state === "cancel",
         },
         {
           action: actionCancel,
@@ -365,36 +329,12 @@ function ManufacturingFormView({
           readonly={getValues().state !== "draft"}
         />
         <FormViewStack>
-          <FieldEntry
-            name="quantity"
-            label="Cantidad a fabricar"
-            type="number"
-            decimals={3}
-            onChange={(value) => computeYield(value)}
-            readonly={getValues().state !== "draft"}
-          />
-          <FieldRelation
-            model="uomCategory"
-            name="uomId"
-            label="UdM"
-            readonly
-          />
+          <FieldEntry name="quantity" label="Cantidad a fabricar" type="number" decimals={3} onChange={(value) => computeYield(value)} readonly={getValues().state !== "draft"} />
+          <FieldRelation model="uomCategory" name="uomId" label="UdM" readonly />
         </FormViewStack>
         <FormViewStack>
-          <FieldEntry
-            name="yield"
-            label="Rendimiento"
-            type="number"
-            decimals={3}
-            readonly
-          />
-          <FieldEntry
-            name="priceUnit"
-            label="Costo de fabricación"
-            type="number"
-            decimals={2}
-            readonly
-          />
+          <FieldEntry name="yield" label="Rendimiento" type="number" decimals={3} readonly />
+          <FieldEntry name="priceUnit" label="Costo de fabricación" type="number" decimals={2} readonly />
         </FormViewStack>
       </FormViewGroup>
       <FormViewGroup>
@@ -418,12 +358,7 @@ function ManufacturingFormView({
           ]}
           readonly={getValues().state !== "draft"}
         />
-        <FieldEntry
-          name="date"
-          readonly
-          label="Fecha de fabricación"
-          type="date"
-        />
+        <FieldEntry name="date" readonly label="Fecha de fabricación" type="date" />
       </FormViewGroup>
       <Notebook defaultActiveKey="lines">
         <Page eventKey="lines" title="Ingredientes">
@@ -473,40 +408,16 @@ function ManufacturingFormView({
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={row} name="lineOutQty">
-                      <FieldEntry
-                        inline
-                        name={`ManufacturingLines.${row}.outQty`}
-                        type="number"
-                        decimals={3}
-                        readonly={getValues().state !== "draft"}
-                      />
+                      <FieldEntry inline name={`ManufacturingLines.${row}.outQty`} type="number" decimals={3} readonly={getValues().state !== "draft"} />
                     </SimpleTD>
                     <SimpleTD colIdx={row} name="lineUomId">
-                      <FieldRelation
-                        inline
-                        model="uomCategory"
-                        name={`ManufacturingLines.${row}.uomId`}
-                        readonly
-                      />
+                      <FieldRelation inline model="uomCategory" name={`ManufacturingLines.${row}.uomId`} readonly />
                     </SimpleTD>
                     <SimpleTD colIdx={row} name="linePriceUnit">
-                      <FieldEntry
-                        inline
-                        name={`ManufacturingLines.${row}.priceUnit`}
-                        type="number"
-                        decimals={2}
-                        readonly
-                      />
+                      <FieldEntry inline name={`ManufacturingLines.${row}.priceUnit`} type="number" decimals={2} readonly />
                     </SimpleTD>
-                    <SimpleTD
-                      contentPosition="text-center"
-                      name="lineDelete"
-                      colIdx={row}
-                    >
-                      <BtnDeleteLine
-                        action={() => remove(row)}
-                        disabled={getValues().state !== "draft"}
-                      />
+                    <SimpleTD contentPosition="text-center" name="lineDelete" colIdx={row}>
+                      <BtnDeleteLine action={() => remove(row)} disabled={getValues().state !== "draft"} />
                     </SimpleTD>
                   </tr>
                 )}

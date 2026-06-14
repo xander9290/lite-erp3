@@ -6,7 +6,6 @@ import prisma from "@/app/libs/prisma";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { ActionResponse } from "@/app/libs/definitions";
 import { createAuditlog } from "../../../actions/auditlog-actions";
-import { round } from "@/app/libs/helpers";
 
 export interface ProductTemplateWithProps extends ProductTemplate {
   Supplier: { id: string; name: string } | null;
@@ -60,16 +59,9 @@ export interface ProductTemplateWithProps extends ProductTemplate {
   TaxPurchase: { id: string; name: string; amount: number } | null;
 }
 
-type ProductTemplateActionProps = Omit<
-  ProductTemplateSchemaType,
-  "createdAt" | "updatedAt" | "createdUid"
->;
+type ProductTemplateActionProps = Omit<ProductTemplateSchemaType, "createdAt" | "updatedAt" | "createdUid">;
 
-export async function getProductById({
-  id,
-}: {
-  id: string | null;
-}): Promise<ProductTemplateWithProps | null> {
+export async function getProductById({ id }: { id: string | null }): Promise<ProductTemplateWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -178,11 +170,7 @@ export async function getProductById({
   }
 }
 
-export async function createProduct({
-  data,
-}: {
-  data: ProductTemplateActionProps;
-}): Promise<ActionResponse<ProductTemplateWithProps>> {
+export async function createProduct({ data }: { data: ProductTemplateActionProps }): Promise<ActionResponse<ProductTemplateWithProps>> {
   try {
     const { uid } = await sessionStore();
 
@@ -370,13 +358,7 @@ export async function createProduct({
   }
 }
 
-export async function updateProduct({
-  id,
-  data,
-}: {
-  id: string | null;
-  data: ProductTemplateActionProps;
-}): Promise<ActionResponse<ProductTemplateWithProps>> {
+export async function updateProduct({ id, data }: { id: string | null; data: ProductTemplateActionProps }): Promise<ActionResponse<ProductTemplateWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -410,33 +392,17 @@ export async function updateProduct({
         Tags: { set: data.Tags.map((t) => ({ id: t })) },
         uomIncomingAllowed: data.uomIncomingAllowed,
         uomOutgoingAllowed: data.uomOutgoingAllowed,
-        Supplier: data.supplierId?.id
-          ? { connect: { id: data.supplierId.id } }
-          : { disconnect: true },
-        User: data.userId?.id
-          ? { connect: { id: data.userId.id } }
-          : { disconnect: true },
-        ProductCategory: data.productCategoryId?.id
-          ? { connect: { id: data.productCategoryId.id } }
-          : { disconnect: true },
-        ProductBrand: data.productBrandId?.id
-          ? { connect: { id: data.productBrandId.id } }
-          : { disconnect: true },
-        Uom: data.uomId?.id
-          ? { connect: { id: data.uomId.id } }
-          : { disconnect: true },
-        TaxPurchase: data.taxPurchaseId?.id
-          ? { connect: { id: data.taxPurchaseId.id } }
-          : { disconnect: true },
-        TaxSale: data.taxSaleId?.id
-          ? { connect: { id: data.taxSaleId.id } }
-          : { disconnect: true },
+        Supplier: data.supplierId?.id ? { connect: { id: data.supplierId.id } } : { disconnect: true },
+        User: data.userId?.id ? { connect: { id: data.userId.id } } : { disconnect: true },
+        ProductCategory: data.productCategoryId?.id ? { connect: { id: data.productCategoryId.id } } : { disconnect: true },
+        ProductBrand: data.productBrandId?.id ? { connect: { id: data.productBrandId.id } } : { disconnect: true },
+        Uom: data.uomId?.id ? { connect: { id: data.uomId.id } } : { disconnect: true },
+        TaxPurchase: data.taxPurchaseId?.id ? { connect: { id: data.taxPurchaseId.id } } : { disconnect: true },
+        TaxSale: data.taxSaleId?.id ? { connect: { id: data.taxSaleId.id } } : { disconnect: true },
         ProductPackagingLines: {
           deleteMany: {
             id: {
-              notIn: data.ProductPackagingLines.filter((l) => l.id).map(
-                (l) => l.id!,
-              ),
+              notIn: data.ProductPackagingLines.filter((l) => l.id).map((l) => l.id!),
             },
           },
           upsert: data.ProductPackagingLines.map((line) => ({
