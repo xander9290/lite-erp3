@@ -190,6 +190,7 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
                         key={`${st.label}-${st.name}-${index}`}
                         variant={st.name === state ? st.decoration : "none"}
                         className={`${st.name === state ? "fw-semibold" : "text-black"} text-uppercase border`}
+                        title={st.name}
                       >
                         {st.label}
                       </Button>

@@ -35,7 +35,15 @@ function PurchaseListView({ state }: { state: string | null }) {
     <ListView model="purchaseOrder">
       <ListView.Header title="Compras" formView="/app/purchase_order?view_type=form&id=null" />
       <ListView.Body>
-        <TableTemplateLite model="purchaseOrder" defaultOrder="name desc" pageSize={100} baseDomain={domain} onRowClick={(row) => router.push(`/app/purchase_order?view_type=form&id=${row.id}`)}>
+        <TableTemplateLite
+          model="purchaseOrder"
+          defaultOrder="name desc"
+          pageSize={100}
+          baseDomain={domain}
+          onRowClick={(row) => router.push(`/app/purchase_order?view_type=form&id=${row.id}`)}
+          showTotals={true}
+          totalColumns={["total"]}
+        >
           <Column field="name" label="Folio" render={(name) => <div className="fw-bold">{name}</div>} />
           <Column field="date" label="Creación" type="date" render={(name) => <WidgetDisplayDate date={name} />} />
           <Column
@@ -105,7 +113,7 @@ function PurchaseListView({ state }: { state: string | null }) {
             }}
             render={(_, field) => <WidgetAvatar imageUrl={field.User.Partner.imageUrl} displayName={field.User.name} />}
           />
-          <Column field="total" label="Total" type="number" render={(field) => <WidgetCurrency number={field} />} />
+          <Column field="total" label="Total" type="number" render={(field) => <WidgetCurrency number={field} />} format="currency" />
           <Column
             field="state"
             label="Estado"

@@ -20,6 +20,8 @@ interface TableTemplateProps {
   baseDomain?: any[];
   showSelection?: boolean;
   onSelectionChange?: (ids: string[]) => void;
+  showTotals?: boolean;
+  totalColumns?: string[];
 }
 
 function buildSortForApi(field: string, dir: "asc" | "desc"): any {
@@ -39,8 +41,11 @@ export function TableTemplateLite({
   baseDomain = [],
   showSelection = true,
   onSelectionChange,
+  showTotals = false,
+  totalColumns = [],
 }: TableTemplateProps) {
   const { access } = useAuth();
+  const { uid } = useAuth();
 
   const pathName = usePathname();
   const entity = extractEntityFromPath(pathName);
@@ -52,18 +57,16 @@ export function TableTemplateLite({
     .map((child) => child.props as ColumnConfig);
 
   // Estado
-  const [sort, setSort] = useState<{ field: string; dir: "asc" | "desc" }>(
-    () => {
-      if (defaultOrder) {
-        const [field, dir] = defaultOrder.split(" ");
-        return {
-          field,
-          dir: dir?.toLowerCase() === "desc" ? "desc" : "asc",
-        };
-      }
-      return { field: "id", dir: "asc" };
-    },
-  );
+  const [sort, setSort] = useState<{ field: string; dir: "asc" | "desc" }>(() => {
+    if (defaultOrder) {
+      const [field, dir] = defaultOrder.split(" ");
+      return {
+        field,
+        dir: dir?.toLowerCase() === "desc" ? "desc" : "asc",
+      };
+    }
+    return { field: "id", dir: "asc" };
+  });
 
   const [filters, setFilters] = useState<FilterValue[]>([]);
   const [page, setPage] = useState(1);
@@ -90,11 +93,7 @@ export function TableTemplateLite({
     sort: JSON.stringify(sortForApi),
     filters: JSON.stringify(filters),
     domain: JSON.stringify(baseDomain),
-    columnTypes: JSON.stringify(
-      Object.fromEntries(
-        columns.map((col) => [col.field, col.type || "string"]),
-      ),
-    ),
+    columnTypes: JSON.stringify(Object.fromEntries(columns.map((col) => [col.field, col.type || "string"]))),
     includes: JSON.stringify(includes),
   });
 
@@ -143,42 +142,73 @@ export function TableTemplateLite({
 
   const handleSelectAll = (checked: boolean) => {
     if (!data?.rows) return;
-    const newIds = checked
-      ? [...new Set([...selectedIds, ...data.rows.map((r: any) => r.id)])]
-      : selectedIds.filter((id) => !data.rows.some((r: any) => r.id === id));
+    const newIds = checked ? [...new Set([...selectedIds, ...data.rows.map((r: any) => r.id)])] : selectedIds.filter((id) => !data.rows.some((r: any) => r.id === id));
     handleSelectionChange(newIds);
   };
 
   const handleRowSelect = (id: string, checked: boolean) => {
-    const newIds = checked
-      ? [...selectedIds, id]
-      : selectedIds.filter((x) => x !== id);
+    const newIds = checked ? [...selectedIds, id] : selectedIds.filter((x) => x !== id);
     handleSelectionChange(newIds);
   };
 
-  const isAllSelected =
-    data &&
-    data?.rows?.length > 0 &&
-    data.rows.every((r: any) => selectedIds.includes(r.id));
+  const isAllSelected = data && data?.rows?.length > 0 && data.rows.every((r: any) => selectedIds.includes(r.id));
+
+  // Calcular totales de columnas numéricas
+  const calculateTotals = () => {
+    if (!showTotals || !data?.rows?.length) return null;
+
+    const rows = groupedData ? Object.values(groupedData).flat() : data.rows;
+
+    // Determinar qué columnas sumar
+    const columnsToSum = totalColumns.length > 0 ? totalColumns : visibleColumns.filter((col) => col.type === "number").map((col) => col.field);
+
+    const totals: Record<string, number> = {};
+
+    columnsToSum.forEach((colField) => {
+      const total = rows.reduce((sum, row) => {
+        const value = getNestedValue(row, colField);
+        const numValue = typeof value === "number" ? value : parseFloat(value);
+        return sum + (isNaN(numValue) ? 0 : numValue);
+      }, 0);
+      totals[colField] = total;
+    });
+
+    return totals;
+  };
+
+  const totals = calculateTotals();
+
+  // Renderizar fila de totales
+  const renderTotalsRow = () => {
+    if (!totals) return null;
+
+    return (
+      <tr className="table-active fw-semibold">
+        {showSelection && (
+          <td className="border-top border-bottom" valign="middle">
+            <strong>Total</strong>
+          </td>
+        )}
+        {visibleColumns.map((col) => {
+          const totalValue = totals[col.field];
+          const hasTotal = totalValue !== undefined;
+
+          return (
+            <td key={col.field} className="border-top border-bottom" valign="middle">
+              {hasTotal ? <p className="fw-semibold m-0 p-0 text-end fs-6">Total: {formatCellValue(totalValue, col.type, col.format)}</p> : <p className="text-muted"></p>}
+            </td>
+          );
+        })}
+      </tr>
+    );
+  };
 
   // Render rows
   const renderRow = (row: any, index: number) => (
-    <tr
-      key={row.id || index}
-      onClick={() => onRowClick?.(row)}
-      style={{ cursor: onRowClick ? "pointer" : "default" }}
-    >
+    <tr key={row.id || index} onClick={() => onRowClick?.(row)} style={{ cursor: onRowClick ? "pointer" : "default" }}>
       {showSelection && (
-        <td
-          onClick={(e) => e.stopPropagation()}
-          className="text-center border-bottom"
-          valign="middle"
-        >
-          <Form.Check
-            type="checkbox"
-            checked={selectedIds.includes(row.id) || false}
-            onChange={(e) => handleRowSelect(row.id, e.target.checked)}
-          />
+        <td onClick={(e) => e.stopPropagation()} className="text-center border-bottom" valign="middle">
+          <Form.Check type="checkbox" checked={selectedIds.includes(row.id) || false} onChange={(e) => handleRowSelect(row.id, e.target.checked)} />
         </td>
       )}
       {visibleColumns.map((col) => {
@@ -191,11 +221,7 @@ export function TableTemplateLite({
         }
         return (
           <td key={col.field} className="border-bottom" valign="middle">
-            {formatCellValue(
-              getNestedValue(row, col.field),
-              col.type,
-              col.format,
-            )}
+            {formatCellValue(getNestedValue(row, col.field), col.type, col.format)}
           </td>
         );
       })}
@@ -207,11 +233,7 @@ export function TableTemplateLite({
       return Object.entries(groupedData).map(([group, rows]) => (
         <React.Fragment key={group}>
           <tr>
-            <td
-              colSpan={visibleColumns.length + (showSelection ? 1 : 0)}
-              className="border-bottom"
-              valign="middle"
-            >
+            <td colSpan={visibleColumns.length + (showSelection ? 1 : 0)} className="border-bottom" valign="middle">
               <strong>
                 <i className="bi bi-collection me-2" />
                 {group} ({rows.length})
@@ -230,20 +252,10 @@ export function TableTemplateLite({
       {/* Toolbar */}
       <div className="d-flex justify-content-between align-items-center">
         <div className="d-flex gap-2">
-          <FilterBuilder
-            columns={columns}
-            filters={filters}
-            onChange={handleFilter}
-          />
-          <GroupByControl
-            columns={columns}
-            currentGroup={groupBy}
-            onGroupChange={setGroupBy}
-          />
+          <FilterBuilder columns={columns} filters={filters} onChange={handleFilter} storageKey={`${uid}-filters-${entity}`} />
+          <GroupByControl columns={columns} storageKey={`${uid}-groupby-${entity}`} onGroupChange={setGroupBy} />
         </div>
-        {isLoading && (
-          <Spinner size="sm" animation="border" variant="primary" />
-        )}
+        {isLoading && <Spinner size="sm" animation="border" variant="primary" />}
       </div>
 
       {/* Table */}
@@ -251,24 +263,15 @@ export function TableTemplateLite({
         <thead className="sticky-top" style={{ zIndex: 1 }}>
           <tr>
             {showSelection && (
-              <th
-                style={{ width: 40 }}
-                className="text-center border-end border-bottom table-active"
-              >
-                <Form.Check
-                  type="checkbox"
-                  checked={isAllSelected || false}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                />
+              <th style={{ width: 40 }} className="text-center border-end border-bottom table-active">
+                <Form.Check type="checkbox" checked={isAllSelected || false} onChange={(e) => handleSelectAll(e.target.checked)} />
               </th>
             )}
             {visibleColumns.map((col) => {
               return (
                 <th
                   key={col.field}
-                  onClick={() =>
-                    col.sortable !== false && handleSort(col.field)
-                  }
+                  onClick={() => col.sortable !== false && handleSort(col.field)}
                   title={col.field}
                   style={{
                     cursor: col.sortable !== false ? "pointer" : "default",
@@ -278,12 +281,7 @@ export function TableTemplateLite({
                 >
                   <div className="d-flex align-items-center justify-content-between">
                     <span>{col.label}</span>
-                    {col.sortable !== false && (
-                      <SortIndicator
-                        active={sort.field === col.field}
-                        direction={sort.dir}
-                      />
-                    )}
+                    {col.sortable !== false && <SortIndicator active={sort.field === col.field} direction={sort.dir} />}
                   </div>
                 </th>
               );
@@ -295,14 +293,12 @@ export function TableTemplateLite({
             renderRows()
           ) : (
             <tr>
-              <td
-                colSpan={visibleColumns.length + (showSelection ? 1 : 0)}
-                className="text-center py-4 text-muted"
-              >
+              <td colSpan={visibleColumns.length + (showSelection ? 1 : 0)} className="text-center py-4 text-muted">
                 {isLoading ? "Cargando..." : "No hay registros"}
               </td>
             </tr>
           )}
+          {totals && renderTotalsRow()}
         </tbody>
         {data && data?.total > 0 && (
           <tfoot>
@@ -311,18 +307,9 @@ export function TableTemplateLite({
                 <div className="d-flex justify-content-between align-items-center">
                   <small className="text-muted">
                     {data?.total.toLocaleString()} registros
-                    {selectedIds.length > 0 && (
-                      <span className="ms-2 text-primary">
-                        ({selectedIds.length} seleccionados)
-                      </span>
-                    )}
+                    {selectedIds.length > 0 && <span className="ms-2 text-primary">({selectedIds.length} seleccionados)</span>}
                   </small>
-                  <Pagination
-                    currentPage={page}
-                    totalPages={Math.ceil(data?.total / pageSize)}
-                    onPageChange={setPage}
-                    isLoading={isLoading}
-                  />
+                  <Pagination currentPage={page} totalPages={Math.ceil(data?.total / pageSize)} onPageChange={setPage} isLoading={isLoading} />
                 </div>
               </td>
             </tr>
@@ -357,9 +344,7 @@ function formatCellValue(value: any, type?: string, format?: string): string {
   if ((type === "date" || type === "datetime") && value) {
     try {
       const date = new Date(value);
-      return type === "date"
-        ? date.toLocaleDateString("es-MX")
-        : date.toLocaleString("es-MX");
+      return type === "date" ? date.toLocaleDateString("es-MX") : date.toLocaleString("es-MX");
     } catch {
       return String(value);
     }
