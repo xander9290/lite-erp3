@@ -234,10 +234,12 @@ export function TableTemplateLite({
         <React.Fragment key={group}>
           <tr>
             <td colSpan={visibleColumns.length + (showSelection ? 1 : 0)} className="border-bottom" valign="middle">
-              <strong>
-                <i className="bi bi-collection me-2" />
-                {group} ({rows.length})
-              </strong>
+              <div className="d-flex align-items-center justify-content-between">
+                <strong>
+                  <i className="bi bi-collection me-2" />
+                  {group} ({rows.length})
+                </strong>
+              </div>
             </td>
           </tr>
           {rows.map((row: any, index: number) => renderRow(row, index))}
@@ -247,10 +249,14 @@ export function TableTemplateLite({
     return data?.rows?.map((row: any, index: number) => renderRow(row, index));
   };
 
+  const from = data?.total && data.rows.length ? (page - 1) * pageSize + 1 : 0;
+
+  const to = data?.total && data.rows.length ? Math.min(page * pageSize, data.total) : 0;
+
   return (
     <div className="position-relative">
       {/* Toolbar */}
-      <div className="d-flex justify-content-between align-items-center">
+      <div className="d-flex justify-content-between align-items-center mb-0 flex-wrap gap-2">
         <div className="d-flex gap-2">
           <FilterBuilder columns={columns} filters={filters} onChange={handleFilter} storageKey={`${uid}-filters-${entity}`} />
           <GroupByControl columns={columns} storageKey={`${uid}-groupby-${entity}`} onGroupChange={setGroupBy} />
@@ -259,63 +265,88 @@ export function TableTemplateLite({
       </div>
 
       {/* Table */}
-      <Table borderless hover size="sm" style={{ fontSize: "0.9rem" }}>
-        <thead className="sticky-top" style={{ zIndex: 1 }}>
-          <tr>
-            {showSelection && (
-              <th style={{ width: 40 }} className="text-center border-end border-bottom table-active">
-                <Form.Check type="checkbox" checked={isAllSelected || false} onChange={(e) => handleSelectAll(e.target.checked)} />
-              </th>
-            )}
-            {visibleColumns.map((col) => {
-              return (
-                <th
-                  key={col.field}
-                  onClick={() => col.sortable !== false && handleSort(col.field)}
-                  title={col.field}
-                  style={{
-                    cursor: col.sortable !== false ? "pointer" : "default",
-                    userSelect: "none",
-                  }}
-                  className="text-center border-end border-bottom table-active"
-                >
-                  <div className="d-flex align-items-center justify-content-between">
-                    <span>{col.label}</span>
-                    {col.sortable !== false && <SortIndicator active={sort.field === col.field} direction={sort.dir} />}
-                  </div>
+      <div
+        className="table-responsive"
+        style={{
+          maxHeight: "74vh",
+          overflowY: "auto",
+        }}
+      >
+        <Table borderless hover size="sm" style={{ fontSize: "0.9rem" }}>
+          <thead
+            className="sticky-top shadow-sm"
+            style={{
+              zIndex: 10,
+            }}
+          >
+            <tr className={onRowClick ? "table-row-clickable" : undefined}>
+              {showSelection && (
+                <th style={{ width: 40 }} className="text-center border-end border-bottom table-active">
+                  <Form.Check type="checkbox" checked={isAllSelected || false} onChange={(e) => handleSelectAll(e.target.checked)} />
                 </th>
-              );
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {data?.rows?.length ? (
-            renderRows()
-          ) : (
-            <tr>
-              <td colSpan={visibleColumns.length + (showSelection ? 1 : 0)} className="text-center py-4 text-muted">
-                {isLoading ? "Cargando..." : "No hay registros"}
-              </td>
+              )}
+              {visibleColumns.map((col) => {
+                return (
+                  <th
+                    key={col.field}
+                    onClick={() => col.sortable !== false && handleSort(col.field)}
+                    title={col.field}
+                    style={{
+                      cursor: col.sortable !== false ? "pointer" : "default",
+                      userSelect: "none",
+                    }}
+                    className="text-center border-end border-bottom table-active"
+                  >
+                    <div className="d-flex align-items-center justify-content-between">
+                      <span>{col.label}</span>
+                      {col.sortable !== false && <SortIndicator active={sort.field === col.field} direction={sort.dir} />}
+                    </div>
+                  </th>
+                );
+              })}
             </tr>
+          </thead>
+          <tbody>
+            {data?.rows?.length ? (
+              renderRows()
+            ) : (
+              <tr className={onRowClick ? "table-row-clickable" : undefined}>
+                <td colSpan={visibleColumns.length + (showSelection ? 1 : 0)} className="text-center py-4 text-muted">
+                  <div className="py-5">
+                    <i className="bi bi-inbox fs-1 d-block mb-2" />
+                    <div>{isLoading ? "Cargando..." : "No hay registros"}</div>
+                  </div>
+                </td>
+              </tr>
+            )}
+            {totals && renderTotalsRow()}
+          </tbody>
+          {data && data?.total > 0 && (
+            <tfoot>
+              <tr className={onRowClick ? "table-row-clickable" : undefined}>
+                <td colSpan={visibleColumns.length + (showSelection ? 1 : 0)}>
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div className="d-flex flex-column">
+                      <small className="text-muted">
+                        Mostrando {from}–{to}
+                        de {data.total.toLocaleString()}
+                      </small>
+
+                      {selectedIds.length > 0 && (
+                        <small className="text-primary">
+                          {selectedIds.length}
+                          seleccionados
+                        </small>
+                      )}
+                    </div>
+                    <Pagination currentPage={page} totalPages={Math.ceil(data?.total / pageSize)} onPageChange={setPage} isLoading={isLoading} />
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
           )}
-          {totals && renderTotalsRow()}
-        </tbody>
-        {data && data?.total > 0 && (
-          <tfoot>
-            <tr>
-              <td colSpan={visibleColumns.length + (showSelection ? 1 : 0)}>
-                <div className="d-flex justify-content-between align-items-center">
-                  <small className="text-muted">
-                    {data?.total.toLocaleString()} registros
-                    {selectedIds.length > 0 && <span className="ms-2 text-primary">({selectedIds.length} seleccionados)</span>}
-                  </small>
-                  <Pagination currentPage={page} totalPages={Math.ceil(data?.total / pageSize)} onPageChange={setPage} isLoading={isLoading} />
-                </div>
-              </td>
-            </tr>
-          </tfoot>
-        )}
-      </Table>
+        </Table>
+      </div>
 
       {error && (
         <div className="alert alert-danger">
