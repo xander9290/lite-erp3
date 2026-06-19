@@ -87,10 +87,18 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
   }
 
   return (
-    <Row className="h-100 overflow-auto">
+    <Row className="h-100">
       <Col xs="12" sm="12" md="12" lg="9" xl="7" xxl="8" className="h-100 px-0">
         <FormProvider {...methods}>
-          <Form noValidate className="card d-flex flex-column h-100 border-0 bg-body-tertiary" style={{ fontSize: "0.9rem" }}>
+          <Form
+            noValidate
+            className="card d-flex flex-column h-100 border-0 bg-body-tertiary"
+            style={{
+              fontSize: "0.9rem",
+              height: "calc(100vh - 100px)", // Ajusta según tu layout
+              maxHeight: "calc(100vh - 100px)",
+            }}
+          >
             <div className="card-header d-flex justify-content-between align-items-center border-0">
               {/* BOTONES DE FORMULARIO */}
               <div className="d-flex align-items-center gap-1">
@@ -178,7 +186,7 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
                 )}
               </Button>
             </div>
-            <div className="card-body p-0 flex-fill" style={{ overflowX: "hidden", overflowY: "auto" }}>
+            <div className="card-body p-0 flex-grow-1 overflow-auto" style={{ minHeight: 0 }}>
               <div className="d-flex justify-content-between align-items-center">
                 <div className="card-title h3 fw-semibold my-1 mx-2">{id !== "null" ? getValues().name : "Nuevo"}</div>
 

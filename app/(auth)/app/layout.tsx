@@ -14,9 +14,7 @@ function AppLayout({
         <ModalProvider>
           <div className="d-flex flex-column vh-100">
             <TopNav />
-            <main className="container-fluid flex-fill overflow-hidden">
-              {children}
-            </main>
+            <main className="container-fluid flex-fill overflow-hidden">{children}</main>
           </div>
         </ModalProvider>
       </AccessProvider>
