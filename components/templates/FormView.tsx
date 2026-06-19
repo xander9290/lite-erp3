@@ -1,9 +1,24 @@
-import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
-import { Alert, Button, ButtonGroup, Col, Container, Dropdown, DropdownButton, Form, Row, Spinner } from "react-bootstrap";
+import {
+  FormProvider,
+  type FieldValues,
+  type UseFormReturn,
+} from "react-hook-form";
+import {
+  Alert,
+  Button,
+  ButtonGroup,
+  Col,
+  Container,
+  Dropdown,
+  DropdownButton,
+  Form,
+  Row,
+  Spinner,
+} from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import { ButtonVariant } from "react-bootstrap/esm/types";
 import NotFound from "@/app/not-found";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import AuditLogViewer from "./AuditLogViewer";
 import { useAuth } from "@/hooks/sessionStore";
 
@@ -36,7 +51,18 @@ type FormViewProps<T extends FieldValues> = {
   isReallyDirty?: boolean;
 };
 
-export function FormView<T extends FieldValues>({ methods, onSubmit, children, id, cleanUrl, reverse, actions, formStates, state, auditLog = "null" }: FormViewProps<T>) {
+export function FormView<T extends FieldValues>({
+  methods,
+  onSubmit,
+  children,
+  id,
+  cleanUrl,
+  reverse,
+  actions,
+  formStates,
+  state,
+  auditLog = "null",
+}: FormViewProps<T>) {
   const {
     handleSubmit,
     formState: { isSubmitting, isDirty },
@@ -47,6 +73,8 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
 
   const { access } = useAuth();
   const router = useRouter();
+
+  const reversingRef = useRef(false);
 
   const modelName = cleanUrl.split("?")[0].split("/")[2] + "Model";
   const modelAccess = access.find((acc) => acc.fieldName === modelName);
@@ -62,12 +90,19 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
   }, [dirty]);
 
   const handleReverseExtended = () => {
+    if (reversingRef.current) return;
+
+    reversingRef.current = true;
+
+    reverse();
+
     if (id && id === "null") {
-      reverse();
       router.back();
-    } else {
-      reverse();
     }
+
+    requestAnimationFrame(() => {
+      reversingRef.current = false;
+    });
   };
 
   if (!id || id === "") {
@@ -107,7 +142,9 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
                     type="button"
                     onClick={() => {
                       if (dirty) {
-                        const confirmLeave = confirm("Tienes cambios sin guardar. ¿Continuar?");
+                        const confirmLeave = confirm(
+                          "Tienes cambios sin guardar. ¿Continuar?",
+                        );
                         if (!confirmLeave) return;
                       }
                       router.replace(cleanUrl);
@@ -119,11 +156,26 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
                   </Button>
                 )}
 
-                <Button type="button" disabled={!dirty || modelAccess?.notEdit} onClick={handleSubmit(onSubmit)} variant={`${isDirty ? "warning" : "outline-secondary"}`}>
-                  {isSubmitting ? <Spinner size="sm" animation="border" /> : <i className="bi bi-cloud-arrow-up-fill"></i>}
+                <Button
+                  type="button"
+                  disabled={!dirty || modelAccess?.notEdit}
+                  onClick={handleSubmit(onSubmit)}
+                  variant={`${isDirty ? "warning" : "outline-secondary"}`}
+                >
+                  {isSubmitting ? (
+                    <Spinner size="sm" animation="border" />
+                  ) : (
+                    <i className="bi bi-cloud-arrow-up-fill"></i>
+                  )}
                 </Button>
 
-                <Button type="button" onClick={handleReverseExtended} disabled={!dirty} title="Deshacer cambios" variant={`${isDirty ? "warning" : "outline-secondary"}`}>
+                <Button
+                  type="button"
+                  onClick={handleReverseExtended}
+                  disabled={!dirty}
+                  title="Deshacer cambios"
+                  variant={`${isDirty ? "warning" : "outline-secondary"}`}
+                >
                   <i className="bi bi-arrow-counterclockwise"></i>
                 </Button>
               </div>
@@ -131,7 +183,9 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
               {/* BOTONES VISTA ESCRITORIO */}
               <div className="d-none d-md-flex gap-1 align-items-center">
                 {actions?.map((action, index) => {
-                  const actionAccess = access.filter((acc) => acc.fieldName === action.fieldName);
+                  const actionAccess = access.filter(
+                    (acc) => acc.fieldName === action.fieldName,
+                  );
                   if (actionAccess[0]?.invisible) return null;
                   if (action.invisible) return null;
                   return (
@@ -154,11 +208,19 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
               <div className="d-flex d-md-none">
                 <DropdownButton variant="light" title="Acciones" align="end">
                   {actions?.map((action, index) => {
-                    const actionAccess = access.filter((acc) => acc.fieldName === action.fieldName);
+                    const actionAccess = access.filter(
+                      (acc) => acc.fieldName === action.fieldName,
+                    );
                     if (actionAccess[0]?.invisible) return null;
                     if (action.invisible) return null;
                     return (
-                      <Dropdown.Item key={`${action.string}-${index}`} as={Button} variant={action.variant ?? "light"} onClick={action.action} disabled={action.readonly}>
+                      <Dropdown.Item
+                        key={`${action.string}-${index}`}
+                        as={Button}
+                        variant={action.variant ?? "light"}
+                        onClick={action.action}
+                        disabled={action.readonly}
+                      >
                         {action.string}
                       </Dropdown.Item>
                     );
@@ -170,7 +232,9 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
                 variant="secondary"
                 onClick={() => {
                   if (dirty) {
-                    const confirmLeave = confirm("Tienes cambios sin guardar. ¿Salir?");
+                    const confirmLeave = confirm(
+                      "Tienes cambios sin guardar. ¿Salir?",
+                    );
                     if (!confirmLeave) return;
                   }
                   router.back();
@@ -186,9 +250,14 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
                 )}
               </Button>
             </div>
-            <div className="card-body p-0 flex-grow-1 overflow-auto" style={{ minHeight: 0 }}>
+            <div
+              className="card-body p-0 flex-grow-1 overflow-auto"
+              style={{ minHeight: 0 }}
+            >
               <div className="d-flex justify-content-between align-items-center">
-                <div className="card-title h3 fw-semibold my-1 mx-2">{id !== "null" ? getValues().name : "Nuevo"}</div>
+                <div className="card-title h3 fw-semibold my-1 mx-2">
+                  {id !== "null" ? getValues().name : "Nuevo"}
+                </div>
 
                 {/* STATEBAR DESKTOP */}
                 <div className="d-none d-md-flex justify-content-end gap-1 mx-2 my-2 w-50">
@@ -208,7 +277,13 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
                 {/* STATEBAR MOBILE */}
                 {formStates && (
                   <div className="d-flex d-md-none">
-                    <Button size="sm" variant={formStates.find((st) => st.name === state)?.decoration} className="fw-semibold text-uppercase">
+                    <Button
+                      size="sm"
+                      variant={
+                        formStates.find((st) => st.name === state)?.decoration
+                      }
+                      className="fw-semibold text-uppercase"
+                    >
                       {formStates.find((st) => st.name === state)?.label}
                     </Button>
                   </div>
@@ -223,7 +298,15 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
         </FormProvider>
       </Col>
       {/* ================= THREAD PANEL ================= */}
-      <Col xs="12" sm="12" md="12" lg="5" xl="5" xxl="4" className="h-100 mt-3 mt-md-0 px-0">
+      <Col
+        xs="12"
+        sm="12"
+        md="12"
+        lg="5"
+        xl="5"
+        xxl="4"
+        className="h-100 mt-3 mt-md-0 px-0"
+      >
         {auditLog && (
           <Suspense fallback={<Spinner animation="border" size="sm" />}>
             <AuditLogViewer entityId={id} entityType={auditLog} />
@@ -234,7 +317,16 @@ export function FormView<T extends FieldValues>({ methods, onSubmit, children, i
   );
 }
 
-export function FormViewGroup({ invisible, children, readonly }: { className?: string; invisible?: boolean; children: React.ReactNode; readonly?: boolean }) {
+export function FormViewGroup({
+  invisible,
+  children,
+  readonly,
+}: {
+  className?: string;
+  invisible?: boolean;
+  children: React.ReactNode;
+  readonly?: boolean;
+}) {
   if (invisible) return null;
 
   return (
@@ -246,7 +338,16 @@ export function FormViewGroup({ invisible, children, readonly }: { className?: s
   );
 }
 
-export function FormViewFluid({ invisible, children, readonly }: { className?: string; invisible?: boolean; children: React.ReactNode; readonly?: boolean }) {
+export function FormViewFluid({
+  invisible,
+  children,
+  readonly,
+}: {
+  className?: string;
+  invisible?: boolean;
+  children: React.ReactNode;
+  readonly?: boolean;
+}) {
   if (invisible) return null;
 
   return (
@@ -258,6 +359,18 @@ export function FormViewFluid({ invisible, children, readonly }: { className?: s
   );
 }
 
-export function FormViewStack({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={`d-flex justify-content-between align-items-center gap-1 m-0 p-0 ${className}`}>{children}</div>;
+export function FormViewStack({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`d-flex justify-content-between align-items-center gap-1 m-0 p-0 ${className}`}
+    >
+      {children}
+    </div>
+  );
 }

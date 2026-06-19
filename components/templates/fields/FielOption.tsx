@@ -12,6 +12,8 @@ export interface SelectOption {
   [key: string]: any;
 }
 
+type WidgetType = "select" | "radio";
+
 interface FieldOptionProps<T extends SelectOption> {
   name: string;
   label?: string;
@@ -23,6 +25,8 @@ interface FieldOptionProps<T extends SelectOption> {
   autoFocus?: boolean;
   onOptionChange?: (value: T) => void;
   disabled?: boolean;
+  widget?: WidgetType;
+  columns?: number;
 }
 
 interface MenuPosition {
@@ -44,6 +48,8 @@ export function FieldOption<T extends SelectOption>({
   autoFocus = false,
   onOptionChange,
   disabled,
+  widget = "select",
+  columns = 2,
 }: FieldOptionProps<T>) {
   const access = useAccess({ fieldName: name });
 
@@ -57,8 +63,11 @@ export function FieldOption<T extends SelectOption>({
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isSelectingRef = useRef<boolean>(false); // 🔑 Nuevo ref para controlar selección
 
   const [query, setQuery] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({
@@ -86,7 +95,13 @@ export function FieldOption<T extends SelectOption>({
     setMounted(true);
   }, []);
 
+  // Sincronizar query con el valor seleccionado (solo para modo select)
   useEffect(() => {
+    if (widget === "radio") return;
+
+    // Si estamos seleccionando, no sobrescribir el query
+    if (isSelectingRef.current) return;
+
     if (value === null || value === undefined || value === "") {
       setQuery("");
       return;
@@ -99,22 +114,43 @@ export function FieldOption<T extends SelectOption>({
 
     const selected = normalizedOptions.find((opt) => opt.value === value);
     setQuery(getOptionLabel(selected));
-  }, [value, normalizedOptions]);
+  }, [value, normalizedOptions, widget]);
 
   useEffect(() => {
-    autoResize();
-  }, [query]);
+    if (widget === "select") {
+      autoResize();
+    }
+  }, [query, widget]);
 
-  const filteredOptions = useMemo(() => {
-    const search = query.trim().toLowerCase();
+  const displayOptions = useMemo(() => {
+    if (widget === "radio") return normalizedOptions;
 
-    return normalizedOptions
-      .filter((opt) => getOptionLabel(opt).toLowerCase().includes(search))
-      .slice(0, 8);
-  }, [normalizedOptions, query]);
+    if (isOpen) {
+      const search = searchTerm.trim().toLowerCase();
+      if (!search) return normalizedOptions;
+
+      return normalizedOptions
+        .filter((opt) => getOptionLabel(opt).toLowerCase().includes(search))
+        .slice(0, 8);
+    }
+
+    if (value !== null && value !== undefined && value !== "") {
+      let selected: T | undefined;
+
+      if (typeof value === "object") {
+        selected = value as T;
+      } else {
+        selected = normalizedOptions.find((opt) => opt.value === value);
+      }
+
+      return selected ? [selected] : [];
+    }
+
+    return [];
+  }, [isOpen, normalizedOptions, searchTerm, value, widget]);
 
   const updateMenuPosition = () => {
-    if (!inputRef.current) return;
+    if (!inputRef.current || widget === "radio") return;
 
     const rect = inputRef.current.getBoundingClientRect();
     const gap = 4;
@@ -145,34 +181,96 @@ export function FieldOption<T extends SelectOption>({
   };
 
   const handleSelect = (option: T) => {
+    isSelectingRef.current = true; // 🔑 Marcar que estamos seleccionando
+
     onChange(option.value);
     onOptionChange?.(option);
     setQuery(getOptionLabel(option));
+    setSearchTerm("");
     setIsOpen(false);
     setHighlightedIndex(0);
+
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
 
     requestAnimationFrame(() => {
       autoResize();
       updateMenuPosition();
+      // 🔑 Resetear el flag después de un breve delay
+      setTimeout(() => {
+        isSelectingRef.current = false;
+      }, 50);
     });
   };
 
+  const handleRadioChange = (option: T) => {
+    onChange(option.value);
+    onOptionChange?.(option);
+  };
+
   const handleBlur = () => {
-    if (!query.trim()) {
-      setQuery("");
-      onChange(null);
-      return;
+    if (widget === "radio") return;
+
+    onBlur();
+
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
     }
 
-    const exactMatch = normalizedOptions.find(
-      (opt) => getOptionLabel(opt).toLowerCase() === query.trim().toLowerCase(),
-    );
+    blurTimeoutRef.current = setTimeout(() => {
+      // 🔑 Si estamos seleccionando, no cerrar
+      if (isSelectingRef.current) {
+        blurTimeoutRef.current = null;
+        return;
+      }
 
-    if (exactMatch) {
-      handleSelect(exactMatch);
-    } else {
-      onChange(null);
-    }
+      const activeElement = document.activeElement;
+      const dropdownPortal = document.querySelector(
+        '[data-dropdown-portal="true"]',
+      );
+
+      if (dropdownPortal && dropdownPortal.contains(activeElement)) {
+        return;
+      }
+
+      setIsOpen(false);
+      setSearchTerm("");
+
+      if (!query.trim()) {
+        setQuery("");
+        onChange(null);
+        return;
+      }
+
+      const exactMatch = normalizedOptions.find(
+        (opt) =>
+          getOptionLabel(opt).toLowerCase() === query.trim().toLowerCase(),
+      );
+
+      if (exactMatch) {
+        onChange(exactMatch.value);
+        onOptionChange?.(exactMatch);
+        setQuery(getOptionLabel(exactMatch));
+      } else {
+        if (value !== null && value !== undefined && value !== "") {
+          let selected: T | undefined;
+          if (typeof value === "object") {
+            selected = value as T;
+          } else {
+            selected = normalizedOptions.find((opt) => opt.value === value);
+          }
+          setQuery(getOptionLabel(selected));
+        } else {
+          setQuery("");
+          onChange(null);
+        }
+      }
+
+      blurTimeoutRef.current = null;
+    }, 150);
   };
 
   useEffect(() => {
@@ -180,7 +278,14 @@ export function FieldOption<T extends SelectOption>({
       const target = event.target as Node;
 
       if (containerRef.current && !containerRef.current.contains(target)) {
+        const dropdownPortal = document.querySelector(
+          '[data-dropdown-portal="true"]',
+        );
+        if (dropdownPortal && dropdownPortal.contains(target)) {
+          return;
+        }
         setIsOpen(false);
+        setSearchTerm("");
       }
     };
 
@@ -190,10 +295,10 @@ export function FieldOption<T extends SelectOption>({
 
   useEffect(() => {
     setHighlightedIndex(0);
-  }, [query]);
+  }, [searchTerm]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || widget === "radio") return;
 
     updateMenuPosition();
 
@@ -213,55 +318,134 @@ export function FieldOption<T extends SelectOption>({
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", handleScroll, true);
     };
-  }, [isOpen, query]);
+  }, [isOpen, searchTerm, widget]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (!isOpen) return;
+    if (widget === "radio") return;
+
+    if (!isOpen) {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+        inputRef.current?.blur();
+      }
+      return;
+    }
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      if (filteredOptions.length === 0) return;
+      if (displayOptions.length === 0) return;
       setHighlightedIndex((prev) =>
-        prev < filteredOptions.length - 1 ? prev + 1 : prev,
+        prev < displayOptions.length - 1 ? prev + 1 : prev,
       );
       return;
     }
 
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      if (filteredOptions.length === 0) return;
+      if (displayOptions.length === 0) return;
       setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
       return;
     }
 
     if (e.key === "Enter") {
       e.preventDefault();
-      const selected = filteredOptions[highlightedIndex];
+      const selected = displayOptions[highlightedIndex];
       if (selected) handleSelect(selected);
       return;
     }
 
     if (e.key === "Escape") {
       setIsOpen(false);
+      setSearchTerm("");
+      inputRef.current?.blur();
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (invisible) return null;
   if (access?.invisible) return null;
 
   const floatingText = label ?? name;
-  const placeholder = label ?? name;
+  const isDisabled = disabled || readOnly || access?.readonly || isSubmitting;
 
+  // Renderizado para widget="radio"
+  if (widget === "radio") {
+    return (
+      <div
+        className={`mb-2 ${className}  border rounded p-1`}
+        ref={(element) => {
+          containerRef.current = element;
+        }}
+        title={name}
+      >
+        {label && (
+          <Form.Label className="fw-bold mb-2" style={{ fontSize: "0.9rem" }}>
+            {label}
+          </Form.Label>
+        )}
+
+        <div
+          className="d-flex flex-wrap gap-1"
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            gap: "0.5rem",
+          }}
+        >
+          {normalizedOptions.map((opt) => {
+            const isChecked =
+              value === opt.value ||
+              (typeof value === "object" && value?.value === opt.value);
+
+            return (
+              <Form.Check
+                key={String(opt.value)}
+                type="radio"
+                id={`${name}-${String(opt.value)}`}
+                name={name}
+                label={getOptionLabel(opt)}
+                value={String(opt.value)}
+                checked={isChecked}
+                onChange={() => handleRadioChange(opt)}
+                disabled={isDisabled}
+                className="mb-0 bg-body-tertiary"
+                style={{ fontSize: "0.9rem" }}
+              />
+            );
+          })}
+        </div>
+
+        {error && (
+          <Form.Control.Feedback type="invalid" className="d-block">
+            {error?.message}
+          </Form.Control.Feedback>
+        )}
+      </div>
+    );
+  }
+
+  // Renderizado para widget="select"
   const dropdownMenu =
-    mounted && isOpen && !readOnly && !disabled && filteredOptions.length > 0
+    mounted && isOpen && !isDisabled && displayOptions.length > 0
       ? createPortal(
           <div
+            data-dropdown-portal="true"
             style={{
               position: "fixed",
               top: menuPosition.top,
               left: menuPosition.left,
               width: menuPosition.width,
               zIndex: 9999,
+            }}
+            onMouseDown={(e) => {
+              e.preventDefault();
             }}
           >
             <Dropdown show className="w-100">
@@ -279,7 +463,7 @@ export function FieldOption<T extends SelectOption>({
                       : "0 0.5rem 1rem rgba(0,0,0,0.15)",
                 }}
               >
-                {filteredOptions.map((opt, index) => (
+                {displayOptions.map((opt, index) => (
                   <Dropdown.Item
                     key={opt.value}
                     active={index === highlightedIndex}
@@ -305,7 +489,7 @@ export function FieldOption<T extends SelectOption>({
         as="textarea"
         rows={1}
         name={name}
-        placeholder={placeholder}
+        placeholder={label ?? name}
         ref={(element) => {
           ref(element);
           inputRef.current = element;
@@ -315,31 +499,43 @@ export function FieldOption<T extends SelectOption>({
         }}
         value={query}
         onChange={(e) => {
-          setQuery(e.target.value);
-          setIsOpen(true);
+          const newValue = e.target.value;
+          setQuery(newValue);
+          setSearchTerm(newValue);
+
+          if (document.activeElement === inputRef.current) {
+            setIsOpen(true);
+            setHighlightedIndex(0);
+          }
 
           autoResize(e.target as HTMLTextAreaElement);
           requestAnimationFrame(updateMenuPosition);
         }}
         onFocus={() => {
-          if (disabled || readOnly || access?.readonly) return;
+          if (isDisabled) return;
+
+          // 🔑 Limpiar flags y timeouts
+          if (blurTimeoutRef.current) {
+            clearTimeout(blurTimeoutRef.current);
+            blurTimeoutRef.current = null;
+          }
+          isSelectingRef.current = false;
+
           setIsOpen(true);
           setHighlightedIndex(0);
+          setSearchTerm("");
 
           requestAnimationFrame(() => {
             autoResize();
             updateMenuPosition();
           });
         }}
-        onBlur={() => {
-          handleBlur();
-          onBlur();
-        }}
+        onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         autoComplete="off"
         isInvalid={!!error}
-        disabled={disabled}
-        readOnly={isSubmitting || readOnly || access?.readonly}
+        disabled={isDisabled}
+        readOnly={isDisabled}
         autoFocus={autoFocus}
         className={`w-100 shadow-none overflow-hidden ${className} ${inline ? "border-0" : ""}`}
         style={{

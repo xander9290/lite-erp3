@@ -1,6 +1,12 @@
 // // "use client";
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import { createPortal } from "react-dom";
 import { FieldError, useController, useFormContext } from "react-hook-form";
 import { Form, Dropdown, FloatingLabel, Button } from "react-bootstrap";
@@ -22,7 +28,18 @@ export type Many2OneValue = {
   name?: string | null;
 };
 
-export type DomainOperator = "=" | "!=" | "contains" | "startsWith" | "endsWith" | "in" | "notIn" | ">" | ">=" | "<" | "<=";
+export type DomainOperator =
+  | "="
+  | "!="
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "in"
+  | "notIn"
+  | ">"
+  | ">="
+  | "<"
+  | "<=";
 
 export type DomainItem = [field: string, operator: DomainOperator, value: any];
 export type Domain = DomainItem[];
@@ -135,9 +152,13 @@ export function FieldRelation<T extends Many2OneOption>({
 
     const openUpwards = spaceBelow < DROPDOWN_HEIGHT && spaceAbove > spaceBelow;
 
-    const top = openUpwards ? rect.top - DROPDOWN_HEIGHT - SPACING : rect.bottom + SPACING;
+    const top = openUpwards
+      ? rect.top - DROPDOWN_HEIGHT - SPACING
+      : rect.bottom + SPACING;
 
-    const maxHeight = openUpwards ? rect.top - 10 : viewportHeight - rect.bottom - 10;
+    const maxHeight = openUpwards
+      ? rect.top - 10
+      : viewportHeight - rect.bottom - 10;
 
     setMenuPosition({
       top,
@@ -173,7 +194,10 @@ export function FieldRelation<T extends Many2OneOption>({
   // 📍 Optimizado: Event listener con cleanup
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -233,14 +257,6 @@ export function FieldRelation<T extends Many2OneOption>({
     [isOpen, options, highlightedIndex, handleSelect],
   );
 
-  // const openDropdown = useCallback(() => {
-  //   if (readonly || access?.readonly) return;
-
-  //   setIsOpen(true);
-  //   search(query.trim());
-  //   requestAnimationFrame(updateMenuPosition);
-  // }, [readonly, access?.readonly, search, query, updateMenuPosition]);
-
   const openDropdown = useCallback(() => {
     if (readonly || access?.readonly) return;
 
@@ -259,22 +275,6 @@ export function FieldRelation<T extends Many2OneOption>({
     requestAnimationFrame(updateMenuPosition);
   }, [readonly, access?.readonly, search, query, updateMenuPosition, value]);
 
-  // const handleQueryChange = useCallback(
-  //   (e: React.ChangeEvent<HTMLInputElement>) => {
-  //     const newValue = String(e.target.value);
-  //     setQuery(newValue);
-  //     setIsOpen(true);
-  //     search(newValue.trim());
-  //     requestAnimationFrame(updateMenuPosition);
-
-  //     if (newValue.trim() === "") {
-  //       onChange(null);
-  //       ponChange?.(null, null);
-  //     }
-  //   },
-  //   [search, onChange, ponChange, updateMenuPosition],
-  // );
-
   const handleQueryChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = String(e.target.value);
@@ -283,17 +283,12 @@ export function FieldRelation<T extends Many2OneOption>({
       search(newValue.trim());
       requestAnimationFrame(updateMenuPosition);
 
-      // Solo limpia el valor si el usuario realmente borró todo el texto
-      if (newValue.trim() === "" && value?.id) {
-        // Opcional: preguntar o simplemente limpiar
-        onChange(null);
-        ponChange?.(null, null);
-      } else if (newValue.trim() === "" && !value?.id) {
+      if (newValue.trim() === "") {
         onChange(null);
         ponChange?.(null, null);
       }
     },
-    [search, onChange, ponChange, updateMenuPosition, value],
+    [search, onChange, ponChange, updateMenuPosition],
   );
 
   const handleInputFocus = useCallback(() => {
@@ -356,7 +351,11 @@ export function FieldRelation<T extends Many2OneOption>({
         }}
       >
         <Dropdown show className="w-100">
-          <Dropdown.Menu show className="p-0 mt-0" style={{ maxHeight: 200, overflowY: "auto" }}>
+          <Dropdown.Menu
+            show
+            className="p-0 mt-0"
+            style={{ maxHeight: 200, overflowY: "auto" }}
+          >
             {options.length === 0 ? (
               <Dropdown.Item disabled className="text-muted">
                 <small>No hay resultados</small>
@@ -395,7 +394,17 @@ export function FieldRelation<T extends Many2OneOption>({
       </div>,
       document.body,
     );
-  }, [mounted, isOpen, readonly, access?.readonly, menuPosition, options, highlightedIndex, handleSelect, searchColumns]);
+  }, [
+    mounted,
+    isOpen,
+    readonly,
+    access?.readonly,
+    menuPosition,
+    options,
+    highlightedIndex,
+    handleSelect,
+    searchColumns,
+  ]);
 
   if (invisible || access?.invisible) return null;
 
@@ -447,11 +456,22 @@ export function FieldRelation<T extends Many2OneOption>({
   return (
     <div ref={containerRef} className="mb-1 w-100">
       <div className="d-flex align-items-stretch">
-        <FloatingLabel label={label ?? name} className="flex-grow-1 fs-6 fw-bold" title={name}>
+        <FloatingLabel
+          label={label ?? name}
+          className="flex-grow-1 fs-6 fw-bold"
+          title={name}
+        >
           {input}
         </FloatingLabel>
         {!readonly && (
-          <Button size="sm" variant="secondary" onClick={handleOff} disabled={readonly || access?.readonly} className="rounded-start-0" title="Limpiar selección">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handleOff}
+            disabled={readonly || access?.readonly}
+            className="rounded-start-0"
+            title="Limpiar selección"
+          >
             <i className="bi bi-power text-dark"></i>
           </Button>
         )}
