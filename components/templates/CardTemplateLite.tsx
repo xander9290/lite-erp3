@@ -136,7 +136,13 @@ export function CardTemplateLite({
   };
 
   return (
-    <div className="position-relative">
+    <div
+      className="position-relative"
+      style={{
+        height: "calc(100vh - 125px)",
+        overflowY: "auto",
+      }}
+    >
       {/* Toolbar */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <FilterBuilder columns={columns} filters={filters} onChange={handleFilter} />

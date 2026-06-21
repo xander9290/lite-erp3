@@ -10,7 +10,7 @@ function layout({
   children: React.ReactNode;
 }>) {
   return (
-    <Row className="h-100 overflow-auto">
+    <Row className="h-100 overflow-hidden">
       <Col xs="3" sm="3" md="2" xl="1" xxl="1">
         <Nav className="flex-column" defaultActiveKey="/app/product_template/products">
           <Nav.Link as={Link} href="/app/product_template/products?view_type=list&id=null" className="border-bottom py-2">

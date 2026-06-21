@@ -102,7 +102,7 @@ function ListView({ children, model }: ListViewProps) {
       </Row>
     );
 
-  return <Card className="h-100 d-flex flex-column border-0">{children}</Card>;
+  return <Card className="border-0">{children}</Card>;
 }
 
 ListView.Header = Header;
