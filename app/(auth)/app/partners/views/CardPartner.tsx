@@ -14,13 +14,12 @@ function CardPartner({ p }: { p: PartnerWithProps }) {
           </div>
         </Col>
         <Col md="8" className="d-flex flex-column">
-          <Card.Body className="p-3 d-flex flex-column h-100">
-            <div className="d-flex justify-content-between align-items-start mb-2">
+          <Card.Body className="p-1 d-flex flex-column h-100">
+            <div className="d-flex justify-content-between align-items-start mb-1">
               <Card.Title className="fs-6 fw-semibold text-truncate mb-0" title={p.name} style={{ maxWidth: "70%" }}>
                 {p.name || "Sin nombre"}
               </Card.Title>
             </div>
-
             <Card.Text className="p-0 m-0 text-muted small flex-grow-1">
               {p.completeAddress ? (
                 <>
@@ -33,12 +32,11 @@ function CardPartner({ p }: { p: PartnerWithProps }) {
             </Card.Text>
 
             {p.phone && (
-              <div className="mt-2 small text-muted">
+              <div className="small text-muted">
                 <i className="bi bi-telephone me-1"></i>
                 {p.phone}
               </div>
             )}
-
             {p.email && (
               <div className="small text-muted">
                 <i className="bi bi-envelope me-1"></i>
