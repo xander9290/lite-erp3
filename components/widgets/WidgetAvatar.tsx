@@ -4,13 +4,13 @@ import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
 
 export function WidgetAvatar({
-  imageUrl,
+  imageUrl = "/images/avatar_default.svg",
   name = "displayAvatar",
   width = 32,
   height = 32,
   displayName,
 }: {
-  imageUrl?: string | null;
+  imageUrl: string | null;
   name?: string;
   width?: number;
   height?: number;
