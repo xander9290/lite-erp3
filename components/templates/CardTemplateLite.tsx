@@ -36,11 +36,11 @@ export function CardTemplateLite({
   renderCard,
   onCardClick,
   viewForm,
-  pageSize = 20,
+  pageSize = 100,
   defaultOrder,
   baseDomain = [],
   emptyMessage = "No hay elementos para mostrar",
-  columnsGrid = 3,
+  columnsGrid = 4,
 }: CardTemplateProps) {
   const router = useRouter();
 
@@ -79,11 +79,7 @@ export function CardTemplateLite({
     sort: JSON.stringify(sortForApi),
     filters: JSON.stringify(filters),
     domain: JSON.stringify(baseDomain),
-    columnTypes: JSON.stringify(
-      Object.fromEntries(
-        columns.map((col) => [col.field, col.type || "string"]),
-      ),
-    ),
+    columnTypes: JSON.stringify(Object.fromEntries(columns.map((col) => [col.field, col.type || "string"]))),
     includes: JSON.stringify(includes),
   });
 
@@ -121,7 +117,7 @@ export function CardTemplateLite({
       case 3:
         return { xs: 12, sm: 6, lg: 4, xxl: 3 };
       case 4:
-        return { xs: 12, sm: 6, md: 4, lg: 3 };
+        return { xs: 12, sm: 6, md: 12, lg: 6, xxl: 4 };
       default:
         return { xs: 12, sm: 6, lg: 4 };
     }
@@ -131,11 +127,7 @@ export function CardTemplateLite({
     <div className="position-relative">
       {/* Toolbar */}
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <FilterBuilder
-          columns={columns}
-          filters={filters}
-          onChange={handleFilter}
-        />
+        <FilterBuilder columns={columns} filters={filters} onChange={handleFilter} />
       </div>
 
       {/* Cards Grid */}
@@ -163,15 +155,8 @@ export function CardTemplateLite({
           {/* Pagination */}
           {total > pageSize && (
             <div className="mt-4 d-flex justify-content-between align-items-center">
-              <small className="text-muted">
-                {total.toLocaleString()} registros
-              </small>
-              <Pagination
-                currentPage={page}
-                totalPages={Math.ceil(total / pageSize)}
-                onPageChange={setPage}
-                isLoading={isLoading}
-              />
+              <small className="text-muted">{total.toLocaleString()} registros</small>
+              <Pagination currentPage={page} totalPages={Math.ceil(total / pageSize)} onPageChange={setPage} isLoading={isLoading} />
             </div>
           )}
         </>

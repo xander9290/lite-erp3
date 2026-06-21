@@ -11,7 +11,7 @@ export const partnerSchema = z.object({
   houseNumber: z.string().nullable(),
   streets: z.string().nullable(),
   town: z.string().nullable(),
-  zip: z.number().nullable(),
+  zip: z.string().nullable(),
   county: z.string().nullable(),
   province: z.string().nullable(),
   country: z.string().nullable(),

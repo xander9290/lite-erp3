@@ -46,6 +46,9 @@ export async function craetePartner({ data }: { data: PartnerActionProps }): Pro
 
     const sanitizedPhone = sanitizePhoneNumber(data.phone);
     const sanitizedMobile = sanitizePhoneNumber(data.mobile);
+    const completeAddress = [data.street, data.houseNumber, data.zip, data.county, data.province, data.country]
+      .filter(Boolean) // Elimina valores falsy (null, undefined, "", 0, false)
+      .join(", ");
 
     const newPartner = await prisma.partner.create({
       data: {
@@ -60,10 +63,11 @@ export async function craetePartner({ data }: { data: PartnerActionProps }): Pro
         streets: data.streets,
         houseNumber: data.houseNumber,
         town: data.town,
-        zip: data.zip,
+        zip: Number(data.zip),
         county: data.county,
         province: data.province,
         country: data.country,
+        completeAddress,
         vat: data.vat,
         ...(data.userId?.id && {
           UserManager: { connect: { id: data.userId?.id } },
@@ -107,6 +111,9 @@ export async function updatePartner({ data, id }: { data: PartnerActionProps; id
 
     const sanitizedPhone = sanitizePhoneNumber(data.phone);
     const sanitizedMobile = sanitizePhoneNumber(data.mobile);
+    const completeAddress = [data.street, data.houseNumber, data.zip, data.county, data.province, data.country]
+      .filter(Boolean) // Elimina valores falsy (null, undefined, "", 0, false)
+      .join(", ");
 
     const updatedPartner = await prisma.partner.update({
       where: { id },
@@ -122,10 +129,11 @@ export async function updatePartner({ data, id }: { data: PartnerActionProps; id
         streets: data.streets,
         houseNumber: data.houseNumber,
         town: data.town,
-        zip: data.zip,
+        zip: Number(data.zip),
         county: data.county,
         province: data.province,
         country: data.country,
+        completeAddress: completeAddress.toString().replace(/,+$/, ""),
         vat: data.vat,
         UserManager: data.userId?.id ? { connect: { id: data.userId.id } } : { disconnect: true },
       },

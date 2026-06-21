@@ -8,32 +8,33 @@ datasource db {
 }
 
 model Partner {
-  id             String             @id @default(cuid())
-  name           String
-  email          String?
-  imageUrl       String?
-  phone          String?
-  street         String?
-  houseNumber    String?            @map("house_number")
-  streets        String?
-  town           String?
-  zip            Int?
-  county         String?
-  province       String?
-  country        String?
-  vat            String?
-  displayType    PartnerDisplayType @default(INTERNAL) @map("display_type")
-  active         Boolean            @default(true)
-  createdUid     String             @map("created_uid")
-  createdAt      DateTime           @default(now()) @map("created_at")
-  updatedAt      DateTime           @updatedAt @map("updated_at")
-  userId         String?            @map("user_id")
-  mobile         String?
-  Company        Company?           @relation("PartnerCompanyRel")
-  UserManager    User?              @relation("PartnerManagerRel", fields: [userId], references: [id], onDelete: Cascade)
-  Products       ProductTemplate[]  @relation("ProductSupplierRel")
-  PurchaseOrders PurchaseOrder[]
-  User           User?              @relation("PartnerUserRelated")
+  id              String             @id @default(cuid())
+  name            String
+  email           String?
+  imageUrl        String?
+  phone           String?
+  street          String?
+  houseNumber     String?            @map("house_number")
+  streets         String?
+  town            String?
+  zip             Int?
+  county          String?
+  province        String?
+  country         String?
+  completeAddress String?            @map("complete_address")
+  vat             String?
+  displayType     PartnerDisplayType @default(INTERNAL) @map("display_type")
+  active          Boolean            @default(true)
+  createdUid      String             @map("created_uid")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  userId          String?            @map("user_id")
+  mobile          String?
+  Company         Company?           @relation("PartnerCompanyRel")
+  UserManager     User?              @relation("PartnerManagerRel", fields: [userId], references: [id], onDelete: Cascade)
+  Products        ProductTemplate[]  @relation("ProductSupplierRel")
+  PurchaseOrders  PurchaseOrder[]
+  User            User?              @relation("PartnerUserRelated")
 
   @@index([name])
   @@map("partners")

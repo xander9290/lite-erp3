@@ -1,38 +1,50 @@
 "use client";
 
 import { Card, Col, Row } from "react-bootstrap";
+import Image from "next/image";
 import { PartnerWithProps } from "../actions/partner-actions";
-import { WidgetAvatar } from "@/components/widgets";
 
 function CardPartner({ p }: { p: PartnerWithProps }) {
   return (
-    <Card style={{ height: "135px" }}>
-      <Row className="g-0">
-        <Col md="4" className="text-md-start text-center">
-          <WidgetAvatar width={90} height={90} imageUrl={p.imageUrl} />
+    <Card className="h-100 shadow-sm hover-shadow transition" style={{ fontSize: "0.9em", cursor: "pointer" }}>
+      <Row className="g-0 h-100">
+        <Col md="4" className="d-flex align-items-center">
+          <div className="position-relative w-100" style={{ aspectRatio: "1/1" }}>
+            <Image src={p.imageUrl || "/images/avatar_default.svg"} alt={p.name || "Partner"} fill className="object-fit-cover rounded-start" sizes="(max-width: 768px) 100vw, 33vw" priority={false} />
+          </div>
         </Col>
-        <Col md="8">
-          <Card.Body className="px-1">
-            <small style={{ fontSize: "0.8rem" }}>
-              <Card.Title className="text-truncate" title={p.name}>
-                {p.name}
+        <Col md="8" className="d-flex flex-column">
+          <Card.Body className="p-3 d-flex flex-column h-100">
+            <div className="d-flex justify-content-between align-items-start mb-2">
+              <Card.Title className="fs-6 fw-semibold text-truncate mb-0" title={p.name} style={{ maxWidth: "70%" }}>
+                {p.name || "Sin nombre"}
               </Card.Title>
-              <Card.Text
-                className="p-0 m-0 text-truncate"
-                title={`${p.street} ${p.houseNumber}`}
-              >
-                {p.street} {p.houseNumber}
-              </Card.Text>
-              <Card.Text
-                className="p-0 m-0 text-truncate"
-                title={`${p.town} ${p.county} ${p.province} ${p.country}`}
-              >
-                {p.town} {p.county} {p.province} {p.country}
-              </Card.Text>
-              <Card.Text>
-                {p.phone} {p.email}
-              </Card.Text>
-            </small>
+            </div>
+
+            <Card.Text className="p-0 m-0 text-muted small flex-grow-1">
+              {p.completeAddress ? (
+                <>
+                  <i className="bi bi-geo-alt me-1"></i>
+                  {p.completeAddress}
+                </>
+              ) : (
+                <span className="text-muted fst-italic">Dirección no disponible</span>
+              )}
+            </Card.Text>
+
+            {p.phone && (
+              <div className="mt-2 small text-muted">
+                <i className="bi bi-telephone me-1"></i>
+                {p.phone}
+              </div>
+            )}
+
+            {p.email && (
+              <div className="small text-muted">
+                <i className="bi bi-envelope me-1"></i>
+                {p.email}
+              </div>
+            )}
           </Card.Body>
         </Col>
       </Row>

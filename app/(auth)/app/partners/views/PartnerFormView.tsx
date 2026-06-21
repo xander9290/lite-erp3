@@ -27,6 +27,7 @@ function PartnersFormView({ display, partner, id }: { display: string; partner: 
   const { modalError } = useModals();
 
   const onSubmit: SubmitHandler<PartnerSchemaType> = async (data) => {
+    if (data.zip && isNaN(Number(data.zip))) return modalError("Código postal inválido");
     if (id && id === "null") {
       const res = await craetePartner({
         data: { ...data, displayType: display as PartnerDisplayType },
@@ -72,7 +73,7 @@ function PartnersFormView({ display, partner, id }: { display: string; partner: 
       active: partner.active,
       displayType: display as PartnerDisplayType,
       vat: partner.vat,
-      zip: partner.zip,
+      zip: String(partner.zip),
       userId: {
         id: partner.UserManager?.id || null,
         name: partner.UserManager?.name || null,
@@ -102,7 +103,7 @@ function PartnersFormView({ display, partner, id }: { display: string; partner: 
         <FieldEntry name="street" label="Calle" />
         <FormViewStack>
           <FieldEntry name="houseNumber" label="No. Ext." />
-          <FieldEntry name="zip" label="C.P. #" type="number" decimals={0} step="0" className="text-center" />
+          <FieldEntry name="zip" label="C.P. #" className="text-center" />
         </FormViewStack>
         <FieldEntry name="streets" label="Entre calles" />
         <FormViewStack>
