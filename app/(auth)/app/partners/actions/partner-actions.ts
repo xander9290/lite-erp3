@@ -13,6 +13,7 @@ export interface PartnerWithProps extends Partner {
     id: string;
     name: string;
   } | null;
+  Tags: { id: string; name: string }[];
 }
 
 type PartnerActionProps = Omit<PartnerSchemaType, "createdAt" | "updatedAt" | "createdUid">;
@@ -29,6 +30,9 @@ export async function getPartnerById({ id }: { id: string | null }): Promise<Par
             id: true,
             name: true,
           },
+        },
+        Tags: {
+          select: { id: true, name: true },
         },
       },
     });
@@ -68,6 +72,7 @@ export async function craetePartner({ data }: { data: PartnerActionProps }): Pro
         province: data.province,
         country: data.country,
         completeAddress,
+        Tags: { connect: data.Tags.map((t) => ({ id: t })) },
         vat: data.vat,
         ...(data.userId?.id && {
           UserManager: { connect: { id: data.userId?.id } },
@@ -80,6 +85,9 @@ export async function craetePartner({ data }: { data: PartnerActionProps }): Pro
             id: true,
             name: true,
           },
+        },
+        Tags: {
+          select: { id: true, name: true },
         },
       },
     });
@@ -135,6 +143,7 @@ export async function updatePartner({ data, id }: { data: PartnerActionProps; id
         country: data.country,
         completeAddress: completeAddress.toString().replace(/,+$/, ""),
         vat: data.vat,
+        Tags: { set: data.Tags.map((t) => ({ id: t })) },
         UserManager: data.userId?.id ? { connect: { id: data.userId.id } } : { disconnect: true },
       },
       include: {
@@ -143,6 +152,9 @@ export async function updatePartner({ data, id }: { data: PartnerActionProps; id
             id: true,
             name: true,
           },
+        },
+        Tags: {
+          select: { id: true, name: true },
         },
       },
     });

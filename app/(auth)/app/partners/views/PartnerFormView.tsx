@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
 import { PartnerDisplayType } from "@/generated/prisma/enums";
 import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
-import { FieldBoolean, FieldEntry, FieldImage, FieldRelation } from "@/components/templates/fields";
+import { FieldBoolean, FieldEntry, FieldImage, FieldRelation, FieldTags } from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
 
@@ -78,6 +78,7 @@ function PartnersFormView({ display, partner, id }: { display: string; partner: 
         id: partner.UserManager?.id || null,
         name: partner.UserManager?.name || null,
       },
+      Tags: partner.Tags.map((t) => t.id),
       createdAt: partner.createdAt,
       updatedAt: partner.updatedAt,
       createdUid: partner.createdUid,
@@ -114,6 +115,7 @@ function PartnersFormView({ display, partner, id }: { display: string; partner: 
           <FieldEntry name="province" label="Estado" />
           <FieldEntry name="country" label="País" />
         </FormViewStack>
+        <FieldTags name="Tags" label="Etiquetas" />
         <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
       <Notebook defaultActiveKey="salePurchase">

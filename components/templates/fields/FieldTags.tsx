@@ -3,10 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useController, useFormContext } from "react-hook-form";
 import { Form, Dropdown, Badge } from "react-bootstrap";
-import {
-  fetchTags,
-  createTag as createTagAction,
-} from "@/app/(auth)/app/actions/tag-actions";
+import { fetchTags, createTag as createTagAction } from "@/app/(auth)/app/actions/tag-actions";
 import { useAccess } from "@/contexts/AccessContext";
 import { usePathname } from "next/navigation";
 
@@ -26,15 +23,7 @@ interface Many2manyTagsFieldProps {
   readOnly?: boolean;
 }
 
-export function FieldTags({
-  name,
-  label,
-  className,
-  invisible,
-  disabled,
-  inline,
-  readOnly,
-}: Many2manyTagsFieldProps) {
+export function FieldTags({ name, label, className, invisible, disabled, inline, readOnly }: Many2manyTagsFieldProps) {
   const access = useAccess({ fieldName: name });
 
   const pathName = usePathname();
@@ -55,10 +44,7 @@ export function FieldTags({
   const containerRef = useRef<HTMLDivElement>(null);
 
   /* ---------------- Values ---------------- */
-  const selectedIds = useMemo(
-    () => (Array.isArray(value) ? value : []),
-    [value],
-  );
+  const selectedIds = useMemo(() => (Array.isArray(value) ? value : []), [value]);
 
   // const selectedTags = useMemo(
   //   () => options.filter((o) => selectedIds.includes(o.id)),
@@ -72,11 +58,7 @@ export function FieldTags({
 
   const filteredOptions = useMemo(() => {
     const selectedSet = new Set(selectedIds);
-    return options.filter(
-      (o) =>
-        !selectedSet.has(o.id) &&
-        (!query || o.name.toLowerCase().includes(query.toLowerCase())),
-    );
+    return options.filter((o) => !selectedSet.has(o.id) && (!query || o.name.toLowerCase().includes(query.toLowerCase())));
   }, [options, selectedIds, query]);
 
   /* ---------------- Fetch tags ---------------- */
@@ -92,10 +74,7 @@ export function FieldTags({
   /* ---------------- Click outside ---------------- */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -174,19 +153,9 @@ export function FieldTags({
       {/* Selected tags */}
       <div className="d-flex flex-wrap gap-1 mt-2">
         {selectedTags.map((tag) => (
-          <Badge
-            key={tag.id}
-            pill
-            bg="secondary"
-            className="d-flex align-items-center gap-1 px-2 py-1"
-            style={{ fontSize: "0.9rem" }}
-          >
+          <Badge key={tag.id} pill className="d-flex align-items-center gap-1 px-2 py-1" style={{ fontSize: "0.9rem" }}>
             <span>{tag.name}</span>
-            <span
-              role="button"
-              onClick={() => handleRemove(tag.id)}
-              style={{ cursor: "pointer" }}
-            >
+            <span role="button" onClick={() => handleRemove(tag.id)} style={{ cursor: "pointer" }}>
               ×
             </span>
           </Badge>
@@ -216,18 +185,9 @@ export function FieldTags({
       {/* Dropdown */}
       {isOpen && filteredOptions.length > 0 && (
         <Dropdown show className="w-100">
-          <Dropdown.Menu
-            className="p-0 w-100"
-            style={{ maxHeight: 200, overflowY: "auto", zIndex: 1050 }}
-          >
+          <Dropdown.Menu className="p-0 w-100" style={{ maxHeight: 200, overflowY: "auto", zIndex: 1050 }}>
             {filteredOptions.slice(0, 10).map((tag, index) => (
-              <Dropdown.Item
-                key={tag.id}
-                active={index === highlightedIndex}
-                onMouseDown={() => handleSelect(tag)}
-                className="text-wrap border-bottom"
-                style={{ fontSize: "0.9rem" }}
-              >
+              <Dropdown.Item key={tag.id} active={index === highlightedIndex} onMouseDown={() => handleSelect(tag)} className="text-wrap border-bottom" style={{ fontSize: "0.9rem" }}>
                 {tag.name}
               </Dropdown.Item>
             ))}

@@ -24,6 +24,7 @@ export const partnerSchema = z.object({
       name: z.string().nullable(),
     })
     .nullable(),
+  Tags: z.array(z.string()),
   createdUid: z.string().nullable(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
@@ -49,6 +50,7 @@ export const partnerSchemaDefault: PartnerSchemaType = {
   displayType: "INTERNAL",
   active: true,
   userId: { id: null, name: null },
+  Tags: [],
   createdUid: null,
   createdAt: null,
   updatedAt: null,
