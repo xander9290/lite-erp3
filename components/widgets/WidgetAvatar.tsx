@@ -22,7 +22,7 @@ export function WidgetAvatar({
         <Image
           title={name}
           unoptimized
-          src={imageUrl ?? "/images/avatar_default.svg"}
+          src={imageUrl || "/images/avatar_default.svg"}
           width={width}
           height={height}
           alt="imageAvatar"

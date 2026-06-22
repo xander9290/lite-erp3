@@ -26,7 +26,6 @@ export function FieldSubmit({
 
   return (
     <Button
-      size="sm"
       type="submit"
       title={name}
       disabled={isDisabled}
