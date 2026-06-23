@@ -55,7 +55,12 @@ interface FieldInputProps {
 function toDateInputValue(value: unknown): string {
   if (value == null || value === "") return "";
 
-  const d = value instanceof Date ? value : typeof value === "string" || typeof value === "number" ? new Date(value) : null;
+  const d =
+    value instanceof Date
+      ? value
+      : typeof value === "string" || typeof value === "number"
+        ? new Date(value)
+        : null;
 
   if (!d || isNaN(d.getTime())) return "";
 
@@ -79,7 +84,10 @@ function parseLocalDate(value: Date) {
 /**
  * Formatea un número con formato mexicano (miles con coma, decimales con punto)
  */
-function formatMexicanNumber(value: number | null | undefined, decimals: number = 2): string {
+function formatMexicanNumber(
+  value: number | null | undefined,
+  decimals: number = 2,
+): string {
   if (value === null || value === undefined || isNaN(value)) return "";
 
   return value.toLocaleString("es-MX", {
@@ -138,16 +146,28 @@ function FieldInput({
 
   // Estado local para el valor mostrado (solo para type="number")
   const [displayValue, setDisplayValue] = useState<string>(() => {
-    if (type === "number" && typeof field.value === "number" && !isNaN(field.value)) {
-      return thousandsSeparator ? formatMexicanNumber(field.value, decimals) : field.value.toString();
+    if (
+      type === "number" &&
+      typeof field.value === "number" &&
+      !isNaN(field.value)
+    ) {
+      return thousandsSeparator
+        ? formatMexicanNumber(field.value, decimals)
+        : field.value.toString();
     }
     return field.value ?? "";
   });
 
   // Sincronizar cuando el valor externo cambia
   useEffect(() => {
-    if (type === "number" && typeof field.value === "number" && !isNaN(field.value)) {
-      const formatted = thousandsSeparator ? formatMexicanNumber(field.value, decimals) : field.value.toString();
+    if (
+      type === "number" &&
+      typeof field.value === "number" &&
+      !isNaN(field.value)
+    ) {
+      const formatted = thousandsSeparator
+        ? formatMexicanNumber(field.value, decimals)
+        : field.value.toString();
       setDisplayValue(formatted);
     } else if (field.value !== displayValue && type !== "number") {
       setDisplayValue(field.value ?? "");
@@ -166,7 +186,9 @@ function FieldInput({
 
   const isTextarea = as === "textarea" || type === "text";
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const el = e.target;
     const raw = el.value;
 
@@ -231,7 +253,9 @@ function FieldInput({
     onChange?.(raw);
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleBlur = (
+    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     // Formatear el valor al salir del campo
     if (type === "number" && thousandsSeparator) {
       const numValue = parseMexicanNumber(e.target.value);
@@ -367,9 +391,19 @@ export function FieldEntry({
 
         return (
           <div className="mb-1 w-100">
-            <FloatingLabel label={floatingText} controlId={name} className="w-100 fs-6 fw-bold">
+            <FloatingLabel
+              label={floatingText}
+              controlId={name}
+              className="w-100 fs-6 fw-bold"
+            >
               {input}
             </FloatingLabel>
+
+            {fieldState.error?.message && (
+              <Form.Control.Feedback type="invalid" className="d-block small">
+                {fieldState.error.message}
+              </Form.Control.Feedback>
+            )}
           </div>
         );
       }}

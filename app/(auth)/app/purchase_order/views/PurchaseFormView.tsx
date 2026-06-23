@@ -23,7 +23,7 @@ import { FieldEntry, FieldRelation } from "@/components/templates/fields";
 import { useAuth } from "@/hooks/sessionStore";
 import toast from "react-hot-toast";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
-import { Col } from "react-bootstrap";
+import { Card, Col } from "react-bootstrap";
 import {
   BtnDeleteLine,
   SimpleTable,
@@ -646,21 +646,27 @@ function PurchaseFormView({
                     });
                   }}
                 />
-                <div className="text-end pe-2">
-                  <p className="m-1">
-                    <strong>Subtotal: </strong>
-                    <span>{formatCurrency({ value: totals.subtotal })}</span>
-                  </p>
-                  <p className="m-1">
-                    <strong>IVA: </strong>
-                    <span>{formatCurrency({ value: totals.taxes })}</span>
-                  </p>
-                  <p className="fs-5 m-1">
-                    <strong>Total: </strong>
-                    <span className="fw-semibold">
-                      {formatCurrency({ value: totals.total })}
-                    </span>
-                  </p>
+                <div className="d-flex justify-content-end px-1">
+                  <Card>
+                    <Card.Body className="text-end">
+                      <p className="m-1">
+                        <strong>Subtotal: </strong>
+                        <span>
+                          {formatCurrency({ value: totals.subtotal })}
+                        </span>
+                      </p>
+                      <p className="m-1">
+                        <strong>IVA: </strong>
+                        <span>{formatCurrency({ value: totals.taxes })}</span>
+                      </p>
+                      <p className="fs-5 m-1">
+                        <strong>Total: </strong>
+                        <span className="fw-semibold">
+                          {formatCurrency({ value: totals.total })}
+                        </span>
+                      </p>
+                    </Card.Body>
+                  </Card>
                 </div>
               </Col>
             </PageSheet>
