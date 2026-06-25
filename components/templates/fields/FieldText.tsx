@@ -2,7 +2,17 @@
 
 import { useAccess } from "@/contexts/AccessContext";
 
-export function FieldText({ name, invisible, output, className }: { name: string; invisible?: boolean; output: string; className?: string }) {
+export function FieldText({
+  name,
+  invisible,
+  output,
+  className,
+}: {
+  name: string;
+  invisible?: boolean;
+  output: string | null | undefined;
+  className?: string;
+}) {
   const access = useAccess({ fieldName: name });
 
   if (invisible) return null;
@@ -10,7 +20,7 @@ export function FieldText({ name, invisible, output, className }: { name: string
 
   return (
     <span className={`text-truncate m-0 ${className}`} title={name}>
-      {output}
+      {output ? output : null}
     </span>
   );
 }
