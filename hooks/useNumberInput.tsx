@@ -73,28 +73,19 @@ function formatEditableValue(value: string, decimals: number) {
     return groupedInteger;
   }
 
-  const decimalPart = hasDot
-    ? decimalRaw.padEnd(decimals, "0").slice(0, decimals)
-    : "".padEnd(decimals, "0");
+  const decimalPart = hasDot ? decimalRaw.padEnd(decimals, "0").slice(0, decimals) : "".padEnd(decimals, "0");
 
   return `${groupedInteger}.${decimalPart}`;
 }
 
-function getLogicalCaretIndex(
-  value: string,
-  caretPosition: number,
-  decimals: number,
-) {
+function getLogicalCaretIndex(value: string, caretPosition: number, decimals: number) {
   const textBeforeCaret = value.slice(0, caretPosition);
   const cleanedBeforeCaret = cleanNumberInput(textBeforeCaret, decimals);
 
   return cleanedBeforeCaret.length;
 }
 
-function getCaretPositionFromLogicalIndex(
-  formattedValue: string,
-  logicalIndex: number,
-) {
+function getCaretPositionFromLogicalIndex(formattedValue: string, logicalIndex: number) {
   if (logicalIndex <= 0) return 0;
 
   let count = 0;
@@ -114,13 +105,7 @@ function getCaretPositionFromLogicalIndex(
   return formattedValue.length;
 }
 
-function useNumberInput({
-  initialValue,
-  decimals = 2,
-  min,
-  max,
-  onChange,
-}: UseNumberInputProps) {
+function useNumberInput({ initialValue, decimals = 2, min, max, onChange }: UseNumberInputProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const isFocusedRef = useRef(false);
 
@@ -145,10 +130,7 @@ function useNumberInput({
       const input = inputRef.current;
       if (!input) return;
 
-      const nextCaretPosition = getCaretPositionFromLogicalIndex(
-        nextValue,
-        logicalIndex,
-      );
+      const nextCaretPosition = getCaretPositionFromLogicalIndex(nextValue, logicalIndex);
 
       input.setSelectionRange(nextCaretPosition, nextCaretPosition);
     });
@@ -159,11 +141,7 @@ function useNumberInput({
       const rawInput = e.target.value;
       const caretPosition = e.target.selectionStart ?? rawInput.length;
 
-      const logicalCaretIndex = getLogicalCaretIndex(
-        rawInput,
-        caretPosition,
-        decimals,
-      );
+      const logicalCaretIndex = getLogicalCaretIndex(rawInput, caretPosition, decimals);
 
       let cleaned = cleanNumberInput(rawInput, decimals);
 
@@ -237,18 +215,7 @@ function useNumberInput({
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.ctrlKey || e.metaKey) return;
 
-      const allowedKeys = [
-        "ArrowLeft",
-        "ArrowRight",
-        "ArrowUp",
-        "ArrowDown",
-        "Home",
-        "End",
-        "Delete",
-        "Backspace",
-        "Tab",
-        "Enter",
-      ];
+      const allowedKeys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "Delete", "Backspace", "Tab", "Enter"];
 
       if (allowedKeys.includes(e.key)) return;
 
@@ -279,14 +246,7 @@ function useNumberInput({
     [decimals, displayValue],
   );
 
-  return {
-    inputRef,
-    displayValue,
-    handleInput,
-    handleFocus,
-    handleBlur,
-    handleKeyDown,
-  };
+  return [inputRef, displayValue, handleInput, handleFocus, handleBlur, handleKeyDown] as const;
 }
 
 export default useNumberInput;
