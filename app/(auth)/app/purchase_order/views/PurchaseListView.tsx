@@ -5,13 +5,21 @@ import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
 import { useRouter } from "next/navigation";
 import { PurchaseOrderSchemaType } from "../schemas/purchase.schema";
-import { Badge } from "react-bootstrap";
-import { WidgetAvatar, WidgetCurrency, WidgetDeadline, WidgetDisplayDate } from "@/components/widgets";
+import {
+  WidgetAvatar,
+  WidgetBadgeStatus,
+  WidgetCurrency,
+  WidgetDeadline,
+  WidgetDisplayDate,
+} from "@/components/widgets";
 import { useAuth } from "@/hooks/sessionStore";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-export const purchaseOrderStateDisplay: Record<PurchaseOrderSchemaType["state"], string> = {
+export const purchaseOrderStateDisplay: Record<
+  PurchaseOrderSchemaType["state"],
+  string
+> = {
   draft: "Cotización",
   purchase: "Compra",
   pending: "Pendiente",
@@ -33,26 +41,45 @@ function PurchaseListView({ state }: { state: string | null }) {
 
   return (
     <ListView model="purchaseOrder">
-      <ListView.Header title="Compras" formView="/app/purchase_order?view_type=form&id=null" />
+      <ListView.Header
+        title="Compras"
+        formView="/app/purchase_order?view_type=form&id=null"
+      />
       <ListView.Body>
         <TableTemplateLite
           model="purchaseOrder"
           defaultOrder="name desc"
           pageSize={100}
           baseDomain={domain}
-          onRowClick={(row) => router.push(`/app/purchase_order?view_type=form&id=${row.id}`)}
+          onRowClick={(row) =>
+            router.push(`/app/purchase_order?view_type=form&id=${row.id}`)
+          }
           showTotals={true}
           totalColumns={["total"]}
         >
-          <Column field="name" label="Folio" render={(name) => <div className="fw-bold">{name}</div>} />
-          <Column field="date" label="Creación" type="date" render={(name) => <WidgetDisplayDate date={name} />} />
+          <Column
+            field="name"
+            label="Folio"
+            render={(name) => <div className="fw-bold">{name}</div>}
+          />
+          <Column
+            field="date"
+            label="Creación"
+            type="date"
+            render={(name) => <WidgetDisplayDate date={name} />}
+          />
           <Column
             field="Supplier.name"
             label="Proveedor"
             include={{
               Supplier: { select: { name: true, id: true, imageUrl: true } },
             }}
-            render={(_, field) => <WidgetAvatar imageUrl={field.Supplier.imageUrl} displayName={field.Supplier.name} />}
+            render={(_, field) => (
+              <WidgetAvatar
+                imageUrl={field.Supplier.imageUrl}
+                displayName={field.Supplier.name}
+              />
+            )}
           />
           <Column
             field="PaymentTerm.name"
@@ -73,7 +100,9 @@ function PurchaseListView({ state }: { state: string | null }) {
                 <WidgetDeadline date={name} warnAfter={3} />
               ) : (
                 <div className="text-center">
-                  {format(row.confirmedDate, "dd MMM yyyy HH:mm:ss", { locale: es })}
+                  {format(row.confirmedDate, "dd MMM yyyy HH:mm:ss", {
+                    locale: es,
+                  })}
                   <i className="bi bi-check-circle-fill text-success ms-2"></i>
                 </div>
               );
@@ -96,7 +125,9 @@ function PurchaseListView({ state }: { state: string | null }) {
                     </>
                   ) : (
                     <>
-                      {format(row.doneDate, "dd MMM yyyy HH:mm:ss", { locale: es })}
+                      {format(row.doneDate, "dd MMM yyyy HH:mm:ss", {
+                        locale: es,
+                      })}
                       <i className="bi bi-check-circle-fill text-success ms-2"></i>
                     </>
                   )}
@@ -118,27 +149,37 @@ function PurchaseListView({ state }: { state: string | null }) {
                 },
               },
             }}
-            render={(_, field) => <WidgetAvatar imageUrl={field.User.Partner.imageUrl} displayName={field.User.name} />}
+            render={(_, field) => (
+              <WidgetAvatar
+                imageUrl={field.User.Partner.imageUrl}
+                displayName={field.User.name}
+              />
+            )}
           />
-          <Column field="total" label="Total" type="number" render={(field) => <WidgetCurrency number={field} />} format="currency" />
+          <Column
+            field="total"
+            label="Total"
+            type="number"
+            render={(field) => <WidgetCurrency number={field} />}
+            format="currency"
+          />
           <Column
             field="state"
             label="Estado"
-            render={(name) => {
-              let bg = "secondary";
-              if (name === "purchase") bg = "info";
-              if (name === "pending") bg = "warning";
-              if (name === "done") bg = "success";
-              if (name === "cancel") bg = "danger";
-
-              return (
-                <div className="text-center">
-                  <Badge bg={bg} pill>
-                    {purchaseOrderStateDisplay[name as PurchaseOrderSchemaType["state"]]}
-                  </Badge>
-                </div>
-              );
-            }}
+            render={(name) => (
+              <div className="text-center">
+                <WidgetBadgeStatus
+                  value={name}
+                  options={{
+                    done: { label: "Terminado", color: "success" },
+                    draft: { label: "Borrador", color: "secondary" },
+                    cancel: { label: "Cancelado", color: "danger" },
+                    pending: { label: "Pendiente", color: "warning" },
+                    purchase: { label: "Compra", color: "info" },
+                  }}
+                />
+              </div>
+            )}
           />
         </TableTemplateLite>
       </ListView.Body>

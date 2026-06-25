@@ -6,7 +6,6 @@ import {
 import {
   Alert,
   Button,
-  ButtonGroup,
   Col,
   Container,
   Dropdown,
@@ -123,19 +122,18 @@ export function FormView<T extends FieldValues>({
 
   return (
     <Row className="h-100">
-      <Col xs="12" sm="12" md="12" lg="9" xl="7" xxl="8" className="h-100 px-0">
+      <Col xs="12" md="12" lg="8" xl="7" xxl="8" className="h-100 px-0">
         <FormProvider {...methods}>
           <Form
             noValidate
             className="card d-flex flex-column h-100 border-0 bg-body-tertiary"
             style={{
               fontSize: "0.9rem",
-              height: "calc(100vh - 100px)", // Ajusta según tu layout
+              minHeight: "calc(100vh - 100px)",
               maxHeight: "calc(100vh - 100px)",
             }}
           >
-            <div className="card-header d-flex justify-content-between align-items-center border-0">
-              {/* BOTONES DE FORMULARIO */}
+            <div className="card-header d-flex justify-content-between align-items-center gap-2 border-0">
               <div className="d-flex align-items-center gap-1">
                 {id !== "null" && (
                   <Button
@@ -160,12 +158,12 @@ export function FormView<T extends FieldValues>({
                   type="button"
                   disabled={!dirty || modelAccess?.notEdit}
                   onClick={handleSubmit(onSubmit)}
-                  variant={`${isDirty ? "warning" : "outline-secondary"}`}
+                  variant={isDirty ? "warning" : "outline-secondary"}
                 >
                   {isSubmitting ? (
                     <Spinner size="sm" animation="border" />
                   ) : (
-                    <i className="bi bi-cloud-arrow-up-fill"></i>
+                    <i className="bi bi-cloud-arrow-up-fill" />
                   )}
                 </Button>
 
@@ -174,106 +172,119 @@ export function FormView<T extends FieldValues>({
                   onClick={handleReverseExtended}
                   disabled={!dirty}
                   title="Deshacer cambios"
-                  variant={`${isDirty ? "warning" : "outline-secondary"}`}
+                  variant={isDirty ? "warning" : "outline-secondary"}
                 >
-                  <i className="bi bi-arrow-counterclockwise"></i>
+                  <i className="bi bi-arrow-counterclockwise" />
                 </Button>
               </div>
 
-              {/* BOTONES VISTA ESCRITORIO */}
-              <div className="d-none d-md-flex gap-1 align-items-center">
-                {actions?.map((action, index) => {
-                  const actionAccess = access.filter(
-                    (acc) => acc.fieldName === action.fieldName,
-                  );
-                  if (actionAccess[0]?.invisible) return null;
-                  if (action.invisible) return null;
-                  return (
-                    <Button
-                      key={`${action.string}-${index}`}
-                      variant={action.variant ?? "info"}
-                      type="button"
-                      onClick={action.action}
-                      disabled={action.readonly}
-                      title={action.fieldName}
-                      className="fw-bold"
-                    >
-                      {action.string}
-                    </Button>
-                  );
-                })}
-              </div>
-
-              {/* BOTONES VISTA MÓVIL */}
-              <div className="d-flex d-md-none">
-                <DropdownButton variant="light" title="Acciones" align="end">
+              <div className="d-flex align-items-center gap-2">
+                <div className="d-none d-md-flex gap-1 align-items-center">
                   {actions?.map((action, index) => {
                     const actionAccess = access.filter(
                       (acc) => acc.fieldName === action.fieldName,
                     );
+
                     if (actionAccess[0]?.invisible) return null;
                     if (action.invisible) return null;
+
                     return (
-                      <Dropdown.Item
+                      <Button
                         key={`${action.string}-${index}`}
-                        as={Button}
-                        variant={action.variant ?? "light"}
+                        variant={action.variant ?? "info"}
+                        type="button"
                         onClick={action.action}
                         disabled={action.readonly}
+                        title={action.fieldName}
+                        className="fw-bold"
                       >
                         {action.string}
-                      </Dropdown.Item>
+                      </Button>
                     );
                   })}
-                </DropdownButton>
-              </div>
+                </div>
 
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  if (dirty) {
-                    const confirmLeave = confirm(
-                      "Tienes cambios sin guardar. ¿Salir?",
-                    );
-                    if (!confirmLeave) return;
-                  }
-                  router.back();
-                }}
-                disabled={dirty}
-              >
-                {dirty ? (
-                  <div className="small">
-                    <i className="bi bi-exclamation-triangle-fill text-danger"></i>
-                  </div>
-                ) : (
-                  <i className="bi bi-arrow-left"></i>
-                )}
-              </Button>
+                <div className="d-flex d-md-none">
+                  <DropdownButton variant="light" title="Acciones" align="end">
+                    {actions?.map((action, index) => {
+                      const actionAccess = access.filter(
+                        (acc) => acc.fieldName === action.fieldName,
+                      );
+
+                      if (actionAccess[0]?.invisible) return null;
+                      if (action.invisible) return null;
+
+                      return (
+                        <Dropdown.Item
+                          key={`${action.string}-${index}`}
+                          as={Button}
+                          variant={action.variant ?? "light"}
+                          onClick={action.action}
+                          disabled={action.readonly}
+                        >
+                          {action.string}
+                        </Dropdown.Item>
+                      );
+                    })}
+                  </DropdownButton>
+                </div>
+
+                <Button
+                  variant={dirty ? "outline-danger" : "secondary"}
+                  onClick={() => {
+                    if (dirty) {
+                      const confirmLeave = confirm(
+                        "Tienes cambios sin guardar. ¿Salir?",
+                      );
+                      if (!confirmLeave) return;
+                    }
+                    router.back();
+                  }}
+                  title={dirty ? "Hay cambios sin guardar" : "Volver"}
+                >
+                  {dirty ? (
+                    <i className="bi bi-exclamation-triangle-fill" />
+                  ) : (
+                    <i className="bi bi-arrow-left" />
+                  )}
+                </Button>
+              </div>
             </div>
             <div
               className="card-body p-0 flex-grow-1 overflow-auto"
               style={{ minHeight: 0 }}
             >
-              <div className="d-flex justify-content-between align-items-center">
-                <div className="card-title h3 fw-semibold my-1 mx-2">
+              <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 px-2 py-2">
+                <div className="card-title h3 fw-semibold m-0 text-truncate">
                   {id !== "null" ? getValues().name : "Nuevo"}
                 </div>
 
                 {/* STATEBAR DESKTOP */}
-                <div className="d-none d-md-flex justify-content-end gap-1 mx-2 my-2 w-50">
-                  <ButtonGroup>
-                    {formStates?.map((st, index) => (
-                      <Button
-                        key={`${st.label}-${st.name}-${index}`}
-                        variant={st.name === state ? st.decoration : "none"}
-                        className={`${st.name === state ? "fw-semibold" : "text-black"} text-uppercase border`}
-                        title={st.name}
-                      >
-                        {st.label}
-                      </Button>
-                    ))}
-                  </ButtonGroup>
-                </div>
+                {formStates && (
+                  <div className="d-none d-md-flex justify-content-end flex-grow-1">
+                    <div className="statebar">
+                      {formStates.map((st, index) => {
+                        const isActive = st.name === state;
+                        const isLast = index === formStates.length - 1;
+
+                        return (
+                          <div
+                            key={`${st.label}-${st.name}-${index}`}
+                            className={[
+                              "statebar-item",
+                              isActive ? `active bg-${st.decoration}` : "",
+                              isLast ? "last" : "",
+                            ].join(" ")}
+                            title={st.name}
+                          >
+                            <span>{st.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* STATEBAR MOBILE */}
                 {formStates && (
                   <div className="d-flex d-md-none">
@@ -300,12 +311,11 @@ export function FormView<T extends FieldValues>({
       {/* ================= THREAD PANEL ================= */}
       <Col
         xs="12"
-        sm="12"
         md="12"
-        lg="5"
+        lg="4"
         xl="5"
         xxl="4"
-        className="h-100 mt-3 mt-md-0 px-0"
+        className="h-100 mt-3 mt-lg-0 px-0"
       >
         {auditLog && (
           <Suspense fallback={<Spinner animation="border" size="sm" />}>
@@ -331,7 +341,7 @@ export function FormViewGroup({
 
   return (
     <Col md="6">
-      <fieldset className="mt-1" disabled={readonly}>
+      <fieldset className="py-1" disabled={readonly}>
         {children}
       </fieldset>
     </Col>

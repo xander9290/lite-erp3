@@ -12,7 +12,7 @@ function CardCompany({ comapny }: { comapny: CompanieWithProps }) {
           <WidgetAvatar
             width={80}
             height={80}
-            imageUrl={comapny.Partner?.imageUrl}
+            imageUrl={comapny.Partner?.imageUrl || ""}
           />
         </Col>
         <Col md="10" className="text-truncate">

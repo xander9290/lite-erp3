@@ -235,7 +235,7 @@ function ProductTemplateFormView({
   return (
     <FormView
       methods={methods}
-      cleanUrl="/app/product_template?view_type=form&id=null"
+      cleanUrl="/app/product_template/products?view_type=form&id=null"
       auditLog="productTemplate"
       reverse={handleReverse}
       onSubmit={onSubmit}

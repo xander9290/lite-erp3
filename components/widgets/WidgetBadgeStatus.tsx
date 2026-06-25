@@ -22,7 +22,7 @@ export function WidgetBadgeStatus({
   return (
     <span
       className={clsx(
-        "badge",
+        `badge rounded-pill fw-bold`,
         option.color && `bg-${option.color}`,
         option.className,
       )}

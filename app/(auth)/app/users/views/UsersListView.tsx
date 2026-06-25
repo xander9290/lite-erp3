@@ -35,7 +35,7 @@ export const USER_COLUMNS: TableTemplateColumn<UserWithProps>[] = [
     type: "string",
     render: (u) => (
       <WidgetCellRow>
-        <WidgetAvatar imageUrl={u.Partner?.imageUrl} />
+        <WidgetAvatar imageUrl={u.Partner?.imageUrl || ""} />
         <span>{u.Partner?.name}</span>
       </WidgetCellRow>
     ),
@@ -153,8 +153,10 @@ function UsersListView() {
             type="string"
             render={(name, u) => (
               <WidgetCellRow>
-                <WidgetAvatar imageUrl={u.Partner?.imageUrl} />
-                <span>{name}</span>
+                <WidgetAvatar
+                  imageUrl={u.Partner?.imageUrl}
+                  displayName={name}
+                />
               </WidgetCellRow>
             )}
             include={{

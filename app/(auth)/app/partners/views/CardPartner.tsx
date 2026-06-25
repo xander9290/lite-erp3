@@ -6,17 +6,34 @@ import { PartnerWithProps } from "../actions/partner-actions";
 
 function CardPartner({ p }: { p: PartnerWithProps }) {
   return (
-    <Card className="h-100 shadow-sm hover-shadow transition" style={{ fontSize: "0.9em", cursor: "pointer" }}>
-      <Row className="g-0 h-100">
+    <Card
+      className="h-100 shadow-sm hover-shadow transition"
+      style={{ fontSize: "0.9em", cursor: "pointer" }}
+    >
+      <Row className="g-2 h-100">
         <Col md="4" className="d-flex align-items-center">
-          <div className="position-relative w-100" style={{ aspectRatio: "1/1" }}>
-            <Image src={p.imageUrl || "/images/avatar_default.svg"} alt={p.name || "Partner"} fill className="object-fit-cover rounded-start" sizes="(max-width: 768px) 100vw, 33vw" priority={false} />
+          <div
+            className="position-relative w-100"
+            style={{ aspectRatio: "1/1" }}
+          >
+            <Image
+              src={p.imageUrl || "/images/avatar_default.svg"}
+              alt={p.name || "Partner"}
+              fill
+              className="object-fit-cover rounded-start"
+              sizes="(max-width: 768px) 100vw, 33vw"
+              priority={false}
+            />
           </div>
         </Col>
         <Col md="8" className="d-flex flex-column">
-          <Card.Body className="p-1 d-flex flex-column h-100">
+          <Card.Body className="p-2 d-flex flex-column h-100">
             <div className="d-flex justify-content-between align-items-start mb-1">
-              <Card.Title className="fs-6 fw-semibold text-truncate mb-0" title={p.name} style={{ maxWidth: "70%" }}>
+              <Card.Title
+                className="fs-5 fw-semibold text-truncate mb-0"
+                title={p.name}
+                style={{ maxWidth: "70%" }}
+              >
                 {p.name || "Sin nombre"}
               </Card.Title>
             </div>
@@ -27,7 +44,9 @@ function CardPartner({ p }: { p: PartnerWithProps }) {
                   {p.completeAddress}
                 </>
               ) : (
-                <span className="text-muted fst-italic">Dirección no disponible</span>
+                <span className="text-muted fst-italic">
+                  Dirección no disponible
+                </span>
               )}
             </Card.Text>
 

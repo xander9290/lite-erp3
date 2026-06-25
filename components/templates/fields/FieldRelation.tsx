@@ -472,7 +472,7 @@ export function FieldRelation<T extends Many2OneOption>({
             className="rounded-start-0"
             title="Limpiar selección"
           >
-            <i className="bi bi-power text-dark"></i>
+            <i className="bi bi-power"></i>
           </Button>
         )}
       </div>

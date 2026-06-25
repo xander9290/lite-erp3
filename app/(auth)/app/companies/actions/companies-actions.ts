@@ -1,6 +1,10 @@
 "use server";
 
-import type { Company, Partner, WarehouseType } from "@/generated/prisma/client";
+import type {
+  Company,
+  Partner,
+  WarehouseType,
+} from "@/generated/prisma/client";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
 import { CompanySchemaType } from "../schemas/company.schema";
@@ -37,7 +41,11 @@ export interface CompanieWithProps extends Company {
   }[];
 }
 
-export async function getCompanyById({ id }: { id: string | null }): Promise<CompanieWithProps | null> {
+export async function getCompanyById({
+  id,
+}: {
+  id: string | null;
+}): Promise<CompanieWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -86,11 +94,29 @@ export async function getCompanyById({ id }: { id: string | null }): Promise<Com
   }
 }
 
-type CompanyActionProps = Omit<CompanySchemaType, "createdUid" | "createdAt" | "updatedAt">;
+type CompanyActionProps = Omit<
+  CompanySchemaType,
+  "createdUid" | "createdAt" | "updatedAt"
+>;
 
-export async function createCompany({ data }: { data: CompanyActionProps }): Promise<ActionResponse<CompanieWithProps>> {
+export async function createCompany({
+  data,
+}: {
+  data: CompanyActionProps;
+}): Promise<ActionResponse<CompanieWithProps>> {
   try {
     const { uid } = await sessionStore();
+
+    const completeAddress = [
+      data.street,
+      data.houseNumber,
+      data.zip,
+      data.county,
+      data.province,
+      data.country,
+    ]
+      .filter(Boolean) // Elimina valores falsy (null, undefined, "", 0, false)
+      .join(", ");
 
     const newCompany = await prisma.company.create({
       data: {
@@ -123,6 +149,7 @@ export async function createCompany({ data }: { data: CompanyActionProps }): Pro
             province: data.province,
             country: data.country,
             vat: data.vat,
+            completeAddress,
             createdUid: uid || "",
           },
         },
@@ -209,9 +236,24 @@ export async function createCompany({ data }: { data: CompanyActionProps }): Pro
   }
 }
 
-export async function updateCompany({ data }: { data: CompanyActionProps & { id: string | null } }): Promise<ActionResponse<CompanieWithProps>> {
+export async function updateCompany({
+  data,
+}: {
+  data: CompanyActionProps & { id: string | null };
+}): Promise<ActionResponse<CompanieWithProps>> {
   try {
     if (!data.id) throw new Error("ID not defined");
+
+    const completeAddress = [
+      data.street,
+      data.houseNumber,
+      data.zip,
+      data.county,
+      data.province,
+      data.country,
+    ]
+      .filter(Boolean) // Elimina valores falsy (null, undefined, "", 0, false)
+      .join(", ");
 
     const updatedCompany = await prisma.company.update({
       where: { id: data.id },
@@ -222,8 +264,12 @@ export async function updateCompany({ data }: { data: CompanyActionProps & { id:
         Users: {
           set: data.userIds.map((u) => ({ id: u.id })),
         },
-        Manager: data.managerId?.id ? { connect: { id: data.managerId.id } } : { disconnect: true },
-        Company: data.parentId?.id ? { connect: { id: data.parentId.id } } : { disconnect: true },
+        Manager: data.managerId?.id
+          ? { connect: { id: data.managerId.id } }
+          : { disconnect: true },
+        Company: data.parentId?.id
+          ? { connect: { id: data.parentId.id } }
+          : { disconnect: true },
         Children: {
           set: data.childrenIds.map((ch) => ({ id: ch.companyId.id })),
         },
@@ -240,6 +286,7 @@ export async function updateCompany({ data }: { data: CompanyActionProps & { id:
             county: data.county,
             province: data.province,
             country: data.country,
+            completeAddress,
             vat: data.vat,
           },
         },

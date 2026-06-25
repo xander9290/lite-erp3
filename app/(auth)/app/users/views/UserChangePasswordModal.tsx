@@ -3,7 +3,7 @@
 import { ModalBasicProps } from "@/app/libs/definitions";
 import { useForm, SubmitHandler, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, Modal } from "react-bootstrap";
+import { Button, Form, Modal } from "react-bootstrap";
 import {
   userPasswordSchema,
   userPasswordSchemaDefault,
@@ -24,7 +24,7 @@ function UserChangePasswordModal({
     defaultValues: userPasswordSchemaDefault,
   });
 
-  const { handleSubmit, reset, setFocus } = methods;
+  const { handleSubmit, reset } = methods;
 
   const { modalError } = useModals();
 
@@ -48,17 +48,36 @@ function UserChangePasswordModal({
       show={show}
       backdrop="static"
       centered
-      onEntered={() => setFocus("password1")}
       onExited={handleExited}
     >
       <Modal.Header closeButton>Cambiar contraseña</Modal.Header>
-      <Modal.Body>
+      <Modal.Body className="p-2">
         <FormProvider {...methods}>
-          <Form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <FieldEntry name="password1" type="password" label="Contraseña" />
-            <FieldEntry name="password2" type="password" label="Confirmar" />
-            <div className="text-end">
-              <FieldSubmit name="accept" label="Aceptar" />
+          <Form onSubmit={handleSubmit(onSubmit)} noValidate className="card">
+            <div className="card-body">
+              <FieldEntry
+                name="password1"
+                type="password"
+                label="Contraseña"
+                autoFocus
+                className="bg-body-tertiary"
+              />
+              <FieldEntry
+                name="password2"
+                type="password"
+                label="Confirmar"
+                className="bg-body-tertiary"
+              />
+              <div className="d-flex justify-content-end gap-1">
+                <Button
+                  onClick={onHide}
+                  variant="secondary"
+                  className="fw-semibold"
+                >
+                  Cancelar
+                </Button>
+                <FieldSubmit name="accept" label="Aceptar" />
+              </div>
             </div>
           </Form>
         </FormProvider>

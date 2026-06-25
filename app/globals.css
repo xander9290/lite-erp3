@@ -19,3 +19,96 @@ input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+.statebar {
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid var(--bs-border-color);
+  background: var(--bs-light);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.statebar {
+  --statebar-bg: var(--bs-tertiary-bg);
+  --statebar-item-bg: var(--bs-body-bg);
+  --statebar-item-color: var(--bs-secondary-color);
+  --statebar-border: var(--bs-border-color);
+  --statebar-muted-bg: var(--bs-secondary-bg);
+  --statebar-muted-color: var(--bs-secondary-color);
+
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid var(--statebar-border);
+  background: var(--statebar-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.statebar-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0.35rem 1.45rem 0.35rem 1.1rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--statebar-item-color);
+  background: var(--statebar-muted-bg);
+  white-space: nowrap;
+}
+
+.statebar-item:not(.last)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -0.55rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  background: inherit;
+  border-top: 1px solid var(--statebar-border);
+  border-right: 1px solid var(--statebar-border);
+  transform: translateY(-50%) rotate(45deg);
+  z-index: 2;
+}
+
+.statebar-item span {
+  position: relative;
+  z-index: 3;
+}
+
+.statebar-item.active {
+  color: #fff;
+  background: var(--bs-primary);
+}
+
+.statebar-item.active::after {
+  background: inherit;
+}
+
+.statebar-item.disabled,
+.statebar-item:not(.active) {
+  opacity: 0.85;
+}
+
+[data-bs-theme="dark"] .statebar {
+  --statebar-bg: var(--bs-dark-bg-subtle);
+  --statebar-item-bg: var(--bs-body-bg);
+  --statebar-item-color: var(--bs-emphasis-color);
+  --statebar-border: rgba(255, 255, 255, 0.18);
+  --statebar-muted-bg: rgba(255, 255, 255, 0.08);
+  --statebar-muted-color: rgba(255, 255, 255, 0.72);
+
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+[data-bs-theme="dark"] .statebar-item {
+  color: var(--statebar-muted-color);
+}
+
+[data-bs-theme="dark"] .statebar-item.active {
+  color: inherit;
+}

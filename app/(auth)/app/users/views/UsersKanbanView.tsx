@@ -35,7 +35,10 @@ function UsersKanbanView() {
         <CardTemplateLite
           model="user"
           renderCard={(user) => <CardUser user={user} />}
-          baseDomain={[["active", "=", active]]}
+          baseDomain={[
+            ["active", "=", active],
+            ["name", "!=", "bot"],
+          ]}
           viewForm="/app/users?view_type=form"
         >
           <Column field="active" label="Activo" type="boolean" />
@@ -43,7 +46,11 @@ function UsersKanbanView() {
             field="Companies"
             label="Empresas"
             type="relation"
-            include={{ Companies: { select: { id: true, name: true } } }}
+            include={{
+              Companies: { select: { id: true, name: true } },
+              Partner: { select: { imageUrl: true, name: true, email: true } },
+              Group: { select: { name: true, id: true } },
+            }}
           />
         </CardTemplateLite>
       </ListView.Body>

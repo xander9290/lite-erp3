@@ -59,7 +59,9 @@ function TopNavUser() {
           variant="light"
           className="border-0 d-flex gap-2 align-items-center"
         >
-          <Badge bg="success">{companyCode}</Badge>
+          <Badge bg="success" pill>
+            {companyCode}
+          </Badge>
           <Image
             width={25}
             height={25}
@@ -68,9 +70,7 @@ function TopNavUser() {
             alt=""
             className="rounded"
           />
-          <strong>
-            <small>{user?.name}</small>
-          </strong>
+          <span className="fw-semibold">{user?.name}</span>
         </Dropdown.Toggle>
 
         <Dropdown.Menu>

@@ -12,7 +12,7 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
     <Card className="p-1 shadow-sm" style={{ minHeight: "110px" }}>
       <Row className="g-0">
         <Col md="2" className="text-center">
-          <WidgetAvatar width={80} height={80} imageUrl={product?.imageUrl || "/images/avatar_default.svg"} />
+          <WidgetAvatar width={80} height={80} imageUrl={product?.imageUrl ?? ""} />
         </Col>
         <Col md="10">
           <Card.Body className="p-1 text-center text-md-start" style={{ minHeight: "185px" }}>
@@ -25,17 +25,7 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
             </Card.Text>
             <Card.Text className="d-flex justify-content-between m-0 my-1">
               <FieldText name="price1" output={formatCurrency({ value: product.price1 })} />
-              <small>
-                {product.state === "AVAILABLE" ? (
-                  <Badge pill bg="success">
-                    DISPONIBLE
-                  </Badge>
-                ) : (
-                  <Badge bg="danger" pill>
-                    AGOTADO
-                  </Badge>
-                )}
-              </small>
+              {product.state === "AVAILABLE" ? <Badge bg="success">DISPONIBLE</Badge> : <Badge bg="danger">AGOTADO</Badge>}
             </Card.Text>
             <Card.Text className="m-0">
               <strong>Disponible: </strong>

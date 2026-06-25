@@ -57,16 +57,18 @@ export function TableTemplateLite({
     .map((child) => child.props as ColumnConfig);
 
   // Estado
-  const [sort, setSort] = useState<{ field: string; dir: "asc" | "desc" }>(() => {
-    if (defaultOrder) {
-      const [field, dir] = defaultOrder.split(" ");
-      return {
-        field,
-        dir: dir?.toLowerCase() === "desc" ? "desc" : "asc",
-      };
-    }
-    return { field: "id", dir: "asc" };
-  });
+  const [sort, setSort] = useState<{ field: string; dir: "asc" | "desc" }>(
+    () => {
+      if (defaultOrder) {
+        const [field, dir] = defaultOrder.split(" ");
+        return {
+          field,
+          dir: dir?.toLowerCase() === "desc" ? "desc" : "asc",
+        };
+      }
+      return { field: "id", dir: "asc" };
+    },
+  );
 
   const [filters, setFilters] = useState<FilterValue[]>([]);
   const [page, setPage] = useState(1);
@@ -93,7 +95,11 @@ export function TableTemplateLite({
     sort: JSON.stringify(sortForApi),
     filters: JSON.stringify(filters),
     domain: JSON.stringify(baseDomain),
-    columnTypes: JSON.stringify(Object.fromEntries(columns.map((col) => [col.field, col.type || "string"]))),
+    columnTypes: JSON.stringify(
+      Object.fromEntries(
+        columns.map((col) => [col.field, col.type || "string"]),
+      ),
+    ),
     includes: JSON.stringify(includes),
   });
 
@@ -142,16 +148,23 @@ export function TableTemplateLite({
 
   const handleSelectAll = (checked: boolean) => {
     if (!data?.rows) return;
-    const newIds = checked ? [...new Set([...selectedIds, ...data.rows.map((r: any) => r.id)])] : selectedIds.filter((id) => !data.rows.some((r: any) => r.id === id));
+    const newIds = checked
+      ? [...new Set([...selectedIds, ...data.rows.map((r: any) => r.id)])]
+      : selectedIds.filter((id) => !data.rows.some((r: any) => r.id === id));
     handleSelectionChange(newIds);
   };
 
   const handleRowSelect = (id: string, checked: boolean) => {
-    const newIds = checked ? [...selectedIds, id] : selectedIds.filter((x) => x !== id);
+    const newIds = checked
+      ? [...selectedIds, id]
+      : selectedIds.filter((x) => x !== id);
     handleSelectionChange(newIds);
   };
 
-  const isAllSelected = data && data?.rows?.length > 0 && data.rows.every((r: any) => selectedIds.includes(r.id));
+  const isAllSelected =
+    data &&
+    data?.rows?.length > 0 &&
+    data.rows.every((r: any) => selectedIds.includes(r.id));
 
   // Calcular totales de columnas numéricas
   const calculateTotals = () => {
@@ -160,7 +173,12 @@ export function TableTemplateLite({
     const rows = groupedData ? Object.values(groupedData).flat() : data.rows;
 
     // Determinar qué columnas sumar
-    const columnsToSum = totalColumns.length > 0 ? totalColumns : visibleColumns.filter((col) => col.type === "number").map((col) => col.field);
+    const columnsToSum =
+      totalColumns.length > 0
+        ? totalColumns
+        : visibleColumns
+            .filter((col) => col.type === "number")
+            .map((col) => col.field);
 
     const totals: Record<string, number> = {};
 
@@ -194,8 +212,18 @@ export function TableTemplateLite({
           const hasTotal = totalValue !== undefined;
 
           return (
-            <td key={col.field} className="border-top border-bottom" valign="middle">
-              {hasTotal ? <p className="fw-semibold m-0 p-0 text-end fs-6">Total: {formatCellValue(totalValue, col.type, col.format)}</p> : <p className="text-muted"></p>}
+            <td
+              key={col.field}
+              className="border-top border-bottom"
+              valign="middle"
+            >
+              {hasTotal ? (
+                <p className="fw-semibold m-0 p-0 text-end fs-6">
+                  Total: {formatCellValue(totalValue, col.type, col.format)}
+                </p>
+              ) : (
+                <p className="text-muted"></p>
+              )}
             </td>
           );
         })}
@@ -205,10 +233,22 @@ export function TableTemplateLite({
 
   // Render rows
   const renderRow = (row: any, index: number) => (
-    <tr key={row.id || index} onClick={() => onRowClick?.(row)} style={{ cursor: onRowClick ? "pointer" : "default" }}>
+    <tr
+      key={row.id || index}
+      onClick={() => onRowClick?.(row)}
+      style={{ cursor: onRowClick ? "pointer" : "default" }}
+    >
       {showSelection && (
-        <td onClick={(e) => e.stopPropagation()} className="text-center border-bottom" valign="middle">
-          <Form.Check type="checkbox" checked={selectedIds.includes(row.id) || false} onChange={(e) => handleRowSelect(row.id, e.target.checked)} />
+        <td
+          onClick={(e) => e.stopPropagation()}
+          className="text-center border-bottom"
+          valign="middle"
+        >
+          <Form.Check
+            type="checkbox"
+            checked={selectedIds.includes(row.id) || false}
+            onChange={(e) => handleRowSelect(row.id, e.target.checked)}
+          />
         </td>
       )}
       {visibleColumns.map((col) => {
@@ -221,7 +261,11 @@ export function TableTemplateLite({
         }
         return (
           <td key={col.field} className="border-bottom" valign="middle">
-            {formatCellValue(getNestedValue(row, col.field), col.type, col.format)}
+            {formatCellValue(
+              getNestedValue(row, col.field),
+              col.type,
+              col.format,
+            )}
           </td>
         );
       })}
@@ -233,7 +277,11 @@ export function TableTemplateLite({
       return Object.entries(groupedData).map(([group, rows]) => (
         <React.Fragment key={group}>
           <tr>
-            <td colSpan={visibleColumns.length + (showSelection ? 1 : 0)} className="border-bottom" valign="middle">
+            <td
+              colSpan={visibleColumns.length + (showSelection ? 1 : 0)}
+              className="border-bottom"
+              valign="middle"
+            >
               <div className="d-flex align-items-center justify-content-between">
                 <strong>
                   <i className="bi bi-collection me-2" />
@@ -251,17 +299,29 @@ export function TableTemplateLite({
 
   const from = data?.total && data.rows.length ? (page - 1) * pageSize + 1 : 0;
 
-  const to = data?.total && data.rows.length ? Math.min(page * pageSize, data.total) : 0;
+  const to =
+    data?.total && data.rows.length ? Math.min(page * pageSize, data.total) : 0;
 
   return (
     <div className="position-relative">
       {/* Toolbar */}
       <div className="d-flex justify-content-between align-items-center mb-0 flex-wrap gap-2">
         <div className="d-flex gap-2">
-          <FilterBuilder columns={columns} filters={filters} onChange={handleFilter} storageKey={`${uid}-filters-${entity}`} />
-          <GroupByControl columns={columns} storageKey={`${uid}-groupby-${entity}`} onGroupChange={setGroupBy} />
+          <FilterBuilder
+            columns={columns}
+            filters={filters}
+            onChange={handleFilter}
+            storageKey={`${uid}-filters-${entity}`}
+          />
+          <GroupByControl
+            columns={columns}
+            storageKey={`${uid}-groupby-${entity}`}
+            onGroupChange={setGroupBy}
+          />
         </div>
-        {isLoading && <Spinner size="sm" animation="border" variant="primary" />}
+        {isLoading && (
+          <Spinner size="sm" animation="border" variant="primary" />
+        )}
       </div>
 
       {/* Table */}
@@ -281,15 +341,24 @@ export function TableTemplateLite({
           >
             <tr className={onRowClick ? "table-row-clickable" : undefined}>
               {showSelection && (
-                <th style={{ width: 40 }} className="text-center border-end border-bottom table-active">
-                  <Form.Check type="checkbox" checked={isAllSelected || false} onChange={(e) => handleSelectAll(e.target.checked)} />
+                <th
+                  style={{ width: 40 }}
+                  className="text-center border-end border-bottom table-active"
+                >
+                  <Form.Check
+                    type="checkbox"
+                    checked={isAllSelected || false}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                  />
                 </th>
               )}
               {visibleColumns.map((col) => {
                 return (
                   <th
                     key={col.field}
-                    onClick={() => col.sortable !== false && handleSort(col.field)}
+                    onClick={() =>
+                      col.sortable !== false && handleSort(col.field)
+                    }
                     title={col.field}
                     style={{
                       cursor: col.sortable !== false ? "pointer" : "default",
@@ -299,7 +368,12 @@ export function TableTemplateLite({
                   >
                     <div className="d-flex align-items-center justify-content-between">
                       <span>{col.label}</span>
-                      {col.sortable !== false && <SortIndicator active={sort.field === col.field} direction={sort.dir} />}
+                      {col.sortable !== false && (
+                        <SortIndicator
+                          active={sort.field === col.field}
+                          direction={sort.dir}
+                        />
+                      )}
                     </div>
                   </th>
                 );
@@ -311,7 +385,10 @@ export function TableTemplateLite({
               renderRows()
             ) : (
               <tr className={onRowClick ? "table-row-clickable" : undefined}>
-                <td colSpan={visibleColumns.length + (showSelection ? 1 : 0)} className="text-center py-4 text-muted">
+                <td
+                  colSpan={visibleColumns.length + (showSelection ? 1 : 0)}
+                  className="text-center py-4 text-muted"
+                >
                   <div className="py-5">
                     <i className="bi bi-inbox fs-1 d-block mb-2" />
                     <div>{isLoading ? "Cargando..." : "No hay registros"}</div>
@@ -319,27 +396,41 @@ export function TableTemplateLite({
                 </td>
               </tr>
             )}
-            {totals && renderTotalsRow()}
           </tbody>
+
           {data && data?.total > 0 && (
-            <tfoot>
+            <tfoot
+              className="table-active"
+              style={{
+                position: "sticky",
+                bottom: 0,
+                zIndex: 9,
+                background: "var(--bs-table-bg, #fff)",
+              }}
+            >
+              {totals && renderTotalsRow()}
+
               <tr className={onRowClick ? "table-row-clickable" : undefined}>
                 <td colSpan={visibleColumns.length + (showSelection ? 1 : 0)}>
                   <div className="d-flex justify-content-between align-items-center">
                     <div className="d-flex flex-column">
                       <small className="text-muted">
-                        Mostrando {from}–{to}
-                        de {data.total.toLocaleString()}
+                        Mostrando {from}–{to} de {data.total.toLocaleString()}
                       </small>
 
                       {selectedIds.length > 0 && (
                         <small className="text-primary">
-                          {selectedIds.length}
-                          seleccionados
+                          {selectedIds.length} seleccionados
                         </small>
                       )}
                     </div>
-                    <Pagination currentPage={page} totalPages={Math.ceil(data?.total / pageSize)} onPageChange={setPage} isLoading={isLoading} />
+
+                    <Pagination
+                      currentPage={page}
+                      totalPages={Math.ceil(data?.total / pageSize)}
+                      onPageChange={setPage}
+                      isLoading={isLoading}
+                    />
                   </div>
                 </td>
               </tr>
@@ -375,7 +466,9 @@ function formatCellValue(value: any, type?: string, format?: string): string {
   if ((type === "date" || type === "datetime") && value) {
     try {
       const date = new Date(value);
-      return type === "date" ? date.toLocaleDateString("es-MX") : date.toLocaleString("es-MX");
+      return type === "date"
+        ? date.toLocaleDateString("es-MX")
+        : date.toLocaleString("es-MX");
     } catch {
       return String(value);
     }
