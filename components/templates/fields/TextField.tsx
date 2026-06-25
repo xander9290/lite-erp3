@@ -1,23 +1,8 @@
 import { Form } from "react-bootstrap";
 import { FieldInputProps } from "./FieldEntry";
 
-export function TextField({
-  field,
-  fieldState,
-  name,
-  placeholder,
-  readonly,
-  inline,
-  className,
-  rows = 1,
-  cols,
-  autoFocus,
-  onChange,
-  as,
-}: FieldInputProps) {
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+export function TextField({ field, fieldState, name, placeholder, readonly, inline, className, rows = 1, cols, autoFocus, onChange, as, type }: FieldInputProps) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const el = e.target;
     const value = el.value;
 
@@ -38,12 +23,10 @@ export function TextField({
           el.style.height = `${el.scrollHeight}px`;
         }
       }}
-      className={`${className ?? ""} shadow-none w-100 overflow-hidden px-1 ${
-        inline ? "border-0" : ""
-      }`}
+      className={`${className ?? ""} ${type === "password" ? "text-center" : ""} shadow-none w-100 overflow-hidden px-1 ${inline ? "border-0" : ""}`}
       title={name}
-      as={as ?? "textarea"}
-      type="text"
+      as={as}
+      type={type}
       isInvalid={!!fieldState.error}
       placeholder={placeholder}
       readOnly={readonly}

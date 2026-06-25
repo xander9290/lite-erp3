@@ -5,6 +5,7 @@ import { NumberField } from "./NumberField";
 import { TextField } from "./TextField";
 
 function FieldRenderer(props: FieldInputProps) {
+  console.log(props.type);
   switch (props.type) {
     case "number":
       return <NumberField {...props} />;
@@ -14,6 +15,9 @@ function FieldRenderer(props: FieldInputProps) {
 
     case "datetime-local":
       return <DateTimeField {...props} />;
+
+    case "password":
+      return <TextField {...props} />;
 
     default:
       return <TextField {...props} />;

@@ -117,11 +117,7 @@ export function FieldEntry({
 
         return (
           <div className="mb-1 w-100">
-            <FloatingLabel
-              label={floatingText}
-              controlId={name}
-              className="w-100 fs-6 fw-bold"
-            >
+            <FloatingLabel label={floatingText} controlId={name} className="w-100 fs-6 fw-bold">
               {input}
             </FloatingLabel>
 
