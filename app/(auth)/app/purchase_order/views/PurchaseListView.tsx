@@ -14,7 +14,7 @@ import { es } from "date-fns/locale";
 export const purchaseOrderStateDisplay: Record<PurchaseOrderSchemaType["state"], string> = {
   draft: "Cotización",
   purchase: "Compra",
-  pending: "Incompleto",
+  pending: "Pendiente",
   done: "Hecho",
   cancel: "Cancelado",
 };
@@ -53,6 +53,13 @@ function PurchaseListView({ state }: { state: string | null }) {
               Supplier: { select: { name: true, id: true, imageUrl: true } },
             }}
             render={(_, field) => <WidgetAvatar imageUrl={field.Supplier.imageUrl} displayName={field.Supplier.name} />}
+          />
+          <Column
+            field="PaymentTerm.name"
+            label="Términos de pago"
+            include={{
+              PaymentTerm: { select: { name: true, id: true } },
+            }}
           />
           <Column
             field="dateOrder"

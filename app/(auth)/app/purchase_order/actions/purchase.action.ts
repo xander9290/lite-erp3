@@ -581,9 +581,8 @@ export async function createAffectStock({ data }: { data: PurchaseOrderActionPro
       });
 
       const isCompleted = orderLines.every((line) => line.state === "done" && line.ready === true);
-      const isReceivedQtyCompleted = orderLines.every((line) => round(line.quantity, 3) === round(line.receivedQty, 3));
 
-      if (isCompleted && isReceivedQtyCompleted) {
+      if (isCompleted) {
         await tx.purchaseOrder.update({
           where: { name: data.name },
           data: { state: "done", doneDate: new Date() },
@@ -591,7 +590,7 @@ export async function createAffectStock({ data }: { data: PurchaseOrderActionPro
       } else {
         await tx.purchaseOrder.update({
           where: { name: data.name },
-          data: { state: "pending", doneDate: new Date() },
+          data: { state: "pending" },
         });
       }
     });

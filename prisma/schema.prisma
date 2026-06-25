@@ -11,7 +11,7 @@ model Partner {
   id              String             @id @default(cuid())
   name            String
   email           String?
-  imageUrl        String?
+  imageUrl        String?            @default("/images/avatar_default.svg")
   phone           String?
   street          String?
   houseNumber     String?            @map("house_number")
