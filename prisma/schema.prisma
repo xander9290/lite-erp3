@@ -627,3 +627,30 @@ enum TaxTypeUse {
   sale
   purchase
 }
+
+model InvoicingCurrency {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String
+  label       String
+  symbol      String
+  active      Boolean @default(true)
+
+  @@map("invoicing_currency")
+}
+
+// INVOCES
+
+model AccountInvoice {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  ref            String
+  date           DateTime @db.Date //fecha de recepción
+  invoiceDate    DateTime @map("invoice_date") @db.Date // fecha de proveedor
+  invoiceDateDue DateTime @map("invoice_date_due") @db.Date // a partir de fecha proveedor
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("account_invoice")
+}

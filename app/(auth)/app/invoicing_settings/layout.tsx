@@ -11,14 +11,30 @@ function layout({
   return (
     <Row className="h-100 overflow-auto">
       <Col xs="4" sm="4" md="3" xl="2" xxl="2">
-        <Nav className="flex-column" defaultActiveKey="/app/product_template/products">
-          <Nav.Link as={Link} href="/app/invoicing_settings/payment_term?view_type=list&id=null" className="border-bottom">
+        <Nav
+          className="flex-column"
+          defaultActiveKey="/app/product_template/products"
+        >
+          <Nav.Link
+            as={Link}
+            href="/app/invoicing_settings/payment_term?view_type=list&id=null"
+            className="border-bottom"
+          >
             Términos de pago
           </Nav.Link>
-        </Nav>
-        <Nav className="flex-column" defaultActiveKey="/app/product_template/products">
-          <Nav.Link as={Link} href="/app/invoicing_settings/invoicing_tax?view_type=list&id=null" className="border-bottom">
+          <Nav.Link
+            as={Link}
+            href="/app/invoicing_settings/invoicing_tax?view_type=list&id=null"
+            className="border-bottom"
+          >
             Impuestos
+          </Nav.Link>
+          <Nav.Link
+            as={Link}
+            href="/app/invoicing_settings/invoicing_currency?view_type=list&id=null"
+            className="border-bottom"
+          >
+            Monedas
           </Nav.Link>
         </Nav>
       </Col>
