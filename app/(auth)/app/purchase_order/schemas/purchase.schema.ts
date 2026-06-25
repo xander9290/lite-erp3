@@ -1,4 +1,7 @@
-import { PurchaseLineStates, PurchaseOrderState } from "@/generated/prisma/enums";
+import {
+  PurchaseLineStates,
+  PurchaseOrderState,
+} from "@/generated/prisma/enums";
 import { z } from "zod";
 
 export const purchaseOrderSchema = z.object({
@@ -31,6 +34,10 @@ export const purchaseOrderSchema = z.object({
     .nullable(),
   paymentTermId: z.object({
     id: z.string().min(1, "Términos de pago es requerido"),
+    name: z.string(),
+  }),
+  currencyId: z.object({
+    id: z.string().min(1, "Moneda es requerido"),
     name: z.string(),
   }),
   OrderLines: z.array(
@@ -89,6 +96,7 @@ export const purchaseOrderSchemaDefault: PurchaseOrderSchemaType = {
     id: "",
     name: "",
   },
+  currencyId: { id: "", name: "" },
   OrderLines: [],
   createdAt: null,
   updatedAt: null,

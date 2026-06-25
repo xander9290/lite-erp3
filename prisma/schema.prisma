@@ -479,6 +479,8 @@ model PurchaseOrder {
   OrderLines          PurchaseOrderLine[]
   warehouseAffectedId String?              @map("warehouse_affected_id")
   WarehouseAffected   Warehouse?           @relation("WarehousePurchaseAffected", fields: [warehouseAffectedId], references: [id], onDelete: Restrict)
+  currencyId          String               @map("currency_id")
+  Currency            InvoicingCurrency    @relation(fields: [currencyId], references: [id], onDelete: Restrict)
 
   @@map("purchase_order")
 }
@@ -635,6 +637,8 @@ model InvoicingCurrency {
   label       String
   symbol      String
   active      Boolean @default(true)
+
+  PurchaseOrders PurchaseOrder[]
 
   @@map("invoicing_currency")
 }

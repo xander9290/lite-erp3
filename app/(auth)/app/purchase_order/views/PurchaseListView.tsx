@@ -89,6 +89,13 @@ function PurchaseListView({ state }: { state: string | null }) {
             }}
           />
           <Column
+            field="Currency.name"
+            label="Moneda"
+            include={{
+              Currency: { select: { name: true, id: true } },
+            }}
+          />
+          <Column
             field="dateOrder"
             label="Confirmar el"
             type="date"
