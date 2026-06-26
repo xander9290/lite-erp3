@@ -8,34 +8,36 @@ datasource db {
 }
 
 model Partner {
-  id              String             @id @default(cuid())
-  name            String
-  email           String?
-  imageUrl        String?            @default("/images/avatar_default.svg")
-  phone           String?
-  street          String?
-  houseNumber     String?            @map("house_number")
-  streets         String?
-  town            String?
-  zip             Int?
-  county          String?
-  province        String?
-  country         String?
-  completeAddress String?            @map("complete_address")
-  vat             String?
-  displayType     PartnerDisplayType @default(INTERNAL) @map("display_type")
-  active          Boolean            @default(true)
-  createdUid      String             @map("created_uid")
-  createdAt       DateTime           @default(now()) @map("created_at")
-  updatedAt       DateTime           @updatedAt @map("updated_at")
-  userId          String?            @map("user_id")
-  mobile          String?
-  Company         Company?           @relation("PartnerCompanyRel")
-  UserManager     User?              @relation("PartnerManagerRel", fields: [userId], references: [id], onDelete: Cascade)
-  Products        ProductTemplate[]  @relation("ProductSupplierRel")
-  PurchaseOrders  PurchaseOrder[]
-  User            User?              @relation("PartnerUserRelated")
-  Tags            Tag[]              @relation("PartnerTagsRelation")
+  id                 String             @id @default(cuid())
+  name               String
+  email              String?
+  imageUrl           String?            @default("/images/avatar_default.svg")
+  phone              String?
+  street             String?
+  houseNumber        String?            @map("house_number")
+  streets            String?
+  town               String?
+  zip                Int?
+  county             String?
+  province           String?
+  country            String?
+  completeAddress    String?            @map("complete_address")
+  vat                String?
+  displayType        PartnerDisplayType @default(INTERNAL) @map("display_type")
+  active             Boolean            @default(true)
+  createdUid         String             @map("created_uid")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  userId             String?            @map("user_id")
+  mobile             String?
+  Company            Company?           @relation("PartnerCompanyRel")
+  UserManager        User?              @relation("PartnerManagerRel", fields: [userId], references: [id], onDelete: Cascade)
+  Products           ProductTemplate[]  @relation("ProductSupplierRel")
+  PurchaseOrders     PurchaseOrder[]
+  User               User?              @relation("PartnerUserRelated")
+  Tags               Tag[]              @relation("PartnerTagsRelation")
+  SaleOrderShippings SaleOrder[]        @relation("PartnerShipping")
+  saleOrders         SaleOrder[]
 
   @@index([name])
   @@map("partners")
@@ -62,6 +64,7 @@ model User {
   Group            Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
   Partner          Partner?          @relation("PartnerUserRelated", fields: [partnerId], references: [id], onDelete: Cascade)
   Companies        Company[]         @relation("UserCompanyRel")
+  SaleOrders       SaleOrder[]
 
   @@map("users")
 }
@@ -176,6 +179,7 @@ model Company {
   stockMoves     StockMove[]
   Warehouses     Warehouse[]     @relation("WarehouseCompanyRel")
   Users          User[]          @relation("UserCompanyRel")
+  SaleOrders     SaleOrder[]
 
   @@map("companies")
 }
@@ -207,6 +211,7 @@ model Warehouse {
   updatedAt              DateTime        @updatedAt @map("updated_at")
   purchaseOrders         PurchaseOrder[]
   purchaseOrdersSupplier PurchaseOrder[] @relation("WarehousePurchaseAffected")
+  SaleOrders             SaleOrder[]
 
   @@map("warehouses")
 }
@@ -644,7 +649,6 @@ model InvoicingCurrency {
 }
 
 // INVOCES
-
 model AccountInvoice {
   id             String   @id @default(cuid())
   name           String   @unique
@@ -657,4 +661,64 @@ model AccountInvoice {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("account_invoice")
+}
+
+// SALES
+model SaleOrder {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  orderDate     DateTime       @default(now()) @map("order_date") @db.Date
+  confirmedDate DateTime?      @map("confirmed_date")
+  obs           String?
+  purchaseRef   String?        @map("purchase_ref")
+  reference     String?
+  state         SaleOrderState @default(draft)
+
+  saleUserId String @map("sale_user_id")
+  SaleUser   User   @relation(fields: [saleUserId], references: [id], onDelete: Restrict)
+
+  partnerId String  @map("partner_id")
+  Partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+
+  partnerShippingId String?  @map("partner_shipping_id")
+  PartnerShipping   Partner? @relation("PartnerShipping", fields: [partnerShippingId], references: [id], onDelete: Restrict)
+
+  warehouseId String    @map("warehouse_id")
+  Warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+
+  companyId String  @map("company_id")
+  Company   Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  shippingWayId String          @map("shipping_way_id")
+  ShippingWay   SaleShippingWay @relation(fields: [shippingWayId], references: [id], onDelete: Restrict)
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("sale_order")
+}
+
+enum SaleOrderState {
+  draft
+  sale
+  done
+  cancel
+}
+
+model SaleShippingWay {
+  id     String              @id @default(cuid())
+  name   String              @unique
+  type   SaleShippingWayType @default(counter)
+  active Boolean             @default(true)
+
+  SaleOrders SaleOrder[]
+
+  @@map("sale_shipping_way")
+}
+
+enum SaleShippingWayType {
+  counter // mostrador
+  delivery // local
+  courier // mensajería
 }

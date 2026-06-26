@@ -5,13 +5,17 @@ import { getPurchaseById } from "./actions/purchase.action";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Órdenes de compra",
+  title: "Compras",
 };
 
 const PurchaseListView = lazy(() => import("./views/PurchaseListView"));
 const PurchaseFormView = lazy(() => import("./views/PurchaseFormView"));
 
-async function PagePurchase({ searchParams }: { searchParams: Promise<{ [key: string]: string }> }) {
+async function PagePurchase({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string }>;
+}) {
   const { view_type: viewType, id, state } = await searchParams;
 
   const purchase = id && id !== "null" ? await getPurchaseById({ id }) : null;

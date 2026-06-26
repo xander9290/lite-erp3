@@ -27,6 +27,8 @@ function TopNavItems() {
             fieldsAccess.find((field) => field.fieldName === "saleQuotsMenu")
               ?.invisible
           }
+          href="/app/sale_order?view_type=list&id=null&state=draft"
+          as={Link}
         >
           Cotizaciones
         </NavDropdown.Item>
@@ -36,6 +38,8 @@ function TopNavItems() {
             fieldsAccess.find((field) => field.fieldName === "saleSalesMenu")
               ?.invisible
           }
+          href="/app/sale_order?view_type=list&id=null"
+          as={Link}
         >
           Órdenes
         </NavDropdown.Item>

@@ -42,7 +42,7 @@ function PurchaseListView({ state }: { state: string | null }) {
   return (
     <ListView model="purchaseOrder">
       <ListView.Header
-        title="Compras"
+        title={`${state === "draft" ? "Compras cotizaciones" : "Órdenes de compra"}`}
         formView="/app/purchase_order?view_type=form&id=null"
       />
       <ListView.Body>
