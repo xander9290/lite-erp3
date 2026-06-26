@@ -5,7 +5,6 @@ import { NumberField } from "./NumberField";
 import { TextField } from "./TextField";
 
 function FieldRenderer(props: FieldInputProps) {
-  console.log(props.type);
   switch (props.type) {
     case "number":
       return <NumberField {...props} />;
