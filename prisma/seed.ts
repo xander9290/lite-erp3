@@ -36,3 +36,80 @@ export async function main() {
 }
 
 main();
+
+// ejemplo para el model
+
+// const modelData: Prisma.ModelCreateInput[] = [
+//   {
+//     name: "product",
+//     label: "Producto",
+//     description: "Modelo para administrar productos",
+//     active: true,
+//     createdUid: "",
+
+//     ModelFields: {
+//       create: [
+//         {
+//           name: "name",
+//           label: "Nombre",
+//           description: "Nombre del producto",
+//           fieldType: "string",
+//           active: true,
+//           createdUid: "",
+//         },
+//         {
+//           name: "price",
+//           label: "Precio",
+//           description: "Precio de venta del producto",
+//           fieldType: "FLOAT",
+//           active: true,
+//           createdUid: "",
+//         },
+//         {
+//           name: "active",
+//           label: "Activo",
+//           description: "Indica si el producto está activo",
+//           fieldType: "BOOLEAN",
+//           active: true,
+//           createdUid: "",
+//         },
+//       ],
+//     },
+//   },
+//   {
+//     name: "partner",
+//     label: "Contacto",
+//     description: "Modelo para clientes y proveedores",
+//     active: true,
+//     createdUid: "",
+
+//     ModelFields: {
+//       create: [
+//         {
+//           name: "name",
+//           label: "Nombre",
+//           description: "Nombre del contacto",
+//           fieldType: "STRING",
+//           active: true,
+//           createdUid: "",
+//         },
+//         {
+//           name: "email",
+//           label: "Correo",
+//           description: "Correo electrónico del contacto",
+//           fieldType: "STRING",
+//           active: true,
+//           createdUid: "",
+//         },
+//         {
+//           name: "phone",
+//           label: "Teléfono",
+//           description: "Teléfono del contacto",
+//           fieldType: "STRING",
+//           active: true,
+//           createdUid: "",
+//         },
+//       ],
+//     },
+//   },
+// ];
