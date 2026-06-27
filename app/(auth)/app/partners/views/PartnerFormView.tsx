@@ -150,6 +150,34 @@ function PartnersFormView({
       onSubmit={onSubmit}
       methods={methods}
       id={id}
+      state={getValues().displayType}
+      formStates={[
+        {
+          name: "CUSTOMER",
+          label: "CLIENTE",
+          decoration: "primary",
+        },
+        {
+          name: "SUPPLIER",
+          label: "PROVEEDOR",
+          decoration: "info",
+        },
+        {
+          name: "INTERNAL",
+          label: "INTERNO",
+          decoration: "warning",
+        },
+        {
+          name: "CONTACT",
+          label: "CONTACTO",
+          decoration: "info",
+        },
+        {
+          name: "DELIVERY",
+          label: "ENTREGA",
+          decoration: "warning",
+        },
+      ]}
       actions={[
         {
           action: goToParent,
