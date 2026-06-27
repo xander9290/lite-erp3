@@ -1,6 +1,6 @@
 "use server";
 
-import type { Partner } from "@/generated/prisma/client";
+import type { Partner, PartnerDisplayType } from "@/generated/prisma/client";
 import { PartnerSchemaType } from "../schemas/partner.schema";
 import { ActionResponse } from "@/app/libs/definitions";
 import prisma from "@/app/libs/prisma";
@@ -14,11 +14,30 @@ export interface PartnerWithProps extends Partner {
     name: string;
   } | null;
   Tags: { id: string; name: string }[];
+  Children: {
+    id: string;
+    name: string;
+    mobile: string | null;
+    displayType: PartnerDisplayType;
+    completeAddress: string | null;
+  }[];
+  Parent: {
+    id: string;
+    name: string;
+    displayType: PartnerDisplayType;
+  } | null;
 }
 
-type PartnerActionProps = Omit<PartnerSchemaType, "createdAt" | "updatedAt" | "createdUid">;
+type PartnerActionProps = Omit<
+  PartnerSchemaType,
+  "createdAt" | "updatedAt" | "createdUid"
+>;
 
-export async function getPartnerById({ id }: { id: string | null }): Promise<PartnerWithProps | null> {
+export async function getPartnerById({
+  id,
+}: {
+  id: string | null;
+}): Promise<PartnerWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -34,6 +53,18 @@ export async function getPartnerById({ id }: { id: string | null }): Promise<Par
         Tags: {
           select: { id: true, name: true },
         },
+        Children: {
+          select: {
+            id: true,
+            name: true,
+            mobile: true,
+            completeAddress: true,
+            displayType: true,
+          },
+        },
+        Parent: {
+          select: { id: true, name: true, displayType: true },
+        },
       },
     });
 
@@ -44,13 +75,24 @@ export async function getPartnerById({ id }: { id: string | null }): Promise<Par
   }
 }
 
-export async function craetePartner({ data }: { data: PartnerActionProps }): Promise<ActionResponse<PartnerWithProps>> {
+export async function craetePartner({
+  data,
+}: {
+  data: PartnerActionProps;
+}): Promise<ActionResponse<PartnerWithProps>> {
   try {
     const { uid } = await sessionStore();
 
     const sanitizedPhone = sanitizePhoneNumber(data.phone);
     const sanitizedMobile = sanitizePhoneNumber(data.mobile);
-    const completeAddress = [data.street, data.houseNumber, data.zip, data.county, data.province, data.country]
+    const completeAddress = [
+      data.street,
+      data.houseNumber,
+      data.zip,
+      data.county,
+      data.province,
+      data.country,
+    ]
       .filter(Boolean) // Elimina valores falsy (null, undefined, "", 0, false)
       .join(", ");
 
@@ -73,6 +115,13 @@ export async function craetePartner({ data }: { data: PartnerActionProps }): Pro
         country: data.country,
         completeAddress,
         Tags: { connect: data.Tags.map((t) => ({ id: t })) },
+        ...(data.parentId?.id && {
+          Parent: {
+            connect: {
+              id: data.parentId.id,
+            },
+          },
+        }),
         vat: data.vat,
         ...(data.userId?.id && {
           UserManager: { connect: { id: data.userId?.id } },
@@ -88,6 +137,18 @@ export async function craetePartner({ data }: { data: PartnerActionProps }): Pro
         },
         Tags: {
           select: { id: true, name: true },
+        },
+        Children: {
+          select: {
+            id: true,
+            name: true,
+            mobile: true,
+            completeAddress: true,
+            displayType: true,
+          },
+        },
+        Parent: {
+          select: { id: true, name: true, displayType: true },
         },
       },
     });
@@ -113,13 +174,26 @@ export async function craetePartner({ data }: { data: PartnerActionProps }): Pro
   }
 }
 
-export async function updatePartner({ data, id }: { data: PartnerActionProps; id: string | null }): Promise<ActionResponse<PartnerWithProps>> {
+export async function updatePartner({
+  data,
+  id,
+}: {
+  data: PartnerActionProps;
+  id: string | null;
+}): Promise<ActionResponse<PartnerWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
 
     const sanitizedPhone = sanitizePhoneNumber(data.phone);
     const sanitizedMobile = sanitizePhoneNumber(data.mobile);
-    const completeAddress = [data.street, data.houseNumber, data.zip, data.county, data.province, data.country]
+    const completeAddress = [
+      data.street,
+      data.houseNumber,
+      data.zip,
+      data.county,
+      data.province,
+      data.country,
+    ]
       .filter(Boolean) // Elimina valores falsy (null, undefined, "", 0, false)
       .join(", ");
 
@@ -144,7 +218,12 @@ export async function updatePartner({ data, id }: { data: PartnerActionProps; id
         completeAddress: completeAddress.toString().replace(/,+$/, ""),
         vat: data.vat,
         Tags: { set: data.Tags.map((t) => ({ id: t })) },
-        UserManager: data.userId?.id ? { connect: { id: data.userId.id } } : { disconnect: true },
+        Parent: data.parentId?.id
+          ? { connect: { id: data.parentId.id } }
+          : { disconnect: true },
+        UserManager: data.userId?.id
+          ? { connect: { id: data.userId.id } }
+          : { disconnect: true },
       },
       include: {
         UserManager: {
@@ -155,6 +234,18 @@ export async function updatePartner({ data, id }: { data: PartnerActionProps; id
         },
         Tags: {
           select: { id: true, name: true },
+        },
+        Children: {
+          select: {
+            id: true,
+            name: true,
+            mobile: true,
+            completeAddress: true,
+            displayType: true,
+          },
+        },
+        Parent: {
+          select: { id: true, name: true, displayType: true },
         },
       },
     });
