@@ -39,6 +39,10 @@ model Partner {
   SaleOrderShippings SaleOrder[]        @relation("PartnerShipping")
   saleOrders         SaleOrder[]
 
+  parentId String?   @map("parent_id")
+  Parent   Partner?  @relation("PartnerParent", fields: [parentId], references: [id], onDelete: Cascade)
+  Children Partner[] @relation("PartnerParent")
+
   @@index([name])
   @@map("partners")
 }
@@ -673,6 +677,9 @@ model SaleOrder {
   purchaseRef   String?        @map("purchase_ref")
   reference     String?
   state         SaleOrderState @default(draft)
+  amountTax     Float          @default(0.0) @map("amount_tax")
+  subtotal      Float          @default(0.0)
+  total         Float          @default(0.0)
 
   saleUserId String @map("sale_user_id")
   SaleUser   User   @relation(fields: [saleUserId], references: [id], onDelete: Restrict)

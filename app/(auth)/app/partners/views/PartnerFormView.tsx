@@ -1,25 +1,54 @@
 "use client";
 
-import { craetePartner, PartnerWithProps, updatePartner } from "../actions/partner-actions";
+import {
+  craetePartner,
+  PartnerWithProps,
+  updatePartner,
+} from "../actions/partner-actions";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { partnerSchema, partnerSchemaDefault, PartnerSchemaType } from "../schemas/partner.schema";
+import {
+  partnerSchema,
+  partnerSchemaDefault,
+  PartnerSchemaType,
+} from "../schemas/partner.schema";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import { PartnerDisplayType } from "@/generated/prisma/enums";
-import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
-import { FieldBoolean, FieldEntry, FieldImage, FieldRelation, FieldTags } from "@/components/templates/fields";
+import {
+  FormView,
+  FormViewGroup,
+  FormViewStack,
+} from "@/components/templates/FormView";
+import {
+  FieldAction,
+  FieldBoolean,
+  FieldEntry,
+  FieldImage,
+  FieldRelation,
+  FieldSelect,
+  FieldTags,
+} from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
+import { Card, Col } from "react-bootstrap";
+import { WidgetBadgeStatus } from "@/components/widgets";
 
-function PartnersFormView({ display, partner, id }: { display: string; partner: PartnerWithProps | null; id: string | null }) {
+function PartnersFormView({
+  display,
+  partner,
+  id,
+}: {
+  display: string;
+  partner: PartnerWithProps | null;
+  id: string | null;
+}) {
   const methods = useForm<PartnerSchemaType>({
     resolver: zodResolver(partnerSchema),
     defaultValues: partnerSchemaDefault,
   });
 
-  const { reset } = methods;
+  const { reset, getValues } = methods;
 
   const originalValuesRef = useRef<PartnerSchemaType | null>(null);
   const router = useRouter();
@@ -27,13 +56,21 @@ function PartnersFormView({ display, partner, id }: { display: string; partner: 
   const { modalError } = useModals();
 
   const onSubmit: SubmitHandler<PartnerSchemaType> = async (data) => {
-    if (data.zip && isNaN(Number(data.zip))) return modalError("Código postal inválido");
+    if (data.zip && isNaN(Number(data.zip)))
+      return modalError("Código postal inválido");
+
+    if (data.displayType !== "CONTACT" && data.displayType !== "DELIVERY") {
+      if (data.displayType !== display) {
+        return modalError("Verifica el tipo de contacto");
+      }
+    }
+
     if (id && id === "null") {
-      const res = await craetePartner({
-        data: { ...data, displayType: display as PartnerDisplayType },
-      });
+      const res = await craetePartner({ data });
       if (!res.success) return modalError(res.message);
-      router.replace(`/app/partners?view_type=form&id=${res.data?.id}&display=${res.data?.displayType}`);
+      router.replace(
+        `/app/partners?view_type=form&id=${res.data?.id}&display=${res.data?.displayType}`,
+      );
       toast.success(res.message);
     } else {
       const res = await updatePartner({ id, data });
@@ -71,7 +108,7 @@ function PartnersFormView({ display, partner, id }: { display: string; partner: 
       province: partner.province,
       country: partner.country,
       active: partner.active,
-      displayType: display as PartnerDisplayType,
+      displayType: partner.displayType,
       vat: partner.vat,
       zip: String(partner.zip),
       userId: {
@@ -79,6 +116,17 @@ function PartnersFormView({ display, partner, id }: { display: string; partner: 
         name: partner.UserManager?.name || null,
       },
       Tags: partner.Tags.map((t) => t.id),
+      Children: partner.Children.map((p) => ({
+        id: p.id,
+        name: p.name,
+        mobile: p.mobile,
+        displayType: p.displayType,
+        completeAddress: p.completeAddress,
+      })),
+      parentId: {
+        id: partner.Parent?.id,
+        name: partner.Parent?.name,
+      },
       createdAt: partner.createdAt,
       updatedAt: partner.updatedAt,
       createdUid: partner.createdUid,
@@ -88,8 +136,36 @@ function PartnersFormView({ display, partner, id }: { display: string; partner: 
     originalValuesRef.current = values;
   }, [reset, display, partner]);
 
+  const goToParent = () => {
+    return router.push(
+      `/app/partners?view_type=form&display=${partner?.Parent?.displayType}&id=${partner?.Parent?.id}`,
+    );
+  };
+
   return (
-    <FormView cleanUrl={`/app/partners?view_type=form&display=${display}&id=null`} reverse={handleReverse} auditLog="partners" onSubmit={onSubmit} methods={methods} id={id}>
+    <FormView
+      cleanUrl={`/app/partners?view_type=form&display=${display}&id=null`}
+      reverse={handleReverse}
+      auditLog="partners"
+      onSubmit={onSubmit}
+      methods={methods}
+      id={id}
+      actions={[
+        {
+          action: goToParent,
+          fieldName: "actionGoToParent",
+          string: (
+            <>
+              <i className="bi bi-person-lines-fill me-1"></i>
+              <span>Relacionado</span>
+            </>
+          ),
+          invisible: ["CUSTOMER", "INTERNAL", "SUPPLIER"].includes(
+            getValues().displayType,
+          ),
+        },
+      ]}
+    >
       <FormViewGroup>
         <FieldImage folder="partners" name="imageUrl" />
         <FieldEntry name="name" label="Nombre" />
@@ -118,11 +194,91 @@ function PartnersFormView({ display, partner, id }: { display: string; partner: 
         <FieldTags name="Tags" label="Etiquetas" />
         <FieldBoolean name="active" label="Activo" />
       </FormViewGroup>
-      <Notebook defaultActiveKey="salePurchase">
+      <Notebook defaultActiveKey="children">
+        <Page eventKey="children" title="Contactos y direcciones">
+          <PageSheet name="children">
+            {getValues().Children.map((chi) => (
+              <Col md="4" className="py-1" key={chi.id}>
+                <Card
+                  className="shadow-sm hover-shadow transition"
+                  style={{ fontSize: "0.9em", height: "76.3%" }}
+                >
+                  <Card.Body>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <Card.Title className="fs-6 fw-semibold">
+                        {chi.name}
+                      </Card.Title>
+                      <WidgetBadgeStatus
+                        value={chi.displayType}
+                        options={{
+                          CONTACT: { label: "Contacto", color: "info" },
+                          DELIVERY: { label: "Entrega", color: "warning" },
+                        }}
+                      />
+                    </div>
+                    <Card.Text>
+                      <>
+                        <i className="bi bi-geo-alt me-1"></i>
+                        {chi.completeAddress}
+                      </>
+                    </Card.Text>
+                    {chi.mobile && (
+                      <div className="small text-muted">
+                        <i className="bi bi-telephone me-1"></i>
+                        {chi.mobile}
+                      </div>
+                    )}
+                    <div className="text-end">
+                      <FieldAction
+                        action={() =>
+                          router.push(
+                            `/app/partners?view_type=form&display=${chi.displayType}&id=${chi.id}`,
+                          )
+                        }
+                        label="Ver más"
+                        name="editChild"
+                        size="sm"
+                        variant="link"
+                      />
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </PageSheet>
+        </Page>
         <Page eventKey="salePurchase" title="Cartera">
           <PageSheet name="salePurchase">
             <FormViewGroup>
-              <FieldRelation name="userId" model="user" label="Responsable" domain={[["name", "!=", "bot"]]} />
+              <FieldRelation
+                name="userId"
+                model="user"
+                label="Responsable"
+                domain={[["name", "!=", "bot"]]}
+              />
+            </FormViewGroup>
+          </PageSheet>
+        </Page>
+        <Page eventKey="otherInfo" title="Otra información">
+          <PageSheet name="otherInfo">
+            <FormViewGroup>
+              <FieldSelect
+                name="displayType"
+                label="Tipo"
+                options={[
+                  { label: "Cliente", value: "CUSTOMER" },
+                  { label: "Proveedor", value: "SUPPLIER" },
+                  { label: "Interno", value: "INTERNAL" },
+                  { label: "Contacto", value: "CONTACT" },
+                  { label: "Entrega", value: "DELIVERY" },
+                ]}
+              />
+              <FieldRelation
+                name="parentId"
+                label="Relacionado"
+                model="partner"
+                domain={[["displayType", "in", ["CUSTOMER"]]]}
+              />
             </FormViewGroup>
           </PageSheet>
         </Page>

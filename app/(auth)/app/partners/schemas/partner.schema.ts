@@ -25,6 +25,21 @@ export const partnerSchema = z.object({
     })
     .nullable(),
   Tags: z.array(z.string()),
+  Children: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      mobile: z.string().nullable(),
+      displayType: z.enum(PartnerDisplayType),
+      completeAddress: z.string().nullable(),
+    }),
+  ),
+  parentId: z
+    .object({
+      id: z.string().optional(),
+      name: z.string().optional(),
+    })
+    .nullable(),
   createdUid: z.string().nullable(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
@@ -50,7 +65,9 @@ export const partnerSchemaDefault: PartnerSchemaType = {
   displayType: "INTERNAL",
   active: true,
   userId: { id: null, name: null },
+  parentId: { id: "", name: "" },
   Tags: [],
+  Children: [],
   createdUid: null,
   createdAt: null,
   updatedAt: null,
