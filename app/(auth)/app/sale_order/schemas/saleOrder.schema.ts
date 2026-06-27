@@ -37,10 +37,13 @@ export const saleOrderSchema = z.object({
 
 export type SaleOrderSchemaType = z.infer<typeof saleOrderSchema>;
 
+const now = new Date();
+const getDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
 export const saleOrderSchemaDefault: SaleOrderSchemaType = {
   name: "",
-  orderDate: new Date(),
-  confirmedDate: new Date(),
+  orderDate: getDate,
+  confirmedDate: getDate,
   obs: "",
   purchaseRef: "",
   reference: "",

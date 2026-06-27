@@ -2,7 +2,6 @@
 
 import { SaleOrder } from "@/generated/prisma/client";
 import { SaleOrderSchemaType } from "../schemas/saleOrder.schema";
-import id from "zod/v4/locales/id.cjs";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
 import { sessionStore } from "@/app/libs/sessionStore";
@@ -18,11 +17,7 @@ export interface SaleOrderWithProps extends SaleOrder {
   Company: { id: string; name: string };
 }
 
-export async function getSaleOrderById({
-  id,
-}: {
-  id: string | null;
-}): Promise<SaleOrderWithProps | null> {
+export async function getSaleOrderById({ id }: { id: string | null }): Promise<SaleOrderWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -63,20 +58,13 @@ export async function getSaleOrderById({
   }
 }
 
-export async function actionSaleOrder({
-  data,
-}: {
-  data: SaleOrderSchemaType;
-}): Promise<ActionResponse<SaleOrderWithProps>> {
+export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): Promise<ActionResponse<SaleOrderWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
     let newName = "";
     if (!data.name) {
-      newName = await getNextValue(
-        `S/${company.code}/`,
-        `${company.code}-saleOrder`,
-      );
+      newName = await getNextValue(`S/${company.code}/`, `${company.code}-saleOrder`);
     }
 
     const saleOrder = await prisma.saleOrder.upsert({

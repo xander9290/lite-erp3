@@ -2,11 +2,7 @@
 import { Col, Container, Form, Row } from "react-bootstrap";
 import { useForm, SubmitHandler, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  userLoginSchema,
-  userLoginSchemaDefault,
-  UserLoginSchemaType,
-} from "@/schemas/userlogin.schema";
+import { userLoginSchema, userLoginSchemaDefault, UserLoginSchemaType } from "@/schemas/userlogin.schema";
 import { userLogin } from "@/app/(auth)/app/actions/login-actions";
 import toast from "react-hot-toast";
 import { redirect } from "next/navigation";
@@ -41,29 +37,13 @@ function ViewFormLogin() {
           <Row className="justify-content-center">
             <Col xs="11" sm="11" md="4" lg="3" xl="4" xxl="3">
               <FormProvider {...methods}>
-                <Form
-                  className="card shadow-sm mt-5"
-                  noValidate
-                  onSubmit={handleSubmit(onSubmit)}
-                >
+                <Form className="card shadow mt-5 bg-body-tertiary" noValidate onSubmit={handleSubmit(onSubmit)}>
                   <fieldset className="card-body">
-                    <FieldEntry
-                      name="login"
-                      label="Usuario"
-                      className="text-center"
-                      autoFocus
-                    />
-                    <FieldEntry
-                      name="password"
-                      label="Contraseña"
-                      type="password"
-                    />
+                    <h6 className="card-title">Inicio de sesión</h6>
+                    <FieldEntry name="login" label="Usuario" className="text-center" autoFocus />
+                    <FieldEntry name="password" label="Contraseña" type="password" />
                     <Form.Group className="d-grid">
-                      <FieldSubmit
-                        name="validate"
-                        label="Entrar"
-                        feedback="Validando"
-                      />
+                      <FieldSubmit name="validate" label="Entrar" feedback="Validando" />
                     </Form.Group>
                   </fieldset>
                 </Form>

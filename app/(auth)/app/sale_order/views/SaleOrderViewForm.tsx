@@ -2,18 +2,11 @@
 
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  saleOrderSchema,
-  saleOrderSchemaDefault,
-  SaleOrderSchemaType,
-} from "../schemas/saleOrder.schema";
+import { saleOrderSchema, saleOrderSchemaDefault, SaleOrderSchemaType } from "../schemas/saleOrder.schema";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import {
-  actionSaleOrder,
-  SaleOrderWithProps,
-} from "../actions/saleOrder.action";
+import { actionSaleOrder, SaleOrderWithProps } from "../actions/saleOrder.action";
 import { FormView, FormViewGroup } from "@/components/templates/FormView";
 import { FieldEntry, FieldRelation } from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
@@ -21,13 +14,7 @@ import { useAuth } from "@/hooks/sessionStore";
 import { getCompanyById } from "../../companies/actions/companies-actions";
 import { toast } from "react-hot-toast";
 
-function SaleOrderViewForm({
-  saleOrder,
-  id,
-}: {
-  saleOrder: SaleOrderWithProps | null;
-  id: string | null;
-}) {
+function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | null; id: string | null }) {
   const { companyId } = useAuth();
 
   const methods = useForm<SaleOrderSchemaType>({
@@ -110,9 +97,7 @@ function SaleOrderViewForm({
     const setSaleWarehouse = async () => {
       const getCompany = await getCompanyById({ id: companyId });
       if (getCompany) {
-        const getSalesWh = getCompany.Warehouses.filter(
-          (wh) => wh.type === "SALES",
-        );
+        const getSalesWh = getCompany.Warehouses.filter((wh) => wh.type === "SALES");
 
         setValue("companyId", { id: getCompany.id, name: getCompany.name });
 
@@ -145,38 +130,22 @@ function SaleOrderViewForm({
       state={getValues().state}
     >
       <FormViewGroup>
-        <FieldRelation
-          model="partner"
-          name="partnerId"
-          label="Cliente"
-          domain={[["displayType", "=", "CUSTOMER"]]}
-        />
+        <FieldRelation model="partner" name="partnerId" label="Cliente" domain={[["displayType", "=", "CUSTOMER"]]} />
         <FieldRelation
           model="user"
           name="saleUserId"
           label="Vendedor"
-          domain={[["active", "=", true]]}
+          domain={[
+            ["active", "=", true],
+            ["Partner.Tags.name", "some", "SALE"],
+          ]}
         />
-        <FieldRelation
-          model="SaleShippingWay"
-          name="shippingWayId"
-          label="Forma de envío"
-          domain={[["active", "=", true]]}
-        />
+        <FieldRelation model="SaleShippingWay" name="shippingWayId" label="Forma de envío" domain={[["active", "=", true]]} />
         <FieldEntry name="reference" label="Referencia" />
       </FormViewGroup>
       <FormViewGroup>
-        <FieldRelation
-          model="partner"
-          name="partnerShippingId"
-          label="Dirección de entrega"
-        />
-        <FieldEntry
-          name="orderDate"
-          label="Fecha de la orden"
-          type="date"
-          readonly
-        />
+        <FieldRelation model="partner" name="partnerShippingId" label="Dirección de entrega" />
+        <FieldEntry name="orderDate" label="Fecha de la orden" type="date" readonly />
         <FieldEntry name="obs" label="Observaciones de entrega" as="textarea" />
         <FieldEntry name="purchaseRef" label="Orden de compra" />
       </FormViewGroup>
@@ -198,12 +167,7 @@ function SaleOrderViewForm({
                   ["companyId", "=", companyId],
                 ]}
               />
-              <FieldRelation
-                model="company"
-                name="companyId"
-                label="Empresa"
-                readonly
-              />
+              <FieldRelation model="company" name="companyId" label="Empresa" readonly />
             </FormViewGroup>
           </PageSheet>
         </Page>
