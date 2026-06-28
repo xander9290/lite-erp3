@@ -31,6 +31,10 @@ export interface PartnerWithProps extends Partner {
     name: string;
     displayType: PartnerDisplayType;
   } | null;
+  PaymentTerm: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 type PartnerActionProps = Omit<PartnerSchemaType, "createdAt" | "updatedAt" | "createdUid">;
@@ -67,6 +71,9 @@ export async function getPartnerById({ id }: { id: string | null }): Promise<Par
         },
         Parent: {
           select: { id: true, name: true, displayType: true },
+        },
+        PaymentTerm: {
+          select: { id: true, name: true },
         },
       },
     });
@@ -107,6 +114,14 @@ export async function craetePartner({ data }: { data: PartnerActionProps }): Pro
         country: data.country,
         completeAddress,
         Tags: { connect: data.Tags.map((t) => ({ id: t })) },
+        ...(data.paymentTermId?.id && {
+          PaymentTerm: {
+            connect: {
+              id: data.paymentTermId?.id,
+            },
+          },
+        }),
+        productPricelist: data.productPricelist,
         Children: {
           createMany: {
             data: data.Children.map((ch) => ({
@@ -164,6 +179,9 @@ export async function craetePartner({ data }: { data: PartnerActionProps }): Pro
         },
         Parent: {
           select: { id: true, name: true, displayType: true },
+        },
+        PaymentTerm: {
+          select: { id: true, name: true },
         },
       },
     });
@@ -223,6 +241,8 @@ export async function updatePartner({ data, id }: { data: PartnerActionProps; id
         vat: data.vat,
         Tags: { set: data.Tags.map((t) => ({ id: t })) },
         UserManager: data.userId?.id ? { connect: { id: data.userId.id } } : { disconnect: true },
+        PaymentTerm: data.paymentTermId?.id ? { connect: { id: data.paymentTermId.id } } : { disconnect: true },
+        productPricelist: data.productPricelist,
         Children: {
           deleteMany: {
             id: {
@@ -277,6 +297,9 @@ export async function updatePartner({ data, id }: { data: PartnerActionProps; id
         },
         Parent: {
           select: { id: true, name: true, displayType: true },
+        },
+        PaymentTerm: {
+          select: { id: true, name: true },
         },
       },
     });

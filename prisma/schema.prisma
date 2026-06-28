@@ -8,37 +8,40 @@ datasource db {
 }
 
 model Partner {
-  id                 String             @id @default(cuid())
+  id                 String                @id @default(cuid())
   name               String
   email              String?
-  imageUrl           String?            @default("/images/avatar_default.svg")
+  imageUrl           String?               @default("/images/avatar_default.svg")
   phone              String?
   street             String?
-  houseNumber        String?            @map("house_number")
+  houseNumber        String?               @map("house_number")
   streets            String?
   town               String?
   zip                Int?
   county             String?
   province           String?
   country            String?
-  completeAddress    String?            @map("complete_address")
+  completeAddress    String?               @map("complete_address")
   vat                String?
-  displayType        PartnerDisplayType @default(INTERNAL) @map("display_type")
-  active             Boolean            @default(true)
-  createdUid         String             @map("created_uid")
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @updatedAt @map("updated_at")
-  userId             String?            @map("user_id")
+  displayType        PartnerDisplayType    @default(INTERNAL) @map("display_type")
+  active             Boolean               @default(true)
+  createdUid         String                @map("created_uid")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
+  userId             String?               @map("user_id")
   mobile             String?
-  Company            Company?           @relation("PartnerCompanyRel")
-  UserManager        User?              @relation("PartnerManagerRel", fields: [userId], references: [id], onDelete: Cascade)
-  Products           ProductTemplate[]  @relation("ProductSupplierRel")
+  Company            Company?              @relation("PartnerCompanyRel")
+  UserManager        User?                 @relation("PartnerManagerRel", fields: [userId], references: [id], onDelete: Cascade)
+  Products           ProductTemplate[]     @relation("ProductSupplierRel")
   PurchaseOrders     PurchaseOrder[]
-  User               User?              @relation("PartnerUserRelated")
-  Tags               Tag[]              @relation("PartnerTagsRelation")
-  SaleOrderShippings SaleOrder[]        @relation("PartnerShipping")
+  User               User?                 @relation("PartnerUserRelated")
+  Tags               Tag[]                 @relation("PartnerTagsRelation")
+  SaleOrderShippings SaleOrder[]           @relation("PartnerShipping")
   saleOrders         SaleOrder[]
   obs                String?
+  paymentTermId      String?               @map("payment_term_id")
+  PaymentTerm        InvoicingPaymentTerm? @relation(fields: [paymentTermId], references: [id], onDelete: Restrict)
+  productPricelist   ProductPricelistItem? @map("product_pricelist")
 
   parentId String?   @map("parent_id")
   Parent   Partner?  @relation("PartnerParent", fields: [parentId], references: [id], onDelete: Cascade)
@@ -316,6 +319,14 @@ model ProductTemplate {
   TaxPurchase           InvoicingTax?          @relation("PTPurchaseTax", fields: [taxPurchaseId], references: [id], onDelete: Restrict)
 
   @@map("product_template")
+}
+
+enum ProductPricelistItem {
+  price1
+  price2
+  price3
+  price4
+  price5
 }
 
 model ProductCategory {
@@ -614,6 +625,7 @@ model InvoicingPaymentTerm {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   PurchaseOrders PurchaseOrder[]
+  Partners       Partner[]
 
   @@map("invoicing_payment_term")
 }

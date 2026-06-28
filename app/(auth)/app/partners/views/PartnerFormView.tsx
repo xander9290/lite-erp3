@@ -109,6 +109,11 @@ function PartnersFormView({ display, partner, id }: { display: string; partner: 
         id: partner.Parent?.id,
         name: partner.Parent?.name,
       },
+      paymentTermId: {
+        id: partner.PaymentTerm?.id,
+        name: partner.PaymentTerm?.name,
+      },
+      productPricelist: partner.productPricelist,
       createdAt: partner.createdAt,
       updatedAt: partner.updatedAt,
       createdUid: partner.createdUid,
@@ -217,6 +222,14 @@ function PartnersFormView({ display, partner, id }: { display: string; partner: 
                 {getValues().Children.map((chi, index) => (
                   <Col md="4" key={chi.id}>
                     <Card className="shadow-sm hover-shadow transition" style={{ fontSize: "0.9em", height: "100%" }}>
+                      <Card.Header>
+                        <div className="d-flex justify-content-between">
+                          <FieldAction size="sm" variant="link" action={() => remove(index)} name="removeChild" label="" icon={<i className="bi bi-trash"></i>} />
+                          {chi.id && (
+                            <FieldAction action={() => router.push(`/app/partners?view_type=form&display=${chi.displayType}&id=${chi.id}`)} label="Ver más" name="editChild" size="sm" variant="link" />
+                          )}
+                        </div>
+                      </Card.Header>
                       <Card.Body>
                         <div className="d-flex justify-content-between align-items-center">
                           <Card.Title className="fs-6 fw-semibold">{chi.name}</Card.Title>
@@ -241,24 +254,28 @@ function PartnersFormView({ display, partner, id }: { display: string; partner: 
                           </div>
                         )}
                       </Card.Body>
-                      <Card.Footer>
-                        <div className="d-flex justify-content-between">
-                          <FieldAction size="sm" variant="link" action={() => remove(index)} name="removeChild" label="" icon={<i className="bi bi-trash"></i>} />
-                          {chi.id && (
-                            <FieldAction action={() => router.push(`/app/partners?view_type=form&display=${chi.displayType}&id=${chi.id}`)} label="Ver más" name="editChild" size="sm" variant="link" />
-                          )}
-                        </div>
-                      </Card.Footer>
                     </Card>
                   </Col>
                 ))}
               </Row>
             </Container>
           </Page>
-          <Page eventKey="salePurchase" title="Cartera">
+          <Page eventKey="salePurchase" title="Venta y compra">
             <PageSheet name="salePurchase">
               <FormViewGroup>
-                <FieldRelation name="userId" model="user" label="Responsable" domain={[["name", "!=", "bot"]]} />
+                <FieldRelation name="userId" model="user" label="Agente" domain={[["name", "!=", "bot"]]} />
+                <FieldRelation name="paymentTermId" label="Términos de pago" model="invoicingPaymentTerm" />
+                <FieldSelect
+                  name="productPricelist"
+                  label="Lista de precio"
+                  options={[
+                    { value: "price1", label: "Precio 1" },
+                    { value: "price2", label: "Precio 2" },
+                    { value: "price3", label: "Precio 3" },
+                    { value: "price4", label: "Precio 4" },
+                    { value: "price5", label: "Precio 5" },
+                  ]}
+                />
               </FormViewGroup>
             </PageSheet>
           </Page>

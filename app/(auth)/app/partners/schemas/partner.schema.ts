@@ -1,4 +1,4 @@
-import { PartnerDisplayType } from "@/generated/prisma/enums";
+import { PartnerDisplayType, ProductPricelistItem } from "@/generated/prisma/enums";
 import { z } from "zod";
 
 export const partnerChildrenSchema = z.object({
@@ -45,6 +45,13 @@ export const partnerSchema = z.object({
       name: z.string().optional(),
     })
     .nullable(),
+  paymentTermId: z
+    .object({
+      id: z.string().optional(),
+      name: z.string().optional(),
+    })
+    .nullable(),
+  productPricelist: z.enum(ProductPricelistItem).nullable(),
   createdUid: z.string().nullable(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
@@ -74,6 +81,8 @@ export const partnerSchemaDefault: PartnerSchemaType = {
   parentId: { id: "", name: "" },
   Tags: [],
   Children: [],
+  paymentTermId: { id: "", name: "" },
+  productPricelist: null,
   createdUid: null,
   createdAt: null,
   updatedAt: null,
