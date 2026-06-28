@@ -107,6 +107,24 @@ export async function craetePartner({ data }: { data: PartnerActionProps }): Pro
         country: data.country,
         completeAddress,
         Tags: { connect: data.Tags.map((t) => ({ id: t })) },
+        Children: {
+          createMany: {
+            data: data.Children.map((ch) => ({
+              name: ch.name,
+              street: ch.street,
+              mobile: sanitizePhoneNumber(ch.mobile).internationalNumber,
+              phone: sanitizePhoneNumber(ch.phone).internationalNumber,
+              houseNumber: ch.houseNumber,
+              displayType: ch.displayType,
+              obs: ch.obs,
+              town: ch.town,
+              completeAddress: [ch.street, ch.houseNumber, ch.town]
+                .filter(Boolean) // Elimina valores falsy (null, undefined, "", 0, false)
+                .join(", "),
+              createdUid: uid!,
+            })),
+          },
+        },
         ...(data.parentId?.id && {
           Parent: {
             connect: {
