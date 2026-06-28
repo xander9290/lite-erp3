@@ -1,6 +1,19 @@
 import { PartnerDisplayType } from "@/generated/prisma/enums";
 import { z } from "zod";
 
+export const partnerChildrenSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  mobile: z.string().min(1, "Teléfono móvil es requerido"),
+  phone: z.string().nullable(),
+  street: z.string().min(1, "Calle es requerido"),
+  houseNumber: z.string().min(1, "Número exterior es requerido"),
+  town: z.string().nullable(),
+  obs: z.string().nullable(),
+  displayType: z.enum(PartnerDisplayType),
+  completeAddress: z.string().nullable(),
+});
+
 export const partnerSchema = z.object({
   name: z.string().min(1, "Nombre es requerido"),
   email: z.email().nullable(),
@@ -25,15 +38,7 @@ export const partnerSchema = z.object({
     })
     .nullable(),
   Tags: z.array(z.string()),
-  Children: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      mobile: z.string().nullable(),
-      displayType: z.enum(PartnerDisplayType),
-      completeAddress: z.string().nullable(),
-    }),
-  ),
+  Children: z.array(partnerChildrenSchema),
   parentId: z
     .object({
       id: z.string().optional(),
@@ -46,6 +51,7 @@ export const partnerSchema = z.object({
 });
 
 export type PartnerSchemaType = z.infer<typeof partnerSchema>;
+export type PartnerChildrenType = z.infer<typeof partnerChildrenSchema>;
 
 export const partnerSchemaDefault: PartnerSchemaType = {
   name: "",
@@ -71,4 +77,16 @@ export const partnerSchemaDefault: PartnerSchemaType = {
   createdUid: null,
   createdAt: null,
   updatedAt: null,
+};
+
+export const partnerChildrenSchemaDefault: PartnerChildrenType = {
+  name: "",
+  street: "",
+  phone: null,
+  mobile: "",
+  houseNumber: "",
+  town: null,
+  displayType: "CONTACT",
+  completeAddress: null,
+  obs: "",
 };

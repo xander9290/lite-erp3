@@ -17,8 +17,13 @@ export interface PartnerWithProps extends Partner {
   Children: {
     id: string;
     name: string;
+    phone: string | null;
+    street: string | null;
     mobile: string | null;
     displayType: PartnerDisplayType;
+    houseNumber: string | null;
+    obs: string | null;
+    town: string | null;
     completeAddress: string | null;
   }[];
   Parent: {
@@ -28,16 +33,9 @@ export interface PartnerWithProps extends Partner {
   } | null;
 }
 
-type PartnerActionProps = Omit<
-  PartnerSchemaType,
-  "createdAt" | "updatedAt" | "createdUid"
->;
+type PartnerActionProps = Omit<PartnerSchemaType, "createdAt" | "updatedAt" | "createdUid">;
 
-export async function getPartnerById({
-  id,
-}: {
-  id: string | null;
-}): Promise<PartnerWithProps | null> {
+export async function getPartnerById({ id }: { id: string | null }): Promise<PartnerWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -58,8 +56,13 @@ export async function getPartnerById({
             id: true,
             name: true,
             mobile: true,
+            phone: true,
+            street: true,
+            houseNumber: true,
             completeAddress: true,
             displayType: true,
+            obs: true,
+            town: true,
           },
         },
         Parent: {
@@ -75,24 +78,13 @@ export async function getPartnerById({
   }
 }
 
-export async function craetePartner({
-  data,
-}: {
-  data: PartnerActionProps;
-}): Promise<ActionResponse<PartnerWithProps>> {
+export async function craetePartner({ data }: { data: PartnerActionProps }): Promise<ActionResponse<PartnerWithProps>> {
   try {
     const { uid } = await sessionStore();
 
     const sanitizedPhone = sanitizePhoneNumber(data.phone);
     const sanitizedMobile = sanitizePhoneNumber(data.mobile);
-    const completeAddress = [
-      data.street,
-      data.houseNumber,
-      data.zip,
-      data.county,
-      data.province,
-      data.country,
-    ]
+    const completeAddress = [data.street, data.houseNumber, data.zip, data.county, data.province, data.country]
       .filter(Boolean) // Elimina valores falsy (null, undefined, "", 0, false)
       .join(", ");
 
@@ -143,8 +135,13 @@ export async function craetePartner({
             id: true,
             name: true,
             mobile: true,
+            phone: true,
+            street: true,
+            houseNumber: true,
             completeAddress: true,
             displayType: true,
+            obs: true,
+            town: true,
           },
         },
         Parent: {
@@ -174,26 +171,15 @@ export async function craetePartner({
   }
 }
 
-export async function updatePartner({
-  data,
-  id,
-}: {
-  data: PartnerActionProps;
-  id: string | null;
-}): Promise<ActionResponse<PartnerWithProps>> {
+export async function updatePartner({ data, id }: { data: PartnerActionProps; id: string | null }): Promise<ActionResponse<PartnerWithProps>> {
   try {
     if (!id) throw new Error("ID not defined");
 
+    const { uid } = await sessionStore();
+
     const sanitizedPhone = sanitizePhoneNumber(data.phone);
     const sanitizedMobile = sanitizePhoneNumber(data.mobile);
-    const completeAddress = [
-      data.street,
-      data.houseNumber,
-      data.zip,
-      data.county,
-      data.province,
-      data.country,
-    ]
+    const completeAddress = [data.street, data.houseNumber, data.zip, data.county, data.province, data.country]
       .filter(Boolean) // Elimina valores falsy (null, undefined, "", 0, false)
       .join(", ");
 
@@ -218,12 +204,34 @@ export async function updatePartner({
         completeAddress: completeAddress.toString().replace(/,+$/, ""),
         vat: data.vat,
         Tags: { set: data.Tags.map((t) => ({ id: t })) },
-        Parent: data.parentId?.id
-          ? { connect: { id: data.parentId.id } }
-          : { disconnect: true },
-        UserManager: data.userId?.id
-          ? { connect: { id: data.userId.id } }
-          : { disconnect: true },
+        UserManager: data.userId?.id ? { connect: { id: data.userId.id } } : { disconnect: true },
+        Children: {
+          deleteMany: {
+            id: {
+              notIn: data.Children.filter((l) => l.id).map((l) => l.id!),
+            },
+          },
+          upsert: data.Children.map((ch) => ({
+            where: {
+              id: ch.id ?? "",
+            },
+            update: {},
+            create: {
+              name: ch.name,
+              street: ch.street,
+              mobile: sanitizePhoneNumber(ch.mobile).internationalNumber,
+              phone: sanitizePhoneNumber(ch.phone).internationalNumber,
+              houseNumber: ch.houseNumber,
+              displayType: ch.displayType,
+              obs: ch.obs,
+              town: ch.town,
+              completeAddress: [ch.street, ch.houseNumber, ch.town]
+                .filter(Boolean) // Elimina valores falsy (null, undefined, "", 0, false)
+                .join(", "),
+              createdUid: uid!,
+            },
+          })),
+        },
       },
       include: {
         UserManager: {
@@ -240,8 +248,13 @@ export async function updatePartner({
             id: true,
             name: true,
             mobile: true,
+            phone: true,
+            street: true,
+            houseNumber: true,
             completeAddress: true,
             displayType: true,
+            obs: true,
+            town: true,
           },
         },
         Parent: {

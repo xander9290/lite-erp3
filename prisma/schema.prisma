@@ -38,6 +38,7 @@ model Partner {
   Tags               Tag[]              @relation("PartnerTagsRelation")
   SaleOrderShippings SaleOrder[]        @relation("PartnerShipping")
   saleOrders         SaleOrder[]
+  obs                String?
 
   parentId String?   @map("parent_id")
   Parent   Partner?  @relation("PartnerParent", fields: [parentId], references: [id], onDelete: Cascade)

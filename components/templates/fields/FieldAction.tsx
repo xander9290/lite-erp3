@@ -14,6 +14,7 @@ export function FieldAction({
   variant = "primary",
   size,
   icon,
+  className,
 }: {
   name: string;
   label: string;
@@ -24,6 +25,7 @@ export function FieldAction({
   action: () => void;
   size?: "sm" | "lg";
   icon?: React.ReactNode;
+  className?: string;
 }) {
   const access = useAccess({ fieldName: name });
 
@@ -32,15 +34,7 @@ export function FieldAction({
   const isDisabled = disabled || access?.readonly;
 
   return (
-    <Button
-      type="button"
-      title={name}
-      disabled={isDisabled}
-      className="fw-semibold"
-      onClick={action}
-      variant={variant}
-      size={size}
-    >
+    <Button type="button" title={name} disabled={isDisabled} className={`fw-semibold ${className}`} onClick={action} variant={variant} size={size}>
       {icon && <span className="me-1">{icon}</span>}
       <span>{label}</span>
     </Button>
