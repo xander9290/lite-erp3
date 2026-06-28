@@ -140,21 +140,22 @@ export function FieldRelation<T extends Many2OneOption>({
     if (!inputRef.current) return;
 
     const rect = inputRef.current.getBoundingClientRect();
+
     const viewportHeight = window.innerHeight;
-    const DROPDOWN_HEIGHT = 220;
+
+    const MENU_MAX_HEIGHT = 85;
+    const MIN_SPACE_BELOW = 100;
     const SPACING = 4;
 
     const spaceBelow = viewportHeight - rect.bottom;
     const spaceAbove = rect.top;
 
-    const openUpwards = spaceBelow < DROPDOWN_HEIGHT && spaceAbove > spaceBelow;
+    const openUpwards = spaceBelow < MIN_SPACE_BELOW && spaceAbove > spaceBelow;
 
-    const top = openUpwards ? rect.top - DROPDOWN_HEIGHT - SPACING : rect.bottom + SPACING;
-
-    const maxHeight = openUpwards ? rect.top - 10 : viewportHeight - rect.bottom - 10;
+    const maxHeight = Math.min(openUpwards ? spaceAbove - 8 : spaceBelow - 8, MENU_MAX_HEIGHT);
 
     setMenuPosition({
-      top,
+      top: openUpwards ? rect.top - maxHeight - SPACING : rect.bottom + SPACING,
       left: rect.left,
       width: rect.width,
       maxHeight,
@@ -341,7 +342,7 @@ export function FieldRelation<T extends Many2OneOption>({
         }}
       >
         <Dropdown show className="w-100">
-          <Dropdown.Menu show className="p-0 mt-0" style={{ maxHeight: 200, overflowY: "auto" }}>
+          <Dropdown.Menu show className="p-0 mt-0" style={{ maxHeight: menuPosition.maxHeight, overflowY: "auto" }}>
             {options.length === 0 ? (
               <Dropdown.Item disabled className="text-muted">
                 <small>No hay resultados</small>
