@@ -42,7 +42,7 @@ function Header({ children, formView, title, actions }: HeaderProps) {
               )}
               <Card.Title className="m-0 p-0">{title}</Card.Title>
               {actions && (
-                <DropdownButton variant="none" title={<i className="bi bi-gear-fill"></i>} as={ButtonGroup} size="sm">
+                <DropdownButton variant="dark" title={<i className="bi bi-gear-fill"></i>} as={ButtonGroup} size="sm">
                   {actions.map((action, index) => {
                     return (
                       <Dropdown.Item key={`action-list-${index}`} onClick={() => action.action()} eventKey={index} title={action.name}>
