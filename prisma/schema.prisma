@@ -626,6 +626,7 @@ model InvoicingPaymentTerm {
 
   PurchaseOrders PurchaseOrder[]
   Partners       Partner[]
+  saleOrders     SaleOrder[]
 
   @@map("invoicing_payment_term")
 }
@@ -711,6 +712,9 @@ model SaleOrder {
 
   shippingWayId String          @map("shipping_way_id")
   ShippingWay   SaleShippingWay @relation(fields: [shippingWayId], references: [id], onDelete: Restrict)
+
+  paymentTermId String               @map("payment_term_id")
+  PaymentTerm   InvoicingPaymentTerm @relation(fields: [paymentTermId], references: [id], onDelete: Restrict)
 
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")

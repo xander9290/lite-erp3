@@ -2,32 +2,21 @@
 
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  saleOrderSchema,
-  saleOrderSchemaDefault,
-  SaleOrderSchemaType,
-} from "../schemas/saleOrder.schema";
+import { saleOrderSchema, saleOrderSchemaDefault, SaleOrderSchemaType } from "../schemas/saleOrder.schema";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import {
-  actionSaleOrder,
-  SaleOrderWithProps,
-} from "../actions/saleOrder.action";
+import { actionSaleOrder, SaleOrderWithProps } from "../actions/saleOrder.action";
 import { FormView, FormViewGroup } from "@/components/templates/FormView";
 import { FieldEntry, FieldRelation } from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import { useAuth } from "@/hooks/sessionStore";
 import { getCompanyById } from "../../companies/actions/companies-actions";
 import { toast } from "react-hot-toast";
+import { Partner } from "@/generated/prisma/browser";
+import { getIPaymentTermById } from "../../invoicing_settings/payment_term/actions/ipaymentTerm.action";
 
-function SaleOrderViewForm({
-  saleOrder,
-  id,
-}: {
-  saleOrder: SaleOrderWithProps | null;
-  id: string | null;
-}) {
+function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | null; id: string | null }) {
   const { companyId } = useAuth();
 
   const methods = useForm<SaleOrderSchemaType>({
@@ -48,6 +37,10 @@ function SaleOrderViewForm({
   const { modalError } = useModals();
 
   const onSubmit: SubmitHandler<SaleOrderSchemaType> = async (data) => {
+    if (companyId === null) {
+      return modalError("Selecciona una comapañía para continuar");
+    }
+
     const res = await actionSaleOrder({ data });
     if (!res.success) return modalError(res.message);
     if (id && id === "null") {
@@ -97,6 +90,10 @@ function SaleOrderViewForm({
         id: saleOrder.Warehouse.id,
         name: saleOrder.Warehouse.name,
       },
+      paymentTermId: {
+        id: saleOrder.PaymentTerm.id,
+        name: saleOrder.PaymentTerm.name,
+      },
     };
     reset(value);
     originalValuesRef.current = value;
@@ -104,15 +101,10 @@ function SaleOrderViewForm({
 
   useEffect(() => {
     if (id && id !== "null") return;
-    if (!companyId) {
-      return modalError("Selecciona una comapañía para continuar");
-    }
     const setSaleWarehouse = async () => {
       const getCompany = await getCompanyById({ id: companyId });
       if (getCompany) {
-        const getSalesWh = getCompany.Warehouses.filter(
-          (wh) => wh.type === "SALES",
-        );
+        const getSalesWh = getCompany.Warehouses.filter((wh) => wh.type === "SALES");
 
         setValue("companyId", { id: getCompany.id, name: getCompany.name });
 
@@ -127,6 +119,13 @@ function SaleOrderViewForm({
     };
     setSaleWarehouse();
   }, [companyId]);
+
+  const onChangePartner = async (vale: string | null, record: Partner) => {
+    const paymentTermId = await getIPaymentTermById({ id: record.paymentTermId });
+    if (paymentTermId) {
+      setValue("paymentTermId", { id: paymentTermId.id, name: paymentTermId.name });
+    }
+  };
 
   return (
     <FormView
@@ -145,12 +144,7 @@ function SaleOrderViewForm({
       state={getValues().state}
     >
       <FormViewGroup>
-        <FieldRelation
-          model="partner"
-          name="partnerId"
-          label="Cliente"
-          domain={[["displayType", "=", "CUSTOMER"]]}
-        />
+        <FieldRelation ponChange={(value, record) => onChangePartner(value, record as Partner)} model="partner" name="partnerId" label="Cliente" domain={[["displayType", "=", "CUSTOMER"]]} />
         <FieldRelation
           model="user"
           name="saleUserId"
@@ -160,13 +154,7 @@ function SaleOrderViewForm({
             ["Partner.Tags.name", "some", "SALE"],
           ]}
         />
-        <FieldRelation
-          model="SaleShippingWay"
-          name="shippingWayId"
-          label="Forma de envío"
-          domain={[["active", "=", true]]}
-        />
-        <FieldEntry name="reference" label="Referencia" />
+        <FieldRelation model="SaleShippingWay" name="shippingWayId" label="Forma de envío" domain={[["active", "=", true]]} />
       </FormViewGroup>
       <FormViewGroup>
         <FieldRelation
@@ -178,14 +166,8 @@ function SaleOrderViewForm({
             ["parentId", "=", getValues().partnerId?.id],
           ]}
         />
-        <FieldEntry
-          name="orderDate"
-          label="Fecha de la orden"
-          type="date"
-          readonly
-        />
-        <FieldEntry name="obs" label="Observaciones de entrega" as="textarea" />
-        <FieldEntry name="purchaseRef" label="Orden de compra" />
+        <FieldEntry name="orderDate" label="Fecha de la orden" type="date" readonly />
+        <FieldRelation name="paymentTermId" label="Término de pago" model="invoicingPaymentTerm" />
       </FormViewGroup>
       <Notebook defaultActiveKey="saleOrderLines">
         <Page eventKey="saleOrderLines" title="Líneas de la orden">
@@ -205,12 +187,12 @@ function SaleOrderViewForm({
                   ["companyId", "=", companyId],
                 ]}
               />
-              <FieldRelation
-                model="company"
-                name="companyId"
-                label="Empresa"
-                readonly
-              />
+              <FieldRelation model="company" name="companyId" label="Empresa" readonly />
+            </FormViewGroup>
+            <FormViewGroup>
+              <FieldEntry name="reference" label="Referencia" />
+              <FieldEntry name="purchaseRef" label="Orden de compra" />
+              <FieldEntry name="obs" label="Observaciones de entrega" as="textarea" />
             </FormViewGroup>
           </PageSheet>
         </Page>

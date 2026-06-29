@@ -15,6 +15,7 @@ export interface SaleOrderWithProps extends SaleOrder {
   Warehouse: { id: string; name: string };
   ShippingWay: { id: string; name: string };
   Company: { id: string; name: string };
+  PaymentTerm: { id: string; name: string };
 }
 
 export async function getSaleOrderById({ id }: { id: string | null }): Promise<SaleOrderWithProps | null> {
@@ -48,6 +49,9 @@ export async function getSaleOrderById({ id }: { id: string | null }): Promise<S
         Company: {
           select: { id: true, name: true },
         },
+        PaymentTerm: {
+          select: { id: true, name: true },
+        },
       },
     });
 
@@ -79,6 +83,7 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
         partnerId: data.partnerId.id,
         partnerShippingId: data.partnerShippingId.id,
         shippingWayId: data.shippingWayId.id,
+        paymentTermId: data.paymentTermId.id,
       },
       create: {
         name: newName,
@@ -92,6 +97,7 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
         partnerShippingId: data.partnerShippingId.id,
         warehouseId: data.warehouseId.id,
         shippingWayId: data.shippingWayId.id,
+        paymentTermId: data.paymentTermId.id,
         createUid: uid!,
       },
       include: {
@@ -121,6 +127,9 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
             id: true,
             name: true,
           },
+        },
+        PaymentTerm: {
+          select: { id: true, name: true },
         },
       },
     });

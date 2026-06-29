@@ -33,6 +33,10 @@ export const saleOrderSchema = z.object({
     id: z.string().min(1, "Forma de envío es requerido"),
     name: z.string(),
   }),
+  paymentTermId: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
 });
 
 export type SaleOrderSchemaType = z.infer<typeof saleOrderSchema>;
@@ -54,4 +58,5 @@ export const saleOrderSchemaDefault: SaleOrderSchemaType = {
   warehouseId: { id: "", name: "" },
   shippingWayId: { id: "", name: "" },
   companyId: { id: "", name: "" },
+  paymentTermId: { id: "", name: "" },
 };

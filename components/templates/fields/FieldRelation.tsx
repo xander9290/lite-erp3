@@ -143,7 +143,7 @@ export function FieldRelation<T extends Many2OneOption>({
 
     const viewportHeight = window.innerHeight;
 
-    const MENU_MAX_HEIGHT = 85;
+    const MENU_MAX_HEIGHT = 100;
     const MIN_SPACE_BELOW = 100;
     const SPACING = 4;
 
