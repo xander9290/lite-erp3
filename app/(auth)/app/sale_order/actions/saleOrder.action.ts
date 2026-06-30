@@ -87,6 +87,7 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
       },
       create: {
         name: newName,
+        orderDate: data.orderDate,
         obs: data.obs,
         purchaseRef: data.purchaseRef,
         reference: data.reference,

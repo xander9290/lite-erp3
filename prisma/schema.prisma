@@ -685,7 +685,7 @@ model AccountInvoice {
 model SaleOrder {
   id            String         @id @default(cuid())
   name          String         @unique
-  orderDate     DateTime       @default(now()) @map("order_date") @db.Date
+  orderDate     DateTime       @map("order_date") @db.Date
   confirmedDate DateTime?      @map("confirmed_date")
   obs           String?
   purchaseRef   String?        @map("purchase_ref")

@@ -24,7 +24,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
     defaultValues: saleOrderSchemaDefault,
   });
 
-  const { reset, getValues, setValue } = methods;
+  const { reset, getValues, setValue, handleSubmit } = methods;
 
   const originalValuesRef = useRef<SaleOrderSchemaType | null>(null);
   const handleReverse = () => {
@@ -118,7 +118,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
       }
     };
     setSaleWarehouse();
-  }, [companyId]);
+  }, [companyId, id]);
 
   const onChangePartner = async (vale: string | null, record: Partner) => {
     const paymentTermId = await getIPaymentTermById({ id: record.paymentTermId });
@@ -126,6 +126,15 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
       setValue("paymentTermId", { id: paymentTermId.id, name: paymentTermId.name });
     }
   };
+
+  const actionConfirm = handleSubmit(async () => {
+    const newData: SaleOrderSchemaType = {
+      ...getValues(),
+      state: "sale",
+      confirmedDate: new Date(),
+    };
+    await onSubmit(newData);
+  });
 
   return (
     <FormView
@@ -142,9 +151,24 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
         { name: "cancel", label: "Cancelado", decoration: "danger" },
       ]}
       state={getValues().state}
+      actions={[
+        {
+          action: actionConfirm,
+          fieldName: "actionConfirm",
+          string: "Confirmar",
+          invisible: getValues().state !== "draft",
+        },
+      ]}
     >
       <FormViewGroup>
-        <FieldRelation ponChange={(value, record) => onChangePartner(value, record as Partner)} model="partner" name="partnerId" label="Cliente" domain={[["displayType", "=", "CUSTOMER"]]} />
+        <FieldRelation
+          ponChange={(value, record) => onChangePartner(value, record as Partner)}
+          model="partner"
+          name="partnerId"
+          label="Cliente"
+          domain={[["displayType", "=", "CUSTOMER"]]}
+          readonly={getValues().state !== "draft"}
+        />
         <FieldRelation
           model="user"
           name="saleUserId"
@@ -153,8 +177,9 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
             ["active", "=", true],
             ["Partner.Tags.name", "some", "SALE"],
           ]}
+          readonly={getValues().state !== "draft"}
         />
-        <FieldRelation model="SaleShippingWay" name="shippingWayId" label="Forma de envío" domain={[["active", "=", true]]} />
+        <FieldRelation model="SaleShippingWay" name="shippingWayId" label="Forma de envío" domain={[["active", "=", true]]} readonly={getValues().state !== "draft"} />
       </FormViewGroup>
       <FormViewGroup>
         <FieldRelation
@@ -165,9 +190,10 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
             ["displayType", "=", "DELIVERY"],
             ["parentId", "=", getValues().partnerId?.id],
           ]}
+          readonly={getValues().state !== "draft"}
         />
         <FieldEntry name="orderDate" label="Fecha de la orden" type="date" readonly />
-        <FieldRelation name="paymentTermId" label="Término de pago" model="invoicingPaymentTerm" />
+        <FieldRelation name="paymentTermId" label="Término de pago" model="invoicingPaymentTerm" readonly={getValues().state !== "draft"} />
       </FormViewGroup>
       <Notebook defaultActiveKey="saleOrderLines">
         <Page eventKey="saleOrderLines" title="Líneas de la orden">
@@ -186,6 +212,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
                   ["type", "=", "SALES"],
                   ["companyId", "=", companyId],
                 ]}
+                readonly={getValues().state !== "draft"}
               />
               <FieldRelation model="company" name="companyId" label="Empresa" readonly />
             </FormViewGroup>
