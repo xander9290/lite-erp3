@@ -317,6 +317,7 @@ model ProductTemplate {
   TaxSale               InvoicingTax?          @relation("PTSaleTax", fields: [taxSaleId], references: [id], onDelete: Restrict)
   taxPurchaseId         String?                @map("tax_purchase_id")
   TaxPurchase           InvoicingTax?          @relation("PTPurchaseTax", fields: [taxPurchaseId], references: [id], onDelete: Restrict)
+  SaleOrderLines        SaleOrderLine[]
 
   @@map("product_template")
 }
@@ -376,6 +377,7 @@ model UomCategory {
   ProductReceiptLines   ProductReceiptLine[]
   Products              ProductTemplate[]
   purchaseOrderLines    PurchaseOrderLine[]
+  SaleOrderLines        SaleOrderLine[]
 
   @@map("product_uom_category")
 }
@@ -720,7 +722,37 @@ model SaleOrder {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  SaleOrderLines SaleOrderLine[]
+
   @@map("sale_order")
+}
+
+model SaleOrderLine {
+  id String @id @default(cuid())
+
+  orderId   String    @map("order_id")
+  SaleOrder SaleOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  productId String          @map("product_id")
+  Product   ProductTemplate @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  quantity Float
+
+  uomId String      @map("uom_id")
+  Uom   UomCategory @relation(fields: [uomId], references: [id], onDelete: Restrict)
+
+  pricelist ProductPricelistItem @default(price1)
+  priceUnit Float                @map("price_unit")
+  subtotal  Float
+  total     Float
+  taxRate   Float                @map("tax_rate")
+  taxAmount Float                @map("tax_amount")
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("sale_order_line")
 }
 
 enum SaleOrderState {

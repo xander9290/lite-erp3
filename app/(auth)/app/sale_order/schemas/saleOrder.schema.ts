@@ -1,5 +1,31 @@
-import { SaleOrderState } from "@/generated/prisma/browser";
+import {
+  ProductPricelistItem,
+  SaleOrderState,
+} from "@/generated/prisma/browser";
 import { z } from "zod";
+
+const saleOrderLineSchema = z.object({
+  id: z.string().nullable(),
+  orderId: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
+  productId: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
+  quantity: z.number(),
+  uomId: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
+  pricelist: z.enum(ProductPricelistItem),
+  priceUnit: z.number(),
+  subtotal: z.number(),
+  total: z.number(),
+  taxRate: z.number(),
+  taxAmount: z.number(),
+});
 
 export const saleOrderSchema = z.object({
   name: z.string(),
@@ -16,6 +42,7 @@ export const saleOrderSchema = z.object({
   partnerId: z.object({
     id: z.string().min(1, "Cliente es requerido"),
     name: z.string(),
+    pricelist: z.enum(ProductPricelistItem).nullable(),
   }),
   partnerShippingId: z.object({
     id: z.string().optional(),
@@ -37,9 +64,11 @@ export const saleOrderSchema = z.object({
     id: z.string(),
     name: z.string(),
   }),
+  orderLine: z.array(saleOrderLineSchema),
 });
 
 export type SaleOrderSchemaType = z.infer<typeof saleOrderSchema>;
+export type SaleOrderLineSchemaType = z.infer<typeof saleOrderLineSchema>;
 
 const now = new Date();
 const getDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -53,10 +82,25 @@ export const saleOrderSchemaDefault: SaleOrderSchemaType = {
   reference: "",
   state: "draft",
   saleUserId: { id: "", name: "" },
-  partnerId: { id: "", name: "" },
+  partnerId: { id: "", name: "", pricelist: "price1" },
   partnerShippingId: { id: "", name: "" },
   warehouseId: { id: "", name: "" },
   shippingWayId: { id: "", name: "" },
   companyId: { id: "", name: "" },
   paymentTermId: { id: "", name: "" },
+  orderLine: [],
+};
+
+export const saleOrderLineSchemaDefault: SaleOrderLineSchemaType = {
+  id: null,
+  orderId: { id: "", name: "" },
+  priceUnit: 0.0,
+  pricelist: "price1",
+  productId: { id: "", name: "" },
+  quantity: 1.0,
+  subtotal: 0.0,
+  taxAmount: 0.0,
+  taxRate: 0.0,
+  total: 0.0,
+  uomId: { id: "", name: "" },
 };
