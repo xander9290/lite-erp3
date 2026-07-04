@@ -25,7 +25,7 @@ export interface SaleOrderWithProps extends SaleOrder {
     id: string | null;
     Product: { id: string; name: string };
     quantity: number;
-    Uom: { id: string; name: string };
+    Uom: { id: string; name: string; code: string };
     pricelist: ProductPricelistItem;
     priceUnit: number;
     subtotal: number;
@@ -35,7 +35,11 @@ export interface SaleOrderWithProps extends SaleOrder {
   }[];
 }
 
-export async function getSaleOrderById({ id }: { id: string | null }): Promise<SaleOrderWithProps | null> {
+export async function getSaleOrderById({
+  id,
+}: {
+  id: string | null;
+}): Promise<SaleOrderWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -73,9 +77,11 @@ export async function getSaleOrderById({ id }: { id: string | null }): Promise<S
         SaleOrderLines: {
           select: {
             id: true,
-            Product: { select: { id: true, name: true } },
+            Product: {
+              select: { id: true, name: true },
+            },
             quantity: true,
-            Uom: { select: { id: true, name: true } },
+            Uom: { select: { id: true, name: true, code: true } },
             pricelist: true,
             priceUnit: true,
             subtotal: true,
@@ -94,13 +100,20 @@ export async function getSaleOrderById({ id }: { id: string | null }): Promise<S
   }
 }
 
-export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): Promise<ActionResponse<SaleOrderWithProps>> {
+export async function actionSaleOrder({
+  data,
+}: {
+  data: SaleOrderSchemaType;
+}): Promise<ActionResponse<SaleOrderWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
     let newName = "";
     if (!data.name) {
-      newName = await getNextValue(`S/${company.code}/`, `${company.code}-saleOrder`);
+      newName = await getNextValue(
+        `S/${company.code}/`,
+        `${company.code}-saleOrder`,
+      );
     }
 
     const saleOrder = await prisma.saleOrder.upsert({
@@ -113,7 +126,9 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
         state: data.state,
         saleUserId: data.saleUserId.id,
         partnerId: data.partnerId.id,
-        partnerShippingId: data.partnerShippingId.id ? data.partnerShippingId.id : null,
+        partnerShippingId: data.partnerShippingId.id
+          ? data.partnerShippingId.id
+          : null,
         shippingWayId: data.shippingWayId.id,
         paymentTermId: data.paymentTermId.id,
         subtotal: round(
@@ -180,7 +195,9 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
         saleUserId: data.saleUserId.id,
         partnerId: data.partnerId.id,
         companyId: company.id,
-        partnerShippingId: data.partnerShippingId.id ? data.partnerShippingId.id : null,
+        partnerShippingId: data.partnerShippingId.id
+          ? data.partnerShippingId.id
+          : null,
         warehouseId: data.warehouseId.id,
         shippingWayId: data.shippingWayId.id,
         paymentTermId: data.paymentTermId.id,
@@ -249,9 +266,11 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
         SaleOrderLines: {
           select: {
             id: true,
-            Product: { select: { id: true, name: true } },
+            Product: {
+              select: { id: true, name: true },
+            },
             quantity: true,
-            Uom: { select: { id: true, name: true } },
+            Uom: { select: { id: true, name: true, code: true } },
             pricelist: true,
             priceUnit: true,
             subtotal: true,

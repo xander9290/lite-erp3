@@ -27,6 +27,7 @@ export const productTemplateSchema = z.object({
   largo: z.number(),
   uomIncomingAllowed: z.number(),
   uomOutgoingAllowed: z.number(),
+  allowPartialQty: z.boolean(),
   supplierId: z
     .object({
       id: z.string(),
@@ -132,6 +133,7 @@ export const productTemplateSchemaDefault: ProductTemplateSchemaType = {
   userId: { id: "", name: "" },
   uomIncomingAllowed: 0,
   uomOutgoingAllowed: 0,
+  allowPartialQty: false,
   Tags: [],
   productCategoryId: {
     id: "",

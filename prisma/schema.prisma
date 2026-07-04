@@ -318,6 +318,7 @@ model ProductTemplate {
   taxPurchaseId         String?                @map("tax_purchase_id")
   TaxPurchase           InvoicingTax?          @relation("PTPurchaseTax", fields: [taxPurchaseId], references: [id], onDelete: Restrict)
   SaleOrderLines        SaleOrderLine[]
+  allowPartialQty       Boolean                @default(false) @map("allow_partial_qty")
 
   @@map("product_template")
 }

@@ -115,7 +115,7 @@ function UomFormView({
           name="ratio"
           label="Proporción"
           type="number"
-          step="0.001"
+          decimals={3}
         />
         <FormViewStack>
           <FieldBoolean name="isBaseUnit" label="Unidad base" />
