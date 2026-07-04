@@ -30,7 +30,7 @@ const saleOrderLineSchema = z.object({
 export const saleOrderSchema = z.object({
   name: z.string(),
   orderDate: z.date(),
-  confirmedDate: z.date().nullable(),
+  confirmedDate: z.string().nullable(),
   obs: z.string().nullable(),
   purchaseRef: z.string().nullable(),
   reference: z.string().nullable(),
@@ -76,7 +76,7 @@ const getDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 export const saleOrderSchemaDefault: SaleOrderSchemaType = {
   name: "",
   orderDate: getDate,
-  confirmedDate: getDate,
+  confirmedDate: null,
   obs: "",
   purchaseRef: "",
   reference: "",

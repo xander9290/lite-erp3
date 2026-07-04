@@ -5,3 +5,4 @@ export { WidgetAvatar } from "./WidgetAvatar";
 export { WidgetDeadline } from "./WidgetDeadline";
 export { WidgetDisplayDate } from "./WidgetDisplayDate";
 export { WidgetCurrency } from "./WidgetCurrency";
+export { WidgetLiveRemaining } from "./WidgetLiveRemaining";

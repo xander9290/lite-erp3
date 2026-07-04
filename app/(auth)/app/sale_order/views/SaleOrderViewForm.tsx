@@ -226,7 +226,7 @@ function SaleOrderViewForm({
     const newData: SaleOrderSchemaType = {
       ...getValues(),
       state: "sale",
-      confirmedDate: new Date(),
+      confirmedDate: new Date().toISOString(),
     };
     await onSubmit(newData);
   });
@@ -392,6 +392,12 @@ function SaleOrderViewForm({
           name="orderDate"
           label="Fecha de la orden"
           type="date"
+          readonly
+        />
+        <FieldEntry
+          name="confirmedDate"
+          label="Confirmado"
+          type="datetime-local"
           readonly
         />
         <FieldRelation

@@ -119,7 +119,7 @@ export async function actionSaleOrder({
     const saleOrder = await prisma.saleOrder.upsert({
       where: { name: data.name },
       update: {
-        confirmedDate: data.confirmedDate ? data.confirmedDate : null,
+        confirmedDate: data.confirmedDate ? new Date(data.confirmedDate) : null,
         obs: data.obs,
         purchaseRef: data.purchaseRef,
         reference: data.reference,

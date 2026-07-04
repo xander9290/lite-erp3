@@ -3,7 +3,13 @@
 import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
-import { WidgetAvatar, WidgetBadgeStatus, WidgetCurrency, WidgetDisplayDate } from "@/components/widgets";
+import {
+  WidgetAvatar,
+  WidgetBadgeStatus,
+  WidgetCurrency,
+  WidgetDisplayDate,
+  WidgetLiveRemaining,
+} from "@/components/widgets";
 import { useAuth } from "@/hooks/sessionStore";
 import { useRouter } from "next/navigation";
 
@@ -21,20 +27,38 @@ function SaleOrderViewList({ state }: { state: string }) {
 
   return (
     <ListView model="saleOrder">
-      <ListView.Header title={`${state === "draft" ? "Ventas cotizaciones" : "Órdenes de venta"}`} formView="/app/sale_order?view_type=form&id=null" />
+      <ListView.Header
+        title={`${state === "draft" ? "Ventas cotizaciones" : "Órdenes de venta"}`}
+        formView="/app/sale_order?view_type=form&id=null"
+      />
       <ListView.Body>
         <TableTemplateLite
           model="saleOrder"
           defaultOrder="name desc"
           pageSize={100}
           baseDomain={domain}
-          onRowClick={(row) => router.push(`/app/sale_order?view_type=form&id=${row.id}`)}
+          onRowClick={(row) =>
+            router.push(`/app/sale_order?view_type=form&id=${row.id}`)
+          }
           showTotals={true}
           totalColumns={["total"]}
         >
-          <Column field="name" label="Número" render={(name) => <span className="fw-semibold">{name}</span>} />
-          <Column field="orderDate" label="Fecha" type="date" render={(name) => <WidgetDisplayDate date={name} />} />
-          <Column field="Partner.name" label="Cliente" include={{ Partner: { select: { id: true, name: true } } }} />
+          <Column
+            field="name"
+            label="Número"
+            render={(name) => <span className="fw-semibold">{name}</span>}
+          />
+          <Column
+            field="orderDate"
+            label="Fecha"
+            type="date"
+            render={(name) => <WidgetDisplayDate date={name} />}
+          />
+          <Column
+            field="Partner.name"
+            label="Cliente"
+            include={{ Partner: { select: { id: true, name: true } } }}
+          />
           <Column field="reference" label="Referencia" />
           <Column
             field="SaleUser.name"
@@ -48,10 +72,33 @@ function SaleOrderViewList({ state }: { state: string }) {
                 },
               },
             }}
-            render={(_, field) => <WidgetAvatar imageUrl={field.SaleUser.Partner.imageUrl} displayName={field.SaleUser.name} />}
+            render={(_, field) => (
+              <WidgetAvatar
+                imageUrl={field.SaleUser.Partner.imageUrl}
+                displayName={field.SaleUser.name}
+              />
+            )}
           />
-          <Column field="ShippingWay.name" label="Forma de envío" include={{ ShippingWay: { select: { id: true, name: true } } }} />
-          <Column field="total" label="Total" type="number" render={(name) => <WidgetCurrency number={name} />} format="currency" />
+          <Column
+            field="ShippingWay.name"
+            label="Forma de envío"
+            include={{ ShippingWay: { select: { id: true, name: true } } }}
+          />
+          <Column
+            field="confirmedDate"
+            label="Confirmado"
+            type="datetime"
+            render={(name) =>
+              !name ? "No confirmado" : <WidgetLiveRemaining date={name} />
+            }
+          />
+          <Column
+            field="total"
+            label="Total"
+            type="number"
+            render={(name) => <WidgetCurrency number={name} />}
+            format="currency"
+          />
           <Column
             field="state"
             label="Estado"
