@@ -731,7 +731,7 @@ model SaleOrderLine {
   id String @id @default(cuid())
 
   orderId   String    @map("order_id")
-  SaleOrder SaleOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  SaleOrder SaleOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   productId String          @map("product_id")
   Product   ProductTemplate @relation(fields: [productId], references: [id], onDelete: Restrict)

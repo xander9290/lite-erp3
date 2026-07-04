@@ -35,6 +35,7 @@ function SaleOrderViewList({ state }: { state: string }) {
           <Column field="name" label="Número" render={(name) => <span className="fw-semibold">{name}</span>} />
           <Column field="orderDate" label="Fecha" type="date" render={(name) => <WidgetDisplayDate date={name} />} />
           <Column field="Partner.name" label="Cliente" include={{ Partner: { select: { id: true, name: true } } }} />
+          <Column field="reference" label="Referencia" />
           <Column
             field="SaleUser.name"
             label="Vendedor"

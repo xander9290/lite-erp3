@@ -8,7 +8,6 @@ import { sessionStore } from "@/app/libs/sessionStore";
 import { getNextValue } from "@/app/libs/sequence";
 import { createAuditlog } from "../../actions/auditlog-actions";
 import { round } from "@/app/libs/helpers";
-import { triggerAsyncId } from "async_hooks";
 
 export interface SaleOrderWithProps extends SaleOrder {
   SaleUser: { id: string; name: string };
@@ -36,11 +35,7 @@ export interface SaleOrderWithProps extends SaleOrder {
   }[];
 }
 
-export async function getSaleOrderById({
-  id,
-}: {
-  id: string | null;
-}): Promise<SaleOrderWithProps | null> {
+export async function getSaleOrderById({ id }: { id: string | null }): Promise<SaleOrderWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -99,20 +94,13 @@ export async function getSaleOrderById({
   }
 }
 
-export async function actionSaleOrder({
-  data,
-}: {
-  data: SaleOrderSchemaType;
-}): Promise<ActionResponse<SaleOrderWithProps>> {
+export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): Promise<ActionResponse<SaleOrderWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
     let newName = "";
     if (!data.name) {
-      newName = await getNextValue(
-        `S/${company.code}/`,
-        `${company.code}-saleOrder`,
-      );
+      newName = await getNextValue(`S/${company.code}/`, `${company.code}-saleOrder`);
     }
 
     const saleOrder = await prisma.saleOrder.upsert({
@@ -125,9 +113,7 @@ export async function actionSaleOrder({
         state: data.state,
         saleUserId: data.saleUserId.id,
         partnerId: data.partnerId.id,
-        partnerShippingId: data.partnerShippingId.id
-          ? data.partnerShippingId.id
-          : null,
+        partnerShippingId: data.partnerShippingId.id ? data.partnerShippingId.id : null,
         shippingWayId: data.shippingWayId.id,
         paymentTermId: data.paymentTermId.id,
         subtotal: round(
@@ -149,7 +135,7 @@ export async function actionSaleOrder({
             },
           },
           update: data.orderLine
-            .filter((line) => !line.id)
+            .filter((line) => line.id)
             .map((line) => ({
               where: {
                 id: line.id!,
@@ -194,9 +180,7 @@ export async function actionSaleOrder({
         saleUserId: data.saleUserId.id,
         partnerId: data.partnerId.id,
         companyId: company.id,
-        partnerShippingId: data.partnerShippingId.id
-          ? data.partnerShippingId.id
-          : null,
+        partnerShippingId: data.partnerShippingId.id ? data.partnerShippingId.id : null,
         warehouseId: data.warehouseId.id,
         shippingWayId: data.shippingWayId.id,
         paymentTermId: data.paymentTermId.id,
