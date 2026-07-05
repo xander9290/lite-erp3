@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Badge } from "react-bootstrap";
 
 interface WidgetLiveRemainingProps {
   date: Date | string | null;

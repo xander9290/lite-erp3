@@ -1,16 +1,14 @@
-import {
-  PurchaseLineStates,
-  PurchaseOrderState,
-} from "@/generated/prisma/enums";
+import { todayDate } from "@/app/libs/validatorDate";
+import { PurchaseLineStates, PurchaseOrderState } from "@/generated/prisma/enums";
 import { z } from "zod";
 
 export const purchaseOrderSchema = z.object({
   name: z.string(),
-  date: z.date(),
-  dateOrder: z.date(),
-  datePlanned: z.date().nullable(),
-  confirmedDate: z.date().nullable(),
-  doneDate: z.date().nullable(),
+  date: z.iso.date(),
+  dateOrder: z.iso.date(),
+  datePlanned: z.iso.date().nullable(),
+  confirmedDate: z.string().nullable(),
+  doneDate: z.string().nullable(),
   state: z.enum(PurchaseOrderState),
   subtotal: z.number(),
   total: z.number(),
@@ -66,13 +64,10 @@ export const purchaseOrderSchema = z.object({
 
 export type PurchaseOrderSchemaType = z.infer<typeof purchaseOrderSchema>;
 
-const now = new Date();
-const getDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
 export const purchaseOrderSchemaDefault: PurchaseOrderSchemaType = {
   name: "",
-  date: getDate,
-  dateOrder: getDate,
+  date: todayDate(),
+  dateOrder: todayDate(),
   datePlanned: null,
   confirmedDate: null,
   doneDate: null,

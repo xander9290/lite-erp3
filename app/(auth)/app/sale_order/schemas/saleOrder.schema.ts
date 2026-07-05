@@ -1,7 +1,5 @@
-import {
-  ProductPricelistItem,
-  SaleOrderState,
-} from "@/generated/prisma/browser";
+import { todayDate } from "@/app/libs/validatorDate";
+import { ProductPricelistItem, SaleOrderState } from "@/generated/prisma/browser";
 import { z } from "zod";
 
 const saleOrderLineSchema = z.object({
@@ -29,7 +27,7 @@ const saleOrderLineSchema = z.object({
 
 export const saleOrderSchema = z.object({
   name: z.string(),
-  orderDate: z.date(),
+  orderDate: z.iso.date(),
   confirmedDate: z.string().nullable(),
   obs: z.string().nullable(),
   purchaseRef: z.string().nullable(),
@@ -70,12 +68,9 @@ export const saleOrderSchema = z.object({
 export type SaleOrderSchemaType = z.infer<typeof saleOrderSchema>;
 export type SaleOrderLineSchemaType = z.infer<typeof saleOrderLineSchema>;
 
-const now = new Date();
-const getDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
 export const saleOrderSchemaDefault: SaleOrderSchemaType = {
   name: "",
-  orderDate: getDate,
+  orderDate: todayDate(),
   confirmedDate: null,
   obs: "",
   purchaseRef: "",
