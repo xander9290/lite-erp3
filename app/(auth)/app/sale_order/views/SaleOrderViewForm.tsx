@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
 import { actionSaleOrder, SaleOrderWithProps } from "../actions/saleOrder.action";
-import { FormView, FormViewGroup } from "@/components/templates/FormView";
+import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
 import { FieldEntry, FieldRelation, FieldSelect } from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import { useAuth } from "@/hooks/sessionStore";
@@ -309,17 +309,32 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
           domain={[["displayType", "=", "CUSTOMER"]]}
           readonly={getValues().state !== "draft"}
         />
-        <FieldRelation
-          model="user"
-          name="saleUserId"
-          label="Vendedor"
-          domain={[
-            ["active", "=", true],
-            ["Partner.Tags.name", "some", "SALE"],
-          ]}
-          readonly={getValues().state !== "draft"}
-        />
-        <FieldRelation model="SaleShippingWay" name="shippingWayId" label="Forma de envío" domain={[["active", "=", true]]} readonly={getValues().state !== "draft"} />
+        <FormViewStack>
+          <FieldRelation
+            model="user"
+            name="saleUserId"
+            label="Vendedor"
+            domain={[
+              ["active", "=", true],
+              ["Partner.Tags.name", "some", "SALE"],
+            ]}
+            readonly={getValues().state !== "draft"}
+          />
+          <FieldRelation
+            model="warehouse"
+            name="warehouseId"
+            label="Almacén"
+            domain={[
+              ["type", "=", "SALES"],
+              ["companyId", "=", companyId],
+            ]}
+            readonly
+          />
+        </FormViewStack>
+        <FormViewStack>
+          <FieldRelation model="SaleShippingWay" name="shippingWayId" label="Forma de envío" domain={[["active", "=", true]]} readonly={getValues().state !== "draft"} />
+          <FieldRelation name="paymentTermId" label="Término de pago" model="invoicingPaymentTerm" readonly={getValues().state !== "draft"} />
+        </FormViewStack>
       </FormViewGroup>
       <FormViewGroup>
         <FieldRelation
@@ -332,9 +347,11 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
           ]}
           readonly={getValues().state !== "draft"}
         />
-        <FieldEntry name="orderDate" label="Fecha de la orden" type="date" readonly />
-        <FieldEntry name="confirmedDate" label="Confirmado" type="datetime-local" readonly />
-        <FieldRelation name="paymentTermId" label="Término de pago" model="invoicingPaymentTerm" readonly={getValues().state !== "draft"} />
+        <FormViewStack>
+          <FieldEntry name="orderDate" label="Fecha de la orden" type="date" readonly />
+          {getValues().state !== "draft" && <FieldEntry name="confirmedDate" label="Confirmado" type="datetime-local" readonly />}
+        </FormViewStack>
+        <FieldEntry name="reference" label="Referencia" readonly={getValues().state !== "draft"} />
       </FormViewGroup>
       <Notebook defaultActiveKey="saleOrderLines">
         <Page eventKey="saleOrderLines" title="Líneas de la orden">
@@ -502,20 +519,9 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
         <Page title="Otra información" eventKey="otherInfo">
           <PageSheet name="otherInfoPage">
             <FormViewGroup>
-              <FieldRelation
-                model="warehouse"
-                name="warehouseId"
-                label="Almacén"
-                domain={[
-                  ["type", "=", "SALES"],
-                  ["companyId", "=", companyId],
-                ]}
-                readonly={getValues().state !== "draft"}
-              />
               <FieldRelation model="company" name="companyId" label="Empresa" readonly />
             </FormViewGroup>
             <FormViewGroup>
-              <FieldEntry name="reference" label="Referencia" />
               <FieldEntry name="purchaseRef" label="Orden de compra" />
               <FieldEntry name="obs" label="Observaciones de entrega" as="textarea" />
             </FormViewGroup>

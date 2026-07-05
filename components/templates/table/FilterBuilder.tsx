@@ -1,5 +1,6 @@
 // components/FilterBuilder.tsx
 import { ColumnConfig, FilterValue } from "@/app/libs/definitions";
+import { toDateOnly, toDateTimeLocal } from "@/app/libs/validatorDate";
 import { useState, useEffect } from "react";
 import { Button, Form, Badge } from "react-bootstrap";
 
@@ -368,7 +369,7 @@ function formatFilterValue(value: any, type?: string): string {
 
   if (type === "datetime" && value) {
     try {
-      return new Date(value).toLocaleString("es-MX");
+      return toDateTimeLocal(value);
     } catch {
       return String(value);
     }
@@ -376,7 +377,7 @@ function formatFilterValue(value: any, type?: string): string {
 
   if (type === "date" && value) {
     try {
-      return new Date(value).toLocaleDateString("es-MX");
+      return toDateOnly(value);
     } catch {
       return String(value);
     }
