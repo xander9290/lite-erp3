@@ -1,6 +1,6 @@
 "use server";
 
-import { ProductPricelistItem, SaleOrder } from "@/generated/prisma/client";
+import { ProductPricelistItem, SaleOrder, SaleShippingWayType } from "@/generated/prisma/client";
 import { SaleOrderSchemaType } from "../schemas/saleOrder.schema";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
@@ -18,7 +18,7 @@ export interface SaleOrderWithProps extends SaleOrder {
   };
   PartnerShipping: { id: string; name: string } | null;
   Warehouse: { id: string; name: string };
-  ShippingWay: { id: string; name: string };
+  ShippingWay: { id: string; name: string; type: SaleShippingWayType };
   Company: { id: string; name: string };
   PaymentTerm: { id: string; name: string };
   SaleOrderLines: {
@@ -62,7 +62,7 @@ export async function getSaleOrderById({ id }: { id: string | null }): Promise<S
           select: { id: true, name: true },
         },
         ShippingWay: {
-          select: { id: true, name: true },
+          select: { id: true, name: true, type: true },
         },
         Company: {
           select: { id: true, name: true },
@@ -234,7 +234,7 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
           select: { id: true, name: true },
         },
         ShippingWay: {
-          select: { id: true, name: true },
+          select: { id: true, name: true, type: true },
         },
         Company: {
           select: {
@@ -298,7 +298,6 @@ export async function actionSaleConfirm({ data }: { data: SaleOrderWithProps }):
   try {
     console.log(":::Action Sale Confirm:::");
     for (const line of data.SaleOrderLines) {
-      console.log("Line", line, "Data", data);
       console.log("-Obtiendo información del producto:", line.Product.name);
       const productId = await prisma.productTemplate.findUnique({
         where: {

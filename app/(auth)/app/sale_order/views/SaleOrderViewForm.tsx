@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
 import { actionSaleCancel, actionSaleConfirm, actionSaleOrder, SaleOrderWithProps } from "../actions/saleOrder.action";
 import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
-import { FieldEntry, FieldRelation, FieldSelect } from "@/components/templates/fields";
+import { FieldEntry, FieldRelation, FieldSelect, FieldText } from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import { useAuth } from "@/hooks/sessionStore";
 import { getCompanyById } from "../../companies/actions/companies-actions";
@@ -19,6 +19,7 @@ import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/sim
 import { getProductById } from "../../product_template/products/actions/productTemplate.action";
 import { formatCurrency } from "@/app/libs/helpers";
 import { toDateOnly } from "@/app/libs/validatorDate";
+import { getPartnerById } from "../../partners/actions/partner-actions";
 
 function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | null; id: string | null }) {
   const { companyId } = useAuth();
@@ -54,6 +55,8 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
     taxes: 0.0,
     total: 0.0,
   });
+
+  const [partnerLocation, setPartnerLocation] = useState<string | null>("");
 
   const save = async (data: SaleOrderSchemaType): Promise<SaleOrderWithProps | null> => {
     const res = await actionSaleOrder({ data });
@@ -122,6 +125,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
       shippingWayId: {
         id: saleOrder.ShippingWay.id,
         name: saleOrder.ShippingWay.name,
+        type: saleOrder.ShippingWay.type,
       },
       warehouseId: {
         id: saleOrder.Warehouse.id,
@@ -157,6 +161,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
     reset(value);
     originalValuesRef.current = value;
     computeTotals();
+    onChangePartnerShipping(saleOrder.partnerShippingId);
   }, [saleOrder, reset]);
 
   useEffect(() => {
@@ -198,6 +203,19 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
       });
     }
     setValue("partnerId.pricelist", record.productPricelist);
+  };
+
+  const onChangePartnerShipping = async (value: string | null) => {
+    if (!value) {
+      setPartnerLocation("");
+      return null;
+    }
+    const shippingId = await getPartnerById({ id: value });
+    if (shippingId) {
+      setPartnerLocation(shippingId.completeAddress);
+    } else {
+      setPartnerLocation("");
+    }
   };
 
   const actionConfirm = handleSubmit(async () => {
@@ -388,7 +406,11 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
             ["parentId", "=", getValues().partnerId?.id],
           ]}
           readonly={getValues().state !== "draft"}
+          ponChange={(value) => onChangePartnerShipping(value)}
         />
+        <div className="my-1 px-1 bg-body-tertiary text-center rounded border" style={{ height: "25px", display: getValues().shippingWayId.type === "delivery" ? "block" : "none" }}>
+          <FieldText name="shippingText" output={partnerLocation} />
+        </div>
         <FormViewStack>
           <FieldEntry name="orderDate" label="Fecha de la orden" type="date" readonly />
           {getValues().state !== "draft" && <FieldEntry name="confirmedDate" label="Confirmado" type="datetime-local" readonly />}

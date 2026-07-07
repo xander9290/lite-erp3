@@ -1,5 +1,5 @@
 import { todayDate } from "@/app/libs/validatorDate";
-import { ProductPricelistItem, SaleOrderState } from "@/generated/prisma/browser";
+import { ProductPricelistItem, SaleOrderState, SaleShippingWayType } from "@/generated/prisma/browser";
 import { z } from "zod";
 
 const saleOrderLineSchema = z.object({
@@ -57,6 +57,7 @@ export const saleOrderSchema = z.object({
   shippingWayId: z.object({
     id: z.string().min(1, "Forma de envío es requerido"),
     name: z.string(),
+    type: z.enum(SaleShippingWayType),
   }),
   paymentTermId: z.object({
     id: z.string(),
@@ -80,7 +81,7 @@ export const saleOrderSchemaDefault: SaleOrderSchemaType = {
   partnerId: { id: "", name: "", pricelist: "price1" },
   partnerShippingId: { id: "", name: "" },
   warehouseId: { id: "", name: "" },
-  shippingWayId: { id: "", name: "" },
+  shippingWayId: { id: "", name: "", type: "counter" },
   companyId: { id: "", name: "" },
   paymentTermId: { id: "", name: "" },
   SaleOrderLines: [],
