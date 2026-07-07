@@ -1,6 +1,6 @@
 // validators/date.ts
 
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 export function toDateTimeLocal(value: Date | string | null | undefined): string {
   if (!value) return "";
@@ -17,7 +17,11 @@ export function toDateOnly(value: string | Date | null | undefined): string {
 
   if (isNaN(date.getTime())) return "";
 
-  return date.toISOString().slice(0, 10);
+  console.log(format(parseISO(date.toISOString().replace("Z", "")), "yyyy-MM-dd"));
+
+  return format(parseISO(date.toISOString().replace("Z", "")), "yyyy-MM-dd");
+
+  // return date.toISOString().slice(0, 10);
 }
 
 export const todayDate = () => format(new Date(), "yyyy-MM-dd");

@@ -382,7 +382,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
         <FieldRelation
           model="partner"
           name="partnerShippingId"
-          label="Dirección de entrega"
+          label="Locación de entrega"
           domain={[
             ["displayType", "=", "DELIVERY"],
             ["parentId", "=", getValues().partnerId?.id],
