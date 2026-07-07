@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/sessionStore";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Table } from "react-bootstrap";
+import styles from "./SimpleTable.module.css";
 
 type STHeader = {
   string: React.ReactNode;
@@ -45,9 +46,25 @@ export function SimpleTable<T>({
   const entity = extractEntityFromPath(pathName);
   const modelAccess = access.filter((acc) => acc.entityType === entity);
 
+  const visibleHeaders = useMemo(() => {
+    return headers
+      .map((header, originalIndex) => ({
+        ...header,
+        originalIndex,
+      }))
+      .filter((header) => {
+        const fieldAccess = modelAccess.find(
+          (acc) => acc.fieldName === header.name,
+        );
+
+        return !fieldAccess?.invisible;
+      });
+  }, [headers, modelAccess]);
+
   const [columnWidths, setColumnWidths] = useState<number[]>(
     headers.map((header) => header.width ?? 140),
   );
+
   const [resizeState, setResizeState] = useState<ResizeState>(null);
 
   useEffect(() => {
@@ -65,10 +82,12 @@ export function SimpleTable<T>({
       setColumnWidths((prev) => {
         const next = [...prev];
         const minWidth = headers[resizeState.columnIndex]?.minWidth ?? 60;
+
         next[resizeState.columnIndex] = Math.max(
           minWidth,
           resizeState.startWidth + delta,
         );
+
         return next;
       });
     };
@@ -131,6 +150,7 @@ export function SimpleTable<T>({
         next[columnIndex] = minWidth;
         return next;
       });
+
       return;
     }
 
@@ -163,7 +183,7 @@ export function SimpleTable<T>({
       }),
     );
 
-    const extraPadding = 16;
+    const extraPadding = 20;
 
     setColumnWidths((prev) => {
       const next = [...prev];
@@ -175,116 +195,105 @@ export function SimpleTable<T>({
   const colgroup = useMemo(
     () => (
       <colgroup>
-        {headers.map((_, index) => {
-          return (
-            <col
-              key={index}
-              style={{
-                width: `${columnWidths[index]}px`,
-              }}
-            />
-          );
-        })}
+        {visibleHeaders.map((header) => (
+          <col
+            key={header.originalIndex}
+            style={{
+              width: `${columnWidths[header.originalIndex]}px`,
+            }}
+          />
+        ))}
       </colgroup>
     ),
-    [headers, columnWidths],
+    [visibleHeaders, columnWidths],
   );
 
   return (
-    <div className="w-100 overflow-auto">
-      <Table
-        ref={tableRef}
-        size="sm"
-        borderless
-        className={className}
-        style={{
-          tableLayout: "fixed",
-          width: "max-content",
-          minWidth: "100%",
-        }}
-      >
-        {colgroup}
+    <div className={[styles.tableShell, className ?? ""].join(" ")}>
+      <div className={styles.tableScroller}>
+        <Table
+          ref={tableRef}
+          size="sm"
+          borderless
+          className={styles.table}
+          style={{
+            tableLayout: "fixed",
+            width: "max-content",
+            minWidth: "100%",
+          }}
+        >
+          {colgroup}
 
-        <thead>
-          <tr className="border-end border-bottom table-active">
-            {headers.map((header, idx) => {
-              const fieldRow = modelAccess.find(
-                (acc) => acc.fieldName === header.name,
-              );
-              if (fieldRow && fieldRow.invisible) return null;
-              return (
-                <th
-                  key={idx}
-                  data-column-index={idx}
-                  className={`${header.className ?? ""} border-end position-relative`}
-                  style={{
-                    minWidth: `${header.minWidth ?? 60}px`,
-                    width: `${columnWidths[idx]}px`,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                  title={header.name}
-                >
-                  <div className="position-relative w-100">
-                    <span
-                      className="d-block text-truncate pe-2"
-                      style={{ width: "100%" }}
-                    >
-                      {header.string}
-                    </span>
-
-                    {resizable && idx < headers.length - 1 && (
-                      <div
-                        onMouseDown={(event) => startResize(event, idx)}
-                        onDoubleClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          autoFitColumn(idx);
-                        }}
-                        title="Arrastra para redimensionar. Doble click para autoajustar."
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          right: -4,
-                          width: 8,
-                          height: "100%",
-                          cursor: "col-resize",
-                          zIndex: 10,
-                        }}
-                      />
-                    )}
-                  </div>
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-
-        <tbody>
-          {data.map((item, index) => {
-            return renderRow(item, index);
-          })}
-
-          {action && (
+          <thead className={styles.tableHead}>
             <tr>
-              <td
-                valign="middle"
-                colSpan={headers.length}
-                className="border-0 p-0"
-              >
-                <Button
-                  variant="link"
-                  onClick={action}
-                  className="border-0 text-decoration-none shadow-none"
-                >
-                  Agregar
-                </Button>
-              </td>
+              {visibleHeaders.map((header, visibleIndex) => {
+                const idx = header.originalIndex;
+
+                return (
+                  <th
+                    key={idx}
+                    data-column-index={idx}
+                    className={[styles.headCell, header.className ?? ""].join(
+                      " ",
+                    )}
+                    style={{
+                      minWidth: `${header.minWidth ?? 60}px`,
+                      width: `${columnWidths[idx]}px`,
+                    }}
+                    title={header.name}
+                  >
+                    <div className={styles.headContent}>
+                      <span className={styles.headText}>{header.string}</span>
+
+                      {resizable &&
+                        visibleIndex < visibleHeaders.length - 1 && (
+                          <div
+                            className={[
+                              styles.resizeHandle,
+                              resizeState?.columnIndex === idx
+                                ? styles.resizeHandleActive
+                                : "",
+                            ].join(" ")}
+                            onMouseDown={(event) => startResize(event, idx)}
+                            onDoubleClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              autoFitColumn(idx);
+                            }}
+                            title="Arrastra para redimensionar. Doble click para autoajustar."
+                          />
+                        )}
+                    </div>
+                  </th>
+                );
+              })}
             </tr>
-          )}
-        </tbody>
-      </Table>
+          </thead>
+
+          <tbody className={styles.tableBody}>
+            {data.map((item, index) => renderRow(item, index))}
+
+            {action && (
+              <tr className={styles.addRow}>
+                <td
+                  valign="middle"
+                  colSpan={visibleHeaders.length}
+                  className={styles.addCell}
+                >
+                  <Button
+                    variant="link"
+                    onClick={action}
+                    className={styles.addButton}
+                  >
+                    <i className="bi bi-plus-circle" />
+                    <span>Agregar</span>
+                  </Button>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </Table>
+      </div>
     </div>
   );
 }

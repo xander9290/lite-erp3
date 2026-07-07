@@ -1,0 +1,61 @@
+.fieldWrapper {
+  margin-bottom: 0.45rem;
+}
+
+.floatingLabel {
+  width: 100%;
+}
+
+.floatingLabel :global(label) {
+  color: var(--bs-secondary-color);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+}
+
+.floatingLabel :global(.form-control),
+.floatingLabel :global(.form-select) {
+  min-height: 42px;
+  border-radius: 0.65rem;
+  border-color: var(--bs-border-color);
+  background-color: var(--bs-body-bg);
+  font-size: 0.88rem;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.floatingLabel :global(.form-control:focus),
+.floatingLabel :global(.form-select:focus) {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.18rem rgba(var(--bs-primary-rgb), 0.12);
+}
+
+.floatingLabel :global(.form-control:disabled),
+.floatingLabel :global(.form-select:disabled),
+.floatingLabel :global(.form-control[readonly]) {
+  background-color: var(--bs-tertiary-bg);
+  color: var(--bs-secondary-color);
+  cursor: not-allowed;
+}
+
+.feedback {
+  display: block;
+  margin-top: 0.22rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.inlineField {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.inlineField :global(.form-control),
+.inlineField :global(.form-select) {
+  min-height: 34px;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+}

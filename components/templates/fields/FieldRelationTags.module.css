@@ -1,0 +1,251 @@
+.fieldWrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.inlineWrapper {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.label {
+  margin-bottom: 0.35rem;
+  color: var(--bs-secondary-color);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.025em;
+}
+
+.requiredMark {
+  margin-left: 0.25rem;
+  color: var(--bs-danger);
+}
+
+.relationTagsBox {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.65rem;
+  background-color: var(--bs-body-bg);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.relationTagsBox:focus-within {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.18rem rgba(var(--bs-primary-rgb), 0.12);
+}
+
+.relationTagsBoxInvalid {
+  border-color: var(--bs-danger);
+}
+
+.relationTagsBoxInvalid:focus-within {
+  border-color: var(--bs-danger);
+  box-shadow: 0 0 0 0.18rem rgba(var(--bs-danger-rgb), 0.12);
+}
+
+.relationTagsBoxReadonly {
+  background-color: var(--bs-tertiary-bg);
+  color: var(--bs-secondary-color);
+  cursor: not-allowed;
+}
+
+.relationBadge {
+  min-height: 24px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.5rem !important;
+  background-color: rgba(var(--bs-primary-rgb), 0.12) !important;
+  color: var(--bs-primary) !important;
+  border: 1px solid rgba(var(--bs-primary-rgb), 0.2);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.015em;
+}
+
+.removeButton {
+  width: 17px;
+  height: 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: -0.2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: transparent;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.removeButton:hover {
+  background-color: rgba(var(--bs-primary-rgb), 0.15);
+  opacity: 1;
+}
+
+.relationInput {
+  min-width: 120px;
+  flex: 1 1 120px;
+  min-height: 26px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  color: var(--bs-body-color);
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+
+.relationInput:focus {
+  background-color: transparent !important;
+  color: var(--bs-body-color);
+  box-shadow: none !important;
+}
+
+.relationInput::placeholder {
+  color: var(--bs-secondary-color);
+  font-weight: 500;
+}
+
+.errorText {
+  margin-top: 0.25rem;
+  color: var(--bs-danger);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+/* Dropdown portal */
+
+.dropdownMenu {
+  width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 0.35rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.75rem;
+  background-color: var(--bs-body-bg);
+  box-shadow:
+    0 0.65rem 1.5rem rgba(0, 0, 0, 0.12),
+    0 0 0 1px var(--bs-border-color);
+}
+
+.dropdownItem,
+.emptyItem {
+  min-height: 34px;
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.6rem !important;
+  font-size: 0.86rem;
+}
+
+.dropdownItem {
+  color: var(--bs-body-color);
+  font-weight: 600;
+}
+
+.dropdownItem:hover,
+.dropdownItem:focus {
+  background-color: var(--bs-tertiary-bg);
+  color: var(--bs-primary);
+}
+
+.dropdownItem:global(.active) {
+  background-color: rgba(var(--bs-primary-rgb), 0.12);
+  color: var(--bs-primary);
+}
+
+.emptyItem {
+  color: var(--bs-secondary-color);
+  font-weight: 600;
+}
+
+/* Dark mode */
+
+:global([data-bs-theme="dark"]) .label {
+  color: #c6ced8;
+}
+
+:global([data-bs-theme="dark"]) .relationTagsBox {
+  background-color: #1c2024;
+  border-color: #46505a;
+  color: #f1f4f8;
+}
+
+:global([data-bs-theme="dark"]) .relationTagsBox:focus-within {
+  background-color: #20252a;
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.18rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+:global([data-bs-theme="dark"]) .relationTagsBoxReadonly {
+  background-color: #272c31;
+  border-color: #3f4852;
+  color: #cbd3dc;
+}
+
+:global([data-bs-theme="dark"]) .relationBadge {
+  background-color: rgba(var(--bs-primary-rgb), 0.24) !important;
+  color: #dce9ff !important;
+  border-color: rgba(var(--bs-primary-rgb), 0.45);
+}
+
+:global([data-bs-theme="dark"]) .removeButton:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+:global([data-bs-theme="dark"]) .relationInput {
+  color: #f1f4f8;
+}
+
+:global([data-bs-theme="dark"]) .relationInput:focus {
+  color: #fff;
+}
+
+:global([data-bs-theme="dark"]) .relationInput::placeholder {
+  color: #87919d;
+}
+
+:global([data-bs-theme="dark"]) .dropdownMenu {
+  background-color: #20252a;
+  border-color: #4a535d;
+  box-shadow:
+    0 0.75rem 1.75rem rgba(0, 0, 0, 0.35),
+    0 0 0 1px #4a535d;
+}
+
+:global([data-bs-theme="dark"]) .dropdownItem {
+  color: #e8edf3;
+}
+
+:global([data-bs-theme="dark"]) .dropdownItem:hover,
+:global([data-bs-theme="dark"]) .dropdownItem:focus {
+  background-color: #2b3138;
+  color: #fff;
+}
+
+:global([data-bs-theme="dark"]) .dropdownItem:global(.active) {
+  background-color: rgba(var(--bs-primary-rgb), 0.28);
+  color: #fff;
+}
+
+:global([data-bs-theme="dark"]) .emptyItem {
+  color: #aeb8c4;
+}

@@ -1,6 +1,6 @@
 // components/templates/table/TableTemplateLite.tsx
-import React, { useState } from "react"; // 👈 Ya no importa useCallback/useMemo
-import { Table, Form, Spinner } from "react-bootstrap";
+import React, { useState } from "react";
+import { Table, Form, Spinner, Badge } from "react-bootstrap";
 import useSWR from "swr";
 import { FilterBuilder } from "./FilterBuilder";
 import { SortIndicator } from "./SortIndicator";
@@ -10,6 +10,7 @@ import { ColumnConfig, FilterValue, TableData } from "@/app/libs/definitions";
 import { extractEntityFromPath } from "@/contexts/AccessContext";
 import { useAuth } from "@/hooks/sessionStore";
 import { usePathname } from "next/navigation";
+import styles from "./TableTemplateLite.module.css";
 
 interface TableTemplateProps {
   model: string;
@@ -28,6 +29,7 @@ function buildSortForApi(field: string, dir: "asc" | "desc"): any {
   if (!field.includes(".")) {
     return { [field]: dir };
   }
+
   const [relation, ...path] = field.split(".");
   return { [relation]: { [path.join(".")]: dir } };
 }
@@ -44,19 +46,16 @@ export function TableTemplateLite({
   showTotals = false,
   totalColumns = [],
 }: TableTemplateProps) {
-  const { access } = useAuth();
-  const { uid } = useAuth();
+  const { access, uid } = useAuth();
 
   const pathName = usePathname();
   const entity = extractEntityFromPath(pathName);
   const modelAccess = access.filter((acc) => acc.entityType === entity);
 
-  // Extraer columnas
   const columns: ColumnConfig[] = React.Children.toArray(children)
     .filter((child) => React.isValidElement(child))
     .map((child) => child.props as ColumnConfig);
 
-  // Estado
   const [sort, setSort] = useState<{ field: string; dir: "asc" | "desc" }>(
     () => {
       if (defaultOrder) {
@@ -66,6 +65,7 @@ export function TableTemplateLite({
           dir: dir?.toLowerCase() === "desc" ? "desc" : "asc",
         };
       }
+
       return { field: "id", dir: "asc" };
     },
   );
@@ -75,15 +75,14 @@ export function TableTemplateLite({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [groupBy, setGroupBy] = useState<string | null>(null);
 
-  // Columnas visibles
   const visibleColumns = columns.filter((col) => {
     const getAccess = modelAccess.find((acc) => acc.fieldName === col.field);
-    if (getAccess && getAccess.invisible) return null;
+    if (getAccess && getAccess.invisible) return false;
     return col.sortable !== false || col.field !== "id";
   });
 
-  // Construir URL de API
   const sortForApi = buildSortForApi(sort.field, sort.dir);
+
   const includes = columns.reduce((acc, col) => {
     if (col.include) Object.assign(acc, col.include);
     return acc;
@@ -105,10 +104,8 @@ export function TableTemplateLite({
 
   const apiUrl = `/api/tables/${model}?${params}`;
 
-  // SWR fetch
   const { data, error, isLoading } = useSWR<TableData>(apiUrl, fetcher);
 
-  // Datos agrupados
   const groupedData: Record<string, any[]> | null = (() => {
     if (!groupBy || !data?.rows) return null;
 
@@ -119,20 +116,22 @@ export function TableTemplateLite({
       (groups: Record<string, any[]>, row: any) => {
         const value = getNestedValue(row, groupBy);
         const key = formatGroupKey(value, col.type);
+
         if (!groups[key]) groups[key] = [];
         groups[key].push(row);
+
         return groups;
       },
       {} as Record<string, any[]>,
     );
   })();
 
-  // Handlers
   const handleSort = (field: string) => {
     setSort((prev) => ({
       field,
       dir: prev.field === field && prev.dir === "asc" ? "desc" : "asc",
     }));
+
     setPage(1);
   };
 
@@ -148,9 +147,11 @@ export function TableTemplateLite({
 
   const handleSelectAll = (checked: boolean) => {
     if (!data?.rows) return;
+
     const newIds = checked
       ? [...new Set([...selectedIds, ...data.rows.map((r: any) => r.id)])]
       : selectedIds.filter((id) => !data.rows.some((r: any) => r.id === id));
+
     handleSelectionChange(newIds);
   };
 
@@ -158,6 +159,7 @@ export function TableTemplateLite({
     const newIds = checked
       ? [...selectedIds, id]
       : selectedIds.filter((x) => x !== id);
+
     handleSelectionChange(newIds);
   };
 
@@ -166,13 +168,11 @@ export function TableTemplateLite({
     data?.rows?.length > 0 &&
     data.rows.every((r: any) => selectedIds.includes(r.id));
 
-  // Calcular totales de columnas numéricas
   const calculateTotals = () => {
     if (!showTotals || !data?.rows?.length) return null;
 
     const rows = groupedData ? Object.values(groupedData).flat() : data.rows;
 
-    // Determinar qué columnas sumar
     const columnsToSum =
       totalColumns.length > 0
         ? totalColumns
@@ -188,6 +188,7 @@ export function TableTemplateLite({
         const numValue = typeof value === "number" ? value : parseFloat(value);
         return sum + (isNaN(numValue) ? 0 : numValue);
       }, 0);
+
       totals[colField] = total;
     });
 
@@ -196,33 +197,29 @@ export function TableTemplateLite({
 
   const totals = calculateTotals();
 
-  // Renderizar fila de totales
   const renderTotalsRow = () => {
     if (!totals) return null;
 
     return (
-      <tr className="table-active fw-semibold">
+      <tr className={styles.totalRow}>
         {showSelection && (
-          <td className="border-top border-bottom" valign="middle">
-            <strong>Total</strong>
+          <td className={styles.totalLabelCell} valign="middle">
+            <span>Total</span>
           </td>
         )}
+
         {visibleColumns.map((col) => {
           const totalValue = totals[col.field];
           const hasTotal = totalValue !== undefined;
 
           return (
-            <td
-              key={col.field}
-              className="border-top border-bottom"
-              valign="middle"
-            >
+            <td key={col.field} className={styles.totalCell} valign="middle">
               {hasTotal ? (
-                <p className="fw-semibold m-0 p-0 text-end fs-6">
-                  Total: {formatCellValue(totalValue, col.type, col.format)}
-                </p>
+                <div className={styles.totalValue}>
+                  {formatCellValue(totalValue, col.type, col.format)}
+                </div>
               ) : (
-                <p className="text-muted"></p>
+                <span className="text-muted">—</span>
               )}
             </td>
           );
@@ -231,17 +228,16 @@ export function TableTemplateLite({
     );
   };
 
-  // Render rows
   const renderRow = (row: any, index: number) => (
     <tr
       key={row.id || index}
       onClick={() => onRowClick?.(row)}
-      style={{ cursor: onRowClick ? "pointer" : "default" }}
+      className={`${styles.tableRow} ${onRowClick ? styles.clickableRow : ""}`}
     >
       {showSelection && (
         <td
           onClick={(e) => e.stopPropagation()}
-          className="text-center border-bottom"
+          className={styles.selectionCell}
           valign="middle"
         >
           <Form.Check
@@ -251,21 +247,27 @@ export function TableTemplateLite({
           />
         </td>
       )}
+
       {visibleColumns.map((col) => {
+        const value = getNestedValue(row, col.field);
+
         if (col.render) {
           return (
-            <td key={col.field} className="border-bottom" valign="middle">
-              {col.render(getNestedValue(row, col.field), row, index)}
+            <td key={col.field} className={styles.bodyCell} valign="middle">
+              {col.render(value, row, index)}
             </td>
           );
         }
+
         return (
-          <td key={col.field} className="border-bottom" valign="middle">
-            {formatCellValue(
-              getNestedValue(row, col.field),
-              col.type,
-              col.format,
-            )}
+          <td
+            key={col.field}
+            className={`${styles.bodyCell} ${
+              col.type === "number" ? styles.numericCell : ""
+            }`}
+            valign="middle"
+          >
+            {formatCellValue(value, col.type, col.format)}
           </td>
         );
       })}
@@ -276,24 +278,29 @@ export function TableTemplateLite({
     if (groupedData) {
       return Object.entries(groupedData).map(([group, rows]) => (
         <React.Fragment key={group}>
-          <tr>
+          <tr className={styles.groupRow}>
             <td
               colSpan={visibleColumns.length + (showSelection ? 1 : 0)}
-              className="border-bottom"
               valign="middle"
             >
-              <div className="d-flex align-items-center justify-content-between">
-                <strong>
-                  <i className="bi bi-collection me-2" />
-                  {group} ({rows.length})
-                </strong>
+              <div className={styles.groupContent}>
+                <div className={styles.groupTitle}>
+                  <i className="bi bi-collection" />
+                  <span>{group}</span>
+                </div>
+
+                <Badge bg="secondary" pill>
+                  {rows.length}
+                </Badge>
               </div>
             </td>
           </tr>
+
           {rows.map((row: any, index: number) => renderRow(row, index))}
         </React.Fragment>
       ));
     }
+
     return data?.rows?.map((row: any, index: number) => renderRow(row, index));
   };
 
@@ -303,48 +310,45 @@ export function TableTemplateLite({
     data?.total && data.rows.length ? Math.min(page * pageSize, data.total) : 0;
 
   return (
-    <div className="position-relative">
-      {/* Toolbar */}
-      <div className="d-flex justify-content-between align-items-center mb-0 flex-wrap gap-2">
-        <div className="d-flex gap-2">
+    <section className={styles.tableShell}>
+      <div className={styles.toolbar}>
+        <div className={styles.toolbarLeft}>
           <FilterBuilder
             columns={columns}
             filters={filters}
             onChange={handleFilter}
             storageKey={`${uid}-filters-${entity}`}
           />
+
           <GroupByControl
             columns={columns}
             storageKey={`${uid}-groupby-${entity}`}
             onGroupChange={setGroupBy}
           />
         </div>
-        {isLoading && (
-          <Spinner size="sm" animation="border" variant="primary" />
-        )}
+
+        <div className={styles.toolbarRight}>
+          {selectedIds.length > 0 && (
+            <Badge bg="primary" pill className={styles.selectedBadge}>
+              {selectedIds.length} seleccionados
+            </Badge>
+          )}
+
+          {isLoading && (
+            <div className={styles.loadingState}>
+              <Spinner size="sm" animation="border" variant="primary" />
+              <span>Cargando</span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Table */}
-      <div
-        className="table-responsive"
-        style={{
-          maxHeight: "74vh",
-          overflowY: "auto",
-        }}
-      >
-        <Table borderless hover size="sm" style={{ fontSize: "0.9rem" }}>
-          <thead
-            className="sticky-top shadow-sm"
-            style={{
-              zIndex: 10,
-            }}
-          >
-            <tr className={onRowClick ? "table-row-clickable" : undefined}>
+      <div className={styles.tableContainer}>
+        <Table borderless hover size="sm" className={styles.table}>
+          <thead className={styles.tableHead}>
+            <tr>
               {showSelection && (
-                <th
-                  style={{ width: 40 }}
-                  className="text-center border-end border-bottom table-active"
-                >
+                <th className={styles.selectionHead}>
                   <Form.Check
                     type="checkbox"
                     checked={isAllSelected || false}
@@ -352,46 +356,52 @@ export function TableTemplateLite({
                   />
                 </th>
               )}
-              {visibleColumns.map((col) => {
-                return (
-                  <th
-                    key={col.field}
-                    onClick={() =>
-                      col.sortable !== false && handleSort(col.field)
-                    }
-                    title={col.field}
-                    style={{
-                      cursor: col.sortable !== false ? "pointer" : "default",
-                      userSelect: "none",
-                    }}
-                    className="text-center border-end border-bottom table-active"
-                  >
-                    <div className="d-flex align-items-center justify-content-between">
-                      <span>{col.label}</span>
-                      {col.sortable !== false && (
-                        <SortIndicator
-                          active={sort.field === col.field}
-                          direction={sort.dir}
-                        />
-                      )}
-                    </div>
-                  </th>
-                );
-              })}
+
+              {visibleColumns.map((col) => (
+                <th
+                  key={col.field}
+                  onClick={() =>
+                    col.sortable !== false && handleSort(col.field)
+                  }
+                  title={col.field}
+                  className={`${styles.headCell} ${
+                    col.sortable !== false ? styles.sortableHeadCell : ""
+                  }`}
+                >
+                  <div className={styles.headContent}>
+                    <span>{col.label}</span>
+
+                    {col.sortable !== false && (
+                      <SortIndicator
+                        active={sort.field === col.field}
+                        direction={sort.dir}
+                      />
+                    )}
+                  </div>
+                </th>
+              ))}
             </tr>
           </thead>
+
           <tbody>
             {data?.rows?.length ? (
               renderRows()
             ) : (
-              <tr className={onRowClick ? "table-row-clickable" : undefined}>
+              <tr>
                 <td
                   colSpan={visibleColumns.length + (showSelection ? 1 : 0)}
-                  className="text-center py-4 text-muted"
+                  className={styles.emptyCell}
                 >
-                  <div className="py-5">
-                    <i className="bi bi-inbox fs-1 d-block mb-2" />
-                    <div>{isLoading ? "Cargando..." : "No hay registros"}</div>
+                  <div className={styles.emptyState}>
+                    <i className="bi bi-inbox" />
+                    <strong>
+                      {isLoading ? "Cargando..." : "No hay registros"}
+                    </strong>
+                    <span>
+                      {isLoading
+                        ? "Estamos preparando la información."
+                        : "No se encontraron datos para mostrar."}
+                    </span>
                   </div>
                 </td>
               </tr>
@@ -399,28 +409,21 @@ export function TableTemplateLite({
           </tbody>
 
           {data && data?.total > 0 && (
-            <tfoot
-              className="table-active"
-              style={{
-                position: "sticky",
-                bottom: 0,
-                zIndex: 9,
-                background: "var(--bs-table-bg, #fff)",
-              }}
-            >
+            <tfoot className={styles.tableFoot}>
               {totals && renderTotalsRow()}
 
-              <tr className={onRowClick ? "table-row-clickable" : undefined}>
+              <tr>
                 <td colSpan={visibleColumns.length + (showSelection ? 1 : 0)}>
-                  <div className="d-flex justify-content-between align-items-center">
-                    <div className="d-flex flex-column">
-                      <small className="text-muted">
-                        Mostrando {from}–{to} de {data.total.toLocaleString()}
+                  <div className={styles.footerContent}>
+                    <div className={styles.footerInfo}>
+                      <small>
+                        Mostrando <strong>{from}</strong>–<strong>{to}</strong>{" "}
+                        de <strong>{data.total.toLocaleString()}</strong>
                       </small>
 
-                      {selectedIds.length > 0 && (
-                        <small className="text-primary">
-                          {selectedIds.length} seleccionados
+                      {groupBy && (
+                        <small className="text-muted">
+                          Agrupado por <strong>{groupBy}</strong>
                         </small>
                       )}
                     </div>
@@ -440,12 +443,12 @@ export function TableTemplateLite({
       </div>
 
       {error && (
-        <div className="alert alert-danger">
-          <i className="bi bi-exclamation-triangle me-2" />
-          {error.message || "Error al cargar datos"}
+        <div className={styles.errorBox}>
+          <i className="bi bi-exclamation-triangle" />
+          <span>{error.message || "Error al cargar datos"}</span>
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -457,12 +460,14 @@ function getNestedValue(obj: any, path: string): any {
 
 function formatCellValue(value: any, type?: string, format?: string): string {
   if (value == null) return "";
+
   if (type === "number" && format === "currency") {
     return new Intl.NumberFormat("es-MX", {
       style: "currency",
       currency: "MXN",
     }).format(Number(value));
   }
+
   if ((type === "date" || type === "datetime") && value) {
     try {
       const date = new Date(value);
@@ -473,12 +478,15 @@ function formatCellValue(value: any, type?: string, format?: string): string {
       return String(value);
     }
   }
+
   if (type === "boolean") return value ? "Sí" : "No";
+
   return String(value);
 }
 
 function formatGroupKey(value: any, type?: string): string {
   if (value == null) return "Sin valor";
+
   if (type === "datetime" || type === "date") {
     try {
       const date = new Date(value);
@@ -490,14 +498,17 @@ function formatGroupKey(value: any, type?: string): string {
       return String(value);
     }
   }
+
   return String(value);
 }
 
 async function fetcher(url: string): Promise<TableData> {
   const res = await fetch(url);
+
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: "Unknown error" }));
     throw new Error(error.error || `HTTP ${res.status}`);
   }
+
   return res.json();
 }

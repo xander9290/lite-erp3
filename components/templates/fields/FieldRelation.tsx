@@ -1,6 +1,12 @@
-// // "use client";
+"use client";
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import { createPortal } from "react-dom";
 import { FieldError, useController, useFormContext } from "react-hook-form";
 import { Form, Dropdown, FloatingLabel, Button } from "react-bootstrap";
@@ -9,6 +15,7 @@ import { ColumnConfig } from "@/app/libs/definitions";
 import RelationSearchModal from "../RelationSearchModal";
 import { useRelation } from "@/hooks/useRelation";
 import toast from "react-hot-toast";
+import styles from "./FieldRelation.module.css";
 
 export interface Many2OneOption {
   id: string;
@@ -152,7 +159,10 @@ export function FieldRelation<T extends Many2OneOption>({
 
     const openUpwards = spaceBelow < MIN_SPACE_BELOW && spaceAbove > spaceBelow;
 
-    const maxHeight = Math.min(openUpwards ? spaceAbove - 8 : spaceBelow - 8, MENU_MAX_HEIGHT);
+    const maxHeight = Math.min(
+      openUpwards ? spaceAbove - 8 : spaceBelow - 8,
+      MENU_MAX_HEIGHT,
+    );
 
     setMenuPosition({
       top: openUpwards ? rect.top - maxHeight - SPACING : rect.bottom + SPACING,
@@ -188,7 +198,10 @@ export function FieldRelation<T extends Many2OneOption>({
   // 📍 Optimizado: Event listener con cleanup
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -342,7 +355,14 @@ export function FieldRelation<T extends Many2OneOption>({
         }}
       >
         <Dropdown show className="w-100">
-          <Dropdown.Menu show className="p-0 mt-0" style={{ maxHeight: menuPosition.maxHeight, overflowY: "auto" }}>
+          <Dropdown.Menu
+            show
+            className={styles.dropdownMenu}
+            style={{
+              maxHeight: menuPosition.maxHeight,
+              overflowY: "auto",
+            }}
+          >
             {options.length === 0 ? (
               <Dropdown.Item disabled className="text-muted">
                 <small>No hay resultados</small>
@@ -356,8 +376,7 @@ export function FieldRelation<T extends Many2OneOption>({
                     e.preventDefault();
                     handleSelect(opt);
                   }}
-                  className="p-1"
-                  style={{ fontSize: "0.9rem" }}
+                  className={styles.dropdownItem}
                 >
                   {opt.displayName ?? opt.name}
                 </Dropdown.Item>
@@ -381,7 +400,17 @@ export function FieldRelation<T extends Many2OneOption>({
       </div>,
       document.body,
     );
-  }, [mounted, isOpen, readonly, access?.readonly, menuPosition, options, highlightedIndex, handleSelect, searchColumns]);
+  }, [
+    mounted,
+    isOpen,
+    readonly,
+    access?.readonly,
+    menuPosition,
+    options,
+    highlightedIndex,
+    handleSelect,
+    searchColumns,
+  ]);
 
   if (invisible || access?.invisible) return null;
 
@@ -401,7 +430,11 @@ export function FieldRelation<T extends Many2OneOption>({
         isInvalid={!!error}
         readOnly={readonly || access?.readonly}
         autoFocus={autoFocus}
-        className={`w-100 shadow-none px-1 rounded-end-0 ${className ?? ""} ${inline ? "border-0" : ""}`}
+        className={[
+          styles.relationInput,
+          inline ? styles.inlineInput : "",
+          className ?? "",
+        ].join(" ")}
         onKeyDown={handleKeyDown}
         style={{ fontSize: "0.9rem" }}
       />
@@ -424,27 +457,41 @@ export function FieldRelation<T extends Many2OneOption>({
 
   if (inline) {
     return (
-      <div ref={containerRef} title={name} className="m-0 p-0 w-100">
+      <div ref={containerRef} title={name} className={styles.inlineWrapper}>
         {input}
       </div>
     );
   }
 
   return (
-    <div ref={containerRef} className="mb-1 w-100">
-      <div className="d-flex align-items-stretch">
-        <FloatingLabel label={label ?? name} className="flex-grow-1 fs-6 fw-bold" title={name}>
+    <div ref={containerRef} className={styles.fieldWrapper}>
+      <div className={styles.inputGroup}>
+        <FloatingLabel
+          label={label ?? name}
+          className={styles.floatingLabel}
+          title={name}
+        >
           {input}
         </FloatingLabel>
+
         {!readonly && (
-          <Button size="sm" variant="secondary" onClick={handleOff} disabled={readonly || access?.readonly} className="rounded-start-0" title="Limpiar selección">
-            <i className="bi bi-power"></i>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handleOff}
+            disabled={readonly || access?.readonly}
+            className={styles.clearButton}
+            title="Limpiar selección"
+          >
+            <i className="bi bi-power" />
           </Button>
         )}
       </div>
 
-      {/* Mantenemos el feedback visual aunque el toast ya muestra el error */}
-      <Form.Control.Feedback type="invalid" className={error ? "d-block" : ""}>
+      <Form.Control.Feedback
+        type="invalid"
+        className={error ? styles.feedbackVisible : styles.feedback}
+      >
         {error?.message}
       </Form.Control.Feedback>
     </div>

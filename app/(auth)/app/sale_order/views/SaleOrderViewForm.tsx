@@ -2,26 +2,55 @@
 
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { saleOrderLineSchemaDefault, saleOrderSchema, saleOrderSchemaDefault, SaleOrderSchemaType } from "../schemas/saleOrder.schema";
+import {
+  saleOrderLineSchemaDefault,
+  saleOrderSchema,
+  saleOrderSchemaDefault,
+  SaleOrderSchemaType,
+} from "../schemas/saleOrder.schema";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import { actionSaleCancel, actionSaleConfirm, actionSaleOrder, SaleOrderWithProps } from "../actions/saleOrder.action";
-import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
-import { FieldEntry, FieldRelation, FieldSelect, FieldText } from "@/components/templates/fields";
+import {
+  actionSaleCancel,
+  actionSaleConfirm,
+  actionSaleOrder,
+  SaleOrderWithProps,
+} from "../actions/saleOrder.action";
+import {
+  FormView,
+  FormViewGroup,
+  FormViewStack,
+} from "@/components/templates/FormView";
+import {
+  FieldEntry,
+  FieldRelation,
+  FieldSelect,
+  FieldText,
+} from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import { useAuth } from "@/hooks/sessionStore";
 import { getCompanyById } from "../../companies/actions/companies-actions";
 import { Partner, ProductPricelistItem } from "@/generated/prisma/browser";
 import { getIPaymentTermById } from "../../invoicing_settings/payment_term/actions/ipaymentTerm.action";
 import { Col } from "react-bootstrap";
-import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
+import {
+  BtnDeleteLine,
+  SimpleTable,
+  SimpleTD,
+} from "@/components/templates/simpletemplates";
 import { getProductById } from "../../product_template/products/actions/productTemplate.action";
 import { formatCurrency } from "@/app/libs/helpers";
 import { toDateOnly } from "@/app/libs/validatorDate";
 import { getPartnerById } from "../../partners/actions/partner-actions";
 
-function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | null; id: string | null }) {
+function SaleOrderViewForm({
+  saleOrder,
+  id,
+}: {
+  saleOrder: SaleOrderWithProps | null;
+  id: string | null;
+}) {
   const { companyId } = useAuth();
 
   const methods = useForm<SaleOrderSchemaType>({
@@ -58,7 +87,9 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
 
   const [partnerLocation, setPartnerLocation] = useState<string | null>("");
 
-  const save = async (data: SaleOrderSchemaType): Promise<SaleOrderWithProps | null> => {
+  const save = async (
+    data: SaleOrderSchemaType,
+  ): Promise<SaleOrderWithProps | null> => {
     const res = await actionSaleOrder({ data });
     if (!res.success) {
       modalError(res.message);
@@ -125,7 +156,6 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
       shippingWayId: {
         id: saleOrder.ShippingWay.id,
         name: saleOrder.ShippingWay.name,
-        type: saleOrder.ShippingWay.type,
       },
       warehouseId: {
         id: saleOrder.Warehouse.id,
@@ -169,7 +199,9 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
     const setSaleWarehouse = async () => {
       const getCompany = await getCompanyById({ id: companyId });
       if (getCompany) {
-        const getSalesWh = getCompany.Warehouses.filter((wh) => wh.type === "SALES");
+        const getSalesWh = getCompany.Warehouses.filter(
+          (wh) => wh.type === "SALES",
+        );
 
         setValue("companyId", { id: getCompany.id, name: getCompany.name });
 
@@ -191,7 +223,9 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
 
   const onChangePartner = async (vale: string | null, record: Partner) => {
     if (getValues().partnerId.id && getValues().SaleOrderLines.length >= 1) {
-      return modalError("No es posible cambiar de cliente mientras la cotización tenga líneas ya definidas");
+      return modalError(
+        "No es posible cambiar de cliente mientras la cotización tenga líneas ya definidas",
+      );
     }
     const paymentTermId = await getIPaymentTermById({
       id: record.paymentTermId,
@@ -252,13 +286,23 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
   });
 
   const handleActionCancel = () => {
-    modalConfirm("Confirma que quieres cancelar la orden", () => actionCancel());
+    modalConfirm("Confirma que quieres cancelar la orden", () =>
+      actionCancel(),
+    );
   };
 
-  const onChangeProduct = async ({ value, line }: { value: string | null; line: number }) => {
+  const onChangeProduct = async ({
+    value,
+    line,
+  }: {
+    value: string | null;
+    line: number;
+  }) => {
     const productId = await getProductById({ id: value });
     if (productId) {
-      const partnerPricelist = !getValues().partnerId.pricelist ? productId["price1"] : productId[getValues().partnerId.pricelist ?? "price1"];
+      const partnerPricelist = !getValues().partnerId.pricelist
+        ? productId["price1"]
+        : productId[getValues().partnerId.pricelist ?? "price1"];
 
       const pricelist = partnerPricelist;
       const taxRate = productId.TaxSale?.amount ?? 0.0;
@@ -274,7 +318,10 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
         name: productId.Uom?.code || "",
       });
 
-      setValue(`SaleOrderLines.${line}.pricelist`, getValues().partnerId.pricelist || "price1");
+      setValue(
+        `SaleOrderLines.${line}.pricelist`,
+        getValues().partnerId.pricelist || "price1",
+      );
       setValue(`SaleOrderLines.${line}.priceUnit`, pricelist);
       setValue(`SaleOrderLines.${line}.taxRate`, taxRate);
       setValue(`SaleOrderLines.${line}.taxAmount`, taxAmount);
@@ -285,7 +332,13 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
     computeTotals();
   };
 
-  const onChangeQuantity = ({ value, line }: { line: number; value: number }) => {
+  const onChangeQuantity = ({
+    value,
+    line,
+  }: {
+    line: number;
+    value: number;
+  }) => {
     const priceUnit = getValues().SaleOrderLines[line].priceUnit; // ✅ ya viene sin IVA
     const taxRate = getValues().SaleOrderLines[line].taxRate ?? 0.0;
     const qty = value;
@@ -301,7 +354,13 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
     computeTotals();
   };
 
-  const onChangePricelist = async ({ value, line }: { value: ProductPricelistItem; line: number }) => {
+  const onChangePricelist = async ({
+    value,
+    line,
+  }: {
+    value: ProductPricelistItem;
+    line: number;
+  }) => {
     if (!value) {
       setValue(`SaleOrderLines.${line}.pricelist`, "price1");
       return;
@@ -358,7 +417,9 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
     >
       <FormViewGroup>
         <FieldRelation
-          ponChange={(value, record) => onChangePartner(value, record as Partner)}
+          ponChange={(value, record) =>
+            onChangePartner(value, record as Partner)
+          }
           model="partner"
           name="partnerId"
           label="Cliente"
@@ -392,8 +453,19 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
           />
         </FormViewStack>
         <FormViewStack>
-          <FieldRelation model="SaleShippingWay" name="shippingWayId" label="Forma de envío" domain={[["active", "=", true]]} readonly={getValues().state !== "draft"} />
-          <FieldRelation name="paymentTermId" label="Término de pago" model="invoicingPaymentTerm" readonly={getValues().state !== "draft"} />
+          <FieldRelation
+            model="SaleShippingWay"
+            name="shippingWayId"
+            label="Forma de envío"
+            domain={[["active", "=", true]]}
+            readonly={getValues().state !== "draft"}
+          />
+          <FieldRelation
+            name="paymentTermId"
+            label="Término de pago"
+            model="invoicingPaymentTerm"
+            readonly={getValues().state !== "draft"}
+          />
         </FormViewStack>
       </FormViewGroup>
       <FormViewGroup>
@@ -408,14 +480,35 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
           readonly={getValues().state !== "draft"}
           ponChange={(value) => onChangePartnerShipping(value)}
         />
-        <div className="my-1 px-1 bg-body-tertiary text-center rounded border" style={{ height: "25px", display: getValues().shippingWayId.type === "delivery" ? "block" : "none" }}>
+        <div
+          className="my-1 px-1 bg-body-tertiary text-center rounded border"
+          style={{
+            height: "25px",
+          }}
+        >
           <FieldText name="shippingText" output={partnerLocation} />
         </div>
         <FormViewStack>
-          <FieldEntry name="orderDate" label="Fecha de la orden" type="date" readonly />
-          {getValues().state !== "draft" && <FieldEntry name="confirmedDate" label="Confirmado" type="datetime-local" readonly />}
+          <FieldEntry
+            name="orderDate"
+            label="Fecha de la orden"
+            type="date"
+            readonly
+          />
+          {getValues().state !== "draft" && (
+            <FieldEntry
+              name="confirmedDate"
+              label="Confirmado"
+              type="datetime-local"
+              readonly
+            />
+          )}
         </FormViewStack>
-        <FieldEntry name="reference" label="Referencia" readonly={getValues().state !== "draft"} />
+        <FieldEntry
+          name="reference"
+          label="Referencia"
+          readonly={getValues().state !== "draft"}
+        />
       </FormViewGroup>
       <Notebook defaultActiveKey="saleOrderLines">
         <Page eventKey="saleOrderLines" title="Líneas de la orden">
@@ -511,7 +604,12 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
                         />
                       </SimpleTD>
                       <SimpleTD colIdx={index} name="lineUomId">
-                        <FieldRelation inline model="uomCategory" name={`SaleOrderLines.${index}.uomId`} readonly />
+                        <FieldRelation
+                          inline
+                          model="uomCategory"
+                          name={`SaleOrderLines.${index}.uomId`}
+                          readonly
+                        />
                       </SimpleTD>
                       <SimpleTD colIdx={index} name="linePricelist">
                         <FieldSelect
@@ -544,17 +642,49 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
                         />
                       </SimpleTD>
                       <SimpleTD colIdx={index} name="lineSubtotal">
-                        <FieldEntry inline name={`SaleOrderLines.${index}.subtotal`} type="number" decimals={2} readonly />
+                        <FieldEntry
+                          inline
+                          name={`SaleOrderLines.${index}.subtotal`}
+                          type="number"
+                          decimals={2}
+                          readonly
+                        />
                       </SimpleTD>
                       <SimpleTD colIdx={index} name="lineTaxRate">
-                        <FieldEntry inline name={`SaleOrderLines.${index}.taxRate`} type="number" decimals={2} readonly invisible />
-                        <FieldEntry inline name={`SaleOrderLines.${index}.taxAmount`} type="number" decimals={2} readonly />
+                        <FieldEntry
+                          inline
+                          name={`SaleOrderLines.${index}.taxRate`}
+                          type="number"
+                          decimals={2}
+                          readonly
+                          invisible
+                        />
+                        <FieldEntry
+                          inline
+                          name={`SaleOrderLines.${index}.taxAmount`}
+                          type="number"
+                          decimals={2}
+                          readonly
+                        />
                       </SimpleTD>
                       <SimpleTD colIdx={index} name="lineTotal">
-                        <FieldEntry inline name={`SaleOrderLines.${index}.total`} type="number" decimals={2} readonly />
+                        <FieldEntry
+                          inline
+                          name={`SaleOrderLines.${index}.total`}
+                          type="number"
+                          decimals={2}
+                          readonly
+                        />
                       </SimpleTD>
-                      <SimpleTD contentPosition="text-center" name="lineDelete" colIdx={index}>
-                        <BtnDeleteLine action={() => remove(index)} disabled={getValues().state !== "draft"} />
+                      <SimpleTD
+                        contentPosition="text-center"
+                        name="lineDelete"
+                        colIdx={index}
+                      >
+                        <BtnDeleteLine
+                          action={() => remove(index)}
+                          disabled={getValues().state !== "draft"}
+                        />
                       </SimpleTD>
                     </tr>
                   );
@@ -575,7 +705,9 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
                 </p>
                 <p className="fs-5 m-1">
                   <strong>Total: </strong>
-                  <span className="fw-semibold">{formatCurrency({ value: totals.total })}</span>
+                  <span className="fw-semibold">
+                    {formatCurrency({ value: totals.total })}
+                  </span>
                 </p>
               </div>
             </Col>
@@ -584,11 +716,20 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
         <Page title="Otra información" eventKey="otherInfo">
           <PageSheet name="otherInfoPage">
             <FormViewGroup>
-              <FieldRelation model="company" name="companyId" label="Empresa" readonly />
+              <FieldRelation
+                model="company"
+                name="companyId"
+                label="Empresa"
+                readonly
+              />
             </FormViewGroup>
             <FormViewGroup>
               <FieldEntry name="purchaseRef" label="Orden de compra" />
-              <FieldEntry name="obs" label="Observaciones de entrega" as="textarea" />
+              <FieldEntry
+                name="obs"
+                label="Observaciones de entrega"
+                as="textarea"
+              />
             </FormViewGroup>
           </PageSheet>
         </Page>

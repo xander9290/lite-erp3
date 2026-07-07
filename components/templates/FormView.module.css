@@ -1,0 +1,133 @@
+.formCard {
+  min-height: calc(100vh - 100px);
+  max-height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.95rem;
+  background-color: var(--bs-body-bg);
+  overflow: hidden;
+  font-size: 0.9rem;
+  box-shadow: 0 0.45rem 1.25rem rgba(0, 0, 0, 0.045);
+}
+
+.formHeader {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border-bottom: 1px solid var(--bs-border-color);
+  background-color: var(--bs-body-bg);
+}
+
+.formActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.formBody {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  background-color: var(--bs-tertiary-bg);
+}
+
+.formTitleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  background-color: var(--bs-body-bg);
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.formTitle {
+  margin: 0;
+  max-width: 100%;
+  color: var(--bs-body-color);
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.formContent {
+  padding-top: 0.85rem;
+  padding-bottom: 1rem;
+}
+
+.iconButton {
+  min-width: 38px;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.primaryButton {
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.auditPanel {
+  height: 100%;
+}
+
+@media (max-width: 992px) {
+  .formCard {
+    min-height: auto;
+    max-height: none;
+  }
+
+  .formHeader {
+    flex-wrap: wrap;
+  }
+
+  .formTitleBar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .auditPanel {
+    margin-top: 1rem;
+  }
+}
+
+.formGroup {
+  height: 100%;
+  padding: 0.85rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.85rem;
+  background-color: var(--bs-body-bg);
+}
+
+.formGroupTitle {
+  width: auto;
+  float: none;
+  margin-bottom: 0.65rem;
+  padding: 0 0.35rem;
+  color: var(--bs-secondary-color);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+:global([data-bs-theme="dark"]) .formGroup {
+  background-color: #22272b;
+  border-color: #4a535d;
+}
+
+:global([data-bs-theme="dark"]) .formGroupTitle {
+  color: #dce3ec;
+  background-color: #22272b;
+}
+

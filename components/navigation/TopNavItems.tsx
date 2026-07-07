@@ -1,236 +1,287 @@
 "use client";
 
-import { useAuth } from "@/hooks/sessionStore";
+import { useMemo } from "react";
 import Link from "next/link";
 import { NavDropdown } from "react-bootstrap";
+import { useAuth } from "@/hooks/sessionStore";
+import styles from "./TopNavItems.module.css";
+
+type MenuItem = {
+  key: string;
+  label: string;
+  icon?: string;
+  href?: string;
+  dividerBefore?: boolean;
+};
+
+type MenuGroup = {
+  key: string;
+  label: string;
+  icon: string;
+  items: MenuItem[];
+};
+
+const menus: MenuGroup[] = [
+  {
+    key: "saleMenu",
+    label: "Ventas",
+    icon: "bi bi-graph-up",
+    items: [
+      {
+        key: "saleQuotsMenu",
+        label: "Cotizaciones",
+        icon: "bi bi-file-earmark-plus",
+        href: "/app/sale_order?view_type=list&id=null&state=draft",
+      },
+      {
+        key: "saleSalesMenu",
+        label: "Órdenes",
+        icon: "bi bi-receipt",
+        href: "/app/sale_order?view_type=list&id=null",
+      },
+      {
+        key: "saleSettingsMenu",
+        label: "Configuración",
+        icon: "bi bi-gear-fill",
+        href: "/app/sale_settings?view_type=list&id=null",
+        dividerBefore: true,
+      },
+    ],
+  },
+  {
+    key: "purchaseMenu",
+    label: "Compras",
+    icon: "bi bi-cart-plus-fill",
+    items: [
+      {
+        key: "purchaseQuotsMenu",
+        label: "Cotizaciones",
+        icon: "bi bi-file-earmark-plus",
+        href: "/app/purchase_order?view_type=list&id=null&state=draft",
+      },
+      {
+        key: "purchaseOrdersMenu",
+        label: "Compras",
+        icon: "bi bi-bag-check",
+        href: "/app/purchase_order?view_type=list&id=null",
+      },
+    ],
+  },
+  {
+    key: "invoicingMenu",
+    label: "Facturación",
+    icon: "bi bi-file-earmark-text-fill",
+    items: [
+      {
+        key: "invoicingCustomersMenu",
+        label: "Clientes",
+        icon: "bi bi-person-vcard-fill",
+      },
+      {
+        key: "invoicingSuppliersMenu",
+        label: "Proveedores",
+        icon: "bi bi-building",
+      },
+      {
+        key: "invoicingSettings",
+        label: "Configuración",
+        icon: "bi bi-gear-fill",
+        href: "/app/invoicing_settings?view_type=list&id=null",
+        dividerBefore: true,
+      },
+    ],
+  },
+  {
+    key: "partnersMenu",
+    label: "Contactos",
+    icon: "bi bi-journal-bookmark-fill",
+    items: [
+      {
+        key: "partnersCustomersMenu",
+        label: "Clientes",
+        icon: "bi bi-person-vcard-fill",
+        href: "/app/partners?view_type=list&id=null&display=CUSTOMER",
+      },
+      {
+        key: "partnersSuppliersMenu",
+        label: "Proveedores",
+        icon: "bi bi-building",
+        href: "/app/partners?view_type=list&id=null&display=SUPPLIER",
+      },
+      {
+        key: "partnersInternalsMenu",
+        label: "Internos",
+        icon: "bi bi-person-bounding-box",
+        href: "/app/partners?view_type=list&id=null&display=INTERNAL",
+      },
+    ],
+  },
+  {
+    key: "inventoryMenu",
+    label: "Inventario",
+    icon: "bi bi-table",
+    items: [
+      {
+        key: "inventoryWarehousesMenu",
+        label: "Almacenes",
+        icon: "bi bi-grid-1x2-fill",
+        href: "/app/warehouses?view_type=list&id=null",
+      },
+      {
+        key: "inventoryProductTemplate",
+        label: "Productos",
+        icon: "bi bi-boxes",
+        href: "/app/product_template?view_type=list&id=null",
+      },
+      {
+        key: "inventoryManufacturing",
+        label: "Fabricación",
+        icon: "bi bi-flask",
+        href: "/app/manufacturing?view_type=list&id=null",
+      },
+      {
+        key: "inventoryStockWarehouse",
+        label: "Existencias",
+        icon: "bi bi-grid-3x3",
+        href: "/app/stock_warehouse?view_type=list&id=null",
+      },
+      {
+        key: "inventoryStockMove",
+        label: "Traslados",
+        icon: "bi bi-arrow-left-right",
+      },
+      {
+        key: "inventoryStockMoveLine",
+        label: "Movimientos",
+        icon: "bi bi-list-columns",
+        href: "/app/stock_move?view_type=list&id=null",
+      },
+    ],
+  },
+  {
+    key: "settingsMenu",
+    label: "Ajustes",
+    icon: "bi bi-gear-fill",
+    items: [
+      {
+        key: "settingsUsersMenu",
+        label: "Usuarios",
+        icon: "bi bi-person-fill",
+        href: "/app/users?view_type=list&id=null",
+      },
+      {
+        key: "settingsGroupsMenu",
+        label: "Grupos",
+        icon: "bi bi-people-fill",
+        href: "/app/groups?view_type=list&id=null",
+      },
+      {
+        key: "settingsCompaniesMenu",
+        label: "Empresas",
+        icon: "bi bi-buildings",
+        href: "/app/companies?view_type=list&id=null",
+      },
+      {
+        key: "settingsModelsMenu",
+        label: "Modelos",
+        icon: "bi bi-database-fill",
+        href: "/app/models?view_type=list&id=null",
+        dividerBefore: true,
+      },
+      {
+        key: "settingsFieldsMenu",
+        label: "Campos",
+        icon: "bi bi-list-columns-reverse",
+        href: "/app/model_fields?view_type=list&id=null",
+      },
+    ],
+  },
+];
 
 function TopNavItems() {
   const { access } = useAuth();
-  const fieldsAccess = access.filter((acc) => acc.entityType === "app");
+
+  const accessMap = useMemo(() => {
+    return new Map(
+      access
+        .filter((acc) => acc.entityType === "app")
+        .map((acc) => [acc.fieldName, acc]),
+    );
+  }, [access]);
+
+  const isInvisible = (fieldName: string) => {
+    return accessMap.get(fieldName)?.invisible === true;
+  };
+
+  const visibleMenus = menus
+    .filter((menu) => !isInvisible(menu.key))
+    .map((menu) => ({
+      ...menu,
+      items: menu.items.filter((item) => !isInvisible(item.key)),
+    }))
+    .filter((menu) => menu.items.length > 0);
+
   return (
-    <>
-      <NavDropdown
-        title={
-          <>
-            <i className="bi bi-graph-up me-1"></i>
-            <span>Ventas</span>
-          </>
-        }
-        disabled={fieldsAccess.find((field) => field.fieldName === "saleMenu")?.invisible}
-      >
-        <NavDropdown.Item
-          title="saleQuotsMenu"
-          disabled={fieldsAccess.find((field) => field.fieldName === "saleQuotsMenu")?.invisible}
-          href="/app/sale_order?view_type=list&id=null&state=draft"
-          as={Link}
+    <nav className={styles.navItems} aria-label="Módulos principales">
+      {visibleMenus.map((menu) => (
+        <NavDropdown
+          key={menu.key}
+          align="start"
+          className={styles.navDropdown}
+          menuVariant="light"
+          title={
+            <span className={styles.dropdownTitle}>
+              <i className={`${menu.icon} ${styles.titleIcon}`} />
+              <span>{menu.label}</span>
+            </span>
+          }
         >
-          Cotizaciones
-        </NavDropdown.Item>
-        <NavDropdown.Item title="saleSalesMenu" disabled={fieldsAccess.find((field) => field.fieldName === "saleSalesMenu")?.invisible} href="/app/sale_order?view_type=list&id=null" as={Link}>
-          Órdenes
-        </NavDropdown.Item>
-        <NavDropdown.Item
-          title="saleSettingsMenu"
-          disabled={fieldsAccess.find((field) => field.fieldName === "saleSettingsMenu")?.invisible}
-          href="/app/sale_settings?view_type=list&id=null"
-          as={Link}
-        >
-          <i className="bi bi-gear-fill me-1"></i>
-          <span>Configuración</span>
-        </NavDropdown.Item>
-      </NavDropdown>
-      <NavDropdown
-        title={
-          <>
-            <i className="bi bi-cart-plus-fill me-1"></i>
-            <span>Compras</span>
-          </>
-        }
-        disabled={fieldsAccess.find((field) => field.fieldName === "purchaseMenu")?.invisible}
-      >
-        <NavDropdown.Item
-          title="purchaseQuotsMenu"
-          disabled={fieldsAccess.find((field) => field.fieldName === "purchaseQuotsMenu")?.invisible}
-          href="/app/purchase_order?view_type=list&id=null&state=draft"
-          as={Link}
-        >
-          Cotizaciones
-        </NavDropdown.Item>
-        <NavDropdown.Item
-          title="purchaseOrdersMenu"
-          disabled={fieldsAccess.find((field) => field.fieldName === "purchaseOrdersMenu")?.invisible}
-          href="/app/purchase_order?view_type=list&id=null"
-          as={Link}
-        >
-          Compras
-        </NavDropdown.Item>
-      </NavDropdown>
-      <NavDropdown
-        title={
-          <>
-            <i className="bi bi-file-earmark-text-fill me-1"></i>
-            <span>Facturación</span>
-          </>
-        }
-        disabled={fieldsAccess.find((field) => field.fieldName === "invoicingMenu")?.invisible}
-      >
-        <NavDropdown.Item title="invoicingCustomersMenu" disabled={fieldsAccess.find((field) => field.fieldName === "invoicingCustomersMenu")?.invisible}>
-          <i className="bi bi-person-vcard-fill me-1"></i>
-          <span>Clietes</span>
-        </NavDropdown.Item>
-        <NavDropdown.Item title="invoicingSuppliersMenu" disabled={fieldsAccess.find((field) => field.fieldName === "invoicingSuppliersMenu")?.invisible}>
-          <i className="bi bi-building me-1"></i>
-          <span>Proveedores</span>
-        </NavDropdown.Item>
-        <NavDropdown.Item
-          title="invoicingSettings"
-          disabled={fieldsAccess.find((field) => field.fieldName === "invoicingSettings")?.invisible}
-          href="/app/invoicing_settings?view_type=list&id=null"
-          as={Link}
-        >
-          <i className="bi bi-gear-fill me-1"></i>
-          <span>Configuración</span>
-        </NavDropdown.Item>
-      </NavDropdown>
+          <div className={styles.menuHeader}>
+            <i className={`${menu.icon} ${styles.menuHeaderIcon}`} />
+            <span>{menu.label}</span>
+          </div>
 
-      <NavDropdown
-        title={
-          <>
-            <i className="bi bi-journal-bookmark-fill me-1"></i>
-            <span>Contactos</span>
-          </>
-        }
-        disabled={fieldsAccess.find((field) => field.fieldName === "partnersMenu")?.invisible}
-      >
-        <NavDropdown.Item
-          title="partnersCustomersMenu"
-          disabled={fieldsAccess.find((field) => field.fieldName === "partnersCustomersMenu")?.invisible}
-          as={Link}
-          href="/app/partners?view_type=list&id=null&display=CUSTOMER"
-        >
-          <i className="bi bi-person-vcard-fill me-1"></i>
-          <span>Clientes</span>
-        </NavDropdown.Item>
-        <NavDropdown.Item
-          title="partnersSuppliersMenu"
-          disabled={fieldsAccess.find((field) => field.fieldName === "partnersSuppliersMenu")?.invisible}
-          as={Link}
-          href="/app/partners?view_type=list&id=null&display=SUPPLIER"
-        >
-          <i className="bi bi-building me-1"></i>
-          <span>Proveedores</span>
-        </NavDropdown.Item>
-        <NavDropdown.Item
-          title="partnersInternalsMenu"
-          disabled={fieldsAccess.find((field) => field.fieldName === "partnersInternalsMenu")?.invisible}
-          as={Link}
-          href="/app/partners?view_type=list&id=null&display=INTERNAL"
-        >
-          <i className="bi bi-person-bounding-box me-1"></i>
-          <span>Internos</span>
-        </NavDropdown.Item>
-      </NavDropdown>
+          {menu.items.map((item) => (
+            <div key={item.key}>
+              {item.dividerBefore && <NavDropdown.Divider />}
 
-      <NavDropdown
-        title={
-          <>
-            <i className="bi bi-table me-1"></i>
-            <span>Inventario</span>
-          </>
-        }
-        disabled={fieldsAccess.find((field) => field.fieldName === "inventoryMenu")?.invisible}
-      >
-        <NavDropdown.Item
-          title="inventoryWarehousesMenu"
-          href="/app/warehouses?view_type=list&id=null"
-          as={Link}
-          disabled={fieldsAccess.find((field) => field.fieldName === "inventoryWarehousesMenu")?.invisible}
-        >
-          <i className="bi bi-grid-1x2-fill me-1"></i>
-          <span>Almacenes</span>
-        </NavDropdown.Item>
-        <NavDropdown.Item
-          title="inventoryProductTemplate"
-          disabled={fieldsAccess.find((field) => field.fieldName === "inventoryProductTemplate")?.invisible}
-          href="/app/product_template?view_type=list&id=null"
-          as={Link}
-        >
-          <i className="bi bi-boxes me-1"></i>
-          <span>Productos</span>
-        </NavDropdown.Item>
-        <NavDropdown.Item
-          title="inventoryManufacturing"
-          disabled={fieldsAccess.find((field) => field.fieldName === "inventoryManufacturing")?.invisible}
-          href="/app/manufacturing?view_type=list&id=null"
-          as={Link}
-        >
-          <i className="bi bi-flask me-1"></i>
-          <span>Fabricación</span>
-        </NavDropdown.Item>
-        <NavDropdown.Item
-          title="inventoryStockWarehouse"
-          disabled={fieldsAccess.find((field) => field.fieldName === "inventoryStockWarehouse")?.invisible}
-          href="/app/stock_warehouse?view_type=list&id=null"
-          as={Link}
-        >
-          <i className="bi bi-grid-3x3 me-1"></i>
-          <span>Existencias</span>
-        </NavDropdown.Item>
-        <NavDropdown.Item title="inventoryStockMove" disabled={fieldsAccess.find((field) => field.fieldName === "inventoryStockMove")?.invisible}>
-          <i className="bi bi-arrow-left-right me-1"></i>
-          <span>Traslados</span>
-        </NavDropdown.Item>
-        <NavDropdown.Item
-          title="inventoryStockMoveLine"
-          disabled={fieldsAccess.find((field) => field.fieldName === "inventoryStockMoveLine")?.invisible}
-          href="/app/stock_move?view_type=list&id=null"
-          as={Link}
-        >
-          <i className="bi bi-list-columns"></i> <span>Movimientos</span>
-        </NavDropdown.Item>
-      </NavDropdown>
+              {item.href ? (
+                <NavDropdown.Item
+                  as={Link}
+                  href={item.href}
+                  title={item.key}
+                  className={styles.dropdownItem}
+                >
+                  {item.icon && (
+                    <span className={styles.itemIcon}>
+                      <i className={item.icon} />
+                    </span>
+                  )}
 
-      <NavDropdown
-        title={
-          <>
-            <i className="bi bi-gear-fill me-1"></i>
-            <span>Ajustes</span>
-          </>
-        }
-        disabled={fieldsAccess.find((field) => field.fieldName === "settingsMenu")?.invisible}
-      >
-        <NavDropdown.Item title="settingsUsersMenu" as={Link} href="/app/users?view_type=list&id=null" disabled={fieldsAccess.find((field) => field.fieldName === "settingsUsersMenu")?.invisible}>
-          <i className="bi bi-person-fill me-1"></i>
-          <span>Usuarios</span>
-        </NavDropdown.Item>
-        <NavDropdown.Item title="settingsGroupsMenu" as={Link} href="/app/groups?view_type=list&id=null" disabled={fieldsAccess.find((field) => field.fieldName === "settingsGroupsMenu")?.invisible}>
-          <i className="bi bi-people-fill me-1"></i>
-          <span>Grupos</span>
-        </NavDropdown.Item>
-        <NavDropdown.Item
-          title="settingsCompaniesMenu"
-          disabled={fieldsAccess.find((field) => field.fieldName === "settingsCompaniesMenu")?.invisible}
-          as={Link}
-          href="/app/companies?view_type=list&id=null"
-        >
-          <i className="bi bi-buildings me-1"></i>
-          <span>Empresas</span>
-        </NavDropdown.Item>
-        <NavDropdown.Item title="settingsModelsMenu" as={Link} href="/app/models?view_type=list&id=null" disabled={fieldsAccess.find((field) => field.fieldName === "settingsModelsMenu")?.invisible}>
-          <i className="bi bi-database-fill me-1"></i>
-          <span>Modelos</span>
-        </NavDropdown.Item>
-        <NavDropdown.Item
-          title="settingsFieldsMenu"
-          as={Link}
-          href="/app/model_fields?view_type=list&id=null"
-          disabled={fieldsAccess.find((field) => field.fieldName === "settingsFieldsMenu")?.invisible}
-        >
-          <i className="bi bi-list-columns-reverse me-1"></i>
-          <span>Campos</span>
-        </NavDropdown.Item>
-      </NavDropdown>
-    </>
+                  <span className={styles.itemLabel}>{item.label}</span>
+                </NavDropdown.Item>
+              ) : (
+                <NavDropdown.Item
+                  title={item.key}
+                  disabled
+                  className={styles.dropdownItem}
+                >
+                  {item.icon && (
+                    <span className={styles.itemIcon}>
+                      <i className={item.icon} />
+                    </span>
+                  )}
+
+                  <span className={styles.itemLabel}>{item.label}</span>
+
+                  <small className={styles.comingSoon}>Próx.</small>
+                </NavDropdown.Item>
+              )}
+            </div>
+          ))}
+        </NavDropdown>
+      ))}
+    </nav>
   );
 }
 

@@ -11,10 +11,12 @@ import { createPortal } from "react-dom";
 import { useController, useFormContext } from "react-hook-form";
 import { Form, Dropdown, Badge } from "react-bootstrap";
 import { useAccess } from "@/contexts/AccessContext";
+import styles from "./FieldRelationTags.module.css";
 
 export interface Many2ManyOption {
   id: string;
   name: string;
+  displayName?: string;
   [key: string]: any;
 }
 
@@ -43,6 +45,7 @@ interface Props {
   required?: boolean;
   invisible?: boolean;
   domain?: Domain;
+  inline?: boolean;
 }
 
 interface MenuPosition {
@@ -59,9 +62,10 @@ export function FieldRelationTags({
   className,
   invisible,
   domain,
+  required,
+  inline,
 }: Props) {
   const access = useAccess({ fieldName: name });
-
   const { control } = useFormContext();
 
   const {
@@ -72,8 +76,6 @@ export function FieldRelationTags({
 
   const value = (field.value as Many2ManyOption[] | undefined) ?? [];
   const setValue = field.onChange;
-
-  const selectedObjects = value;
 
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<Many2ManyOption[]>([]);
@@ -91,10 +93,15 @@ export function FieldRelationTags({
   const abortRef = useRef<AbortController | null>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
+  const isReadonly = isSubmitting || access?.readonly;
+  const isDisabled = disabled || isSubmitting;
+
   const serializedDomain = useMemo(
     () => JSON.stringify(domain ?? []),
     [domain],
   );
+
+  const selectedObjects = value;
 
   const updateMenuPosition = useCallback(() => {
     if (!inputRef.current) return;
@@ -122,7 +129,7 @@ export function FieldRelationTags({
       try {
         const params = new URLSearchParams({
           search,
-          limit: "5",
+          limit: "8",
           domain: serializedDomain,
           excludeIds: value.map((v) => v.id).join(","),
         });
@@ -149,18 +156,20 @@ export function FieldRelationTags({
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (!isOpen || disabled) return;
+    if (!isOpen || isDisabled || isReadonly) return;
 
     debounceRef.current = setTimeout(() => {
-      fetchOptions(query);
+      fetchOptions(query.trim());
     }, 300);
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, fetchOptions, isOpen, disabled]);
+  }, [query, fetchOptions, isOpen, isDisabled, isReadonly]);
 
   const handleSelect = (option: Many2ManyOption) => {
+    if (isReadonly || isDisabled) return;
+
     if (value.some((v) => v.id === option.id)) {
       setIsOpen(false);
       setQuery("");
@@ -174,6 +183,7 @@ export function FieldRelationTags({
         name: option.displayName ?? option.name,
       },
     ]);
+
     setQuery("");
     setIsOpen(false);
     setHighlightedIndex(0);
@@ -182,14 +192,24 @@ export function FieldRelationTags({
   };
 
   const handleRemove = (id: string) => {
+    if (isReadonly || isDisabled) return;
     setValue(value.filter((v) => v.id !== id));
   };
 
+  const openDropdown = () => {
+    if (isReadonly || isDisabled) return;
+
+    setIsOpen(true);
+    fetchOptions(query.trim());
+    requestAnimationFrame(updateMenuPosition);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!isOpen || options.length === 0) return;
+    if (isReadonly || isDisabled) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
+      setIsOpen(true);
       setHighlightedIndex((prev) =>
         prev + 1 < options.length ? prev + 1 : prev,
       );
@@ -205,6 +225,7 @@ export function FieldRelationTags({
     if (e.key === "Enter") {
       e.preventDefault();
       const option = options[highlightedIndex];
+
       if (option) handleSelect(option);
       return;
     }
@@ -242,28 +263,23 @@ export function FieldRelationTags({
 
     updateMenuPosition();
 
-    const handleScroll = () => {
-      updateMenuPosition();
+    const handleScrollOrResize = () => {
+      requestAnimationFrame(updateMenuPosition);
     };
 
-    const handleResize = () => {
-      updateMenuPosition();
-    };
-
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("resize", handleScrollOrResize);
+    window.addEventListener("scroll", handleScrollOrResize, true);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
     };
   }, [isOpen, updateMenuPosition]);
 
-  if (invisible) return null;
-  if (access?.invisible) return null;
+  if (invisible || access?.invisible) return null;
 
   const dropdownMenu =
-    mounted && isOpen && options.length > 0
+    mounted && isOpen && !isReadonly && !isDisabled
       ? createPortal(
           <div
             style={{
@@ -275,29 +291,27 @@ export function FieldRelationTags({
             }}
           >
             <Dropdown show className="w-100">
-              <Dropdown.Menu
-                show
-                className="p-0 w-auto"
-                style={{
-                  maxHeight: "200px",
-                  overflowY: "auto",
-                  zIndex: 9999,
-                }}
-              >
-                {options.map((option, index) => (
-                  <Dropdown.Item
-                    key={option.id}
-                    active={index === highlightedIndex}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      handleSelect(option);
-                    }}
-                    className="text-wrap"
-                    style={{ fontSize: "0.9rem" }}
-                  >
-                    {option.name}
+              <Dropdown.Menu show className={styles.dropdownMenu}>
+                {options.length > 0 ? (
+                  options.map((option, index) => (
+                    <Dropdown.Item
+                      key={option.id}
+                      active={index === highlightedIndex}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSelect(option);
+                      }}
+                      className={styles.dropdownItem}
+                    >
+                      <i className="bi bi-link-45deg" />
+                      <span>{option.displayName ?? option.name}</span>
+                    </Dropdown.Item>
+                  ))
+                ) : (
+                  <Dropdown.Item disabled className={styles.emptyItem}>
+                    No hay resultados
                   </Dropdown.Item>
-                ))}
+                )}
               </Dropdown.Menu>
             </Dropdown>
           </div>,
@@ -306,69 +320,42 @@ export function FieldRelationTags({
       : null;
 
   return (
-    <div ref={containerRef} className={className}>
-      {/* {label && (
-        <Form.Label className="fw-semibold" title={name}>
-          {required && <span className="text-danger ms-1">*</span>}
+    <div
+      ref={containerRef}
+      className={[
+        inline ? styles.inlineWrapper : styles.fieldWrapper,
+        className ?? "",
+      ].join(" ")}
+      title={name}
+    >
+      {label && !inline && (
+        <Form.Label className={styles.label}>
+          {label}
+          {required && <span className={styles.requiredMark}>*</span>}
         </Form.Label>
-      )} */}
+      )}
 
       <div
-        className="d-flex flex-wrap align-items-center gap-1 p-1 mb-1 border rounded"
-        style={{ minHeight: "38px" }}
+        className={[
+          styles.relationTagsBox,
+          error ? styles.relationTagsBoxInvalid : "",
+          isReadonly ? styles.relationTagsBoxReadonly : "",
+        ].join(" ")}
         onClick={() => inputRef.current?.focus()}
-        title={name}
       >
-        {!disabled && (
-          <Form.Control
-            ref={inputRef}
-            type="text"
-            value={query}
-            readOnly={isSubmitting || access?.readonly}
-            placeholder={label}
-            onChange={(e) => {
-              if (access?.readonly) return null;
-              setQuery(e.target.value);
-              setIsOpen(true);
-              requestAnimationFrame(updateMenuPosition);
-            }}
-            onFocus={() => {
-              if (access?.readonly) return null;
-              setIsOpen(true);
-              fetchOptions(query.trim());
-              requestAnimationFrame(updateMenuPosition);
-            }}
-            onClick={() => {
-              if (access?.readonly) return null;
-              setIsOpen(true);
-              fetchOptions(query.trim());
-              requestAnimationFrame(updateMenuPosition);
-            }}
-            onKeyDown={handleKeyDown}
-            size="sm"
-            className="border-0 border-bottom shadow-none flex-grow-1 rounded-0 p-1 fw-bold"
-            style={{ minWidth: "120px", fontSize: "0.9rem" }}
-            autoComplete="off"
-          />
-        )}
         {selectedObjects.map((opt) => (
-          <Badge
-            key={opt.id}
-            bg="primary"
-            className="d-flex align-items-center gap-1 px-2 py-1"
-          >
+          <Badge key={opt.id} pill className={styles.relationBadge}>
             <span>{opt.name}</span>
 
-            {!disabled && (
+            {!isDisabled && !isReadonly && (
               <button
                 type="button"
-                className="btn btn-sm p-0 ms-1 border-0 bg-transparent text-white lh-1"
+                className={styles.removeButton}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                 }}
                 onClick={(e) => {
-                  if (isSubmitting || access?.readonly) return null;
                   e.preventDefault();
                   e.stopPropagation();
                   handleRemove(opt.id);
@@ -380,13 +367,37 @@ export function FieldRelationTags({
             )}
           </Badge>
         ))}
+
+        {!isDisabled && (
+          <Form.Control
+            ref={inputRef}
+            type="text"
+            value={query}
+            readOnly={isReadonly}
+            placeholder={
+              selectedObjects.length > 0
+                ? ""
+                : label
+                  ? `Buscar ${label.toLowerCase()}...`
+                  : "Buscar..."
+            }
+            onChange={(e) => {
+              if (isReadonly) return;
+              setQuery(e.target.value);
+              setIsOpen(true);
+              requestAnimationFrame(updateMenuPosition);
+            }}
+            onFocus={openDropdown}
+            onClick={openDropdown}
+            onKeyDown={handleKeyDown}
+            size="sm"
+            className={styles.relationInput}
+            autoComplete="off"
+          />
+        )}
       </div>
 
-      {error && (
-        <div className="text-danger mt-1" style={{ fontSize: "0.85rem" }}>
-          {error.message}
-        </div>
-      )}
+      {error && <div className={styles.errorText}>{error.message}</div>}
 
       {dropdownMenu}
     </div>

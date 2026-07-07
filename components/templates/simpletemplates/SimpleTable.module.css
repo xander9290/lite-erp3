@@ -1,0 +1,218 @@
+.tableShell {
+  width: 100%;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.85rem;
+  background-color: var(--bs-body-bg);
+  overflow: hidden;
+  box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.035);
+}
+
+.tableScroller {
+  width: 100%;
+  overflow: auto;
+}
+
+.table {
+  margin-bottom: 0;
+  font-size: 0.86rem;
+  vertical-align: middle;
+}
+
+.tableHead {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background-color: var(--bs-tertiary-bg);
+  box-shadow: 0 1px 0 var(--bs-border-color);
+}
+
+.headCell {
+  position: relative;
+  vertical-align: middle;
+  padding: 0.5rem 0.65rem !important;
+  border-right: 1px solid var(--bs-border-color);
+  border-bottom: 1px solid var(--bs-border-color);
+  background-color: var(--bs-tertiary-bg);
+  color: var(--bs-secondary-color);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+}
+
+.headCell:last-child {
+  border-right: 0;
+}
+
+.headContent {
+  position: relative;
+  width: 100%;
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+}
+
+.headText {
+  display: block;
+  width: 100%;
+  padding-right: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resizeHandle {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.65rem;
+  width: 10px;
+  height: calc(100% + 1rem);
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.resizeHandle::after {
+  content: "";
+  position: absolute;
+  top: 0.45rem;
+  right: 4px;
+  width: 2px;
+  height: calc(100% - 0.9rem);
+  border-radius: 999px;
+  background-color: transparent;
+  transition:
+    background-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.resizeHandle:hover::after,
+.resizeHandleActive::after {
+  background-color: var(--bs-primary);
+  box-shadow: 0 0 0 2px rgba(var(--bs-primary-rgb), 0.12);
+}
+
+.tableBody :global(tr) {
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.tableBody :global(td) {
+  padding: 0.38rem 0.55rem !important;
+  border-right: 1px solid var(--bs-border-color);
+  border-bottom: 1px solid var(--bs-border-color);
+  color: var(--bs-body-color);
+  vertical-align: middle;
+}
+
+.tableBody :global(td:last-child) {
+  border-right: 0;
+}
+
+.tableBody :global(tr:hover td) {
+  background-color: var(--bs-tertiary-bg);
+}
+
+.addRow {
+  border-bottom: 0 !important;
+}
+
+.addCell {
+  padding: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+  background-color: var(--bs-body-bg);
+}
+
+.addButton {
+  width: 100%;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  padding: 0.45rem 0.7rem;
+  border: 0;
+  border-radius: 0;
+  color: var(--bs-primary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 800;
+  box-shadow: none !important;
+}
+
+.addButton:hover,
+.addButton:focus {
+  background-color: rgba(var(--bs-primary-rgb), 0.08);
+  color: var(--bs-primary);
+  text-decoration: none;
+}
+
+.addButton i {
+  font-size: 0.95rem;
+}
+
+/* Para que inputs dentro de líneas respiren mejor */
+.tableBody :global(.form-control),
+.tableBody :global(.form-select) {
+  min-height: 32px;
+  font-size: 0.84rem;
+}
+
+.tableBody :global(.btn) {
+  font-size: 0.84rem;
+}
+
+/* Dark mode */
+
+:global([data-bs-theme="dark"]) .tableShell {
+  background-color: #1c2024;
+  border-color: #46505a;
+  box-shadow: 0 0.55rem 1.4rem rgba(0, 0, 0, 0.22);
+}
+
+:global([data-bs-theme="dark"]) .tableHead {
+  background-color: #272c31;
+  box-shadow: 0 1px 0 #46505a;
+}
+
+:global([data-bs-theme="dark"]) .headCell {
+  background-color: #272c31;
+  border-color: #46505a;
+  color: #c6ced8;
+}
+
+:global([data-bs-theme="dark"]) .tableBody :global(tr) {
+  border-bottom-color: #3f4852;
+}
+
+:global([data-bs-theme="dark"]) .tableBody :global(td) {
+  border-color: #3f4852;
+  color: #edf2f7;
+}
+
+:global([data-bs-theme="dark"]) .tableBody :global(tr:hover td) {
+  background-color: #242a30;
+}
+
+:global([data-bs-theme="dark"]) .addCell {
+  background-color: #1c2024;
+}
+
+:global([data-bs-theme="dark"]) .addButton {
+  color: #8fb8ff;
+}
+
+:global([data-bs-theme="dark"]) .addButton:hover,
+:global([data-bs-theme="dark"]) .addButton:focus {
+  background-color: rgba(var(--bs-primary-rgb), 0.2);
+  color: #fff;
+}
+
+:global([data-bs-theme="dark"]) .resizeHandle:hover::after,
+:global([data-bs-theme="dark"]) .resizeHandleActive::after {
+  background-color: #8fb8ff;
+  box-shadow: 0 0 0 2px rgba(var(--bs-primary-rgb), 0.25);
+}

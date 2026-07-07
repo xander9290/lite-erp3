@@ -1,0 +1,127 @@
+.placeholder {
+  width: 280px;
+  height: 42px;
+}
+
+.topNavUser {
+  min-height: 42px;
+}
+
+.toggle {
+  border-radius: 999px;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.toggle:hover,
+.toggle:focus {
+  background-color: var(--bs-tertiary-bg);
+  box-shadow: 0 0 0 1px var(--bs-border-color);
+}
+
+.toggle:active {
+  transform: translateY(1px);
+}
+
+.companyBadge {
+  min-width: 42px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.38rem 0.55rem;
+}
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: var(--bs-secondary-bg);
+  border: 1px solid var(--bs-border-color);
+}
+
+.userName {
+  max-width: 150px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.separator {
+  width: 1px;
+  height: 28px;
+  background-color: var(--bs-border-color);
+  opacity: 0.85;
+}
+
+.clockButton,
+.themeButton {
+  min-height: 34px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.clockButton:hover,
+.themeButton:hover,
+.clockButton:focus,
+.themeButton:focus {
+  background-color: var(--bs-tertiary-bg);
+  box-shadow: 0 0 0 1px var(--bs-border-color);
+}
+
+.clockButton:active,
+.themeButton:active {
+  transform: translateY(1px);
+}
+
+.themeButton {
+  width: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu {
+  min-width: 260px;
+  border-radius: 0.85rem;
+  overflow: hidden;
+}
+
+.companyItem {
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+
+.checkIcon {
+  width: 1.25rem;
+  display: inline-flex;
+  justify-content: center;
+  color: var(--bs-success);
+}
+
+:global(.dropdown-item.active) .checkIcon {
+  color: var(--bs-white);
+}
+
+@media (max-width: 576px) {
+  .userName {
+    display: none;
+  }
+
+  .companyBadge {
+    min-width: auto;
+  }
+
+  .separator {
+    height: 24px;
+  }
+
+  .placeholder {
+    width: 180px;
+  }
+}

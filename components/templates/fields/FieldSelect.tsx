@@ -3,6 +3,7 @@
 import { useFormContext, Controller } from "react-hook-form";
 import { Form, FloatingLabel } from "react-bootstrap";
 import { useAccess } from "@/contexts/AccessContext";
+import styles from "./FieldSelect.module.css";
 
 interface FieldSelectProps {
   name: string;
@@ -14,19 +15,29 @@ interface FieldSelectProps {
   className?: string;
   options: { value: string | number; label: string }[];
   readonly?: boolean;
+  placeholder?: string;
 }
 
-export function FieldSelect({ name, label, disabled, invisible, inline, onChange, className, options, readonly }: FieldSelectProps) {
+export function FieldSelect({
+  name,
+  label,
+  disabled,
+  invisible,
+  inline,
+  onChange,
+  className,
+  options,
+  readonly,
+  placeholder = "",
+}: FieldSelectProps) {
   const access = useAccess({ fieldName: name });
-
   const { control } = useFormContext();
 
   if (!options) {
     throw new Error("La propiedad [options] es requerida en FieldSelect");
   }
 
-  if (invisible) return null;
-  if (access?.invisible) return null;
+  if (invisible || access?.invisible) return null;
 
   const floatingText = label ?? name;
 
@@ -35,6 +46,9 @@ export function FieldSelect({ name, label, disabled, invisible, inline, onChange
       name={name}
       control={control}
       render={({ field, fieldState, formState: { isSubmitting } }) => {
+        const isDisabled =
+          isSubmitting || disabled || access?.readonly || readonly;
+
         const selectControl = (
           <Form.Select
             {...field}
@@ -43,23 +57,25 @@ export function FieldSelect({ name, label, disabled, invisible, inline, onChange
             isInvalid={!!fieldState.error}
             value={field.value ?? ""}
             autoComplete="off"
-            disabled={isSubmitting || disabled || access?.readonly || readonly}
-            className={`shadow-none w-100 ${inline ? "border-0 bg-transparent rounded-0 p-0" : ""} ${className ?? ""}`}
+            disabled={isDisabled}
+            className={[
+              styles.selectControl,
+              inline ? styles.inlineSelect : "",
+              className ?? "",
+            ].join(" ")}
             onChange={(e) => {
               const raw = e.target.value;
-
               const matched = options.find((opt) => String(opt.value) === raw);
-
               const val = matched ? matched.value : raw;
 
               field.onChange(val);
               onChange?.(val);
             }}
-            style={{ fontSize: "0.9rem" }}
           >
-            <option value=""></option>
+            <option value="">{placeholder}</option>
+
             {options.map((opt) => (
-              <option key={opt.value} value={String(opt.value)} className="bg-body-tertiary">
+              <option key={String(opt.value)} value={String(opt.value)}>
                 {opt.label}
               </option>
             ))}
@@ -67,14 +83,19 @@ export function FieldSelect({ name, label, disabled, invisible, inline, onChange
         );
 
         const feedback = (
-          <Form.Control.Feedback type="invalid" className={fieldState.error ? "d-block" : ""}>
+          <Form.Control.Feedback
+            type="invalid"
+            className={
+              fieldState.error ? styles.feedbackVisible : styles.feedback
+            }
+          >
             {fieldState.error?.message}
           </Form.Control.Feedback>
         );
 
         if (inline) {
           return (
-            <div title={name} className="m-0 p-0">
+            <div title={name} className={styles.inlineWrapper}>
               {selectControl}
               {feedback}
             </div>
@@ -82,10 +103,15 @@ export function FieldSelect({ name, label, disabled, invisible, inline, onChange
         }
 
         return (
-          <div title={name} className="mb-1">
-            <FloatingLabel controlId={name} label={floatingText} className="w-100 fs-6 fw-bold">
+          <div title={name} className={styles.fieldWrapper}>
+            <FloatingLabel
+              controlId={name}
+              label={floatingText}
+              className={styles.floatingLabel}
+            >
               {selectControl}
             </FloatingLabel>
+
             {feedback}
           </div>
         );

@@ -5,6 +5,7 @@ import { Form, FloatingLabel } from "react-bootstrap";
 import { ElementType } from "react";
 import { useAccess } from "@/contexts/AccessContext";
 import FieldRenderer from "./FieldRenderer";
+import styles from "./FieldEntry.module.css";
 
 interface FieldEntryProps {
   name: string;
@@ -112,17 +113,21 @@ export function FieldEntry({
         );
 
         if (inline) {
-          return <div className="p-0 m-0 w-100">{input}</div>;
+          return <div className={styles.inlineField}>{input}</div>;
         }
 
         return (
-          <div className="mb-1 w-100">
-            <FloatingLabel label={floatingText} controlId={name} className="w-100 fs-6 fw-bold">
+          <div className={`${styles.fieldWrapper} w-100`}>
+            <FloatingLabel
+              label={floatingText}
+              controlId={name}
+              className={styles.floatingLabel}
+            >
               {input}
             </FloatingLabel>
 
             {fieldState.error?.message && (
-              <Form.Control.Feedback type="invalid" className="d-block small">
+              <Form.Control.Feedback type="invalid" className={styles.feedback}>
                 {fieldState.error.message}
               </Form.Control.Feedback>
             )}

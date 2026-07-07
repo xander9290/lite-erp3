@@ -20,6 +20,7 @@ import NotFound from "@/app/not-found";
 import { Suspense, useEffect, useRef } from "react";
 import AuditLogViewer from "./AuditLogViewer";
 import { useAuth } from "@/hooks/sessionStore";
+import styles from "./FormView.module.css";
 
 type TFormActions = {
   string: React.ReactElement | string;
@@ -126,15 +127,15 @@ export function FormView<T extends FieldValues>({
         <FormProvider {...methods}>
           <Form
             noValidate
-            className="card d-flex flex-column h-100 border-0 bg-body-tertiary"
+            className={styles.formCard}
             style={{
               fontSize: "0.9rem",
               minHeight: "calc(100vh - 100px)",
               maxHeight: "calc(100vh - 100px)",
             }}
           >
-            <div className="card-header d-flex justify-content-between align-items-center gap-2 border-0">
-              <div className="d-flex align-items-center gap-1">
+            <div className={styles.formHeader}>
+              <div className={styles.formActions}>
                 {id !== "null" && (
                   <Button
                     type="button"
@@ -178,7 +179,7 @@ export function FormView<T extends FieldValues>({
                 </Button>
               </div>
 
-              <div className="d-flex align-items-center gap-2">
+              <div className={styles.formActions}>
                 <div className="d-none d-md-flex gap-1 align-items-center">
                   {actions?.map((action, index) => {
                     const actionAccess = access.filter(
@@ -250,12 +251,9 @@ export function FormView<T extends FieldValues>({
                 </Button>
               </div>
             </div>
-            <div
-              className="card-body p-0 flex-grow-1 overflow-auto"
-              style={{ minHeight: 0 }}
-            >
-              <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 px-2 py-2">
-                <div className="card-title h3 fw-semibold m-0 text-truncate">
+            <div className={styles.formBody} style={{ minHeight: 0 }}>
+              <div className={styles.formTitleBar}>
+                <div className={styles.formTitle}>
                   {id !== "null" ? getValues().name : "Nuevo"}
                 </div>
 
@@ -301,7 +299,7 @@ export function FormView<T extends FieldValues>({
                 )}
               </div>
 
-              <Container>
+              <Container className={styles.formContent}>
                 <Row>{children}</Row>
               </Container>
             </div>
@@ -331,17 +329,20 @@ export function FormViewGroup({
   invisible,
   children,
   readonly,
+  title,
 }: {
   className?: string;
   invisible?: boolean;
   children: React.ReactNode;
   readonly?: boolean;
+  title?: string;
 }) {
   if (invisible) return null;
 
   return (
-    <Col md="6">
-      <fieldset className="py-1" disabled={readonly}>
+    <Col md="6" className="mb-2">
+      <fieldset className={styles.formGroup} disabled={readonly}>
+        {title && <legend className={styles.formGroupTitle}>{title}</legend>}
         {children}
       </fieldset>
     </Col>

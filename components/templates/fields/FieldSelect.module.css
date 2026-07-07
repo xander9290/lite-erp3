@@ -1,0 +1,112 @@
+.fieldWrapper {
+  width: 100%;
+  margin-bottom: 0.45rem;
+}
+
+.inlineWrapper {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.floatingLabel {
+  width: 100%;
+}
+
+.floatingLabel :global(label) {
+  color: var(--bs-secondary-color);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+}
+
+.selectControl {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 0.65rem;
+  border-color: var(--bs-border-color);
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  font-size: 0.88rem;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.selectControl:focus {
+  border-color: var(--bs-primary);
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  box-shadow: 0 0 0 0.18rem rgba(var(--bs-primary-rgb), 0.12) !important;
+}
+
+.selectControl:disabled {
+  background-color: var(--bs-tertiary-bg);
+  color: var(--bs-secondary-color);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.selectControl option {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+}
+
+.inlineSelect {
+  min-height: 34px;
+  border: 0 !important;
+  border-radius: 0.5rem;
+  background-color: transparent;
+  padding: 0 !important;
+  font-size: 0.85rem;
+}
+
+.feedback {
+  display: none;
+}
+
+.feedbackVisible {
+  display: block;
+  margin-top: 0.22rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+/* Dark mode */
+
+:global([data-bs-theme="dark"]) .floatingLabel :global(label) {
+  color: #c6ced8;
+}
+
+:global([data-bs-theme="dark"]) .selectControl {
+  background-color: #1c2024;
+  border-color: #46505a;
+  color: #f1f4f8;
+}
+
+:global([data-bs-theme="dark"]) .selectControl:focus {
+  background-color: #20252a;
+  border-color: var(--bs-primary);
+  color: #fff;
+  box-shadow: 0 0 0 0.18rem rgba(var(--bs-primary-rgb), 0.25) !important;
+}
+
+:global([data-bs-theme="dark"]) .selectControl:disabled {
+  background-color: #272c31;
+  border-color: #3f4852;
+  color: #cbd3dc;
+  opacity: 1;
+}
+
+:global([data-bs-theme="dark"]) .selectControl option {
+  background-color: #20252a;
+  color: #f1f4f8;
+}
+
+:global([data-bs-theme="dark"]) .inlineSelect {
+  background-color: transparent;
+  color: #f1f4f8;
+}

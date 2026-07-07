@@ -6,7 +6,7 @@ import TopNavUser from "./TopNavUser";
 
 function TopNav() {
   return (
-    <Navbar expand="lg" bg="light" data-bs-theme="light" sticky="top">
+    <Navbar expand="lg" className="bg-body-tertiary" sticky="top">
       <Container fluid>
         <Navbar.Toggle />
         <Navbar.Collapse>
