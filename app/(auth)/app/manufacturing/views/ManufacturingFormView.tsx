@@ -308,7 +308,10 @@ function ManufacturingFormView({ id, manufacturing }: { id: string | null; manuf
           name="productId"
           label="Producto"
           model="productTemplate"
-          domain={[["purchases", "=", false]]}
+          domain={[
+            ["purchases", "=", false],
+            ["displayType", "=", "PRODUCT"],
+          ]}
           searchColumns={[
             {
               field: "name",

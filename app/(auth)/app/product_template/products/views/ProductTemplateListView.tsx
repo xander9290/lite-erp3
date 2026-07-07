@@ -12,6 +12,7 @@ export const productDisplayOutput: ProductDisplayOutput = {
   CONSU: "consumible",
   PRODUCT: "producto",
   SERVICE: "servicio",
+  BOM: "elaborado",
 };
 
 function ProductTemplateListView({ categoryId, brandId, uomId }: { categoryId: string | null; brandId: string | null; uomId: string | null }) {

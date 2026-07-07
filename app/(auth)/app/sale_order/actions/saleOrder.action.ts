@@ -119,56 +119,52 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
         shippingWayId: data.shippingWayId.id,
         paymentTermId: data.paymentTermId.id,
         subtotal: round(
-          data.orderLine.reduce((acc, line) => acc + line.subtotal, 0),
+          data.SaleOrderLines.reduce((acc, line) => acc + line.subtotal, 0),
           2,
         ),
         amountTax: round(
-          data.orderLine.reduce((acc, line) => acc + line.taxAmount, 0),
+          data.SaleOrderLines.reduce((acc, line) => acc + line.taxAmount, 0),
           2,
         ),
         total: round(
-          data.orderLine.reduce((acc, line) => acc + line.total, 0),
+          data.SaleOrderLines.reduce((acc, line) => acc + line.total, 0),
           2,
         ),
         SaleOrderLines: {
           deleteMany: {
             id: {
-              notIn: data.orderLine.filter((line) => line.id).map((l) => l.id!),
+              notIn: data.SaleOrderLines.filter((line) => line.id).map((l) => l.id!),
             },
           },
-          update: data.orderLine
-            .filter((line) => line.id)
-            .map((line) => ({
-              where: {
-                id: line.id!,
-              },
-              data: {
-                productId: line.productId.id,
-                quantity: line.quantity,
-                uomId: line.uomId.id,
-                pricelist: line.pricelist,
-                priceUnit: line.priceUnit,
-                subtotal: round(line.subtotal, 2),
-                total: round(line.total, 2),
-                taxRate: round(line.taxRate, 2),
-                taxAmount: round(line.taxAmount, 2),
-              },
-            })),
+          update: data.SaleOrderLines.filter((line) => line.id).map((line) => ({
+            where: {
+              id: line.id!,
+            },
+            data: {
+              productId: line.productId.id,
+              quantity: line.quantity,
+              uomId: line.uomId.id,
+              pricelist: line.pricelist,
+              priceUnit: line.priceUnit,
+              subtotal: round(line.subtotal, 2),
+              total: round(line.total, 2),
+              taxRate: round(line.taxRate, 2),
+              taxAmount: round(line.taxAmount, 2),
+            },
+          })),
           createMany: {
-            data: data.orderLine
-              .filter((line) => line.id === null)
-              .map((line) => ({
-                productId: line.productId.id,
-                quantity: line.quantity,
-                uomId: line.uomId.id,
-                pricelist: line.pricelist,
-                priceUnit: line.priceUnit,
-                subtotal: round(line.subtotal, 2),
-                total: round(line.total, 2),
-                taxRate: round(line.taxRate, 2),
-                taxAmount: round(line.taxAmount, 2),
-                createUid: uid!,
-              })),
+            data: data.SaleOrderLines.filter((line) => line.id === null).map((line) => ({
+              productId: line.productId.id,
+              quantity: line.quantity,
+              uomId: line.uomId.id,
+              pricelist: line.pricelist,
+              priceUnit: line.priceUnit,
+              subtotal: round(line.subtotal, 2),
+              total: round(line.total, 2),
+              taxRate: round(line.taxRate, 2),
+              taxAmount: round(line.taxAmount, 2),
+              createUid: uid!,
+            })),
           },
         },
       },
@@ -177,6 +173,7 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
         orderDate: new Date(data.orderDate),
         obs: data.obs,
         purchaseRef: data.purchaseRef,
+        confirmedDate: data.confirmedDate ? new Date(data.confirmedDate) : null,
         reference: data.reference,
         state: data.state,
         saleUserId: data.saleUserId.id,
@@ -188,7 +185,7 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
         paymentTermId: data.paymentTermId.id,
         SaleOrderLines: {
           createMany: {
-            data: data.orderLine.map((line) => ({
+            data: data.SaleOrderLines.map((line) => ({
               productId: line.productId.id,
               quantity: line.quantity,
               uomId: line.uomId.id,
@@ -203,15 +200,15 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
           },
         },
         subtotal: round(
-          data.orderLine.reduce((acc, line) => acc + line.subtotal, 0),
+          data.SaleOrderLines.reduce((acc, line) => acc + line.subtotal, 0),
           2,
         ),
         amountTax: round(
-          data.orderLine.reduce((acc, line) => acc + line.taxAmount, 0),
+          data.SaleOrderLines.reduce((acc, line) => acc + line.taxAmount, 0),
           2,
         ),
         total: round(
-          data.orderLine.reduce((acc, line) => acc + line.total, 0),
+          data.SaleOrderLines.reduce((acc, line) => acc + line.total, 0),
           2,
         ),
         createUid: uid!,
@@ -294,5 +291,211 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
       success: false,
       message: error.message,
     };
+  }
+}
+
+export async function actionSaleConfirm({ data }: { data: SaleOrderWithProps }): Promise<ActionResponse<boolean>> {
+  try {
+    console.log(":::Action Sale Confirm:::");
+    for (const line of data.SaleOrderLines) {
+      console.log("Line", line, "Data", data);
+      console.log("-Obtiendo información del producto:", line.Product.name);
+      const productId = await prisma.productTemplate.findUnique({
+        where: {
+          id: line.Product.id,
+        },
+        include: {
+          Stocks: true,
+          ReceiptLines: {
+            select: {
+              qty: true,
+              Product: {
+                select: {
+                  id: true,
+                  name: true,
+                  Stocks: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!productId) throw new Error("Producto no encontrado:" + line.Product.name);
+
+      const stock = productId.Stocks.find((stock) => stock.warehouseId === data.Warehouse.id);
+
+      // si el tipo de produdcto es producto, se reserva cantidades
+      if (productId.displayType === "PRODUCT") {
+        console.log("-Validando existencias");
+        if (!stock) throw new Error(`El producto ${line.Product.name} no cuenta con existencia`);
+
+        console.log("-Calculando cantidad disponible: ", line.Product.name);
+        const qtyAvailable = round(stock.qty - stock.reservedQty, 3);
+
+        if (qtyAvailable < line.quantity) throw new Error(`El producto ${line.Product.name} no tiene suficiente existencia para cubrir la demanda ${round(line.quantity, 3)} ${line.Uom.name}`);
+
+        console.log("-Reservando proucto para venta:", line.Product.name);
+        await prisma.stockWarehouse.update({
+          where: {
+            productId_warehouseId: {
+              productId: line.Product.id,
+              warehouseId: data.Warehouse.id,
+            },
+          },
+          data: {
+            reservedQty: {
+              increment: line.quantity,
+            },
+          },
+        });
+        // si el producto es elabarado, se validan o se reservan los productos de las recetas
+      } else if (productId.displayType === "BOM") {
+        console.log("-Validando producto elaborado");
+
+        for (const receipt of productId.ReceiptLines) {
+          const stock = receipt.Product.Stocks.find((stock) => stock.warehouseId === data.Warehouse.id);
+          if (!stock) throw new Error(`El producto ${receipt.Product.name} no cuenta con (existencia actual) para cubrir la elaboración de ${productId.name}`);
+
+          console.log("-Calculado cantidad disponible del componente:", receipt.Product.name);
+          const demanda = round(receipt.qty * line.quantity, 3);
+          const qtyAvailable = round(stock.qty - stock.reservedQty, 3);
+
+          console.log("-Validando demanda del componente:", receipt.Product.name);
+          if (qtyAvailable < demanda) throw new Error(`El producto ${receipt.Product.name} no cuenta con (existencia suficiente) para cubrir la elaboración de ${productId.name}`);
+
+          console.log("-Reservando cantidad del componente: ", receipt.Product.name);
+          await prisma.stockWarehouse.update({
+            where: {
+              productId_warehouseId: {
+                productId: receipt.Product.id,
+                warehouseId: data.Warehouse.id,
+              },
+            },
+            data: {
+              reservedQty: {
+                increment: demanda,
+              },
+            },
+          });
+        }
+      } else {
+        throw new Error("Tipo de producto no encontrado");
+      }
+
+      console.log("-Cambiando estado de la línea (Reservado)");
+      if (!line.id) throw new Error("ID line not defined");
+      await prisma.saleOrderLine.update({
+        where: {
+          id: line.id,
+        },
+        data: {
+          state: "reserved",
+        },
+      });
+    }
+
+    return {
+      message: "Se ha compeletado la acción",
+      success: true,
+      data: true,
+    };
+  } catch (error: any) {
+    console.log(error);
+    return { success: false, message: error.message };
+  }
+}
+
+export async function actionSaleCancel({ data }: { data: SaleOrderSchemaType }): Promise<ActionResponse<boolean>> {
+  try {
+    console.log(":::Action Sale Cancel:::");
+    console.log("-Obteniendo líneas de la orden");
+    const lines = await prisma.saleOrderLine.findMany({
+      where: {
+        SaleOrder: {
+          name: data.name,
+        },
+        state: {
+          notIn: ["pending", "cancel"],
+        },
+      },
+      include: {
+        SaleOrder: {
+          select: {
+            state: true,
+          },
+        },
+        Product: {
+          select: {
+            id: true,
+            state: true,
+            displayType: true,
+            ReceiptLines: {
+              select: {
+                id: true,
+                qty: true,
+                Product: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // si la orden es venta, los productos deberían estar reserved
+    if (lines[0].SaleOrder.state === "sale") {
+      for (const line of lines) {
+        // se evalúa el tipo de producto
+        console.log("-Anunlando reservas");
+        if (line.Product.displayType === "PRODUCT") {
+          await prisma.stockWarehouse.update({
+            where: {
+              productId_warehouseId: {
+                productId: line.Product.id,
+                warehouseId: data.warehouseId.id,
+              },
+            },
+            data: {
+              reservedQty: {
+                decrement: line.quantity,
+              },
+            },
+          });
+        } else if (line.Product.displayType === "BOM") {
+          const receiptLines = line.Product.ReceiptLines;
+          for (const reLine of receiptLines) {
+            const factor = round(reLine.qty * line.quantity, 3);
+            await prisma.stockWarehouse.update({
+              where: {
+                productId_warehouseId: {
+                  productId: reLine.Product.id,
+                  warehouseId: data.warehouseId.id,
+                },
+              },
+              data: {
+                reservedQty: {
+                  decrement: factor,
+                },
+              },
+            });
+          }
+        }
+      }
+      // si la orden está terminada, los productos deberían estar como delivered
+    } else if (lines[0].SaleOrder.state === "done") {
+    }
+
+    return {
+      success: true,
+      message: "Acción completada",
+      data: true,
+    };
+  } catch (error: any) {
+    console.log(error);
+    return { success: false, message: error.message };
   }
 }

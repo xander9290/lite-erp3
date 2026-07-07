@@ -1,12 +1,13 @@
 import { Form } from "react-bootstrap";
 import { FieldInputProps } from "./FieldEntry";
+import { format } from "date-fns";
 
 export function DateTimeField({ field, fieldState, name, placeholder, readonly, inline, className, min, max, autoFocus, onChange }: FieldInputProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value; // "" o "2026-07-04T15:30"
 
-    field.onChange(value);
-    onChange?.(value);
+    field.onChange(new Date(value));
+    onChange?.(new Date(value).toISOString());
   };
 
   return (
@@ -17,7 +18,7 @@ export function DateTimeField({ field, fieldState, name, placeholder, readonly, 
       isInvalid={!!fieldState.error}
       placeholder={placeholder}
       readOnly={readonly}
-      value={field.value ?? ""}
+      value={format(field.value || new Date().toISOString(), "yyyy-MM-dd'T'HH:mm:ss") ?? ""}
       min={min}
       max={max}
       autoComplete="off"

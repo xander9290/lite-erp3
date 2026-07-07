@@ -425,6 +425,7 @@ model ProductReceiptLine {
   Product   ProductTemplate @relation("ProductReceipt", fields: [productId], references: [id])
   Uom       UomCategory     @relation(fields: [uomId], references: [id])
 
+  @@unique([productId, parentId], name: "productId_parentId")
   @@map("product_receipt_line")
 }
 
@@ -593,6 +594,7 @@ enum ProductDisplayType {
   CONSU
   SERVICE
   PRODUCT
+  BOM
 }
 
 enum ProductStateType {
@@ -748,6 +750,7 @@ model SaleOrderLine {
   total     Float
   taxRate   Float                @map("tax_rate")
   taxAmount Float                @map("tax_amount")
+  state     SaleOrderLineState   @default(pending)
 
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")
@@ -760,6 +763,13 @@ enum SaleOrderState {
   draft
   sale
   done
+  cancel
+}
+
+enum SaleOrderLineState {
+  pending
+  reserved
+  delivered
   cancel
 }
 

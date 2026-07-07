@@ -6,20 +6,19 @@ import { saleOrderLineSchemaDefault, saleOrderSchema, saleOrderSchemaDefault, Sa
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import { actionSaleOrder, SaleOrderWithProps } from "../actions/saleOrder.action";
+import { actionSaleCancel, actionSaleConfirm, actionSaleOrder, SaleOrderWithProps } from "../actions/saleOrder.action";
 import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
 import { FieldEntry, FieldRelation, FieldSelect } from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import { useAuth } from "@/hooks/sessionStore";
 import { getCompanyById } from "../../companies/actions/companies-actions";
-import { toast } from "react-hot-toast";
 import { Partner, ProductPricelistItem } from "@/generated/prisma/browser";
 import { getIPaymentTermById } from "../../invoicing_settings/payment_term/actions/ipaymentTerm.action";
 import { Col } from "react-bootstrap";
 import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
 import { getProductById } from "../../product_template/products/actions/productTemplate.action";
 import { formatCurrency } from "@/app/libs/helpers";
-import { toDateOnly, toDateTimeLocal } from "@/app/libs/validatorDate";
+import { toDateOnly } from "@/app/libs/validatorDate";
 
 function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | null; id: string | null }) {
   const { companyId } = useAuth();
@@ -37,7 +36,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
     fields: lines,
   } = useFieldArray({
     control,
-    name: "orderLine",
+    name: "SaleOrderLines",
   });
 
   const originalValuesRef = useRef<SaleOrderSchemaType | null>(null);
@@ -48,7 +47,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
   };
   const router = useRouter();
 
-  const { modalError } = useModals();
+  const { modalError, modalConfirm } = useModals();
 
   const [totals, setTotals] = useState({
     subtotal: 0.0,
@@ -56,27 +55,31 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
     total: 0.0,
   });
 
-  const onSubmit: SubmitHandler<SaleOrderSchemaType> = async (data) => {
-    if (companyId === null) {
-      return modalError("Selecciona una comapañía para continuar");
-    }
-
+  const save = async (data: SaleOrderSchemaType): Promise<SaleOrderWithProps | null> => {
     const res = await actionSaleOrder({ data });
-    if (!res.success) return modalError(res.message);
+    if (!res.success) {
+      modalError(res.message);
+      return null;
+    }
     if (id && id === "null") {
       router.replace(`/app/sale_order?view_type=form&id=${res.data?.id}`);
+      return res.data ?? null;
     } else {
       router.refresh();
+      return res.data ?? null;
     }
-    toast.success(res.message);
+  };
+
+  const onSubmit: SubmitHandler<SaleOrderSchemaType> = async (data) => {
+    return await save(data);
   };
 
   const computeTotals = () => {
-    const { orderLine } = getValues();
+    const { SaleOrderLines } = getValues();
     let subtotal = 0.0;
     let taxes = 0.0;
     let total = 0.0;
-    for (const line of orderLine) {
+    for (const line of SaleOrderLines) {
       subtotal += line.subtotal;
       taxes += line.taxAmount;
       total += line.total;
@@ -93,7 +96,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
 
     const value: SaleOrderSchemaType = {
       name: saleOrder.name,
-      confirmedDate: toDateTimeLocal(saleOrder.confirmedDate),
+      confirmedDate: saleOrder.confirmedDate?.toISOString() || "",
       purchaseRef: saleOrder.purchaseRef,
       obs: saleOrder.obs,
       orderDate: toDateOnly(saleOrder.orderDate),
@@ -128,7 +131,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
         id: saleOrder.PaymentTerm.id,
         name: saleOrder.PaymentTerm.name,
       },
-      orderLine: saleOrder.SaleOrderLines.map((line) => ({
+      SaleOrderLines: saleOrder.SaleOrderLines.map((line) => ({
         id: line.id,
         productId: {
           id: line.Product.id,
@@ -182,7 +185,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
   }, [lines]);
 
   const onChangePartner = async (vale: string | null, record: Partner) => {
-    if (getValues().partnerId.id && getValues().orderLine.length >= 1) {
+    if (getValues().partnerId.id && getValues().SaleOrderLines.length >= 1) {
       return modalError("No es posible cambiar de cliente mientras la cotización tenga líneas ya definidas");
     }
     const paymentTermId = await getIPaymentTermById({
@@ -203,8 +206,36 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
       state: "sale",
       confirmedDate: new Date().toISOString(),
     };
+
+    if (getValues().SaleOrderLines.length < 1) {
+      modalError("La orden no tiene líneas");
+      return null;
+    }
+
+    const resSave = await save(newData);
+    console.log(newData);
+    if (!resSave) return modalError("Error al guardar formulario");
+
+    const res = await actionSaleConfirm({ data: resSave });
+
+    if (!res.success) return modalError(res.message);
+    router.refresh();
+  });
+
+  const actionCancel = handleSubmit(async () => {
+    const newData: SaleOrderSchemaType = {
+      ...getValues(),
+      state: "cancel",
+    };
+    const res = await actionSaleCancel({ data: newData });
+    if (!res.success) return modalError(res.message);
+
     await onSubmit(newData);
   });
+
+  const handleActionCancel = () => {
+    modalConfirm("Confirma que quieres cancelar la orden", () => actionCancel());
+  };
 
   const onChangeProduct = async ({ value, line }: { value: string | null; line: number }) => {
     const productId = await getProductById({ id: value });
@@ -219,52 +250,52 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
       const total = subtotal * (1 + taxRate); // ✅ total con IVA incluido
       const taxAmount = subtotal * taxRate; // opcional: monto del impuesto
 
-      setValue(`orderLine.${line}.quantity`, allowOutQty);
-      setValue(`orderLine.${line}.uomId`, {
+      setValue(`SaleOrderLines.${line}.quantity`, allowOutQty);
+      setValue(`SaleOrderLines.${line}.uomId`, {
         id: productId.Uom?.id || "",
         name: productId.Uom?.code || "",
       });
 
-      setValue(`orderLine.${line}.pricelist`, getValues().partnerId.pricelist || "price1");
-      setValue(`orderLine.${line}.priceUnit`, pricelist);
-      setValue(`orderLine.${line}.taxRate`, taxRate);
-      setValue(`orderLine.${line}.taxAmount`, taxAmount);
-      setValue(`orderLine.${line}.subtotal`, subtotal);
-      setValue(`orderLine.${line}.total`, total);
+      setValue(`SaleOrderLines.${line}.pricelist`, getValues().partnerId.pricelist || "price1");
+      setValue(`SaleOrderLines.${line}.priceUnit`, pricelist);
+      setValue(`SaleOrderLines.${line}.taxRate`, taxRate);
+      setValue(`SaleOrderLines.${line}.taxAmount`, taxAmount);
+      setValue(`SaleOrderLines.${line}.subtotal`, subtotal);
+      setValue(`SaleOrderLines.${line}.total`, total);
     }
 
     computeTotals();
   };
 
   const onChangeQuantity = ({ value, line }: { line: number; value: number }) => {
-    const priceUnit = getValues().orderLine[line].priceUnit; // ✅ ya viene sin IVA
-    const taxRate = getValues().orderLine[line].taxRate ?? 0.0;
+    const priceUnit = getValues().SaleOrderLines[line].priceUnit; // ✅ ya viene sin IVA
+    const taxRate = getValues().SaleOrderLines[line].taxRate ?? 0.0;
     const qty = value;
 
     const subtotal = qty * priceUnit; // ✅ base gravable (sin IVA)
     const total = subtotal * (1 + taxRate); // ✅ total con IVA incluido
     const taxAmount = subtotal * taxRate;
 
-    setValue(`orderLine.${line}.taxAmount`, taxAmount);
-    setValue(`orderLine.${line}.subtotal`, subtotal);
-    setValue(`orderLine.${line}.total`, total);
+    setValue(`SaleOrderLines.${line}.taxAmount`, taxAmount);
+    setValue(`SaleOrderLines.${line}.subtotal`, subtotal);
+    setValue(`SaleOrderLines.${line}.total`, total);
 
     computeTotals();
   };
 
   const onChangePricelist = async ({ value, line }: { value: ProductPricelistItem; line: number }) => {
     if (!value) {
-      setValue(`orderLine.${line}.pricelist`, "price1");
+      setValue(`SaleOrderLines.${line}.pricelist`, "price1");
       return;
     }
-    const productLineId = getValues().orderLine[line].productId.id;
+    const productLineId = getValues().SaleOrderLines[line].productId.id;
     const productId = await getProductById({ id: productLineId });
     if (productId) {
       const pricelist = productId[value];
 
-      const currentQty = getValues().orderLine[line].quantity;
+      const currentQty = getValues().SaleOrderLines[line].quantity;
 
-      setValue(`orderLine.${line}.priceUnit`, pricelist);
+      setValue(`SaleOrderLines.${line}.priceUnit`, pricelist);
       onChangeQuantity({ value: currentQty, line });
 
       computeTotals();
@@ -272,7 +303,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
   };
 
   const onChangePriceUnit = ({ line }: { line: number }) => {
-    const qty = getValues().orderLine[line].quantity;
+    const qty = getValues().SaleOrderLines[line].quantity;
     onChangeQuantity({ value: qty, line });
   };
 
@@ -298,6 +329,13 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
           string: "Confirmar",
           invisible: getValues().state !== "draft",
         },
+        {
+          action: handleActionCancel,
+          fieldName: "actionCancel",
+          string: "Cancelar",
+          variant: "danger",
+          invisible: getValues().state !== "sale",
+        },
       ]}
     >
       <FormViewGroup>
@@ -308,6 +346,10 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
           label="Cliente"
           domain={[["displayType", "=", "CUSTOMER"]]}
           readonly={getValues().state !== "draft"}
+          searchColumns={[
+            { field: "name", label: "Nombre" },
+            { field: "phone", label: "Teléfono" },
+          ]}
         />
         <FormViewStack>
           <FieldRelation
@@ -407,11 +449,11 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
                     <tr key={row.id}>
                       <SimpleTD colIdx={index} name="lineProductId">
                         <FieldRelation
-                          name={`orderLine.${index}.productId`}
+                          name={`SaleOrderLines.${index}.productId`}
                           model="productTemplate"
                           inline
                           domain={[
-                            ["displayType", "=", "PRODUCT"],
+                            ["displayType", "in", ["PRODUCT", "BOM"]],
                             ["sales", "=", true],
                           ]}
                           searchColumns={[
@@ -434,7 +476,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
                       <SimpleTD colIdx={index} name="lineQuantity">
                         <FieldEntry
                           inline
-                          name={`orderLine.${index}.quantity`}
+                          name={`SaleOrderLines.${index}.quantity`}
                           type="number"
                           decimals={3}
                           readonly={getValues().state !== "draft"}
@@ -447,7 +489,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
                         />
                       </SimpleTD>
                       <SimpleTD colIdx={index} name="lineUomId">
-                        <FieldRelation inline model="uomCategory" name={`orderLine.${index}.uomId`} readonly />
+                        <FieldRelation inline model="uomCategory" name={`SaleOrderLines.${index}.uomId`} readonly />
                       </SimpleTD>
                       <SimpleTD colIdx={index} name="linePricelist">
                         <FieldSelect
@@ -459,19 +501,20 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
                             { label: "Precio 4", value: "price4" },
                             { label: "Precio 5", value: "price5" },
                           ]}
-                          name={`orderLine.${index}.pricelist`}
+                          name={`SaleOrderLines.${index}.pricelist`}
                           onChange={(value) =>
                             onChangePricelist({
                               line: index,
                               value: value as ProductPricelistItem,
                             })
                           }
+                          readonly={getValues().state !== "draft"}
                         />
                       </SimpleTD>
                       <SimpleTD colIdx={index} name="linePriceUnit">
                         <FieldEntry
                           inline
-                          name={`orderLine.${index}.priceUnit`}
+                          name={`SaleOrderLines.${index}.priceUnit`}
                           type="number"
                           decimals={2}
                           readonly={getValues().state !== "draft"}
@@ -479,14 +522,14 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
                         />
                       </SimpleTD>
                       <SimpleTD colIdx={index} name="lineSubtotal">
-                        <FieldEntry inline name={`orderLine.${index}.subtotal`} type="number" decimals={2} readonly />
+                        <FieldEntry inline name={`SaleOrderLines.${index}.subtotal`} type="number" decimals={2} readonly />
                       </SimpleTD>
                       <SimpleTD colIdx={index} name="lineTaxRate">
-                        <FieldEntry inline name={`orderLine.${index}.taxRate`} type="number" decimals={2} readonly invisible />
-                        <FieldEntry inline name={`orderLine.${index}.taxAmount`} type="number" decimals={2} readonly />
+                        <FieldEntry inline name={`SaleOrderLines.${index}.taxRate`} type="number" decimals={2} readonly invisible />
+                        <FieldEntry inline name={`SaleOrderLines.${index}.taxAmount`} type="number" decimals={2} readonly />
                       </SimpleTD>
                       <SimpleTD colIdx={index} name="lineTotal">
-                        <FieldEntry inline name={`orderLine.${index}.total`} type="number" decimals={2} readonly />
+                        <FieldEntry inline name={`SaleOrderLines.${index}.total`} type="number" decimals={2} readonly />
                       </SimpleTD>
                       <SimpleTD contentPosition="text-center" name="lineDelete" colIdx={index}>
                         <BtnDeleteLine action={() => remove(index)} disabled={getValues().state !== "draft"} />

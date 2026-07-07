@@ -13,18 +13,10 @@ interface FieldSelectProps {
   onChange?: (value: string | number) => void;
   className?: string;
   options: { value: string | number; label: string }[];
+  readonly?: boolean;
 }
 
-export function FieldSelect({
-  name,
-  label,
-  disabled,
-  invisible,
-  inline,
-  onChange,
-  className,
-  options,
-}: FieldSelectProps) {
+export function FieldSelect({ name, label, disabled, invisible, inline, onChange, className, options, readonly }: FieldSelectProps) {
   const access = useAccess({ fieldName: name });
 
   const { control } = useFormContext();
@@ -51,7 +43,7 @@ export function FieldSelect({
             isInvalid={!!fieldState.error}
             value={field.value ?? ""}
             autoComplete="off"
-            disabled={isSubmitting || disabled || access?.readonly}
+            disabled={isSubmitting || disabled || access?.readonly || readonly}
             className={`shadow-none w-100 ${inline ? "border-0 bg-transparent rounded-0 p-0" : ""} ${className ?? ""}`}
             onChange={(e) => {
               const raw = e.target.value;
@@ -67,11 +59,7 @@ export function FieldSelect({
           >
             <option value=""></option>
             {options.map((opt) => (
-              <option
-                key={opt.value}
-                value={String(opt.value)}
-                className="bg-body-tertiary"
-              >
+              <option key={opt.value} value={String(opt.value)} className="bg-body-tertiary">
                 {opt.label}
               </option>
             ))}
@@ -79,10 +67,7 @@ export function FieldSelect({
         );
 
         const feedback = (
-          <Form.Control.Feedback
-            type="invalid"
-            className={fieldState.error ? "d-block" : ""}
-          >
+          <Form.Control.Feedback type="invalid" className={fieldState.error ? "d-block" : ""}>
             {fieldState.error?.message}
           </Form.Control.Feedback>
         );
@@ -98,11 +83,7 @@ export function FieldSelect({
 
         return (
           <div title={name} className="mb-1">
-            <FloatingLabel
-              controlId={name}
-              label={floatingText}
-              className="w-100 fs-6 fw-bold"
-            >
+            <FloatingLabel controlId={name} label={floatingText} className="w-100 fs-6 fw-bold">
               {selectControl}
             </FloatingLabel>
             {feedback}

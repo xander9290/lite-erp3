@@ -62,7 +62,7 @@ export const saleOrderSchema = z.object({
     id: z.string(),
     name: z.string(),
   }),
-  orderLine: z.array(saleOrderLineSchema),
+  SaleOrderLines: z.array(saleOrderLineSchema),
 });
 
 export type SaleOrderSchemaType = z.infer<typeof saleOrderSchema>;
@@ -83,7 +83,7 @@ export const saleOrderSchemaDefault: SaleOrderSchemaType = {
   shippingWayId: { id: "", name: "" },
   companyId: { id: "", name: "" },
   paymentTermId: { id: "", name: "" },
-  orderLine: [],
+  SaleOrderLines: [],
 };
 
 export const saleOrderLineSchemaDefault: SaleOrderLineSchemaType = {
