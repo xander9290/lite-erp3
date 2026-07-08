@@ -294,14 +294,14 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
   }
 }
 
-export async function actionSaleConfirm({ data }: { data: SaleOrderWithProps }): Promise<ActionResponse<boolean>> {
+export async function actionSaleConfirm({ data }: { data: SaleOrderSchemaType }): Promise<ActionResponse<boolean>> {
   try {
     console.log(":::Action Sale Confirm:::");
     for (const line of data.SaleOrderLines) {
-      console.log("-Obtiendo información del producto:", line.Product.name);
+      console.log("-Obtiendo información del producto:", line.productId.name);
       const productId = await prisma.productTemplate.findUnique({
         where: {
-          id: line.Product.id,
+          id: line.productId.id,
         },
         include: {
           Stocks: true,
@@ -320,26 +320,26 @@ export async function actionSaleConfirm({ data }: { data: SaleOrderWithProps }):
         },
       });
 
-      if (!productId) throw new Error("Producto no encontrado:" + line.Product.name);
+      if (!productId) throw new Error("Producto no encontrado:" + line.productId.name);
 
-      const stock = productId.Stocks.find((stock) => stock.warehouseId === data.Warehouse.id);
+      const stock = productId.Stocks.find((stock) => stock.warehouseId === data.warehouseId.id);
 
       // si el tipo de produdcto es producto, se reserva cantidades
       if (productId.displayType === "PRODUCT") {
         console.log("-Validando existencias");
-        if (!stock) throw new Error(`El producto ${line.Product.name} no cuenta con existencia`);
+        if (!stock) throw new Error(`El producto ${line.productId.name} no cuenta con existencia`);
 
-        console.log("-Calculando cantidad disponible: ", line.Product.name);
+        console.log("-Calculando cantidad disponible: ", line.productId.name);
         const qtyAvailable = round(stock.qty - stock.reservedQty, 3);
 
-        if (qtyAvailable < line.quantity) throw new Error(`El producto ${line.Product.name} no tiene suficiente existencia para cubrir la demanda ${round(line.quantity, 3)} ${line.Uom.name}`);
+        if (qtyAvailable < line.quantity) throw new Error(`El producto ${line.productId.name} no tiene suficiente existencia para cubrir la demanda ${round(line.quantity, 3)} ${line.uomId.name}`);
 
-        console.log("-Reservando proucto para venta:", line.Product.name);
+        console.log("-Reservando proucto para venta:", line.productId.name);
         await prisma.stockWarehouse.update({
           where: {
             productId_warehouseId: {
-              productId: line.Product.id,
-              warehouseId: data.Warehouse.id,
+              productId: line.productId.id,
+              warehouseId: data.warehouseId.id,
             },
           },
           data: {
@@ -353,7 +353,7 @@ export async function actionSaleConfirm({ data }: { data: SaleOrderWithProps }):
         console.log("-Validando producto elaborado");
 
         for (const receipt of productId.ReceiptLines) {
-          const stock = receipt.Product.Stocks.find((stock) => stock.warehouseId === data.Warehouse.id);
+          const stock = receipt.Product.Stocks.find((stock) => stock.warehouseId === data.warehouseId.id);
           if (!stock) throw new Error(`El producto ${receipt.Product.name} no cuenta con (existencia actual) para cubrir la elaboración de ${productId.name}`);
 
           console.log("-Calculado cantidad disponible del componente:", receipt.Product.name);
@@ -368,7 +368,7 @@ export async function actionSaleConfirm({ data }: { data: SaleOrderWithProps }):
             where: {
               productId_warehouseId: {
                 productId: receipt.Product.id,
-                warehouseId: data.Warehouse.id,
+                warehouseId: data.warehouseId.id,
               },
             },
             data: {

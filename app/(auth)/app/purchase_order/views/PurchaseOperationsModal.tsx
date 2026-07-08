@@ -45,7 +45,7 @@ function PurchaseOperationsModal({
       <Modal.Header closeButton>
         <span className="fw-bolder ms-1">#{getValues().name}</span>
       </Modal.Header>
-      <Modal.Body className="p-0">
+      <Modal.Body>
         <FormProvider {...methods}>
           <Form className="bg-body-tertiary">
             <Container className="mb-3">

@@ -5,6 +5,7 @@ import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
 import { WidgetAvatar, WidgetBadgeStatus, WidgetCurrency, WidgetDisplayDate, WidgetLiveRemaining } from "@/components/widgets";
 import { useAuth } from "@/hooks/sessionStore";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 function SaleOrderViewList({ state }: { state: string }) {
@@ -21,7 +22,11 @@ function SaleOrderViewList({ state }: { state: string }) {
 
   return (
     <ListView model="saleOrder">
-      <ListView.Header title={`${state === "draft" ? "Ventas cotizaciones" : "Órdenes de venta"}`} formView="/app/sale_order?view_type=form&id=null" />
+      <ListView.Header title={`${state === "draft" ? "Ventas cotizaciones" : "Órdenes de venta"}`} formView="/app/sale_order?view_type=form&id=null">
+        <Link href="/app/sale_order?view_type=kanban&id=null" className="btn btn-info" title="Vista kanban">
+          <i className="bi bi-table"></i>
+        </Link>
+      </ListView.Header>
       <ListView.Body>
         <TableTemplateLite
           model="saleOrder"

@@ -27,53 +27,54 @@ function Header({ children, formView, title, actions }: HeaderProps) {
   const { access } = useAuth();
   const router = useRouter();
 
-  const modelName = formView?.split("?")[0].split("/")[2] + "Model";
+  const modelName = formView?.split("?")[0].split("/").at(2);
   const modelAccess = access.find((acc) => acc.fieldName === modelName);
   return (
-    <Card.Header>
-      <Container fluid>
-        <Row className="gy-1">
-          <Col xs="12" sm="11" md="6" lg="6" xl="6">
-            <div className="d-flex gap-2 align-items-center">
-              {formView && !modelAccess?.notCreate && (
-                <Link className="btn btn-primary fw-semibold" href={formView}>
-                  Nuevo
-                </Link>
-              )}
-              <Card.Title className="m-0 p-0">{title}</Card.Title>
-              {actions && (
-                <DropdownButton variant="dark" title={<i className="bi bi-gear-fill"></i>} as={ButtonGroup} size="sm">
-                  {actions.map((action, index) => {
-                    return (
-                      <Dropdown.Item key={`action-list-${index}`} onClick={() => action.action()} eventKey={index} title={action.name}>
-                        {action.string}
-                      </Dropdown.Item>
-                    );
-                  })}
-                </DropdownButton>
-              )}
-            </div>
-          </Col>
-          <Col xs="12" sm="11" md="6" lg="6" xl="6">
-            <div className="d-flex justify-content-end align-items-end gap-2">
-              {children}
-              <Button onClick={() => router.back()} variant="light">
-                <i className="bi bi-arrow-left"></i>
-              </Button>
-            </div>
-          </Col>
-        </Row>
-      </Container>
+    <Card.Header className="bg-body border-bottom py-3">
+      <Row className="align-items-center g-3">
+        <Col md={6}>
+          <div className="d-flex align-items-center gap-2 flex-wrap">
+            {formView && !modelAccess?.notCreate && (
+              <Link href={formView} className="btn btn-primary">
+                <i className="bi bi-plus-lg me-1"></i>
+                Nuevo
+              </Link>
+            )}
+
+            <h5 className="mb-0 fw-semibold flex-grow-1">{title}</h5>
+
+            {actions && actions.length > 0 && (
+              <DropdownButton as={ButtonGroup} variant="outline-secondary" size="sm" title={<i className="bi bi-three-dots"></i>}>
+                {actions.map((action, index) => (
+                  <Dropdown.Item key={index} onClick={action.action}>
+                    {action.string}
+                  </Dropdown.Item>
+                ))}
+              </DropdownButton>
+            )}
+          </div>
+        </Col>
+
+        <Col md={6}>
+          <div className="d-flex justify-content-md-end gap-2 flex-wrap">
+            {children}
+
+            <Button variant="warning" onClick={() => router.back()}>
+              <i className="bi bi-arrow-left"></i>
+            </Button>
+          </div>
+        </Col>
+      </Row>
     </Card.Header>
   );
 }
 
 function Body({ children }: BodyProps) {
-  return <Card.Body className="p-0 flex-fill overflow-auto bg-body-tertiary">{children}</Card.Body>;
+  return <Card.Body className="p-0 flex-fill">{children}</Card.Body>;
 }
 
 function Footer({ children }: FooterProps) {
-  return <Card.Footer>{children}</Card.Footer>;
+  return <Card.Footer className="bg-body border-top">{children}</Card.Footer>;
 }
 
 export type ListViewSubComponents = {
@@ -102,7 +103,7 @@ function ListView({ children, model }: ListViewProps) {
       </Row>
     );
 
-  return <Card className="border-0">{children}</Card>;
+  return <Card className="shadow-sm border-0 h-100">{children}</Card>;
 }
 
 ListView.Header = Header;

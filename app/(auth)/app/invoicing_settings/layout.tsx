@@ -1,48 +1,59 @@
 "use client";
 
 import Link from "next/link";
-import { Col, Nav, Row } from "react-bootstrap";
+import { usePathname } from "next/navigation";
+import { Card, Col, Nav, Row } from "react-bootstrap";
 
-function layout({
+const menu = [
+  {
+    label: "Términos de pago",
+    href: "/app/invoicing_settings/payment_term?view_type=list&id=null",
+    icon: "bi-credit-card",
+  },
+  {
+    label: "Impuestos",
+    href: "/app/invoicing_settings/invoicing_tax?view_type=list&id=null",
+    icon: "bi-percent",
+  },
+  {
+    label: "Monedas",
+    href: "/app/invoicing_settings/invoicing_currency?view_type=list&id=null",
+    icon: "bi-currency-exchange",
+  },
+];
+
+export default function Layout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+
   return (
-    <Row className="h-100 overflow-auto">
-      <Col xs="4" sm="4" md="3" xl="2" xxl="2">
-        <Nav
-          className="flex-column"
-          defaultActiveKey="/app/product_template/products"
-        >
-          <Nav.Link
-            as={Link}
-            href="/app/invoicing_settings/payment_term?view_type=list&id=null"
-            className="border-bottom"
-          >
-            Términos de pago
-          </Nav.Link>
-          <Nav.Link
-            as={Link}
-            href="/app/invoicing_settings/invoicing_tax?view_type=list&id=null"
-            className="border-bottom"
-          >
-            Impuestos
-          </Nav.Link>
-          <Nav.Link
-            as={Link}
-            href="/app/invoicing_settings/invoicing_currency?view_type=list&id=null"
-            className="border-bottom"
-          >
-            Monedas
-          </Nav.Link>
-        </Nav>
+    <Row className="g-3 h-100">
+      <Col xs={12} md={4} lg={3} xl={2}>
+        <Card className="shadow-sm h-100">
+          <Card.Header className="fw-semibold">
+            <i className="bi bi-gear me-2" />
+            Facturación
+          </Card.Header>
+
+          <Card.Body className="p-2">
+            <Nav className="flex-column gap-1">
+              {menu.map((item) => (
+                <Nav.Link key={item.href} as={Link} href={item.href} active={pathname.startsWith(item.href.split("?")[0])} className="rounded d-flex align-items-center">
+                  <i className={`${item.icon} me-2`} />
+                  {item.label}
+                </Nav.Link>
+              ))}
+            </Nav>
+          </Card.Body>
+        </Card>
       </Col>
-      <Col xs="8" sm="8" md="9" xl="10" xxl="10">
+
+      <Col xs={12} md={8} lg={9} xl={10}>
         {children}
       </Col>
     </Row>
   );
 }
-
-export default layout;
