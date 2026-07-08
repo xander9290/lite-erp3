@@ -124,10 +124,10 @@ export function CardTemplateLite({
         return {
           xs: 12,
           sm: 6,
-          md: 12,
+          md: 6,
           lg: 6,
-          xl: 6,
-          xxl: 4,
+          xl: 3,
+          xxl: 3,
         };
       default:
         return { xs: 12, sm: 6, lg: 4 };

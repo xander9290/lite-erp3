@@ -40,14 +40,14 @@
   border-color: var(--bs-primary);
   background-color: var(--bs-body-bg);
   color: var(--bs-body-color);
-  box-shadow: 0 0 0 0.18rem rgba(var(--bs-primary-rgb), 0.12) !important;
+  /* box-shadow: 0 0 0 0.18rem rgba(var(--bs-primary-rgb), 0.12) !important; */
 }
 
 .selectControl:disabled {
   background-color: var(--bs-tertiary-bg);
   color: var(--bs-secondary-color);
   cursor: not-allowed;
-  opacity: 1;
+  /* opacity: 1; */
 }
 
 .selectControl option {

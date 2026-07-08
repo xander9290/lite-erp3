@@ -2,11 +2,15 @@
 
 import { Card } from "react-bootstrap";
 import { SaleOrderWithProps } from "../actions/saleOrder.action";
-import { WidgetCurrency, WidgetDisplayDate, WidgetLiveRemaining } from "@/components/widgets";
+import {
+  WidgetCurrency,
+  WidgetDisplayDate,
+  WidgetLiveRemaining,
+} from "@/components/widgets";
 
 function SaleOrderCard({ order }: { order: SaleOrderWithProps }) {
   return (
-    <Card className="shadow-sm border-1 h-100 bg-body-tertiary">
+    <Card className="shadow-sm border-1 h-100">
       <Card.Body className="d-flex flex-column gap-3">
         {/* Encabezado */}
         <div className="d-flex justify-content-between align-items-start">
@@ -36,7 +40,9 @@ function SaleOrderCard({ order }: { order: SaleOrderWithProps }) {
               {order.Partner.name}
             </div>
 
-            <small className="text-body-secondary">{order.reference || "—"}</small>
+            <small className="text-body-secondary">
+              {order.reference || "—"}
+            </small>
           </div>
         </div>
 
