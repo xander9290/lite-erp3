@@ -47,6 +47,9 @@ model Partner {
   Parent   Partner?  @relation("PartnerParent", fields: [parentId], references: [id], onDelete: Cascade)
   Children Partner[] @relation("PartnerParent")
 
+  PickingOperators StockPicking[] @relation("PickingOperator")
+  PickingPartners  StockPicking[] @relation("PickingPartner")
+
   @@index([name])
   @@map("partners")
 }
@@ -188,6 +191,8 @@ model Company {
   Warehouses     Warehouse[]     @relation("WarehouseCompanyRel")
   Users          User[]          @relation("UserCompanyRel")
   SaleOrders     SaleOrder[]
+  StockPickings  StockPicking[]
+  PickingRel     StockPicking[]  @relation("CompanyRel")
 
   @@map("companies")
 }
@@ -220,6 +225,8 @@ model Warehouse {
   purchaseOrders         PurchaseOrder[]
   purchaseOrdersSupplier PurchaseOrder[] @relation("WarehousePurchaseAffected")
   SaleOrders             SaleOrder[]
+  PickingWarehouses      StockPicking[]  @relation("PickingWarehouse")
+  PickingWarehouseDests  StockPicking[]  @relation("PickingWHDest")
 
   @@map("warehouses")
 }
@@ -506,6 +513,7 @@ model PurchaseOrder {
   WarehouseAffected   Warehouse?           @relation("WarehousePurchaseAffected", fields: [warehouseAffectedId], references: [id], onDelete: Restrict)
   currencyId          String               @map("currency_id")
   Currency            InvoicingCurrency    @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+  StockPickings       StockPicking[]
 
   @@map("purchase_order")
 }
@@ -726,6 +734,7 @@ model SaleOrder {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   SaleOrderLines SaleOrderLine[]
+  StockPickings  StockPicking[]
 
   @@map("sale_order")
 }
@@ -788,4 +797,53 @@ enum SaleShippingWayType {
   counter // mostrador
   delivery // local
   courier // mensajería
+}
+
+model StockPicking {
+  id            String            @id @default(cuid())
+  name          String            @unique
+  date          DateTime          @default(now()) @db.Date
+  datePlanned   DateTime          @db.Date
+  confirmedDate DateTime?         @map("confirmed_date")
+  readyDate     DateTime?         @map("ready_date")
+  doneDate      DateTime?         @map("done_date")
+  reference     String?
+  state         StockPickingState @default(draft)
+
+  whId      String    @map("wh_id")
+  Warehouse Warehouse @relation("PickingWarehouse", fields: [whId], references: [id], onDelete: Restrict)
+
+  whDestId      String    @map("wh_dest_id")
+  WarehouseDest Warehouse @relation("PickingWHDest", fields: [whDestId], references: [id], onDelete: Restrict)
+
+  partnerId String  @map("partner_id")
+  Partner   Partner @relation("PickingPartner", fields: [partnerId], references: [id], onDelete: Restrict)
+
+  opeartorId String?  @map("operator_id")
+  Operator   Partner? @relation("PickingOperator", fields: [opeartorId], references: [id], onDelete: Restrict)
+
+  companyId String  @map("company_id")
+  Company   Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  CompanyRel Company[] @relation("CompanyRel")
+
+  saleId    String?    @map("sale_id")
+  SaleOrder SaleOrder? @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  purchaseId    String?        @map("purchase_id")
+  PurchaseOrder PurchaseOrder? @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("stock_picking")
+}
+
+enum StockPickingState {
+  draft
+  confirmed
+  ready
+  done
+  cancel
 }

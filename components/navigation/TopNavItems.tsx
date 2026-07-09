@@ -147,8 +147,9 @@ const menus: MenuGroup[] = [
       },
       {
         key: "inventoryStockMove",
-        label: "Traslados",
+        label: "Operaciones",
         icon: "bi bi-arrow-left-right",
+        href: "/app/stock_picking?view_type=list&id=null",
       },
       {
         key: "inventoryStockMoveLine",
