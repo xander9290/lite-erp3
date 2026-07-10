@@ -36,7 +36,11 @@ const generateOperationCode = (opeartion: PickingOperationType) => {
   return operationCode;
 };
 
-export async function getStockPickingById({ id }: { id: string | null }): Promise<StockPickingWithProps | null> {
+export async function getStockPickingById({
+  id,
+}: {
+  id: string | null;
+}): Promise<StockPickingWithProps | null> {
   try {
     if (!id) return null;
 
@@ -62,7 +66,11 @@ export async function getStockPickingById({ id }: { id: string | null }): Promis
   }
 }
 
-export async function actionStockPicking({ data }: { data: StockPickingSchemaType }): Promise<ActionResponse<StockPickingWithProps>> {
+export async function actionStockPicking({
+  data,
+}: {
+  data: StockPickingSchemaType;
+}): Promise<ActionResponse<StockPickingWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
@@ -72,8 +80,11 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
     }
 
     let name = "";
-    if (data.name == "") {
-      name = await getNextValue(`${whDest.code}/${generateOperationCode(data.operationType)}/`, `${whDest.Company.code}-stockpicking`);
+    if (data.name === "new") {
+      name = await getNextValue(
+        `${whDest.code}/${generateOperationCode(data.operationType)}/`,
+        `${whDest.Company.code}-stockpicking`,
+      );
     }
 
     const picking = await prisma.stockPicking.upsert({
@@ -81,7 +92,6 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
         name: data.name,
       },
       update: {
-        CompanyRel: { set: [{ id: company.id }, { id: whDest.Company.id }] },
         confirmedDate: data.confirmedDate ? new Date(data.confirmedDate) : null,
         doneDate: data.doneDate ? new Date(data.doneDate) : null,
         readyDate: data.readyDate ? new Date(data.readyDate) : null,
@@ -92,6 +102,7 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
         reference: data.reference,
         whId: data.whId.id,
         whDestId: data.whDestId.id,
+        companyDestId: whDest.Company.id,
       },
       create: {
         name,
@@ -102,12 +113,12 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
         partnerId: data.partnerId.id,
         whDestId: data.whDestId.id,
         whId: data.whId.id,
-        CompanyRel: { connect: [{ id: company.id }, { id: whDest.Company.id }] },
         operationType: data.operationType,
         purchaseId: data.purchaseId?.id ? data.purchaseId.id : null,
         reference: data.reference,
         saleId: data.saleId?.id ? data.saleId.id : null,
         state: data.state,
+        companyDestId: whDest.Company.id,
       },
       include: {
         Warehouse: { select: { id: true, description: true } },
@@ -120,7 +131,7 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
       },
     });
 
-    if (data.name) {
+    if (data.name !== "new") {
       await createAuditlog({
         action: "update",
         entityId: picking.id,
@@ -144,5 +155,27 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
   } catch (error: any) {
     console.log(error);
     return { success: false, message: error.message };
+  }
+}
+
+export async function actionStockPickingConfirm({
+  data,
+}: {
+  data: StockPickingSchemaType;
+}): Promise<ActionResponse<boolean>> {
+  try {
+    const { company } = await sessionStore();
+
+    return {
+      message: "Acción terminada",
+      success: true,
+    };
+  } catch (error: any) {
+    console.log(error);
+    return {
+      success: false,
+      message: error.message,
+      data: false,
+    };
   }
 }

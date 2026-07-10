@@ -1,5 +1,8 @@
 import { todayDate } from "@/app/libs/validatorDate";
-import { PickingOperationType, StockPickingState } from "@/generated/prisma/enums";
+import {
+  PickingOperationType,
+  StockPickingState,
+} from "@/generated/prisma/enums";
 import { z } from "zod";
 
 export const stockPickingSchema = z.object({
@@ -47,7 +50,7 @@ export const stockPickingSchema = z.object({
 export type StockPickingSchemaType = z.infer<typeof stockPickingSchema>;
 
 export const stockPickingSchemaDefault: StockPickingSchemaType = {
-  name: "",
+  name: "new",
   confirmedDate: null,
   date: todayDate(),
   datePlanned: todayDate(),

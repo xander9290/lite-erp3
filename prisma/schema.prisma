@@ -192,7 +192,6 @@ model Company {
   Users          User[]          @relation("UserCompanyRel")
   SaleOrders     SaleOrder[]
   StockPickings  StockPicking[]
-  PickingRel     StockPicking[]  @relation("CompanyRel")
 
   @@map("companies")
 }
@@ -826,13 +825,13 @@ model StockPicking {
   companyId String  @map("company_id")
   Company   Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
 
-  CompanyRel Company[] @relation("CompanyRel")
-
   saleId    String?    @map("sale_id")
   SaleOrder SaleOrder? @relation(fields: [saleId], references: [id], onDelete: Cascade)
 
   purchaseId    String?        @map("purchase_id")
   PurchaseOrder PurchaseOrder? @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  companyDestId String @map("company_dest_id")
 
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")
