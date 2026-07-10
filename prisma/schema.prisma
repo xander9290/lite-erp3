@@ -800,15 +800,16 @@ enum SaleShippingWayType {
 }
 
 model StockPicking {
-  id            String            @id @default(cuid())
-  name          String            @unique
-  date          DateTime          @default(now()) @db.Date
-  datePlanned   DateTime          @db.Date
-  confirmedDate DateTime?         @map("confirmed_date")
-  readyDate     DateTime?         @map("ready_date")
-  doneDate      DateTime?         @map("done_date")
+  id            String               @id @default(cuid())
+  name          String               @unique
+  date          DateTime             @default(now()) @db.Date
+  datePlanned   DateTime             @db.Date
+  confirmedDate DateTime?            @map("confirmed_date")
+  readyDate     DateTime?            @map("ready_date")
+  doneDate      DateTime?            @map("done_date")
   reference     String?
-  state         StockPickingState @default(draft)
+  state         StockPickingState    @default(draft)
+  operationType PickingOperationType @default(internal)
 
   whId      String    @map("wh_id")
   Warehouse Warehouse @relation("PickingWarehouse", fields: [whId], references: [id], onDelete: Restrict)
@@ -846,4 +847,10 @@ enum StockPickingState {
   ready
   done
   cancel
+}
+
+enum PickingOperationType {
+  outgoing
+  incoming
+  internal
 }

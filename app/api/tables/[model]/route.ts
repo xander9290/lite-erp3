@@ -6,10 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 type FilterItem = { field: string; operator: string; value: any };
 
 // ─── GET Handler ──────────────────────────────────────────────────────────────
-export async function GET(
-  req: NextRequest,
-  context: { params: Promise<{ model: string }> },
-) {
+export async function GET(req: NextRequest, context: { params: Promise<{ model: string }> }) {
   try {
     const { model } = await context.params;
     const { searchParams } = new URL(req.url);
@@ -58,10 +55,7 @@ export async function GET(
     return NextResponse.json({ rows, total, page, pageSize });
   } catch (error: any) {
     console.error("Table API Error:", error.message);
-    return NextResponse.json(
-      { error: error.message || "Query failed" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: error.message || "Query failed" }, { status: 400 });
   }
 }
 
@@ -120,44 +114,7 @@ function convertValueForPrisma(value: any, type: string): any {
   }
 }
 
-// function buildOperatorCondition(operator: string, value: any, type: string): any {
-//   const isString = type === "string" || type === "relation";
-
-//   switch (operator) {
-//     case "=":
-//       return value;
-//     case "!=":
-//       return { not: value };
-//     case ">":
-//       return { gt: value };
-//     case ">=":
-//       return { gte: value };
-//     case "<":
-//       return { lt: value };
-//     case "<=":
-//       return { lte: value };
-//     case "contains":
-//       return isString ? { contains: value, mode: "insensitive" } : value;
-//     case "startsWith":
-//       return isString ? { startsWith: value, mode: "insensitive" } : value;
-//     case "endsWith":
-//       return isString ? { endsWith: value, mode: "insensitive" } : value;
-//     case "some":
-//       return { some: value };
-//     case "every":
-//       return { every: value };
-//     case "none":
-//       return { none: value };
-//     default:
-//       return value;
-//   }
-// }
-
-function buildOperatorCondition(
-  operator: string,
-  value: any,
-  type: string,
-): any {
+function buildOperatorCondition(operator: string, value: any, type: string): any {
   const isString = type === "string" || type === "relation";
   const isArray = Array.isArray(value);
 
@@ -203,58 +160,7 @@ function buildOperatorCondition(
   }
 }
 
-// function buildRelationCondition(
-//   field: string,
-//   operator: string,
-//   value: any,
-// ): any {
-//   if (field.includes(".")) {
-//     const [relation, ...path] = field.split(".");
-//     const fieldName = path.join(".");
-
-//     switch (operator) {
-//       case "contains":
-//         return {
-//           [relation]: {
-//             some: {
-//               [fieldName]: { contains: String(value), mode: "insensitive" },
-//             },
-//           },
-//         };
-//       case "=":
-//         return {
-//           [relation]: {
-//             some: { [fieldName]: value },
-//           },
-//         };
-//       case "!=":
-//         return {
-//           [relation]: {
-//             none: { [fieldName]: value },
-//           },
-//         };
-//       default:
-//         return {
-//           [relation]: {
-//             some: { [fieldName]: { [operator]: value } },
-//           },
-//         };
-//     }
-//   }
-
-//   // Si no tiene punto, asumir que es el nombre de la relación y buscar por name
-//   return {
-//     [field]: {
-//       some: { name: { contains: String(value), mode: "insensitive" } },
-//     },
-//   };
-// }
-
-function buildRelationCondition(
-  field: string,
-  operator: string,
-  value: any,
-): any {
+function buildRelationCondition(field: string, operator: string, value: any): any {
   const isArray = Array.isArray(value);
 
   if (field.includes(".")) {
@@ -340,32 +246,29 @@ function buildRelationCondition(
   }
 }
 
-function buildCondition(
-  field: string,
-  operator: string,
-  value: any,
-  type: string,
-): any {
-  // Si es tipo relación, manejar diferente
-  if (type === "relation") {
-    return buildRelationCondition(field, operator, value);
-  }
-
+function buildCondition(field: string, operator: string, value: any, type: string) {
   const condition = buildOperatorCondition(operator, value, type);
 
-  // Campos anidados (ej: "Partner.name")
+  // Relación (CompanyRel.id, Partner.name, etc.)
   if (field.includes(".")) {
-    const [relation, ...path] = field.split(".");
-    return { [relation]: { [path.join(".")]: condition } };
+    const [relation, property] = field.split(".", 2);
+
+    return {
+      [relation]: {
+        some: {
+          [property]: condition,
+        },
+      },
+    };
   }
 
-  return { [field]: condition };
+  // Campo normal
+  return {
+    [field]: condition,
+  };
 }
 
-function buildWhereClause(
-  filters: FilterItem[],
-  columnTypes: Record<string, string>,
-): any {
+function buildWhereClause(filters: FilterItem[], columnTypes: Record<string, string>): any {
   if (!filters.length) return {};
 
   const conditions = filters.map(({ field, operator, value }) => {

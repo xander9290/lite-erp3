@@ -11,6 +11,7 @@ export interface WarehouseWithProps extends Warehouse {
   Company: {
     id: string;
     name: string;
+    code: string;
   };
   InternalsFrom: {
     id: string;
@@ -19,11 +20,7 @@ export interface WarehouseWithProps extends Warehouse {
   Stocks: { qty: number; reservedQty: number; locationName: string | null }[];
 }
 
-export async function getWarehouseById({
-  id,
-}: {
-  id: string | null;
-}): Promise<WarehouseWithProps | null> {
+export async function getWarehouseById({ id }: { id: string | null }): Promise<WarehouseWithProps | null> {
   try {
     if (!id) throw new Error("ID not definded");
 
@@ -34,6 +31,7 @@ export async function getWarehouseById({
           select: {
             id: true,
             name: true,
+            code: true,
           },
         },
         InternalsFrom: {
@@ -55,16 +53,9 @@ export async function getWarehouseById({
   }
 }
 
-type WarehouseActionProps = Omit<
-  WarehouseSchemaType,
-  "updatedAt" | "createdAt" | "createdUid"
->;
+type WarehouseActionProps = Omit<WarehouseSchemaType, "updatedAt" | "createdAt" | "createdUid">;
 
-export async function createWarehouse({
-  data,
-}: {
-  data: WarehouseActionProps;
-}): Promise<ActionResponse<WarehouseWithProps>> {
+export async function createWarehouse({ data }: { data: WarehouseActionProps }): Promise<ActionResponse<WarehouseWithProps>> {
   try {
     const { uid } = await sessionStore();
 
@@ -88,6 +79,7 @@ export async function createWarehouse({
           select: {
             id: true,
             name: true,
+            code: true,
           },
         },
         InternalsFrom: {
@@ -123,13 +115,7 @@ export async function createWarehouse({
   }
 }
 
-export async function updateWarehouse({
-  id,
-  data,
-}: {
-  id: string | null;
-  data: WarehouseActionProps;
-}): Promise<ActionResponse<WarehouseWithProps>> {
+export async function updateWarehouse({ id, data }: { id: string | null; data: WarehouseActionProps }): Promise<ActionResponse<WarehouseWithProps>> {
   try {
     if (!id) throw new Error("ID not definded");
 
@@ -153,6 +139,7 @@ export async function updateWarehouse({
           select: {
             id: true,
             name: true,
+            code: true,
           },
         },
         InternalsFrom: {

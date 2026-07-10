@@ -12,22 +12,12 @@ type Props = {
   defaultValue?: StatusOption;
 };
 
-export function WidgetBadgeStatus({
-  value,
-  options,
-  defaultValue = { label: value, color: "secondary" },
-}: Props) {
+export function WidgetBadgeStatus({ value, options, defaultValue = { label: value, color: "secondary" } }: Props) {
   const option = options[value] || defaultValue;
 
-  return (
-    <span
-      className={clsx(
-        `badge rounded-pill fw-bold`,
-        option.color && `bg-${option.color}`,
-        option.className,
-      )}
-    >
-      {option.label}
-    </span>
-  );
+  if (option.color === "none") {
+    return <span>{option.label}</span>;
+  } else {
+    return <span className={clsx(`badge rounded-pill fw-bold`, option.color && `bg-${option.color}`, option.className)}>{option.label}</span>;
+  }
 }
