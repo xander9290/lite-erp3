@@ -9,10 +9,20 @@ import { getNextValue } from "@/app/libs/sequence";
 import { getWarehouseById } from "../../warehouses/actions/warehouse-actions";
 import { createAuditlog } from "../../actions/auditlog-actions";
 import { todayDate } from "@/app/libs/validatorDate";
+import { ERROR_THROWN_EVENT } from "next/dist/telemetry/events";
+import { error } from "next/dist/build/output/log";
 
 export interface StockPickingWithProps extends StockPicking {
-  Warehouse: { id: string; description: string; Company: { id: string; name: string } };
-  WarehouseDest: { id: string; description: string; Company: { id: string; name: string } };
+  Warehouse: {
+    id: string;
+    description: string;
+    Company: { id: string; name: string };
+  };
+  WarehouseDest: {
+    id: string;
+    description: string;
+    Company: { id: string; name: string };
+  };
   Partner: { id: string; name: string };
   Operator: { id: string; name: string } | null;
   Company: { id: string; name: string };
@@ -37,7 +47,11 @@ const generateOperationCode = (opeartion: PickingOperationType) => {
   return operationCode;
 };
 
-export async function getStockPickingById({ id }: { id: string | null }): Promise<StockPickingWithProps | null> {
+export async function getStockPickingById({
+  id,
+}: {
+  id: string | null;
+}): Promise<StockPickingWithProps | null> {
   try {
     if (!id) return null;
 
@@ -46,8 +60,20 @@ export async function getStockPickingById({ id }: { id: string | null }): Promis
         id,
       },
       include: {
-        Warehouse: { select: { id: true, description: true, Company: { select: { id: true, name: true } } } },
-        WarehouseDest: { select: { id: true, description: true, Company: { select: { id: true, name: true } } } },
+        Warehouse: {
+          select: {
+            id: true,
+            description: true,
+            Company: { select: { id: true, name: true } },
+          },
+        },
+        WarehouseDest: {
+          select: {
+            id: true,
+            description: true,
+            Company: { select: { id: true, name: true } },
+          },
+        },
         Partner: { select: { id: true, name: true } },
         Operator: { select: { id: true, name: true } },
         Company: { select: { id: true, name: true } },
@@ -63,7 +89,11 @@ export async function getStockPickingById({ id }: { id: string | null }): Promis
   }
 }
 
-export async function actionStockPicking({ data }: { data: StockPickingSchemaType }): Promise<ActionResponse<StockPickingWithProps>> {
+export async function actionStockPicking({
+  data,
+}: {
+  data: StockPickingSchemaType;
+}): Promise<ActionResponse<StockPickingWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
@@ -76,7 +106,10 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
 
     let name = "";
     if (data.name === "new") {
-      name = await getNextValue(`${whDest.code}/${generateOperationCode(data.operationType)}/`, `${whDest.Company.code}-stockpicking`);
+      name = await getNextValue(
+        `${whDest.code}/${generateOperationCode(data.operationType)}/`,
+        `${whDest.Company.code}-stockpicking`,
+      );
     }
 
     const picking = await prisma.stockPicking.upsert({
@@ -115,8 +148,20 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
         companyDestId: whDest.Company.id, // empresa pedidora
       },
       include: {
-        Warehouse: { select: { id: true, description: true, Company: { select: { id: true, name: true } } } },
-        WarehouseDest: { select: { id: true, description: true, Company: { select: { id: true, name: true } } } },
+        Warehouse: {
+          select: {
+            id: true,
+            description: true,
+            Company: { select: { id: true, name: true } },
+          },
+        },
+        WarehouseDest: {
+          select: {
+            id: true,
+            description: true,
+            Company: { select: { id: true, name: true } },
+          },
+        },
         Partner: { select: { id: true, name: true } },
         Operator: { select: { id: true, name: true } },
         Company: { select: { id: true, name: true } },
@@ -152,7 +197,11 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
   }
 }
 
-export async function actionStockPickingConfirm({ data }: { data: StockPickingSchemaType }): Promise<ActionResponse<boolean>> {
+export async function actionStockPickingConfirm({
+  data,
+}: {
+  data: StockPickingSchemaType;
+}): Promise<ActionResponse<boolean>> {
   try {
     const { company } = await sessionStore();
 
@@ -174,7 +223,9 @@ export async function actionStockPickingConfirm({ data }: { data: StockPickingSc
     });
 
     if (!internal) {
-      throw new Error(`${data.whDestId.name} no acepta operaciones internas por parte de ${data.whId.name}`);
+      throw new Error(
+        `${data.whDestId.name} no acepta operaciones internas por parte de ${data.whId.name}`,
+      );
     }
 
     const res = await actionStockPicking({ data });
@@ -196,7 +247,11 @@ export async function actionStockPickingConfirm({ data }: { data: StockPickingSc
   }
 }
 
-export async function actionStockPickingReady({ data }: { data: StockPickingSchemaType }): Promise<ActionResponse<boolean>> {
+export async function actionStockPickingReady({
+  data,
+}: {
+  data: StockPickingSchemaType;
+}): Promise<ActionResponse<boolean>> {
   try {
     const { company } = await sessionStore();
 
@@ -209,6 +264,10 @@ export async function actionStockPickingReady({ data }: { data: StockPickingSche
       throw new Error(res.message);
     }
 
+    if (!data.operatorId?.id) {
+      throw new Error("El campo operador es requerido");
+    }
+
     return {
       message: "Acción terminada",
       success: true,
@@ -223,7 +282,11 @@ export async function actionStockPickingReady({ data }: { data: StockPickingSche
   }
 }
 
-export async function actionStockPickingDone({ data }: { data: StockPickingSchemaType }): Promise<ActionResponse<boolean>> {
+export async function actionStockPickingDone({
+  data,
+}: {
+  data: StockPickingSchemaType;
+}): Promise<ActionResponse<boolean>> {
   try {
     const { company } = await sessionStore();
 
@@ -234,10 +297,50 @@ export async function actionStockPickingDone({ data }: { data: StockPickingSchem
     const today = todayDate();
     const datePlanned = data.datePlanned === today;
     if (!datePlanned) {
-      throw new Error(`Fecha de entrega precipitada; programado para\n${data.datePlanned}`.toString());
+      throw new Error(
+        `Fecha de entrega precipitada; programado para\n${data.datePlanned}`.toString(),
+      );
     }
 
-    return;
+    const res = await actionStockPicking({ data });
+    if (!res.success) {
+      throw new Error(res.message);
+    }
+
+    return {
+      message: "Acción terminada",
+      success: true,
+    };
+  } catch (error: any) {
+    console.log(error);
+    return {
+      success: false,
+      message: error.message,
+      data: false,
+    };
+  }
+}
+
+export async function actionStockPickingCancel({
+  data,
+}: {
+  data: StockPickingSchemaType & { id: string | null };
+}): Promise<ActionResponse<boolean>> {
+  try {
+    const { company } = await sessionStore();
+
+    const picking = await getStockPickingById({ id: data.id });
+    if (!picking) throw new Error("Operación no encontrada");
+
+    if (picking.state === "done") {
+      throw new Error(
+        "No es posible cancelar el documento una vez termiando el proceso de traslado; en su lugar, solicita una Devolución",
+      );
+    }
+
+    if (data.companyId !== company.id) {
+      throw new Error("La empresa destino debe cancelar el documento");
+    }
 
     const res = await actionStockPicking({ data });
     if (!res.success) {

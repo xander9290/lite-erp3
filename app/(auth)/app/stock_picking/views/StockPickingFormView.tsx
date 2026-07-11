@@ -1,21 +1,46 @@
 "use client";
 
 import { SubmitHandler, useForm } from "react-hook-form";
-import { actionStockPicking, actionStockPickingConfirm, actionStockPickingDone, actionStockPickingReady, StockPickingWithProps } from "../actions/stockPicking.action";
-import { stockPickingSchema, stockPickingSchemaDefault, StockPickingSchemaType } from "../schemas/stockPicking.schema";
+import {
+  actionStockPicking,
+  actionStockPickingCancel,
+  actionStockPickingConfirm,
+  actionStockPickingDone,
+  actionStockPickingReady,
+  StockPickingWithProps,
+} from "../actions/stockPicking.action";
+import {
+  stockPickingSchema,
+  stockPickingSchemaDefault,
+  StockPickingSchemaType,
+} from "../schemas/stockPicking.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import { toDateOnly, toDateTimeLocal, todayDate } from "@/app/libs/validatorDate";
-import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
+import {
+  toDateOnly,
+  toDateTimeLocal,
+  todayDate,
+} from "@/app/libs/validatorDate";
+import {
+  FormView,
+  FormViewGroup,
+  FormViewStack,
+} from "@/components/templates/FormView";
 import { FieldEntry, FieldRelation } from "@/components/templates/fields";
 import { useAuth } from "@/hooks/sessionStore";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
 import { Alert } from "react-bootstrap";
 
-function StockPickingFormView({ id, picking }: { id: string | null; picking: StockPickingWithProps | null }) {
+function StockPickingFormView({
+  id,
+  picking,
+}: {
+  id: string | null;
+  picking: StockPickingWithProps | null;
+}) {
   const { companyId } = useAuth();
 
   const methods = useForm<StockPickingSchemaType>({
@@ -82,6 +107,16 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
       state: "done",
     };
     const res = await actionStockPickingDone({ data: newData });
+    if (!res.success) return modalError(res.message);
+    router.refresh();
+  });
+
+  const actionCancel = handleSubmit(async () => {
+    const newData: StockPickingSchemaType = {
+      ...getValues(),
+      state: "cancel",
+    };
+    const res = await actionStockPickingCancel({ data: { ...newData, id } });
     if (!res.success) return modalError(res.message);
     router.refresh();
   });
@@ -200,10 +235,24 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
           variant: "success",
           invisible: getValues().state !== "ready",
         },
+        {
+          action: actionCancel,
+          fieldName: "actionCancel",
+          string: "Cancelar",
+          variant: "danger",
+          invisible:
+            getValues().state === "draft" || getValues().state === "cancel",
+        },
       ]}
     >
       <FormViewGroup>
-        <FieldRelation model="partner" name="partnerId" label="Contacto" readonly={getValues().state !== "draft"} />
+        <FieldRelation
+          model="partner"
+          name="partnerId"
+          label="Contacto"
+          readonly={getValues().state !== "draft"}
+          domain={[["Tags.name", "some", "EMPLOYEE"]]}
+        />
         <FormViewStack>
           <FieldRelation
             model="warehouse"
@@ -231,9 +280,20 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
       <FormViewGroup>
         <FormViewStack>
           <FieldEntry name="date" type="date" label="Fecha" readonly />
-          <FieldEntry name="datePlanned" type="date" label="Programar entrega" min={todayDate()} />
+          <FieldEntry
+            name="datePlanned"
+            type="date"
+            label="Programar entrega"
+            min={todayDate()}
+          />
         </FormViewStack>
-        <FieldRelation model="partner" name="operatorId" label="Operador" domain={[["Tags.name", "some", "WAREHOUSE"]]} readonly={getValues().state !== "confirmed"} />
+        <FieldRelation
+          model="partner"
+          name="operatorId"
+          label="Operador"
+          domain={[["Tags.name", "some", "WAREHOUSE"]]}
+          readonly={getValues().state !== "confirmed"}
+        />
       </FormViewGroup>
       <Notebook defaultActiveKey="pickingLine">
         <Page eventKey="pickingLine" title="Movimientos">
@@ -242,9 +302,23 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
         <Page eventKey="otherInfo" title="Otra información">
           <PageSheet name="otherInfo">
             <FormViewGroup>
-              <FieldEntry name="operationType" label="Tipo de operación" readonly />
-              <FieldRelation name="purchaseId" label="Orden de compra" model="purchaseOrder" readonly />
-              <FieldRelation name="saleId" label="Orden de venta" model="saleOrder" readonly />
+              <FieldEntry
+                name="operationType"
+                label="Tipo de operación"
+                readonly
+              />
+              <FieldRelation
+                name="purchaseId"
+                label="Orden de compra"
+                model="purchaseOrder"
+                readonly
+              />
+              <FieldRelation
+                name="saleId"
+                label="Orden de venta"
+                model="saleOrder"
+                readonly
+              />
             </FormViewGroup>
           </PageSheet>
         </Page>
