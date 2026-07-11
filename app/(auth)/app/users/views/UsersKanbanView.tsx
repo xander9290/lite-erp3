@@ -23,7 +23,11 @@ function UsersKanbanView() {
           },
         ]}
       >
-        <Link href="/app/users?view_type=list&id=null" className="btn btn-secondary btn-sm" title="Vista tabla">
+        <Link
+          href="/app/users?view_type=list&id=null"
+          className="btn btn-secondary"
+          title="Vista tabla"
+        >
           <i className="bi-list-task"></i>
         </Link>
       </ListView.Header>

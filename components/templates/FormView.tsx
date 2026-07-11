@@ -21,6 +21,7 @@ import { Suspense, useEffect, useRef } from "react";
 import AuditLogViewer from "./AuditLogViewer";
 import { useAuth } from "@/hooks/sessionStore";
 import styles from "./FormView.module.css";
+import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 
 type TFormActions = {
   string: React.ReactElement | string;
@@ -75,6 +76,20 @@ export function FormView<T extends FieldValues>({
   const router = useRouter();
 
   const reversingRef = useRef(false);
+
+  const handleCleanUrl = () => {
+    if (dirty) {
+      const confirmLeave = confirm("Tienes cambios sin guardar. ¿Continuar?");
+      if (!confirmLeave) return;
+    }
+    router.replace(cleanUrl);
+  };
+
+  // Activar el atajo Alt + G
+  useKeyboardShortcut("g", () => {
+    if (!dirty || modelAccess?.notEdit) return;
+    handleSubmit(onSubmit)();
+  });
 
   const modelName = cleanUrl.split("?")[0].split("/")[2] + "Model";
   const modelAccess = access.find((acc) => acc.fieldName === modelName);
@@ -139,15 +154,7 @@ export function FormView<T extends FieldValues>({
                 {id !== "null" && (
                   <Button
                     type="button"
-                    onClick={() => {
-                      if (dirty) {
-                        const confirmLeave = confirm(
-                          "Tienes cambios sin guardar. ¿Continuar?",
-                        );
-                        if (!confirmLeave) return;
-                      }
-                      router.replace(cleanUrl);
-                    }}
+                    onClick={() => handleCleanUrl()}
                     className="fw-semibold"
                     disabled={modelAccess?.notCreate}
                   >

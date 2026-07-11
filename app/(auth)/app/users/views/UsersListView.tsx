@@ -127,7 +127,7 @@ function UsersListView() {
       >
         <Link
           href="/app/users?view_type=kanban&id=null"
-          className="btn btn-secondary btn-sm"
+          className="btn btn-secondary"
           title="Vista kanban"
         >
           <i className="bi bi-table"></i>
@@ -141,10 +141,7 @@ function UsersListView() {
           onRowClick={(row) =>
             router.push(`/app/users?view_type=form&id=${row.id}`)
           }
-          baseDomain={[
-            ["name", "!=", "bot"],
-            ["active", "=", active],
-          ]}
+          baseDomain={[["active", "=", active]]}
         >
           <Column
             field="name"
@@ -180,7 +177,7 @@ function UsersListView() {
           />
           <Column
             field="active"
-            label="Active"
+            label="Estado"
             type="boolean"
             render={(_, u) => (
               <WidgetCellRow content="center">

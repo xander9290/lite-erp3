@@ -7,7 +7,7 @@ import { WidgetBadgeStatus } from "@/components/widgets";
 
 function CardUser({ user }: { user: UserWithProps }) {
   return (
-    <Card>
+    <Card className="shadow-sm">
       <Row className="g-0 h-100">
         <Col md="4" className="d-flex align-items-center">
           <div
@@ -35,10 +35,8 @@ function CardUser({ user }: { user: UserWithProps }) {
                 {user.Partner?.name || "Sin nombre"}
               </Card.Title>
             </div>
-            <div className="d-flex justify-content-between align-items-start mb-1">
-              <Card.Text>{user.login}</Card.Text>
-              <Card.Text>{user.Group?.name}</Card.Text>
-            </div>
+            <Card.Text>{user.login}</Card.Text>
+            <Card.Text>{user.Group?.name}</Card.Text>
             {user.Partner?.email && (
               <div className="small text-muted">
                 <i className="bi bi-envelope me-1"></i>
