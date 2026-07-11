@@ -12,6 +12,8 @@ export const stockPickingSchema = z.object({
   reference: z.string().nullable(),
   state: z.enum(StockPickingState),
   operationType: z.enum(PickingOperationType),
+  companyId: z.string().nullable(),
+  companyOriginId: z.string().nullable(),
   whId: z.object({
     id: z.string().min(1, "Almacén origen es requerido"),
     name: z.string(),
@@ -49,6 +51,8 @@ export type StockPickingSchemaType = z.infer<typeof stockPickingSchema>;
 export const stockPickingSchemaDefault: StockPickingSchemaType = {
   name: "new",
   confirmedDate: null,
+  companyId: null,
+  companyOriginId: null,
   date: todayDate(),
   datePlanned: todayDate(),
   doneDate: null,

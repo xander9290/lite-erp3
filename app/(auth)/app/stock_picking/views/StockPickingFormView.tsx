@@ -1,7 +1,7 @@
 "use client";
 
 import { SubmitHandler, useForm } from "react-hook-form";
-import { actionStockPicking, actionStockPickingConfirm, StockPickingWithProps } from "../actions/stockPicking.action";
+import { actionStockPicking, actionStockPickingConfirm, actionStockPickingDone, actionStockPickingReady, StockPickingWithProps } from "../actions/stockPicking.action";
 import { stockPickingSchema, stockPickingSchemaDefault, StockPickingSchemaType } from "../schemas/stockPicking.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef } from "react";
@@ -13,6 +13,7 @@ import { FieldEntry, FieldRelation } from "@/components/templates/fields";
 import { useAuth } from "@/hooks/sessionStore";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
+import { Alert } from "react-bootstrap";
 
 function StockPickingFormView({ id, picking }: { id: string | null; picking: StockPickingWithProps | null }) {
   const { companyId } = useAuth();
@@ -42,7 +43,6 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
   const { modalError } = useModals();
 
   const onSubmit: SubmitHandler<StockPickingSchemaType> = async (data) => {
-    console.log(data);
     const res = await actionStockPicking({ data });
     if (!res.success) return modalError(res.message);
 
@@ -55,6 +55,37 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
     }
   };
 
+  const actionConfirmed = handleSubmit(async () => {
+    const newData: StockPickingSchemaType = {
+      ...getValues(),
+      state: "confirmed",
+    };
+
+    const res = await actionStockPickingConfirm({ data: newData });
+    if (!res.success) return modalError(res.message);
+    router.refresh();
+  });
+
+  const actionReady = handleSubmit(async () => {
+    const newData: StockPickingSchemaType = {
+      ...getValues(),
+      state: "ready",
+    };
+    const res = await actionStockPickingReady({ data: newData });
+    if (!res.success) return modalError(res.message);
+    router.refresh();
+  });
+
+  const actionDone = handleSubmit(async () => {
+    const newData: StockPickingSchemaType = {
+      ...getValues(),
+      state: "done",
+    };
+    const res = await actionStockPickingDone({ data: newData });
+    if (!res.success) return modalError(res.message);
+    router.refresh();
+  });
+
   useEffect(() => {
     if (!picking) {
       reset(stockPickingSchemaDefault);
@@ -64,6 +95,8 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
 
     const values: StockPickingSchemaType = {
       confirmedDate: toDateTimeLocal(picking.confirmedDate),
+      companyId: picking.companyId,
+      companyOriginId: picking.companyOriginId,
       date: toDateOnly(picking.date),
       datePlanned: toDateOnly(picking.datePlanned),
       doneDate: toDateTimeLocal(picking.doneDate),
@@ -105,14 +138,9 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
     console.log(errors);
   }, [errors]);
 
-  const actionConfirmed = handleSubmit(async () => {
-    const newData: StockPickingSchemaType = {
-      ...getValues(),
-      state: "confirmed",
-    };
-
-    await actionStockPickingConfirm({ data: newData });
-  });
+  if (!companyId) {
+    return <Alert variant="warning">Elige una empresa para continuar</Alert>;
+  }
 
   return (
     <FormView
@@ -158,10 +186,24 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
           variant: "info",
           invisible: id === "null" || getValues().state !== "draft",
         },
+        {
+          action: actionReady,
+          fieldName: "actionReady",
+          string: "Listo",
+          variant: "primary",
+          invisible: getValues().state !== "confirmed",
+        },
+        {
+          action: actionDone,
+          fieldName: "actionDone",
+          string: "Terminar",
+          variant: "success",
+          invisible: getValues().state !== "ready",
+        },
       ]}
     >
       <FormViewGroup>
-        <FieldRelation model="partner" name="partnerId" label="Contacto" />
+        <FieldRelation model="partner" name="partnerId" label="Contacto" readonly={getValues().state !== "draft"} />
         <FormViewStack>
           <FieldRelation
             model="warehouse"
@@ -171,6 +213,7 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
               ["companyId", "!=", companyId],
               ["type", "in", ["SALES", "PRODUCTION"]],
             ]}
+            readonly={getValues().state !== "draft"}
           />
           <FieldRelation
             model="warehouse"
@@ -180,6 +223,7 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
               ["companyId", "=", companyId],
               ["type", "in", ["SALES", "PRODUCTION"]],
             ]}
+            readonly={getValues().state !== "draft"}
           />
         </FormViewStack>
         <FieldEntry name="reference" label="Referencia" />
@@ -189,7 +233,7 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
           <FieldEntry name="date" type="date" label="Fecha" readonly />
           <FieldEntry name="datePlanned" type="date" label="Programar entrega" min={todayDate()} />
         </FormViewStack>
-        <FieldRelation model="partner" name="operatorId" label="Operador" domain={[["Tags.name", "some", "WAREHOUSE"]]} />
+        <FieldRelation model="partner" name="operatorId" label="Operador" domain={[["Tags.name", "some", "WAREHOUSE"]]} readonly={getValues().state !== "confirmed"} />
       </FormViewGroup>
       <Notebook defaultActiveKey="pickingLine">
         <Page eventKey="pickingLine" title="Movimientos">

@@ -4,7 +4,7 @@ import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
 
 export function WidgetAvatar({
-  imageUrl = "/images/avatar_default.svg",
+  imageUrl,
   name = "displayAvatar",
   width = 32,
   height = 32,
@@ -19,16 +19,7 @@ export function WidgetAvatar({
   return (
     <Zoom>
       <div className={displayName ? "d-flex align-items-center gap-1" : ""}>
-        <Image
-          title={name}
-          unoptimized
-          src={imageUrl || "/images/avatar_default.svg"}
-          width={width}
-          height={height}
-          alt="imageAvatar"
-          className="img-fluid rounded"
-          onClick={(e) => e.stopPropagation()}
-        />
+        {imageUrl && <Image title={name} unoptimized src={imageUrl} width={width} height={height} alt="imageAvatar" className="img-fluid rounded" onClick={(e) => e.stopPropagation()} />}
         {displayName && <span>{displayName}</span>}
       </div>
     </Zoom>

@@ -8,6 +8,7 @@ import { StockPickingSchemaType } from "../schemas/stockPicking.schema";
 import { getNextValue } from "@/app/libs/sequence";
 import { getWarehouseById } from "../../warehouses/actions/warehouse-actions";
 import { createAuditlog } from "../../actions/auditlog-actions";
+import { todayDate } from "@/app/libs/validatorDate";
 
 export interface StockPickingWithProps extends StockPicking {
   Warehouse: { id: string; description: string; Company: { id: string; name: string } };
@@ -154,6 +155,94 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
 export async function actionStockPickingConfirm({ data }: { data: StockPickingSchemaType }): Promise<ActionResponse<boolean>> {
   try {
     const { company } = await sessionStore();
+
+    if (data.companyId !== company.id) {
+      throw new Error("La empresa destino debe confirmar el documento");
+    }
+
+    const internal = await prisma.warehouse.findFirst({
+      where: {
+        id: data.whDestId.id,
+        InternalsFrom: {
+          some: {
+            id: {
+              in: [data.whId.id],
+            },
+          },
+        },
+      },
+    });
+
+    if (!internal) {
+      throw new Error(`${data.whDestId.name} no acepta operaciones internas por parte de ${data.whId.name}`);
+    }
+
+    const res = await actionStockPicking({ data });
+    if (!res.success) {
+      throw new Error(res.message);
+    }
+
+    return {
+      message: "Acción terminada",
+      success: true,
+    };
+  } catch (error: any) {
+    console.log(error);
+    return {
+      success: false,
+      message: error.message,
+      data: false,
+    };
+  }
+}
+
+export async function actionStockPickingReady({ data }: { data: StockPickingSchemaType }): Promise<ActionResponse<boolean>> {
+  try {
+    const { company } = await sessionStore();
+
+    if (data.companyOriginId !== company.id) {
+      throw new Error("La empresa origen debe colocar el documento listo");
+    }
+
+    const res = await actionStockPicking({ data });
+    if (!res.success) {
+      throw new Error(res.message);
+    }
+
+    return {
+      message: "Acción terminada",
+      success: true,
+    };
+  } catch (error: any) {
+    console.log(error);
+    return {
+      success: false,
+      message: error.message,
+      data: false,
+    };
+  }
+}
+
+export async function actionStockPickingDone({ data }: { data: StockPickingSchemaType }): Promise<ActionResponse<boolean>> {
+  try {
+    const { company } = await sessionStore();
+
+    if (data.companyId !== company.id) {
+      throw new Error("La empresa destino debe terminar el documento");
+    }
+
+    const today = todayDate();
+    const datePlanned = data.datePlanned === today;
+    if (!datePlanned) {
+      throw new Error(`Fecha de entrega precipitada; programado para\n${data.datePlanned}`.toString());
+    }
+
+    return;
+
+    const res = await actionStockPicking({ data });
+    if (!res.success) {
+      throw new Error(res.message);
+    }
 
     return {
       message: "Acción terminada",

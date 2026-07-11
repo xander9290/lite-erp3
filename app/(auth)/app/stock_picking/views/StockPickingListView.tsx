@@ -3,7 +3,7 @@
 import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
-import { WidgetBadgeStatus, WidgetDeadline, WidgetDisplayDate } from "@/components/widgets";
+import { WidgetAvatar, WidgetBadgeStatus, WidgetDeadline, WidgetDisplayDate } from "@/components/widgets";
 import { useAuth } from "@/hooks/sessionStore";
 import { useRouter } from "next/navigation";
 
@@ -14,12 +14,12 @@ function StockPickingListView() {
 
   return (
     <ListView model="stockPicking">
-      <ListView.Header title={`Operaciones almacén ${company?.name}`} formView="/app/stock_picking?view_type=form&id=null" />
+      <ListView.Header title={`Operaciones ${company?.name}`} formView="/app/stock_picking?view_type=form&id=null" />
       <ListView.Body>
         <TableTemplateLite
           pageSize={100}
           onRowClick={(row) => router.push(`/app/stock_picking?view_type=form&id=${row.id}`)}
-          defaultOrder="name desc"
+          defaultOrder="createdAt desc"
           model="stockPicking"
           baseDomain={[
             [
@@ -55,12 +55,14 @@ function StockPickingListView() {
                 select: {
                   id: true,
                   name: true,
+                  imageUrl: true,
                   Company: { select: { id: true } },
                 },
               },
             }}
+            render={(_, field) => <WidgetAvatar imageUrl={field.Partner.imageUrl} displayName={field.Partner.name} />}
           />
-          <Column field="reference" label="Reference" />
+          <Column field="reference" label="Referencia" />
           <Column
             field="Warehouse.description"
             label="Origen"
@@ -85,6 +87,12 @@ function StockPickingListView() {
                 },
               },
             }}
+          />
+          <Column
+            field="Operator.name"
+            label="Almacenista"
+            include={{ Operator: { select: { id: true, name: true, imageUrl: true } } }}
+            render={(_, field) => <WidgetAvatar imageUrl={field.Operador?.imageUrl} displayName={field.Operator?.name} />}
           />
           <Column field="datePlanned" label="Fecha de entrega" type="date" render={(field) => <WidgetDeadline date={field} warnAfter={1} />} />
           <Column

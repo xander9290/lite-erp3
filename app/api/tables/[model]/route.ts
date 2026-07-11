@@ -32,8 +32,6 @@ export async function GET(req: NextRequest, context: { params: Promise<{ model: 
     // Construir where
     const where = buildWhereClause(allFilters, columnTypes);
 
-    console.log("Where construido:", JSON.stringify(where, null, 2));
-
     // Ejecutar queries
     const [total, rows] = await Promise.all([
       modelDelegate.count({ where }),
