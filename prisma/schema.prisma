@@ -802,13 +802,13 @@ model StockPicking {
   id            String               @id @default(cuid())
   name          String               @unique
   date          DateTime             @default(now()) @db.Date
-  datePlanned   DateTime             @db.Date
+  datePlanned   DateTime             @map("date_planned") @db.Date
   confirmedDate DateTime?            @map("confirmed_date")
   readyDate     DateTime?            @map("ready_date")
   doneDate      DateTime?            @map("done_date")
   reference     String?
   state         StockPickingState    @default(draft)
-  operationType PickingOperationType @default(internal)
+  operationType PickingOperationType @default(internal) @map("operation_type")
 
   whId      String    @map("wh_id")
   Warehouse Warehouse @relation("PickingWarehouse", fields: [whId], references: [id], onDelete: Restrict)
@@ -831,7 +831,8 @@ model StockPicking {
   purchaseId    String?        @map("purchase_id")
   PurchaseOrder PurchaseOrder? @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 
-  companyDestId String @map("company_dest_id")
+  companyOriginId String @map("company_origin_id")
+  companyDestId   String @map("company_dest_id")
 
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")

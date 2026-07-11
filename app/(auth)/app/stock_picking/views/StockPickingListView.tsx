@@ -3,11 +3,7 @@
 import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
-import {
-  WidgetBadgeStatus,
-  WidgetDeadline,
-  WidgetDisplayDate,
-} from "@/components/widgets";
+import { WidgetBadgeStatus, WidgetDeadline, WidgetDisplayDate } from "@/components/widgets";
 import { useAuth } from "@/hooks/sessionStore";
 import { useRouter } from "next/navigation";
 
@@ -18,34 +14,25 @@ function StockPickingListView() {
 
   return (
     <ListView model="stockPicking">
-      <ListView.Header
-        title={`Operaciones almacén ${company?.name}`}
-        formView="/app/stock_picking?view_type=form&id=null"
-      />
+      <ListView.Header title={`Operaciones almacén ${company?.name}`} formView="/app/stock_picking?view_type=form&id=null" />
       <ListView.Body>
         <TableTemplateLite
           pageSize={100}
-          onRowClick={(row) =>
-            router.push(`/app/stock_picking?view_type=form&id=${row.id}`)
-          }
+          onRowClick={(row) => router.push(`/app/stock_picking?view_type=form&id=${row.id}`)}
           defaultOrder="name desc"
           model="stockPicking"
           baseDomain={[
-            ["companyId", "=", company?.id],
-            ["companyDestId", "=", company?.id],
+            [
+              "OR",
+              [
+                ["companyId", "=", company?.id],
+                ["companyOriginId", "=", company?.id],
+              ],
+            ],
           ]}
         >
-          <Column
-            field="name"
-            label="Folio"
-            render={(field) => <span className="fw-semibold">{field}</span>}
-          />
-          <Column
-            field="date"
-            label="Fecha"
-            type="date"
-            render={(field) => <WidgetDisplayDate date={field} />}
-          />
+          <Column field="name" label="Folio" render={(field) => <span className="fw-semibold">{field}</span>} />
+          <Column field="date" label="Fecha" type="date" render={(field) => <WidgetDisplayDate date={field} />} />
           <Column
             field="operationType"
             label="Tipo"
@@ -99,12 +86,7 @@ function StockPickingListView() {
               },
             }}
           />
-          <Column
-            field="datePlanned"
-            label="Fecha de entrega"
-            type="date"
-            render={(field) => <WidgetDeadline date={field} warnAfter={1} />}
-          />
+          <Column field="datePlanned" label="Fecha de entrega" type="date" render={(field) => <WidgetDeadline date={field} warnAfter={1} />} />
           <Column
             field="state"
             label="Estado"

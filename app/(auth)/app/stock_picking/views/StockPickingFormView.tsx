@@ -1,42 +1,20 @@
 "use client";
 
 import { SubmitHandler, useForm } from "react-hook-form";
-import {
-  actionStockPicking,
-  actionStockPickingConfirm,
-  StockPickingWithProps,
-} from "../actions/stockPicking.action";
-import {
-  stockPickingSchema,
-  stockPickingSchemaDefault,
-  StockPickingSchemaType,
-} from "../schemas/stockPicking.schema";
+import { actionStockPicking, actionStockPickingConfirm, StockPickingWithProps } from "../actions/stockPicking.action";
+import { stockPickingSchema, stockPickingSchemaDefault, StockPickingSchemaType } from "../schemas/stockPicking.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import {
-  toDateOnly,
-  toDateTimeLocal,
-  todayDate,
-} from "@/app/libs/validatorDate";
-import {
-  FormView,
-  FormViewGroup,
-  FormViewStack,
-} from "@/components/templates/FormView";
+import { toDateOnly, toDateTimeLocal, todayDate } from "@/app/libs/validatorDate";
+import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
 import { FieldEntry, FieldRelation } from "@/components/templates/fields";
 import { useAuth } from "@/hooks/sessionStore";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
 
-function StockPickingFormView({
-  id,
-  picking,
-}: {
-  id: string | null;
-  picking: StockPickingWithProps | null;
-}) {
+function StockPickingFormView({ id, picking }: { id: string | null; picking: StockPickingWithProps | null }) {
   const { companyId } = useAuth();
 
   const methods = useForm<StockPickingSchemaType>({
@@ -187,19 +165,19 @@ function StockPickingFormView({
         <FormViewStack>
           <FieldRelation
             model="warehouse"
-            name="whDestId"
-            label="Destino"
+            name="whId"
+            label="Origen"
             domain={[
-              ["companyId", "=", companyId],
+              ["companyId", "!=", companyId],
               ["type", "in", ["SALES", "PRODUCTION"]],
             ]}
           />
           <FieldRelation
             model="warehouse"
-            name="whId"
-            label="Origen"
+            name="whDestId"
+            label="Destino"
             domain={[
-              ["companyId", "!=", companyId],
+              ["companyId", "=", companyId],
               ["type", "in", ["SALES", "PRODUCTION"]],
             ]}
           />
@@ -209,19 +187,9 @@ function StockPickingFormView({
       <FormViewGroup>
         <FormViewStack>
           <FieldEntry name="date" type="date" label="Fecha" readonly />
-          <FieldEntry
-            name="datePlanned"
-            type="date"
-            label="Programar entrega"
-            min={todayDate()}
-          />
+          <FieldEntry name="datePlanned" type="date" label="Programar entrega" min={todayDate()} />
         </FormViewStack>
-        <FieldRelation
-          model="partner"
-          name="operatorId"
-          label="Operador"
-          domain={[["Tags.name", "some", "WAREHOUSE"]]}
-        />
+        <FieldRelation model="partner" name="operatorId" label="Operador" domain={[["Tags.name", "some", "WAREHOUSE"]]} />
       </FormViewGroup>
       <Notebook defaultActiveKey="pickingLine">
         <Page eventKey="pickingLine" title="Movimientos">
@@ -230,23 +198,9 @@ function StockPickingFormView({
         <Page eventKey="otherInfo" title="Otra información">
           <PageSheet name="otherInfo">
             <FormViewGroup>
-              <FieldEntry
-                name="operationType"
-                label="Tipo de operación"
-                readonly
-              />
-              <FieldRelation
-                name="purchaseId"
-                label="Orden de compra"
-                model="purchaseOrder"
-                readonly
-              />
-              <FieldRelation
-                name="saleId"
-                label="Orden de venta"
-                model="saleOrder"
-                readonly
-              />
+              <FieldEntry name="operationType" label="Tipo de operación" readonly />
+              <FieldRelation name="purchaseId" label="Orden de compra" model="purchaseOrder" readonly />
+              <FieldRelation name="saleId" label="Orden de venta" model="saleOrder" readonly />
             </FormViewGroup>
           </PageSheet>
         </Page>

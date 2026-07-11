@@ -90,6 +90,19 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
     setTotals({ subtotal, taxes, total });
   };
 
+  const onChangePartnerShipping = async (value: string | null) => {
+    if (!value) {
+      setPartnerLocation("");
+      return null;
+    }
+    const shippingId = await getPartnerById({ id: value });
+    if (shippingId) {
+      setPartnerLocation(shippingId.completeAddress);
+    } else {
+      setPartnerLocation("");
+    }
+  };
+
   useEffect(() => {
     if (!saleOrder) {
       reset(saleOrderSchemaDefault);
@@ -202,19 +215,6 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
       });
     }
     setValue("partnerId.pricelist", record.productPricelist);
-  };
-
-  const onChangePartnerShipping = async (value: string | null) => {
-    if (!value) {
-      setPartnerLocation("");
-      return null;
-    }
-    const shippingId = await getPartnerById({ id: value });
-    if (shippingId) {
-      setPartnerLocation(shippingId.completeAddress);
-    } else {
-      setPartnerLocation("");
-    }
   };
 
   const actionConfirm = handleSubmit(async () => {
