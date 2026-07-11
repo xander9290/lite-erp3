@@ -9,8 +9,6 @@ import { getNextValue } from "@/app/libs/sequence";
 import { getWarehouseById } from "../../warehouses/actions/warehouse-actions";
 import { createAuditlog } from "../../actions/auditlog-actions";
 import { todayDate } from "@/app/libs/validatorDate";
-import { ERROR_THROWN_EVENT } from "next/dist/telemetry/events";
-import { error } from "next/dist/build/output/log";
 
 export interface StockPickingWithProps extends StockPicking {
   Warehouse: {
@@ -28,6 +26,13 @@ export interface StockPickingWithProps extends StockPicking {
   Company: { id: string; name: string };
   SaleOrder: { id: string; name: string } | null;
   PurchaseOrder: { id: string; name: string } | null;
+  PickingLine: {
+    id: string;
+    Product: { id: string; name: string };
+    Uom: { id: string; name: string; code: string };
+    quantity: number;
+    delivered: number;
+  }[];
 }
 
 const generateOperationCode = (opeartion: PickingOperationType) => {
@@ -79,6 +84,15 @@ export async function getStockPickingById({
         Company: { select: { id: true, name: true } },
         SaleOrder: { select: { id: true, name: true } },
         PurchaseOrder: { select: { id: true, name: true } },
+        PickingLine: {
+          select: {
+            id: true,
+            quantity: true,
+            delivered: true,
+            Product: { select: { id: true, name: true } },
+            Uom: { select: { id: true, name: true, code: true } },
+          },
+        },
       },
     });
 
@@ -121,6 +135,7 @@ export async function actionStockPicking({
         doneDate: data.doneDate ? new Date(data.doneDate) : null,
         readyDate: data.readyDate ? new Date(data.readyDate) : null,
         datePlanned: new Date(data.datePlanned),
+        cancelDate: data.cancelDate ? new Date(data.cancelDate) : null,
         opeartorId: data.operatorId?.id ? data.operatorId.id : null,
         partnerId: data.partnerId.id,
         state: data.state,
@@ -129,6 +144,37 @@ export async function actionStockPicking({
         whDestId: data.whDestId.id,
         companyOriginId: whOrigin.Company.id,
         companyDestId: whDest.Company.id,
+        PickingLine: {
+          deleteMany: {
+            id: {
+              notIn: data.PickingLine.filter((line) => line.id).map(
+                (l) => l.id!,
+              ),
+            },
+          },
+          update: data.PickingLine.filter((line) => line.id).map((line) => ({
+            where: {
+              id: line.id!,
+            },
+            data: {
+              productId: line.productId.id,
+              quantity: line.quantity,
+              delivered: line.delivered,
+              uomId: line.uomId.id,
+            },
+          })),
+          createMany: {
+            data: data.PickingLine.filter((line) => line.id === undefined).map(
+              (line) => ({
+                productId: line.productId.id,
+                quantity: line.quantity,
+                delivered: line.quantity,
+                uomId: line.uomId.id,
+                createUid: uid!,
+              }),
+            ),
+          },
+        },
       },
       create: {
         name,
@@ -146,6 +192,17 @@ export async function actionStockPicking({
         companyId: company.id, // empresa creadora
         companyOriginId: whOrigin.Company.id, // empresa peticionada
         companyDestId: whDest.Company.id, // empresa pedidora
+        PickingLine: {
+          createMany: {
+            data: data.PickingLine.map((line) => ({
+              createUid: uid!,
+              delivered: line.quantity,
+              productId: line.productId.id,
+              quantity: line.quantity,
+              uomId: line.uomId.id,
+            })),
+          },
+        },
       },
       include: {
         Warehouse: {
@@ -167,6 +224,15 @@ export async function actionStockPicking({
         Company: { select: { id: true, name: true } },
         SaleOrder: { select: { id: true, name: true } },
         PurchaseOrder: { select: { id: true, name: true } },
+        PickingLine: {
+          select: {
+            id: true,
+            quantity: true,
+            delivered: true,
+            Product: { select: { id: true, name: true } },
+            Uom: { select: { id: true, name: true, code: true } },
+          },
+        },
       },
     });
 
@@ -298,7 +364,7 @@ export async function actionStockPickingDone({
     const datePlanned = data.datePlanned === today;
     if (!datePlanned) {
       throw new Error(
-        `Fecha de entrega precipitada; programado para\n${data.datePlanned}`.toString(),
+        `Fecha de validación precipitada; programado para\n${data.datePlanned}`.toString(),
       );
     }
 
@@ -332,14 +398,14 @@ export async function actionStockPickingCancel({
     const picking = await getStockPickingById({ id: data.id });
     if (!picking) throw new Error("Operación no encontrada");
 
+    if (data.companyId !== company.id) {
+      throw new Error("La empresa destino debe cancelar el documento");
+    }
+
     if (picking.state === "done") {
       throw new Error(
         "No es posible cancelar el documento una vez termiando el proceso de traslado; en su lugar, solicita una Devolución",
       );
-    }
-
-    if (data.companyId !== company.id) {
-      throw new Error("La empresa destino debe cancelar el documento");
     }
 
     const res = await actionStockPicking({ data });

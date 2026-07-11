@@ -325,6 +325,7 @@ model ProductTemplate {
   TaxPurchase           InvoicingTax?          @relation("PTPurchaseTax", fields: [taxPurchaseId], references: [id], onDelete: Restrict)
   SaleOrderLines        SaleOrderLine[]
   allowPartialQty       Boolean                @default(false) @map("allow_partial_qty")
+  stockPickingLines     StockPickingLine[]
 
   @@map("product_template")
 }
@@ -385,6 +386,7 @@ model UomCategory {
   Products              ProductTemplate[]
   purchaseOrderLines    PurchaseOrderLine[]
   SaleOrderLines        SaleOrderLine[]
+  stockPickingLines     StockPickingLine[]
 
   @@map("product_uom_category")
 }
@@ -806,6 +808,7 @@ model StockPicking {
   confirmedDate DateTime?            @map("confirmed_date")
   readyDate     DateTime?            @map("ready_date")
   doneDate      DateTime?            @map("done_date")
+  cancelDate    DateTime?            @map("cancel_date")
   reference     String?
   state         StockPickingState    @default(draft)
   operationType PickingOperationType @default(internal) @map("operation_type")
@@ -834,6 +837,8 @@ model StockPicking {
   companyOriginId String @map("company_origin_id")
   companyDestId   String @map("company_dest_id")
 
+  PickingLine StockPickingLine[]
+
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -853,4 +858,23 @@ enum PickingOperationType {
   outgoing
   incoming
   internal
+}
+
+model StockPickingLine {
+  id        String @id @default(cuid())
+  quantity  Float
+  delivered Float
+
+  uomId String      @map("uom_id")
+  Uom   UomCategory @relation(fields: [uomId], references: [id], onDelete: Restrict)
+
+  productId String          @map("product_id")
+  Product   ProductTemplate @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  pickingId String       @map("picking_id")
+  Picking   StockPicking @relation(fields: [pickingId], references: [id], onDelete: Cascade)
+
+  createUid String   @map("create_uid")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 }

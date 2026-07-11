@@ -1,6 +1,6 @@
 "use client";
 
-import { SubmitHandler, useForm } from "react-hook-form";
+import { SubmitHandler, useForm, useFieldArray } from "react-hook-form";
 import {
   actionStockPicking,
   actionStockPickingCancel,
@@ -32,7 +32,14 @@ import { FieldEntry, FieldRelation } from "@/components/templates/fields";
 import { useAuth } from "@/hooks/sessionStore";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
-import { Alert } from "react-bootstrap";
+import { Alert, Col } from "react-bootstrap";
+import {
+  BtnDeleteLine,
+  SimpleTable,
+  SimpleTD,
+} from "@/components/templates/simpletemplates";
+import { stockPickingLineDefautl } from "../schemas/stockPickingLine.schema";
+import { getProductById } from "../../product_template/products/actions/productTemplate.action";
 
 function StockPickingFormView({
   id,
@@ -56,6 +63,15 @@ function StockPickingFormView({
     control,
     formState: { errors },
   } = methods;
+
+  const {
+    remove,
+    append,
+    fields: lines,
+  } = useFieldArray({
+    control,
+    name: "PickingLine",
+  });
 
   const originalValuesRef = useRef<StockPickingSchemaType | null>(null);
   const handleReverse = () => {
@@ -84,6 +100,7 @@ function StockPickingFormView({
     const newData: StockPickingSchemaType = {
       ...getValues(),
       state: "confirmed",
+      confirmedDate: new Date().toISOString(),
     };
 
     const res = await actionStockPickingConfirm({ data: newData });
@@ -95,6 +112,7 @@ function StockPickingFormView({
     const newData: StockPickingSchemaType = {
       ...getValues(),
       state: "ready",
+      readyDate: new Date().toISOString(),
     };
     const res = await actionStockPickingReady({ data: newData });
     if (!res.success) return modalError(res.message);
@@ -105,6 +123,7 @@ function StockPickingFormView({
     const newData: StockPickingSchemaType = {
       ...getValues(),
       state: "done",
+      doneDate: new Date().toISOString(),
     };
     const res = await actionStockPickingDone({ data: newData });
     if (!res.success) return modalError(res.message);
@@ -115,11 +134,22 @@ function StockPickingFormView({
     const newData: StockPickingSchemaType = {
       ...getValues(),
       state: "cancel",
+      cancelDate: new Date().toISOString(),
     };
     const res = await actionStockPickingCancel({ data: { ...newData, id } });
     if (!res.success) return modalError(res.message);
     router.refresh();
   });
+
+  const onChangeProduct = async (value: string | null, line: number) => {
+    const productId = await getProductById({ id: value });
+    if (productId) {
+      setValue(`PickingLine.${line}.uomId`, {
+        id: productId.Uom?.id || "",
+        name: productId.Uom?.code || "",
+      });
+    }
+  };
 
   useEffect(() => {
     if (!picking) {
@@ -135,6 +165,7 @@ function StockPickingFormView({
       date: toDateOnly(picking.date),
       datePlanned: toDateOnly(picking.datePlanned),
       doneDate: toDateTimeLocal(picking.doneDate),
+      cancelDate: toDateTimeLocal(picking.cancelDate),
       name: picking.name,
       operationType: picking.operationType,
       operatorId: {
@@ -164,7 +195,15 @@ function StockPickingFormView({
         id: picking.Warehouse.id,
         name: picking.Warehouse.description,
       },
+      PickingLine: picking.PickingLine.map((line) => ({
+        delivered: line.delivered,
+        quantity: line.quantity,
+        productId: { id: line.Product.id, name: line.Product.name },
+        uomId: { id: line.Uom.id, name: line.Uom.code },
+        id: line.id,
+      })),
     };
+    console.log(picking.cancelDate);
     reset(values);
     originalValuesRef.current = values;
   }, [picking, reset]);
@@ -285,6 +324,10 @@ function StockPickingFormView({
             type="date"
             label="Programar entrega"
             min={todayDate()}
+            readonly={
+              getValues().companyId !== companyId ||
+              ["done", "cancel"].includes(getValues().state)
+            }
           />
         </FormViewStack>
         <FieldRelation
@@ -297,7 +340,95 @@ function StockPickingFormView({
       </FormViewGroup>
       <Notebook defaultActiveKey="pickingLine">
         <Page eventKey="pickingLine" title="Movimientos">
-          <h3>Movimientos</h3>
+          <Col md="12" className="p-0 m-0 overflow-auto">
+            <SimpleTable
+              data={lines}
+              headers={[
+                {
+                  string: "Producto",
+                  name: "productId",
+                  width: 270,
+                  minWidth: 170,
+                },
+                {
+                  string: "Demanda",
+                  name: "quantity",
+                  width: 30,
+                  minWidth: 30,
+                },
+                {
+                  string: "Entregado",
+                  name: "delivered",
+                  width: 30,
+                  minWidth: 30,
+                },
+                { string: "UdM", name: "uomId", width: 35, minWidth: 20 },
+                {
+                  string: <i className="bi bi-trash"></i>,
+                  className: "text-center",
+                  width: 25,
+                  minWidth: 25,
+                  name: "lineDelete",
+                },
+              ]}
+              resizable
+              renderRow={(row, index) => (
+                <tr key={row.id}>
+                  <SimpleTD colIdx={index} name="lineProductId">
+                    <FieldRelation
+                      inline
+                      model="productTemplate"
+                      name={`PickingLine.${index}.productId`}
+                      ponChange={(value) => onChangeProduct(value, index)}
+                    />
+                  </SimpleTD>
+                  <SimpleTD colIdx={index} name="lineQuantity">
+                    <FieldEntry
+                      inline
+                      name={`PickingLine.${index}.quantity`}
+                      decimals={3}
+                      type="number"
+                      readonly={getValues().state !== "draft"}
+                    />
+                  </SimpleTD>
+                  <SimpleTD colIdx={index} name="lineDelivered">
+                    <FieldEntry
+                      inline
+                      name={`PickingLine.${index}.delivered`}
+                      decimals={3}
+                      type="number"
+                      readonly={
+                        getValues().state !== "confirmed" ||
+                        getValues().companyOriginId !== companyId
+                      }
+                    />
+                  </SimpleTD>
+                  <SimpleTD colIdx={index} name="lineUomId">
+                    <FieldRelation
+                      inline
+                      model="uomCategory"
+                      name={`PickingLine.${index}.uomId`}
+                      readonly
+                    />
+                  </SimpleTD>
+                  <SimpleTD
+                    colIdx={index}
+                    name="lineRemoveLine"
+                    contentPosition="text-center"
+                  >
+                    <BtnDeleteLine
+                      action={() => remove(index)}
+                      disabled={getValues().state !== "draft"}
+                    />
+                  </SimpleTD>
+                </tr>
+              )}
+              action={() => {
+                if (getValues().state !== "draft") return;
+                return append(stockPickingLineDefautl);
+              }}
+            />
+          </Col>
         </Page>
         <Page eventKey="otherInfo" title="Otra información">
           <PageSheet name="otherInfo">
@@ -319,6 +450,36 @@ function StockPickingFormView({
                 model="saleOrder"
                 readonly
               />
+            </FormViewGroup>
+            <FormViewGroup title="Línea de tiempo">
+              <FormViewStack>
+                <FieldEntry
+                  name="confirmedDate"
+                  label="Confirmado"
+                  type="datetime-local"
+                  readonly
+                />
+                <FieldEntry
+                  name="readyDate"
+                  label="Listo"
+                  type="datetime-local"
+                  readonly
+                />
+              </FormViewStack>
+              <FormViewStack>
+                <FieldEntry
+                  name="doneDate"
+                  label="Hecho"
+                  type="datetime-local"
+                  readonly
+                />
+                <FieldEntry
+                  name="cancelDate"
+                  label="Cancelado"
+                  type="datetime-local"
+                  readonly
+                />
+              </FormViewStack>
             </FormViewGroup>
           </PageSheet>
         </Page>

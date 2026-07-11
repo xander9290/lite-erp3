@@ -1,6 +1,10 @@
 import { todayDate } from "@/app/libs/validatorDate";
-import { PickingOperationType, StockPickingState } from "@/generated/prisma/enums";
+import {
+  PickingOperationType,
+  StockPickingState,
+} from "@/generated/prisma/enums";
 import { z } from "zod";
+import { stockPickingLine } from "./stockPickingLine.schema";
 
 export const stockPickingSchema = z.object({
   name: z.string(),
@@ -9,6 +13,7 @@ export const stockPickingSchema = z.object({
   confirmedDate: z.string().nullable(),
   readyDate: z.string().nullable(),
   doneDate: z.string().nullable(),
+  cancelDate: z.string().nullable(),
   reference: z.string().nullable(),
   state: z.enum(StockPickingState),
   operationType: z.enum(PickingOperationType),
@@ -44,6 +49,7 @@ export const stockPickingSchema = z.object({
       name: z.string().optional(),
     })
     .nullable(),
+  PickingLine: z.array(stockPickingLine),
 });
 
 export type StockPickingSchemaType = z.infer<typeof stockPickingSchema>;
@@ -56,6 +62,7 @@ export const stockPickingSchemaDefault: StockPickingSchemaType = {
   date: todayDate(),
   datePlanned: todayDate(),
   doneDate: null,
+  cancelDate: null,
   operatorId: { id: "", name: "" },
   operationType: "internal",
   partnerId: { id: "", name: "" },
@@ -66,4 +73,5 @@ export const stockPickingSchemaDefault: StockPickingSchemaType = {
   state: "draft",
   whDestId: { id: "", name: "" },
   whId: { id: "", name: "" },
+  PickingLine: [],
 };

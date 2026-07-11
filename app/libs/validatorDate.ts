@@ -2,7 +2,9 @@
 
 import { format, parseISO } from "date-fns";
 
-export function toDateTimeLocal(value: Date | string | null | undefined): string {
+export function toDateTimeLocal(
+  value: Date | string | null | undefined,
+): string {
   if (!value) return "";
 
   const date = value instanceof Date ? value : new Date(value);
@@ -16,8 +18,6 @@ export function toDateOnly(value: string | Date | null | undefined): string {
   const date = value instanceof Date ? value : new Date(value);
 
   if (isNaN(date.getTime())) return "";
-
-  console.log(format(parseISO(date.toISOString().replace("Z", "")), "yyyy-MM-dd"));
 
   return format(parseISO(date.toISOString().replace("Z", "")), "yyyy-MM-dd");
 

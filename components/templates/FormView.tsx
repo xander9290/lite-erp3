@@ -17,7 +17,7 @@ import {
 import { useRouter } from "next/navigation";
 import { ButtonVariant } from "react-bootstrap/esm/types";
 import NotFound from "@/app/not-found";
-import { Suspense, useEffect, useRef } from "react";
+import React, { Suspense, useEffect, useRef } from "react";
 import AuditLogViewer from "./AuditLogViewer";
 import { useAuth } from "@/hooks/sessionStore";
 import styles from "./FormView.module.css";
@@ -385,10 +385,12 @@ export function FormViewStack({
   className?: string;
 }) {
   return (
-    <div
-      className={`d-flex justify-content-between align-items-center gap-1 m-0 p-0 ${className}`}
-    >
-      {children}
-    </div>
+    <Row className={`m-0 p-0 ${className}`}>
+      {React.Children.map(children, (child) => (
+        <Col xs="6" className="px-1">
+          {child}
+        </Col>
+      ))}
+    </Row>
   );
 }
