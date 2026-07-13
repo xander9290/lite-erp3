@@ -6,93 +6,94 @@ import { sessionStore } from "@/app/libs/sessionStore";
 
 export interface StockWarehouseActionProps {
   productId: string;
-  warehouseId: string;
-  warehouseDestId: string;
+  warehouseId: {
+    whId: string;
+    companyOringId: string;
+  };
+  warehouseDestId: {
+    whDestId: string;
+    companyDestId: string;
+  };
   qty: number;
+  deliveredQty: number;
   ref: string;
   name: string;
 }
 
-export async function affectStockWarehouse({
-  data,
-}: {
-  data: StockWarehouseActionProps[];
-}): Promise<ActionResponse<true>> {
+export async function affectStockWarehouse({ data }: { data: StockWarehouseActionProps }): Promise<ActionResponse<boolean>> {
   try {
-    const { uid, company } = await sessionStore();
+    const { uid } = await sessionStore();
 
-    for (const line of data) {
-      await prisma.$transaction(async (tx) => {
-        // ENTRADA
-        const stocKIn = await tx.stockWarehouse.upsert({
-          where: {
-            productId_warehouseId: {
-              productId: line.productId,
-              warehouseId: line.warehouseDestId,
-            },
+    await prisma.$transaction(async (tx) => {
+      // ENTRADA
+      const stocKIn = await tx.stockWarehouse.upsert({
+        where: {
+          productId_warehouseId: {
+            productId: data.productId,
+            warehouseId: data.warehouseDestId.whDestId,
           },
-          update: {
-            qty: {
-              increment: line.qty,
-            },
+        },
+        update: {
+          qty: {
+            increment: data.deliveredQty,
           },
-          create: {
-            productId: line.productId,
-            warehouseId: line.warehouseDestId,
-            qty: line.qty,
-            createdUid: uid || "",
-          },
-        });
-
-        const stockMoveIn = await tx.stockMove.create({
-          data: {
-            moveType: "incoming",
-            reference: line.ref,
-            name: line.name,
-            productId: line.productId,
-            userId: uid!,
-            companyId: company.id,
-            warehouseDestId: line.warehouseDestId,
-            warehouseId: line.warehouseId,
-            quantity: line.qty,
-          },
-        });
-
-        // SALIDA
-        const stockOut = await tx.stockWarehouse.update({
-          where: {
-            productId_warehouseId: {
-              productId: line.productId,
-              warehouseId: line.warehouseId,
-            },
-          },
-          data: {
-            qty: {
-              decrement: line.qty,
-            },
-            reservedQty: {
-              decrement: line.qty,
-            },
-          },
-        });
-
-        const stockMoveOut = await tx.stockMove.create({
-          data: {
-            moveType: "outgoing",
-            reference: line.ref,
-            name: line.name,
-            productId: line.productId,
-            userId: uid!,
-            companyId: company.id,
-            warehouseDestId: line.warehouseDestId,
-            warehouseId: line.warehouseId,
-            quantity: line.qty,
-          },
-        });
-
-        return { stocKIn, stockMoveIn, stockOut, stockMoveOut };
+        },
+        create: {
+          productId: data.productId,
+          warehouseId: data.warehouseDestId.whDestId,
+          qty: data.deliveredQty,
+          createdUid: uid || "",
+        },
       });
-    }
+
+      const stockMoveIn = await tx.stockMove.create({
+        data: {
+          moveType: "incoming",
+          reference: data.ref,
+          name: data.name,
+          productId: data.productId,
+          userId: uid!,
+          companyId: data.warehouseDestId.companyDestId,
+          warehouseDestId: data.warehouseDestId.whDestId,
+          warehouseId: data.warehouseId.whId,
+          quantity: data.deliveredQty,
+        },
+      });
+
+      // SALIDA
+      const stockOut = await tx.stockWarehouse.update({
+        where: {
+          productId_warehouseId: {
+            productId: data.productId,
+            warehouseId: data.warehouseId.whId,
+          },
+        },
+        data: {
+          qty: {
+            decrement: data.deliveredQty,
+          },
+          reservedQty: {
+            decrement: data.qty,
+          },
+        },
+      });
+
+      const stockMoveOut = await tx.stockMove.create({
+        data: {
+          moveType: "outgoing",
+          reference: data.ref,
+          name: data.name,
+          productId: data.productId,
+          userId: uid!,
+          companyId: data.warehouseId.companyOringId,
+          warehouseDestId: data.warehouseDestId.whDestId,
+          warehouseId: data.warehouseId.whId,
+          quantity: data.deliveredQty,
+        },
+      });
+
+      return { stocKIn, stockMoveIn, stockOut, stockMoveOut };
+    });
 
     return {
       success: true,
@@ -104,5 +105,59 @@ export async function affectStockWarehouse({
       success: false,
       message: error.message,
     };
+  }
+}
+
+export async function stockWarehouseReserve({ data }: { data: { productId: { id: string; name: string }; qty: number; whId: string } }): Promise<ActionResponse<boolean>> {
+  try {
+    await prisma.stockWarehouse.update({
+      where: {
+        productId_warehouseId: {
+          productId: data.productId.id,
+          warehouseId: data.whId,
+        },
+      },
+      data: {
+        reservedQty: {
+          increment: data.qty,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: "Acción completada",
+      data: true,
+    };
+  } catch (error: any) {
+    console.log(error);
+    return { success: false, message: error.message };
+  }
+}
+
+export async function stockWarehouseReserveCancel({ data }: { data: { productId: string; whId: string; qty: number } }): Promise<ActionResponse<boolean>> {
+  try {
+    await prisma.stockWarehouse.update({
+      where: {
+        productId_warehouseId: {
+          productId: data.productId,
+          warehouseId: data.whId,
+        },
+      },
+      data: {
+        reservedQty: {
+          decrement: data.qty,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: "Acción completada",
+      data: true,
+    };
+  } catch (error: any) {
+    console.log(error);
+    return { success: false, message: error.message };
   }
 }

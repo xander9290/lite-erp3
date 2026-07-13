@@ -15,9 +15,10 @@ function StockMoveListView({ productId }: { productId: string | null }) {
       <ListView.Header title="Historial de movimientos" />
       <ListView.Body>
         <TableTemplateLite model="stockMove" defaultOrder="createdAt desc" pageSize={100} baseDomain={domain}>
-          <Column field="createdAt" label="Fecha" type="datetime" />
+          <Column field="date" label="Fecha" type="date" />
           <Column field="name" label="Nombre" />
           <Column field="reference" label="Referencia" />
+          <Column field="User.Partner.name" label="Usuario" include={{ User: { select: { Partner: { select: { name: true } } } } }} />
           <Column field="Product.name" label="Producto" include={{ Product: { select: { name: true, Uom: { select: { code: true } } } } }} />
           <Column field="WarehouseOrigin.description" label="Origen" include={{ WarehouseOrigin: { select: { description: true } } }} />
           <Column field="WarehouseDest.description" label="Destino" include={{ WarehouseDest: { select: { description: true } } }} />
@@ -27,6 +28,7 @@ function StockMoveListView({ productId }: { productId: string | null }) {
             type="number"
             render={(_, move) => (
               <div className={`text-end ${move.moveType === "incoming" ? "text-success" : "text-danger"}`}>
+                {`${move.moveType === "outgoing" ? "- " : "+ "}`}
                 {formatNumberForDisplay(move.quantity, 3)} {move.Product.Uom.code}
               </div>
             )}

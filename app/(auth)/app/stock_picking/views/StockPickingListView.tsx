@@ -3,8 +3,10 @@
 import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
-import { WidgetAvatar, WidgetBadgeStatus, WidgetDeadline, WidgetDisplayDate } from "@/components/widgets";
+import { WidgetAvatar, WidgetBadgeStatus, WidgetDeadline, WidgetDisplayDate, WidgetLiveRemaining } from "@/components/widgets";
 import { useAuth } from "@/hooks/sessionStore";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { useRouter } from "next/navigation";
 
 function StockPickingListView() {
@@ -95,6 +97,12 @@ function StockPickingListView() {
             render={(_, field) => <WidgetAvatar imageUrl={field.Operador?.imageUrl} displayName={field.Operator?.name} />}
           />
           <Column field="datePlanned" label="Fecha de entrega" type="date" render={(field) => <WidgetDeadline date={field} warnAfter={1} />} />
+          <Column
+            field="confirmedDate"
+            label="Confirmado"
+            type="datetime"
+            render={(field, row) => (row.state === "done" ? <span>{format(field, "dd MMM yyy HH:mm:ss", { locale: es })}</span> : <WidgetLiveRemaining date={field} />)}
+          />
           <Column
             field="state"
             label="Estado"

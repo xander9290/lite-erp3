@@ -5,13 +5,7 @@ import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
 
-function StockWarehouseListView({
-  productId,
-  whId,
-}: {
-  productId: string | null;
-  whId: string | null;
-}) {
+function StockWarehouseListView({ productId, whId }: { productId: string | null; whId: string | null }) {
   const domain = [
     ["qty", ">", 0.0],
     ["Warehouse.type", "in", ["SALES", "PRODUCTION"]],
@@ -23,17 +17,8 @@ function StockWarehouseListView({
     <ListView model="stock_warehouse">
       <ListView.Header title="Existencias" />
       <ListView.Body>
-        <TableTemplateLite
-          model="stockWarehouse"
-          defaultOrder="qty desc"
-          baseDomain={domain}
-          pageSize={100}
-        >
-          <Column
-            field="Warehouse.name"
-            label="Almacén"
-            include={{ Warehouse: { select: { name: true } } }}
-          />
+        <TableTemplateLite model="stockWarehouse" defaultOrder="qty desc" baseDomain={domain} pageSize={100} showTotals={true} totalColumns={["qty"]}>
+          <Column field="Warehouse.name" label="Almacén" include={{ Warehouse: { select: { name: true } } }} />
           <Column field="locationName" label="Ubicación" type="string" />
           <Column
             field="Product.name"
@@ -44,36 +29,9 @@ function StockWarehouseListView({
               },
             }}
           />
-          <Column
-            field="qty"
-            label="Cantidad"
-            type="number"
-            render={(_, stock) => (
-              <div className="text-end fw-semibold">
-                {formatNumberForDisplay(stock.qty, 3)}
-              </div>
-            )}
-          />
-          <Column
-            field="reservedQty"
-            label="Reservado"
-            type="number"
-            render={(_, stock) => (
-              <div className="text-end fw-semibold">
-                {formatNumberForDisplay(stock.reservedQty, 3)}
-              </div>
-            )}
-          />
-          <Column
-            field="_"
-            label="Disponible"
-            type="number"
-            render={(_, stock) => (
-              <div className="text-end fw-semibold">
-                {formatNumberForDisplay(stock.qty - stock.reservedQty, 3)}
-              </div>
-            )}
-          />
+          <Column field="qty" label="Cantidad" type="number" render={(_, stock) => <div className="text-end fw-semibold">{formatNumberForDisplay(stock.qty, 3)}</div>} />
+          <Column field="reservedQty" label="Reservado" type="number" render={(_, stock) => <div className="text-end fw-semibold">{formatNumberForDisplay(stock.reservedQty, 3)}</div>} />
+          <Column field="_" label="Disponible" type="number" render={(_, stock) => <div className="text-end fw-semibold">{formatNumberForDisplay(stock.qty - stock.reservedQty, 3)}</div>} />
           <Column field="Product.Uom.name" label="UdM" />
         </TableTemplateLite>
       </ListView.Body>

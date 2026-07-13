@@ -1,53 +1,25 @@
 "use client";
 
 import { SubmitHandler, useForm, useFieldArray } from "react-hook-form";
-import {
-  actionStockPicking,
-  actionStockPickingCancel,
-  actionStockPickingConfirm,
-  actionStockPickingDone,
-  actionStockPickingReady,
-  StockPickingWithProps,
-} from "../actions/stockPicking.action";
-import {
-  stockPickingSchema,
-  stockPickingSchemaDefault,
-  StockPickingSchemaType,
-} from "../schemas/stockPicking.schema";
+import { actionStockPicking, actionStockPickingCancel, actionStockPickingConfirm, actionStockPickingDone, actionStockPickingReady, StockPickingWithProps } from "../actions/stockPicking.action";
+import { stockPickingSchema, stockPickingSchemaDefault, StockPickingSchemaType } from "../schemas/stockPicking.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import {
-  toDateOnly,
-  toDateTimeLocal,
-  todayDate,
-} from "@/app/libs/validatorDate";
-import {
-  FormView,
-  FormViewGroup,
-  FormViewStack,
-} from "@/components/templates/FormView";
+import { toDateOnly, toDateTimeLocal, todayDate } from "@/app/libs/validatorDate";
+import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
 import { FieldEntry, FieldRelation } from "@/components/templates/fields";
 import { useAuth } from "@/hooks/sessionStore";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
 import { Alert, Col } from "react-bootstrap";
-import {
-  BtnDeleteLine,
-  SimpleTable,
-  SimpleTD,
-} from "@/components/templates/simpletemplates";
+import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
 import { stockPickingLineDefautl } from "../schemas/stockPickingLine.schema";
 import { getProductById } from "../../product_template/products/actions/productTemplate.action";
+import { round } from "@/app/libs/helpers";
 
-function StockPickingFormView({
-  id,
-  picking,
-}: {
-  id: string | null;
-  picking: StockPickingWithProps | null;
-}) {
+function StockPickingFormView({ id, picking }: { id: string | null; picking: StockPickingWithProps | null }) {
   const { companyId } = useAuth();
 
   const methods = useForm<StockPickingSchemaType>({
@@ -84,6 +56,14 @@ function StockPickingFormView({
   const { modalError } = useModals();
 
   const onSubmit: SubmitHandler<StockPickingSchemaType> = async (data) => {
+    console.log(data);
+    for (const line of data.PickingLine) {
+      if (line.delivered > line.quantity) {
+        modalError(`La cantidad entregada del product ${line.productId.name} no debe ser mayor a la demandada`);
+        return;
+      }
+    }
+
     const res = await actionStockPicking({ data });
     if (!res.success) return modalError(res.message);
 
@@ -97,6 +77,9 @@ function StockPickingFormView({
   };
 
   const actionConfirmed = handleSubmit(async () => {
+    const lines = getValues().PickingLine;
+    if (lines.length < 1) return modalError("No hay líneas en la orden");
+
     const newData: StockPickingSchemaType = {
       ...getValues(),
       state: "confirmed",
@@ -144,6 +127,11 @@ function StockPickingFormView({
   const onChangeProduct = async (value: string | null, line: number) => {
     const productId = await getProductById({ id: value });
     if (productId) {
+      const whId = getValues().whId;
+      let qtyAvailable = 0.0;
+      const stocks = productId.Stocks.filter((wh) => wh.Warehouse.id === whId.id)[0];
+      qtyAvailable = round(stocks.qty - stocks.reservedQty, 3);
+      setValue(`PickingLine.${line}.qtyAvailable`, qtyAvailable);
       setValue(`PickingLine.${line}.uomId`, {
         id: productId.Uom?.id || "",
         name: productId.Uom?.code || "",
@@ -197,6 +185,7 @@ function StockPickingFormView({
       },
       PickingLine: picking.PickingLine.map((line) => ({
         delivered: line.delivered,
+        qtyAvailable: 0.0,
         quantity: line.quantity,
         productId: { id: line.Product.id, name: line.Product.name },
         uomId: { id: line.Uom.id, name: line.Uom.code },
@@ -279,19 +268,12 @@ function StockPickingFormView({
           fieldName: "actionCancel",
           string: "Cancelar",
           variant: "danger",
-          invisible:
-            getValues().state === "draft" || getValues().state === "cancel",
+          invisible: getValues().state === "draft" || getValues().state === "cancel",
         },
       ]}
     >
       <FormViewGroup>
-        <FieldRelation
-          model="partner"
-          name="partnerId"
-          label="Contacto"
-          readonly={getValues().state !== "draft"}
-          domain={[["Tags.name", "some", "EMPLOYEE"]]}
-        />
+        <FieldRelation model="partner" name="partnerId" label="Contacto" readonly={getValues().state !== "draft"} domain={[["Tags.name", "some", "EMPLOYEE"]]} />
         <FormViewStack>
           <FieldRelation
             model="warehouse"
@@ -319,24 +301,9 @@ function StockPickingFormView({
       <FormViewGroup>
         <FormViewStack>
           <FieldEntry name="date" type="date" label="Fecha" readonly />
-          <FieldEntry
-            name="datePlanned"
-            type="date"
-            label="Programar entrega"
-            min={todayDate()}
-            readonly={
-              getValues().companyId !== companyId ||
-              ["done", "cancel"].includes(getValues().state)
-            }
-          />
+          <FieldEntry name="datePlanned" type="date" label="Programar entrega" min={todayDate()} readonly={getValues().companyId !== companyId || ["done", "cancel"].includes(getValues().state)} />
         </FormViewStack>
-        <FieldRelation
-          model="partner"
-          name="operatorId"
-          label="Operador"
-          domain={[["Tags.name", "some", "WAREHOUSE"]]}
-          readonly={getValues().state !== "confirmed"}
-        />
+        <FieldRelation model="partner" name="operatorId" label="Operador" domain={[["Tags.name", "some", "WAREHOUSE"]]} readonly={getValues().state !== "confirmed"} />
       </FormViewGroup>
       <Notebook defaultActiveKey="pickingLine">
         <Page eventKey="pickingLine" title="Movimientos">
@@ -349,6 +316,12 @@ function StockPickingFormView({
                   name: "productId",
                   width: 270,
                   minWidth: 170,
+                },
+                {
+                  string: "Disponible",
+                  name: "delivered",
+                  width: 30,
+                  minWidth: 30,
                 },
                 {
                   string: "Demanda",
@@ -375,51 +348,22 @@ function StockPickingFormView({
               renderRow={(row, index) => (
                 <tr key={row.id}>
                   <SimpleTD colIdx={index} name="lineProductId">
-                    <FieldRelation
-                      inline
-                      model="productTemplate"
-                      name={`PickingLine.${index}.productId`}
-                      ponChange={(value) => onChangeProduct(value, index)}
-                    />
+                    <FieldRelation inline model="productTemplate" name={`PickingLine.${index}.productId`} ponChange={(value) => onChangeProduct(value, index)} />
+                  </SimpleTD>
+                  <SimpleTD colIdx={index} name="lineQtyAvailable">
+                    <FieldEntry name={`PickingLine.${index}.qtyAvailable`} type="number" decimals={3} inline />
                   </SimpleTD>
                   <SimpleTD colIdx={index} name="lineQuantity">
-                    <FieldEntry
-                      inline
-                      name={`PickingLine.${index}.quantity`}
-                      decimals={3}
-                      type="number"
-                      readonly={getValues().state !== "draft"}
-                    />
+                    <FieldEntry inline name={`PickingLine.${index}.quantity`} decimals={3} type="number" readonly={getValues().state !== "draft"} />
                   </SimpleTD>
                   <SimpleTD colIdx={index} name="lineDelivered">
-                    <FieldEntry
-                      inline
-                      name={`PickingLine.${index}.delivered`}
-                      decimals={3}
-                      type="number"
-                      readonly={
-                        getValues().state !== "confirmed" ||
-                        getValues().companyOriginId !== companyId
-                      }
-                    />
+                    <FieldEntry inline name={`PickingLine.${index}.delivered`} decimals={3} type="number" readonly={getValues().state !== "confirmed" || getValues().companyOriginId !== companyId} />
                   </SimpleTD>
                   <SimpleTD colIdx={index} name="lineUomId">
-                    <FieldRelation
-                      inline
-                      model="uomCategory"
-                      name={`PickingLine.${index}.uomId`}
-                      readonly
-                    />
+                    <FieldRelation inline model="uomCategory" name={`PickingLine.${index}.uomId`} readonly />
                   </SimpleTD>
-                  <SimpleTD
-                    colIdx={index}
-                    name="lineRemoveLine"
-                    contentPosition="text-center"
-                  >
-                    <BtnDeleteLine
-                      action={() => remove(index)}
-                      disabled={getValues().state !== "draft"}
-                    />
+                  <SimpleTD colIdx={index} name="lineRemoveLine" contentPosition="text-center">
+                    <BtnDeleteLine action={() => remove(index)} disabled={getValues().state !== "draft"} />
                   </SimpleTD>
                 </tr>
               )}
@@ -433,52 +377,18 @@ function StockPickingFormView({
         <Page eventKey="otherInfo" title="Otra información">
           <PageSheet name="otherInfo">
             <FormViewGroup>
-              <FieldEntry
-                name="operationType"
-                label="Tipo de operación"
-                readonly
-              />
-              <FieldRelation
-                name="purchaseId"
-                label="Orden de compra"
-                model="purchaseOrder"
-                readonly
-              />
-              <FieldRelation
-                name="saleId"
-                label="Orden de venta"
-                model="saleOrder"
-                readonly
-              />
+              <FieldEntry name="operationType" label="Tipo de operación" readonly />
+              <FieldRelation name="purchaseId" label="Orden de compra" model="purchaseOrder" readonly />
+              <FieldRelation name="saleId" label="Orden de venta" model="saleOrder" readonly />
             </FormViewGroup>
             <FormViewGroup title="Línea de tiempo">
               <FormViewStack>
-                <FieldEntry
-                  name="confirmedDate"
-                  label="Confirmado"
-                  type="datetime-local"
-                  readonly
-                />
-                <FieldEntry
-                  name="readyDate"
-                  label="Listo"
-                  type="datetime-local"
-                  readonly
-                />
+                <FieldEntry name="confirmedDate" label="Confirmado" type="datetime-local" readonly />
+                <FieldEntry name="readyDate" label="Listo" type="datetime-local" readonly />
               </FormViewStack>
               <FormViewStack>
-                <FieldEntry
-                  name="doneDate"
-                  label="Hecho"
-                  type="datetime-local"
-                  readonly
-                />
-                <FieldEntry
-                  name="cancelDate"
-                  label="Cancelado"
-                  type="datetime-local"
-                  readonly
-                />
+                <FieldEntry name="doneDate" label="Hecho" type="datetime-local" readonly />
+                <FieldEntry name="cancelDate" label="Cancelado" type="datetime-local" readonly />
               </FormViewStack>
             </FormViewGroup>
           </PageSheet>

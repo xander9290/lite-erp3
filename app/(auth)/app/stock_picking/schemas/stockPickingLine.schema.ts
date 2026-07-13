@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const stockPickingLine = z.object({
   id: z.string().optional(),
+  qtyAvailable: z.number().nullable(),
   quantity: z.number().min(0.1, "Cantidad solicitida debe ser mayor a 0.0"),
   delivered: z.number(),
   productId: z.object({
@@ -18,6 +19,7 @@ export type StockPickingLineType = z.infer<typeof stockPickingLine>;
 
 export const stockPickingLineDefautl: StockPickingLineType = {
   delivered: 0.0,
+  qtyAvailable: 0.0,
   productId: { id: "", name: "" },
   quantity: 0.0,
   uomId: { id: "", name: "" },
