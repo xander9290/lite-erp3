@@ -1,9 +1,16 @@
 "use client";
 
+import { FieldText } from "@/components/templates/fields";
 import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
-import { WidgetAvatar, WidgetBadgeStatus, WidgetDeadline, WidgetDisplayDate, WidgetLiveRemaining } from "@/components/widgets";
+import {
+  WidgetAvatar,
+  WidgetBadgeStatus,
+  WidgetDeadline,
+  WidgetDisplayDate,
+  WidgetLiveRemaining,
+} from "@/components/widgets";
 import { useAuth } from "@/hooks/sessionStore";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -16,11 +23,16 @@ function StockPickingListView() {
 
   return (
     <ListView model="stockPicking">
-      <ListView.Header title={`Operaciones ${company?.name}`} formView="/app/stock_picking?view_type=form&id=null" />
+      <ListView.Header
+        title={`Operaciones ${company?.name}`}
+        formView="/app/stock_picking?view_type=form&id=null"
+      />
       <ListView.Body>
         <TableTemplateLite
           pageSize={100}
-          onRowClick={(row) => router.push(`/app/stock_picking?view_type=form&id=${row.id}`)}
+          onRowClick={(row) =>
+            router.push(`/app/stock_picking?view_type=form&id=${row.id}`)
+          }
           defaultOrder="createdAt desc"
           model="stockPicking"
           baseDomain={[
@@ -33,8 +45,17 @@ function StockPickingListView() {
             ],
           ]}
         >
-          <Column field="name" label="Folio" render={(field) => <span className="fw-semibold">{field}</span>} />
-          <Column field="date" label="Fecha" type="date" render={(field) => <WidgetDisplayDate date={field} />} />
+          <Column
+            field="name"
+            label="Folio"
+            render={(field) => <span className="fw-semibold">{field}</span>}
+          />
+          <Column
+            field="date"
+            label="Fecha"
+            type="date"
+            render={(field) => <WidgetDisplayDate date={field} />}
+          />
           <Column
             field="operationType"
             label="Tipo"
@@ -62,9 +83,20 @@ function StockPickingListView() {
                 },
               },
             }}
-            render={(_, field) => <WidgetAvatar imageUrl={field.Partner.imageUrl} displayName={field.Partner.name} />}
+            render={(_, field) => (
+              <WidgetAvatar
+                imageUrl={field.Partner.imageUrl}
+                displayName={field.Partner.name}
+              />
+            )}
           />
-          <Column field="reference" label="Referencia" />
+          <Column
+            field="reference"
+            label="Referencia"
+            render={(field) => (
+              <FieldText name="stockPickingReference" output={field} />
+            )}
+          />
           <Column
             field="Warehouse.description"
             label="Origen"
@@ -77,6 +109,9 @@ function StockPickingListView() {
                 },
               },
             }}
+            render={(field) => (
+              <FieldText name="stockPickingOrigin" output={field} />
+            )}
           />
           <Column
             field="WarehouseDest.description"
@@ -89,19 +124,42 @@ function StockPickingListView() {
                 },
               },
             }}
+            render={(field) => (
+              <FieldText name="stockPickingDest" output={field} />
+            )}
           />
           <Column
             field="Operator.name"
             label="Almacenista"
-            include={{ Operator: { select: { id: true, name: true, imageUrl: true } } }}
-            render={(_, field) => <WidgetAvatar imageUrl={field.Operador?.imageUrl} displayName={field.Operator?.name} />}
+            include={{
+              Operator: { select: { id: true, name: true, imageUrl: true } },
+            }}
+            render={(_, field) => (
+              <WidgetAvatar
+                imageUrl={field.Operador?.imageUrl}
+                displayName={field.Operator?.name}
+              />
+            )}
           />
-          <Column field="datePlanned" label="Fecha de entrega" type="date" render={(field) => <WidgetDeadline date={field} warnAfter={1} />} />
+          <Column
+            field="datePlanned"
+            label="Fecha de entrega"
+            type="date"
+            render={(field) => <WidgetDeadline date={field} warnAfter={1} />}
+          />
           <Column
             field="confirmedDate"
             label="Confirmado"
             type="datetime"
-            render={(field, row) => (row.state === "done" ? <span>{format(field, "dd MMM yyy HH:mm:ss", { locale: es })}</span> : <WidgetLiveRemaining date={field} />)}
+            render={(field, row) =>
+              row.state === "done" ? (
+                <span>
+                  {format(field, "dd MMM yyy HH:mm:ss", { locale: es })}
+                </span>
+              ) : (
+                <WidgetLiveRemaining date={field} />
+              )
+            }
           />
           <Column
             field="state"

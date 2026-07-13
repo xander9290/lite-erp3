@@ -3,7 +3,10 @@
 import prisma from "@/app/libs/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, context: { params: Promise<{ model: string }> }) {
+export async function GET(
+  req: NextRequest,
+  context: { params: Promise<{ model: string }> },
+) {
   try {
     const { model } = await context.params;
     const { searchParams } = new URL(req.url);
@@ -47,7 +50,10 @@ export async function GET(req: NextRequest, context: { params: Promise<{ model: 
     return NextResponse.json({ rows, total, page, pageSize });
   } catch (error: any) {
     console.error("Table API Error:", error.message);
-    return NextResponse.json({ error: error.message || "Query failed" }, { status: 400 });
+    return NextResponse.json(
+      { error: error.message || "Query failed" },
+      { status: 400 },
+    );
   }
 }
 
@@ -85,7 +91,12 @@ function parseFilters(raw: string | null): any[] {
     }
 
     // Si es un objeto con field, operator, value
-    if (typeof parsed === "object" && parsed !== null && parsed.field && parsed.operator) {
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      parsed.field &&
+      parsed.operator
+    ) {
       return [parsed];
     }
 
@@ -100,7 +111,11 @@ function parseFilters(raw: string | null): any[] {
 function processFilterArray(arr: any[]): any[] {
   return arr.map((item) => {
     // Si es un array de 2 elementos y el primero es OR/AND
-    if (Array.isArray(item) && item.length === 2 && (item[0] === "OR" || item[0] === "AND")) {
+    if (
+      Array.isArray(item) &&
+      item.length === 2 &&
+      (item[0] === "OR" || item[0] === "AND")
+    ) {
       const [operator, operands] = item;
       // Procesar los operandos recursivamente
       if (Array.isArray(operands)) {
@@ -115,7 +130,12 @@ function processFilterArray(arr: any[]): any[] {
     }
 
     // Si es un objeto con field, operator, value
-    if (typeof item === "object" && item !== null && item.field && item.operator) {
+    if (
+      typeof item === "object" &&
+      item !== null &&
+      item.field &&
+      item.operator
+    ) {
       return [item.field, item.operator, item.value];
     }
 
@@ -142,7 +162,10 @@ function parseJSON<T>(raw: string | null, fallback: T): T {
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
 
-    if (typeof parsed === "string" && (parsed.startsWith("{") || parsed.startsWith("["))) {
+    if (
+      typeof parsed === "string" &&
+      (parsed.startsWith("{") || parsed.startsWith("["))
+    ) {
       try {
         return JSON.parse(parsed);
       } catch {
@@ -158,12 +181,33 @@ function parseJSON<T>(raw: string | null, fallback: T): T {
 
 function convertValueForPrisma(value: any, type: string): any {
   if (value == null) return value;
+
+  // 🔥 Manejar objetos con gte/lte (between)
+  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+    if ("gte" in value || "lte" in value) {
+      const result: any = {};
+      if (value.gte !== undefined) {
+        result.gte = convertSingleValueForPrisma(value.gte, type);
+      }
+      if (value.lte !== undefined) {
+        result.lte = convertSingleValueForPrisma(value.lte, type);
+      }
+      return result;
+    }
+    // Si es otro objeto, devolverlo tal cual
+    return value;
+  }
+
   if (Array.isArray(value)) {
     return value.map((v) => convertValueForPrisma(v, type));
   }
-  if (typeof value === "object") {
-    return value;
-  }
+
+  return convertSingleValueForPrisma(value, type);
+}
+
+// 🔥 Nuevo helper para convertir valores individuales
+function convertSingleValueForPrisma(value: any, type: string): any {
+  if (value == null) return value;
 
   switch (type) {
     case "number":
@@ -183,11 +227,18 @@ function convertValueForPrisma(value: any, type: string): any {
   }
 }
 
-function buildOperatorCondition(operator: string, value: any, type: string): any {
+function buildOperatorCondition(
+  operator: string,
+  value: any,
+  type: string,
+): any {
   const isString = type === "string" || type === "relation";
   const isArray = Array.isArray(value);
 
   switch (operator) {
+    case "between":
+      // 🔥 between ya se maneja en buildCondition
+      return value; // value ya tiene { gte, lte }
     case "=":
       return value;
     case "!=":
@@ -229,7 +280,11 @@ function buildOperatorCondition(operator: string, value: any, type: string): any
   }
 }
 
-function buildRelationCondition(field: string, operator: string, value: any): any {
+function buildRelationCondition(
+  field: string,
+  operator: string,
+  value: any,
+): any {
   if (typeof value === "string") {
     if ((value.startsWith("{") || value.startsWith("[")) && value.length > 2) {
       try {
@@ -438,7 +493,24 @@ function buildRelationCondition(field: string, operator: string, value: any): an
   }
 }
 
-function buildCondition(field: string, operator: string, value: any, type: string): any {
+// app/api/tables/[model]/route.ts
+
+function buildCondition(
+  field: string,
+  operator: string,
+  value: any,
+  type: string,
+): any {
+  // 🔥 CASO ESPECIAL: between - ya viene con { gte, lte }
+  if (
+    operator === "between" &&
+    typeof value === "object" &&
+    value !== null &&
+    ("gte" in value || "lte" in value)
+  ) {
+    return { [field]: value }; // value ya tiene { gte, lte }
+  }
+
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
     if (type === "relation") {
       return buildRelationCondition(field, operator, value);
@@ -461,7 +533,10 @@ function buildCondition(field: string, operator: string, value: any, type: strin
 }
 
 // 🔥 Función mejorada para construir where con soporte para OR/AND
-function buildWhereClause(filters: any[], columnTypes: Record<string, string>): any {
+function buildWhereClause(
+  filters: any[],
+  columnTypes: Record<string, string>,
+): any {
   if (!filters || !filters.length) return {};
 
   const conditions = filters
@@ -472,24 +547,28 @@ function buildWhereClause(filters: any[], columnTypes: Record<string, string>): 
 
         if (operator === "OR" || operator === "AND") {
           if (!Array.isArray(operands)) {
-            console.warn(`Operador ${operator} requiere un array de condiciones`);
+            console.warn(
+              `Operador ${operator} requiere un array de condiciones`,
+            );
             return null;
           }
 
-          // Construir condiciones anidadas
           const nestedConditions = buildWhereClause(operands, columnTypes);
 
           if (!nestedConditions || Object.keys(nestedConditions).length === 0) {
             return null;
           }
 
-          // Extraer condiciones del objeto resultante
           let conditionsArray: any[] = [];
 
           if (nestedConditions.AND) {
-            conditionsArray = Array.isArray(nestedConditions.AND) ? nestedConditions.AND : [nestedConditions.AND];
+            conditionsArray = Array.isArray(nestedConditions.AND)
+              ? nestedConditions.AND
+              : [nestedConditions.AND];
           } else if (nestedConditions.OR) {
-            conditionsArray = Array.isArray(nestedConditions.OR) ? nestedConditions.OR : [nestedConditions.OR];
+            conditionsArray = Array.isArray(nestedConditions.OR)
+              ? nestedConditions.OR
+              : [nestedConditions.OR];
           } else if (Array.isArray(nestedConditions)) {
             conditionsArray = nestedConditions;
           } else {
@@ -504,6 +583,15 @@ function buildWhereClause(filters: any[], columnTypes: Record<string, string>): 
       if (Array.isArray(filter) && filter.length === 3) {
         const [field, operator, value] = filter;
         const type = columnTypes[field] || "string";
+
+        // 🔥 CASO ESPECIAL: between
+        if (operator === "between") {
+          // value ya viene como { gte: "2026-07-11", lte: "2026-07-12" }
+          // Convertir las fechas a Date si es necesario
+          const convertedValue = convertValueForPrisma(value, type);
+          return buildCondition(field, operator, convertedValue, type);
+        }
+
         const convertedValue = convertValueForPrisma(value, type);
 
         if (operator === "in" || operator === "notIn") {
@@ -513,9 +601,21 @@ function buildWhereClause(filters: any[], columnTypes: Record<string, string>): 
       }
 
       // 🔥 CASO 3: Condición como objeto: { field, operator, value }
-      if (typeof filter === "object" && filter !== null && filter.field && filter.operator) {
+      if (
+        typeof filter === "object" &&
+        filter !== null &&
+        filter.field &&
+        filter.operator
+      ) {
         const { field, operator, value } = filter;
         const type = columnTypes[field] || "string";
+
+        // 🔥 CASO ESPECIAL: between
+        if (operator === "between") {
+          const convertedValue = convertValueForPrisma(value, type);
+          return buildCondition(field, operator, convertedValue, type);
+        }
+
         const convertedValue = convertValueForPrisma(value, type);
         return buildCondition(field, operator, convertedValue, type);
       }

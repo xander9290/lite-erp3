@@ -5,6 +5,8 @@ import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
 import { useAuth } from "@/hooks/sessionStore";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 function StockMoveListView({ productId }: { productId: string | null }) {
   const { companyId } = useAuth();
@@ -14,22 +16,59 @@ function StockMoveListView({ productId }: { productId: string | null }) {
     <ListView model="stock_move">
       <ListView.Header title="Historial de movimientos" />
       <ListView.Body>
-        <TableTemplateLite model="stockMove" defaultOrder="createdAt desc" pageSize={100} baseDomain={domain}>
-          <Column field="date" label="Fecha" type="date" />
+        <TableTemplateLite
+          model="stockMove"
+          defaultOrder="createdAt desc"
+          pageSize={100}
+          baseDomain={domain}
+        >
+          <Column
+            field="createdAt"
+            label="Fecha"
+            type="datetime"
+            render={(field) =>
+              format(field, "dd MMM yyyy HH:mm", { locale: es })
+            }
+          />
           <Column field="name" label="Nombre" />
           <Column field="reference" label="Referencia" />
-          <Column field="User.Partner.name" label="Usuario" include={{ User: { select: { Partner: { select: { name: true } } } } }} />
-          <Column field="Product.name" label="Producto" include={{ Product: { select: { name: true, Uom: { select: { code: true } } } } }} />
-          <Column field="WarehouseOrigin.description" label="Origen" include={{ WarehouseOrigin: { select: { description: true } } }} />
-          <Column field="WarehouseDest.description" label="Destino" include={{ WarehouseDest: { select: { description: true } } }} />
+          <Column
+            field="User.Partner.name"
+            label="Usuario"
+            include={{
+              User: { select: { Partner: { select: { name: true } } } },
+            }}
+          />
+          <Column
+            field="Product.name"
+            label="Producto"
+            include={{
+              Product: {
+                select: { name: true, Uom: { select: { code: true } } },
+              },
+            }}
+          />
+          <Column
+            field="WarehouseOrigin.description"
+            label="Origen"
+            include={{ WarehouseOrigin: { select: { description: true } } }}
+          />
+          <Column
+            field="WarehouseDest.description"
+            label="Destino"
+            include={{ WarehouseDest: { select: { description: true } } }}
+          />
           <Column
             field="quantity"
             label="Cantidad"
             type="number"
             render={(_, move) => (
-              <div className={`text-end ${move.moveType === "incoming" ? "text-success" : "text-danger"}`}>
+              <div
+                className={`text-end ${move.moveType === "incoming" ? "text-success" : "text-danger"}`}
+              >
                 {`${move.moveType === "outgoing" ? "- " : "+ "}`}
-                {formatNumberForDisplay(move.quantity, 3)} {move.Product.Uom.code}
+                {formatNumberForDisplay(move.quantity, 3)}{" "}
+                {move.Product.Uom.code}
               </div>
             )}
           />
