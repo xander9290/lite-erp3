@@ -120,8 +120,10 @@ export function FieldRelation<T extends Many2OneOption>({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const errorShownRef = useRef(false);
-
-  // 📍 Mostrar toast cuando hay error (solo una vez por error)
+  const menuRef = useRef<HTMLDivElement>(null);
+  const isOpenRef = useRef(false);
+  const valueRef = useRef<Many2OneValue | null>(value ?? null);
+  const itemRefs = useRef(new Map<string, HTMLElement>()); // 📍 Mostrar toast cuando hay error (solo una vez por error)
   useEffect(() => {
     if (error && error.id && !errorShownRef.current) {
       toast.error(error.id?.message || "Error");
@@ -135,12 +137,19 @@ export function FieldRelation<T extends Many2OneOption>({
 
   // Sincronizar query con value
   useEffect(() => {
+    valueRef.current = value ?? null;
+
     if (!value) {
       setQuery("");
       return;
     }
-    setQuery(value.name ?? "");
+
+    setQuery(value.name ?? value.displayName ?? "");
   }, [value]);
+
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
 
   // 📍 Optimizado: Calcular posición con useCallback memoizado
   const updateMenuPosition = useCallback(() => {
@@ -150,7 +159,7 @@ export function FieldRelation<T extends Many2OneOption>({
 
     const viewportHeight = window.innerHeight;
 
-    const MENU_MAX_HEIGHT = 100;
+    const MENU_MAX_HEIGHT = 125;
     const MIN_SPACE_BELOW = 100;
     const SPACING = 4;
 
@@ -198,10 +207,13 @@ export function FieldRelation<T extends Many2OneOption>({
   // 📍 Optimizado: Event listener con cleanup
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
+      const target = e.target as Node;
+
+      const insideInput = containerRef.current?.contains(target);
+
+      const insideMenu = menuRef.current?.contains(target);
+
+      if (!insideInput && !insideMenu) {
         setIsOpen(false);
       }
     };
@@ -315,30 +327,46 @@ export function FieldRelation<T extends Many2OneOption>({
   }, [readonly, access?.readonly, value, query, search, updateMenuPosition]);
 
   const handleBlur = useCallback(() => {
-    onBlur(); // Llamar al onBlur original de react-hook-form
+    onBlur();
 
-    // Pequeño delay para permitir que el click en el dropdown se registre
-    setTimeout(() => {
-      if (!isOpen) {
-        // Si no hay valor seleccionado, limpiar query
-        if (!value?.id) {
-          setQuery("");
-        } else {
-          // Restaurar el nombre del valor seleccionado
-          setQuery(value.name ?? "");
-        }
+    requestAnimationFrame(() => {
+      const active = document.activeElement;
+
+      if (
+        menuRef.current?.contains(active) ||
+        containerRef.current?.contains(active)
+      ) {
+        return;
       }
-    }, 150);
-  }, [onBlur, isOpen, value]);
+
+      setIsOpen(false);
+
+      if (valueRef.current?.id) {
+        setQuery(valueRef.current.name ?? "");
+      } else {
+        setQuery("");
+      }
+    });
+  }, [onBlur]);
 
   const handleOff = useCallback(() => {
     setQuery("");
-    setIsOpen(true);
+    setIsOpen(false);
+
     onChange(null);
     ponChange?.(null, null);
+
+    search("");
+
     inputRef.current?.focus();
-    requestAnimationFrame(updateMenuPosition);
-  }, [onChange, ponChange, updateMenuPosition]);
+  }, [onChange, ponChange, search]);
+
+  // useEffect(() => {
+  //   itemRefs.current[highlightedIndex]?.scrollIntoView({
+  //     block: "nearest",
+  //     behavior: "instant",
+  //   });
+  // }, [highlightedIndex]);
 
   // 📍 Optimizado: Memoizar el dropdown menu
   const dropdownMenu = useMemo(() => {
@@ -346,6 +374,7 @@ export function FieldRelation<T extends Many2OneOption>({
 
     return createPortal(
       <div
+        ref={menuRef}
         style={{
           position: "fixed",
           top: menuPosition.top,
@@ -358,6 +387,7 @@ export function FieldRelation<T extends Many2OneOption>({
           <Dropdown.Menu
             show
             className={styles.dropdownMenu}
+            onMouseDown={(e) => e.preventDefault()}
             style={{
               maxHeight: menuPosition.maxHeight,
               overflowY: "auto",
@@ -370,6 +400,13 @@ export function FieldRelation<T extends Many2OneOption>({
             ) : (
               options.map((opt, index) => (
                 <Dropdown.Item
+                  ref={(el) => {
+                    if (el) {
+                      itemRefs.current.set(opt.id, el);
+                    } else {
+                      itemRefs.current.delete(opt.id);
+                    }
+                  }}
                   key={opt.id}
                   active={index === highlightedIndex}
                   onMouseDown={(e) => {

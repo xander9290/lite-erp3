@@ -15,14 +15,17 @@
     transform 0.15s ease;
 }
 
+/* MEJORA 1: Toggle más visible en hover */
 .toggle:hover,
 .toggle:focus {
-  background-color: var(--bs-tertiary-bg);
-  box-shadow: 0 0 0 1px var(--bs-border-color);
+  background-color: var(--bs-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(var(--bs-primary-rgb), 0.3);
+  transform: scale(1.02);
 }
 
 .toggle:active {
-  transform: translateY(1px);
+  transform: scale(0.98);
 }
 
 .companyBadge {
@@ -31,13 +34,30 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   padding: 0.38rem 0.55rem;
+  background-color: var(--bs-primary);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.15s ease;
+}
+
+/* MEJORA 2: Badge con efecto hover */
+.companyBadge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(var(--bs-primary-rgb), 0.3);
 }
 
 .avatar {
   border-radius: 50%;
   object-fit: cover;
   background-color: var(--bs-secondary-bg);
-  border: 1px solid var(--bs-border-color);
+  border: 2px solid var(--bs-border-color);
+  transition: all 0.15s ease;
+}
+
+/* MEJORA 3: Avatar animado en hover */
+.toggle:hover .avatar {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.2);
 }
 
 .userName {
@@ -46,6 +66,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+/* MEJORA 4: Nombre de usuario cambia en hover del toggle */
+.toggle:hover .userName {
+  color: var(--bs-primary);
 }
 
 .separator {
@@ -53,6 +80,13 @@
   height: 28px;
   background-color: var(--bs-border-color);
   opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+
+/* MEJORA 5: Separador más visible en hover */
+.toggle:hover .separator {
+  opacity: 1;
+  background-color: var(--bs-primary);
 }
 
 .clockButton,
@@ -63,20 +97,24 @@
   transition:
     background-color 0.15s ease,
     box-shadow 0.15s ease,
-    transform 0.15s ease;
+    transform 0.15s ease,
+    color 0.15s ease;
 }
 
+/* MEJORA 6: Botones con mejor feedback visual */
 .clockButton:hover,
 .themeButton:hover,
 .clockButton:focus,
 .themeButton:focus {
-  background-color: var(--bs-tertiary-bg);
-  box-shadow: 0 0 0 1px var(--bs-border-color);
+  background-color: var(--bs-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(var(--bs-primary-rgb), 0.3);
+  transform: scale(1.05);
 }
 
 .clockButton:active,
 .themeButton:active {
-  transform: translateY(1px);
+  transform: scale(0.95);
 }
 
 .themeButton {
@@ -86,15 +124,49 @@
   justify-content: center;
 }
 
+/* MEJORA 7: Menú dropdown más destacado */
 .menu {
-  min-width: 260px;
-  border-radius: 0.85rem;
+  min-width: 280px;
+  border-radius: 1rem;
   overflow: hidden;
+  border: 1px solid var(--bs-border-color);
+  box-shadow: 
+    0 0.75rem 2rem rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(var(--bs-primary-rgb), 0.1);
+  background-color: var(--bs-body-bg);
+  backdrop-filter: blur(8px);
+  padding: 0.25rem;
+  animation: menuFade 0.2s ease;
+}
+
+@keyframes menuFade {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .companyItem {
-  padding-top: 0.6rem;
-  padding-bottom: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.65rem;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+/* MEJORA 8: Company items con mejor interacción */
+.companyItem:hover {
+  background-color: var(--bs-primary);
+  color: #ffffff;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(var(--bs-primary-rgb), 0.2);
+}
+
+.companyItem:active {
+  transform: translateX(4px) scale(0.98);
 }
 
 .checkIcon {
@@ -102,10 +174,53 @@
   display: inline-flex;
   justify-content: center;
   color: var(--bs-success);
+  transition: color 0.15s ease;
+}
+
+/* MEJORA 9: Icono de check más visible en hover */
+.companyItem:hover .checkIcon {
+  color: #ffffff;
 }
 
 :global(.dropdown-item.active) .checkIcon {
   color: var(--bs-white);
+}
+
+/* MEJORA 10: Dropdown dividers mejorados */
+:global(.dropdown-divider) {
+  margin: 0.35rem 0.5rem;
+  border-color: var(--bs-border-color);
+  opacity: 0.5;
+}
+
+/* MEJORA 11: Texto del menú con mejor contraste */
+:global(.dropdown-item) {
+  padding: 0.55rem 0.75rem !important;
+  border-radius: 0.65rem;
+  transition: all 0.15s ease;
+  font-weight: 500;
+}
+
+:global(.dropdown-item:hover),
+:global(.dropdown-item:focus) {
+  background-color: var(--bs-primary);
+  color: #ffffff;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(var(--bs-primary-rgb), 0.2);
+}
+
+:global(.dropdown-item:active) {
+  transform: translateX(4px) scale(0.98);
+}
+
+/* MEJORA 12: Dropdown headers más visibles */
+:global(.dropdown-header) {
+  padding: 0.5rem 0.75rem 0.25rem;
+  color: var(--bs-secondary-color);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 @media (max-width: 576px) {
@@ -123,5 +238,28 @@
 
   .placeholder {
     width: 180px;
+  }
+
+  /* MEJORA 13: Ajustes responsive */
+  .menu {
+    min-width: 240px;
+    width: 100%;
+    border-radius: 0.75rem;
+  }
+
+  .toggle:hover .userName {
+    color: inherit; /* Reset en móvil */
+  }
+
+  .companyItem:hover {
+    transform: none; /* Sin efecto en móvil para mejor UX */
+  }
+
+  :global(.dropdown-item:hover) {
+    transform: none;
+  }
+
+  .menu {
+    animation: none; /* Desactivar animación en móvil */
   }
 }
