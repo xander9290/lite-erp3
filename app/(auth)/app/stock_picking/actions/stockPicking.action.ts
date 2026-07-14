@@ -9,7 +9,11 @@ import { getNextValue } from "@/app/libs/sequence";
 import { getWarehouseById } from "../../warehouses/actions/warehouse-actions";
 import { createAuditlog } from "../../actions/auditlog-actions";
 import { todayDate } from "@/app/libs/validatorDate";
-import { affectStockWarehouse, stockWarehouseReserve, stockWarehouseReserveCancel } from "../../stock_warehouse/actions/stockWarehouse.action";
+import {
+  affectStockWarehouse,
+  stockWarehouseReserve,
+  stockWarehouseReserveCancel,
+} from "../../stock_warehouse/actions/stockWarehouse.action";
 import { round } from "@/app/libs/helpers";
 
 export interface StockPickingWithProps extends StockPicking {
@@ -54,7 +58,11 @@ const generateOperationCode = (opeartion: PickingOperationType) => {
   return operationCode;
 };
 
-export async function getStockPickingById({ id }: { id: string | null }): Promise<StockPickingWithProps | null> {
+export async function getStockPickingById({
+  id,
+}: {
+  id: string | null;
+}): Promise<StockPickingWithProps | null> {
   try {
     if (!id) return null;
 
@@ -101,7 +109,11 @@ export async function getStockPickingById({ id }: { id: string | null }): Promis
   }
 }
 
-export async function actionStockPicking({ data }: { data: StockPickingSchemaType }): Promise<ActionResponse<StockPickingWithProps>> {
+export async function actionStockPicking({
+  data,
+}: {
+  data: StockPickingSchemaType;
+}): Promise<ActionResponse<StockPickingWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
@@ -114,8 +126,13 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
 
     let name = "";
     if (data.name === "new") {
-      name = await getNextValue(`${whDest.code}/${generateOperationCode(data.operationType)}/`, `${whDest.Company.code}-stockpicking`);
+      name = await getNextValue(
+        `${whDest.code}/${generateOperationCode(data.operationType)}/`,
+        `${whDest.Company.code}-stockpicking`,
+      );
     }
+
+    console.log(data.confirmedDate);
 
     const picking = await prisma.stockPicking.upsert({
       where: {
@@ -138,7 +155,9 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
         PickingLine: {
           deleteMany: {
             id: {
-              notIn: data.PickingLine.filter((line) => line.id).map((l) => l.id!),
+              notIn: data.PickingLine.filter((line) => line.id).map(
+                (l) => l.id!,
+              ),
             },
           },
           update: data.PickingLine.filter((line) => line.id).map((line) => ({
@@ -153,13 +172,15 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
             },
           })),
           createMany: {
-            data: data.PickingLine.filter((line) => line.id === undefined).map((line) => ({
-              productId: line.productId.id,
-              quantity: line.quantity,
-              delivered: 0.0,
-              uomId: line.uomId.id,
-              createUid: uid!,
-            })),
+            data: data.PickingLine.filter((line) => line.id === undefined).map(
+              (line) => ({
+                productId: line.productId.id,
+                quantity: line.quantity,
+                delivered: 0.0,
+                uomId: line.uomId.id,
+                createUid: uid!,
+              }),
+            ),
           },
         },
       },
@@ -167,6 +188,7 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
         name,
         createUid: uid!,
         datePlanned: new Date(data.datePlanned),
+        confirmedDate: data.confirmedDate ? new Date(data.confirmedDate) : null,
         date: new Date(data.date),
         partnerId: data.partnerId.id,
         whDestId: data.whDestId.id,
@@ -183,7 +205,7 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
           createMany: {
             data: data.PickingLine.map((line) => ({
               createUid: uid!,
-              delivered: 0.0,
+              delivered: line.quantity,
               productId: line.productId.id,
               quantity: line.quantity,
               uomId: line.uomId.id,
@@ -250,7 +272,11 @@ export async function actionStockPicking({ data }: { data: StockPickingSchemaTyp
   }
 }
 
-export async function actionStockPickingConfirm({ data }: { data: StockPickingSchemaType }): Promise<ActionResponse<boolean>> {
+export async function actionStockPickingConfirm({
+  data,
+}: {
+  data: StockPickingSchemaType;
+}): Promise<ActionResponse<boolean>> {
   try {
     const { company } = await sessionStore();
 
@@ -272,7 +298,9 @@ export async function actionStockPickingConfirm({ data }: { data: StockPickingSc
     });
 
     if (!internal) {
-      throw new Error(`${data.whDestId.name} no acepta operaciones internas por parte de ${data.whId.name}`);
+      throw new Error(
+        `${data.whDestId.name} no acepta operaciones internas por parte de ${data.whId.name}`,
+      );
     }
 
     for (const line of data.PickingLine) {
@@ -284,23 +312,39 @@ export async function actionStockPickingConfirm({ data }: { data: StockPickingSc
           },
         },
         include: {
-          Product: { select: { id: true, name: true, Uom: { select: { id: true, code: true } } } },
+          Product: {
+            select: {
+              id: true,
+              name: true,
+              Uom: { select: { id: true, code: true } },
+            },
+          },
         },
       });
 
       if (!stock) {
-        throw new Error(`${line.productId.name} no cuenta con existencia en el almacén de origen`);
+        throw new Error(
+          `${line.productId.name} no cuenta con existencia en el almacén de origen`,
+        );
       }
 
       const qyAvailable = round(stock.qty - stock.reservedQty, 3);
 
       if (qyAvailable < line.quantity) {
-        throw new Error(`${line.productId.name} no cuenta con cantidad disponible para complementar la demanda solicitada.\n Disponible: ${qyAvailable} ${stock.Product.Uom?.code}`);
+        throw new Error(
+          `${line.productId.name} no cuenta con cantidad disponible para complementar la demanda solicitada.\n Disponible: ${qyAvailable} ${stock.Product.Uom?.code}`,
+        );
       }
     }
 
     for (const line of data.PickingLine) {
-      const resReserved = await stockWarehouseReserve({ data: { productId: { id: line.productId.id, name: line.productId.name }, qty: line.quantity, whId: data.whId.id } });
+      const resReserved = await stockWarehouseReserve({
+        data: {
+          productId: { id: line.productId.id, name: line.productId.name },
+          qty: line.quantity,
+          whId: data.whId.id,
+        },
+      });
 
       if (!resReserved.success) {
         throw new Error(resReserved.message);
@@ -340,7 +384,11 @@ export async function actionStockPickingConfirm({ data }: { data: StockPickingSc
   }
 }
 
-export async function actionStockPickingReady({ data }: { data: StockPickingSchemaType }): Promise<ActionResponse<boolean>> {
+export async function actionStockPickingReady({
+  data,
+}: {
+  data: StockPickingSchemaType;
+}): Promise<ActionResponse<boolean>> {
   try {
     const { company } = await sessionStore();
 
@@ -354,7 +402,9 @@ export async function actionStockPickingReady({ data }: { data: StockPickingSche
 
     for (const line of data.PickingLine) {
       if (line.delivered > line.quantity) {
-        throw new Error(`La cantidad entregada del producto ${line.productId.name} no debe ser mayor a la demandada.`);
+        throw new Error(
+          `La cantidad entregada del producto ${line.productId.name} no debe ser mayor a la demandada.`,
+        );
       }
     }
 
@@ -377,7 +427,11 @@ export async function actionStockPickingReady({ data }: { data: StockPickingSche
   }
 }
 
-export async function actionStockPickingDone({ data }: { data: StockPickingSchemaType }): Promise<ActionResponse<boolean>> {
+export async function actionStockPickingDone({
+  data,
+}: {
+  data: StockPickingSchemaType;
+}): Promise<ActionResponse<boolean>> {
   try {
     const { company } = await sessionStore();
 
@@ -388,7 +442,9 @@ export async function actionStockPickingDone({ data }: { data: StockPickingSchem
     const today = todayDate();
     const datePlanned = data.datePlanned === today;
     if (!datePlanned) {
-      throw new Error(`Fecha de validación precipitada; programado para\n${data.datePlanned}`.toString());
+      throw new Error(
+        `Fecha de validación precipitada; programado para\n${data.datePlanned}`.toString(),
+      );
     }
 
     const res = await actionStockPicking({ data });
@@ -430,7 +486,11 @@ export async function actionStockPickingDone({ data }: { data: StockPickingSchem
   }
 }
 
-export async function actionStockPickingCancel({ data }: { data: StockPickingSchemaType & { id: string | null } }): Promise<ActionResponse<boolean>> {
+export async function actionStockPickingCancel({
+  data,
+}: {
+  data: StockPickingSchemaType & { id: string | null };
+}): Promise<ActionResponse<boolean>> {
   try {
     const { company } = await sessionStore();
 
@@ -442,11 +502,19 @@ export async function actionStockPickingCancel({ data }: { data: StockPickingSch
     }
 
     if (picking.state === "done") {
-      throw new Error("No es posible cancelar el documento una vez termiando el proceso de traslado; en su lugar, solicita una Devolución");
+      throw new Error(
+        "No es posible cancelar el documento una vez termiando el proceso de traslado; en su lugar, solicita una Devolución",
+      );
     }
 
     for (const line of data.PickingLine) {
-      await stockWarehouseReserveCancel({ data: { productId: line.productId.id, qty: line.quantity, whId: data.whId.id } });
+      await stockWarehouseReserveCancel({
+        data: {
+          productId: line.productId.id,
+          qty: line.quantity,
+          whId: data.whId.id,
+        },
+      });
     }
 
     const res = await actionStockPicking({ data });

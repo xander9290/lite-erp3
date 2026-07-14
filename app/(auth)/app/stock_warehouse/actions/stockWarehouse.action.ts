@@ -20,7 +20,11 @@ export interface StockWarehouseActionProps {
   name: string;
 }
 
-export async function affectStockWarehouse({ data }: { data: StockWarehouseActionProps }): Promise<ActionResponse<boolean>> {
+export async function affectStockWarehouse({
+  data,
+}: {
+  data: StockWarehouseActionProps;
+}): Promise<ActionResponse<boolean>> {
   try {
     const { uid } = await sessionStore();
 
@@ -70,7 +74,7 @@ export async function affectStockWarehouse({ data }: { data: StockWarehouseActio
         },
         data: {
           qty: {
-            decrement: data.deliveredQty,
+            decrement: data.qty >= 0.1 ? data.deliveredQty : 0.0,
           },
           reservedQty: {
             decrement: data.qty,
@@ -108,7 +112,11 @@ export async function affectStockWarehouse({ data }: { data: StockWarehouseActio
   }
 }
 
-export async function stockWarehouseReserve({ data }: { data: { productId: { id: string; name: string }; qty: number; whId: string } }): Promise<ActionResponse<boolean>> {
+export async function stockWarehouseReserve({
+  data,
+}: {
+  data: { productId: { id: string; name: string }; qty: number; whId: string };
+}): Promise<ActionResponse<boolean>> {
   try {
     await prisma.stockWarehouse.update({
       where: {
@@ -135,7 +143,11 @@ export async function stockWarehouseReserve({ data }: { data: { productId: { id:
   }
 }
 
-export async function stockWarehouseReserveCancel({ data }: { data: { productId: string; whId: string; qty: number } }): Promise<ActionResponse<boolean>> {
+export async function stockWarehouseReserveCancel({
+  data,
+}: {
+  data: { productId: string; whId: string; qty: number };
+}): Promise<ActionResponse<boolean>> {
   try {
     await prisma.stockWarehouse.update({
       where: {
