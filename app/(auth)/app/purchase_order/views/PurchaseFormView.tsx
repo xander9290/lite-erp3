@@ -1,56 +1,27 @@
 "use client";
 
-import {
-  cancelStockWarehousePurchase,
-  confirmStockWarehousePurchase,
-  createAffectStock,
-  createPurchaseOrder,
-  PurchaseOrderWithProps,
-  updatePurchaseOrder,
-} from "../actions/purchase.action";
+import { cancelStockWarehousePurchase, confirmStockWarehousePurchase, createAffectStock, createPurchaseOrder, PurchaseOrderWithProps, updatePurchaseOrder } from "../actions/purchase.action";
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  purchaseOrderSchema,
-  purchaseOrderSchemaDefault,
-  PurchaseOrderSchemaType,
-} from "../schemas/purchase.schema";
+import { purchaseOrderSchema, purchaseOrderSchemaDefault, PurchaseOrderSchemaType } from "../schemas/purchase.schema";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import {
-  FormView,
-  FormViewGroup,
-  FormViewStack,
-} from "@/components/templates/FormView";
+import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
 import { FieldEntry, FieldRelation } from "@/components/templates/fields";
 import { useAuth } from "@/hooks/sessionStore";
 import toast from "react-hot-toast";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import { Col } from "react-bootstrap";
-import {
-  BtnDeleteLine,
-  SimpleTable,
-  SimpleTD,
-} from "@/components/templates/simpletemplates";
+import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
 import type { ProductTemplate } from "@/generated/prisma/client";
 import { getProductById } from "../../product_template/products/actions/productTemplate.action";
 import { formatCurrency } from "@/app/libs/helpers";
 import { getCompanyById } from "../../companies/actions/companies-actions";
 import PurchaseOperationsModal from "./PurchaseOperationsModal";
-import {
-  toDateOnly,
-  toDateTimeLocal,
-  todayDate,
-} from "@/app/libs/validatorDate";
+import { toDateOnly, toDateTimeLocal, todayDate } from "@/app/libs/validatorDate";
 
-function PurchaseFormView({
-  id,
-  purchase,
-}: {
-  id: string | null;
-  purchase: PurchaseOrderWithProps | null;
-}) {
+function PurchaseFormView({ id, purchase }: { id: string | null; purchase: PurchaseOrderWithProps | null }) {
   const { companyId, user } = useAuth();
 
   const [totals, setTotals] = useState({
@@ -59,23 +30,12 @@ function PurchaseFormView({
     total: 0.0,
   });
 
-  const [readyToAffect, setReadyToAffect] = useState(false);
-
-  const [modalOperation, setModalOperation] = useState(false);
-
   const methods = useForm({
     resolver: zodResolver(purchaseOrderSchema),
     defaultValues: purchaseOrderSchemaDefault,
   });
 
-  const {
-    reset,
-    control,
-    setValue,
-    getValues,
-    handleSubmit,
-    formState: { isDirty },
-  } = methods;
+  const { reset, control, setValue, getValues, handleSubmit } = methods;
 
   const {
     append,
@@ -112,15 +72,7 @@ function PurchaseFormView({
     }
   };
 
-  const computeProductLine = async ({
-    value,
-    record,
-    line,
-  }: {
-    value: string | null;
-    record: ProductTemplate | null;
-    line: number;
-  }) => {
+  const computeProductLine = async ({ value, record, line }: { value: string | null; record: ProductTemplate | null; line: number }) => {
     if (record) {
       const productId = await getProductById({ id: value });
       if (productId) {
@@ -148,13 +100,7 @@ function PurchaseFormView({
     }
   };
 
-  const computeQuantityLine = ({
-    value,
-    line,
-  }: {
-    value: number;
-    line: number;
-  }) => {
+  const computeQuantityLine = ({ value, line }: { value: number; line: number }) => {
     const priceUnit = getValues().OrderLines[line].priceUnit; // ✅ ya viene sin IVA
     const taxRate = getValues().OrderLines[line].taxRate ?? 0.0;
     const qty = value;
@@ -170,13 +116,7 @@ function PurchaseFormView({
     computeTotals();
   };
 
-  const computePriceUnit = ({
-    value,
-    line,
-  }: {
-    value: number;
-    line: number;
-  }) => {
+  const computePriceUnit = ({ value, line }: { value: number; line: number }) => {
     const priceUnit = value; // ✅ precio sin IVA
     const qty = getValues().OrderLines[line].quantity;
     const taxRate = getValues().OrderLines[line].taxRate ?? 0.0;
@@ -204,15 +144,6 @@ function PurchaseFormView({
       total += line.total;
     }
     setTotals({ subtotal, taxes, total });
-  };
-
-  const verfiyReadyToAffect = () => {
-    // HABILITA EL BOTÓN AFECTAR
-    const lines = getValues().OrderLines;
-    const isReady = lines.some(
-      (line) => line.ready === true && line.state === "pending",
-    );
-    setReadyToAffect(isReady);
   };
 
   useEffect(() => {
@@ -283,7 +214,6 @@ function PurchaseFormView({
     reset(values);
     originalValuesRef.current = values;
     computeTotals();
-    verfiyReadyToAffect();
   }, [purchase, reset]);
 
   useEffect(() => {
@@ -291,17 +221,20 @@ function PurchaseFormView({
   }, [lines]);
 
   useEffect(() => {
+    if (id && id !== "null") return;
     const setWarehouse = async () => {
       const getCompany = await getCompanyById({ id: companyId });
       if (getCompany) {
-        const getPurchaseWh = getCompany.Warehouses.filter(
-          (wh) => wh.type === "SUPPLY",
-        )[0];
+        const getPurchaseWh = getCompany.Warehouses.filter((wh) => wh.type === "SUPPLY")[0];
         if (getPurchaseWh) {
           setValue(`warehouseDestId`, {
             id: getPurchaseWh.id,
             name: getPurchaseWh.name,
           });
+        }
+        const getSaleWh = getCompany.Warehouses.filter((wh) => wh.type === "SALES")[0];
+        if (getSaleWh) {
+          setValue(`warehouseAffectedId`, { id: getSaleWh.id, name: getSaleWh.name });
         }
       }
     };
@@ -313,8 +246,7 @@ function PurchaseFormView({
 
   const actionConfirm = handleSubmit(async () => {
     const lines = getValues().OrderLines;
-    if (lines.length === 0)
-      return modalError("No hay productos en la orden de compra");
+    if (lines.length === 0) return modalError("No hay productos en la orden de compra");
     const newData: PurchaseOrderSchemaType = {
       ...getValues(),
       state: "purchase",
@@ -343,376 +275,273 @@ function PurchaseFormView({
     await onSubmit(newData);
   });
 
-  const handleAffect = handleSubmit(async () => {
-    const whAffected = getValues().warehouseAffectedId?.id;
-    if (!whAffected)
-      return modalError("No se ha definido el almacén destino de existencias");
-    const res = await createAffectStock({ data: getValues() });
-    if (!res.success) return modalError(res.message);
-    router.refresh();
-  });
-
   return (
-    <>
-      <FormView
-        auditLog="purchaseOrder"
-        reverse={handleReverse}
-        onSubmit={onSubmit}
-        id={id}
-        methods={methods}
-        cleanUrl="/app/purchase_order?view_type=form&id=null"
-        state={purchase?.state}
-        formStates={[
-          {
-            name: "draft",
-            label: "Cotización",
-            decoration: "secondary",
-          },
-          {
-            name: "purchase",
-            label: "Compra",
-            decoration: "info",
-          },
-          {
-            name: "pending",
-            label: "Pendiente",
-            decoration: "warning",
-          },
-          {
-            name: "done",
-            label: "Terminado",
-            decoration: "success",
-          },
-          {
-            name: "cancel",
-            label: "Cancelado",
-            decoration: "danger",
-          },
-        ]}
-        actions={[
-          {
-            action: actionConfirm,
-            fieldName: "actionConfirm",
-            string: "Confirmar",
-            invisible: getValues().state !== "draft",
-          },
-          {
-            action: () => setModalOperation(!modalOperation),
-            fieldName: "actionOperations",
-            string: "Operaciones",
-            invisible:
-              getValues().state === "draft" || getValues().state === "cancel",
-          },
-          {
-            action: handleAffect,
-            fieldName: "handleAffect",
-            string: "Afectar",
-            invisible:
-              !readyToAffect ||
-              getValues().state === "done" ||
-              getValues().state === "cancel",
-            readonly: isDirty,
-          },
-          {
-            action: actionCancel,
-            fieldName: "actionCancel",
-            string: "Cancelar",
-            variant: "danger",
-            invisible:
-              id === "null" ||
-              ["cancel", "pending", "done"].includes(getValues().state),
-          },
-        ]}
-      >
-        <FormViewGroup>
-          <FieldRelation
-            model="partner"
-            name="supplierId"
-            label="Proveedor"
-            domain={[["displayType", "=", "SUPPLIER"]]}
-            searchColumns={[{ field: "name", label: "Nombre" }]}
-            readonly={getValues().state !== "draft"}
-          />
+    <FormView
+      auditLog="purchaseOrder"
+      reverse={handleReverse}
+      onSubmit={onSubmit}
+      id={id}
+      methods={methods}
+      cleanUrl="/app/purchase_order?view_type=form&id=null"
+      state={purchase?.state}
+      formStates={[
+        {
+          name: "draft",
+          label: "Cotización",
+          decoration: "secondary",
+        },
+        {
+          name: "purchase",
+          label: "Compra",
+          decoration: "info",
+        },
+        {
+          name: "pending",
+          label: "Pendiente",
+          decoration: "warning",
+        },
+        {
+          name: "done",
+          label: "Terminado",
+          decoration: "success",
+        },
+        {
+          name: "cancel",
+          label: "Cancelado",
+          decoration: "danger",
+        },
+      ]}
+      actions={[
+        {
+          action: actionConfirm,
+          fieldName: "actionConfirm",
+          string: "Confirmar",
+          invisible: getValues().state !== "draft",
+        },
+        {
+          action: actionCancel,
+          fieldName: "actionCancel",
+          string: "Cancelar",
+          variant: "danger",
+          invisible: id === "null" || ["cancel", "pending", "done"].includes(getValues().state),
+        },
+      ]}
+    >
+      <FormViewGroup>
+        <FieldRelation
+          model="partner"
+          name="supplierId"
+          label="Proveedor"
+          domain={[["displayType", "=", "SUPPLIER"]]}
+          searchColumns={[{ field: "name", label: "Nombre" }]}
+          readonly={getValues().state !== "draft"}
+        />
+        <FormViewStack>
           <FieldRelation
             model="warehouse"
             name="warehouseDestId"
-            label="Almacén destino"
+            label="Origen"
             domain={[
               ["type", "=", "SUPPLY"],
               ["companyId", "=", companyId],
             ]}
             readonly={getValues().state !== "draft"}
           />
-          <FormViewStack>
-            <FieldRelation
-              model="invoicingPaymentTerm"
-              name="paymentTermId"
-              label="Término de pago"
-              readonly={["done", "cancel"].includes(getValues().state)}
-            />
-            <FieldRelation
-              model="invoicingCurrency"
-              name="currencyId"
-              label="Moneda"
-              readonly={getValues().state !== "draft"}
-            />
-          </FormViewStack>
-        </FormViewGroup>
-        <FormViewGroup>
-          <FieldEntry name="date" label="Creación" type="date" readonly />
-          <FieldEntry
-            name="dateOrder"
-            label="Confirmar el"
-            min={todayDate()}
-            type="date"
+          <FieldRelation
+            model="warehouse"
+            name="warehouseAffectedId"
+            label="Destino"
+            domain={[
+              ["type", "in", ["SALES", "PRODUCTION"]],
+              ["companyId", "=", companyId],
+            ]}
             readonly={getValues().state !== "draft"}
-            invisible={getValues().confirmedDate !== null}
           />
-          <FieldEntry
-            name="confirmedDate"
-            label="Orden confirmada"
-            min={todayDate()}
-            type="datetime-local"
-            readonly
-            invisible={getValues().confirmedDate === null}
-          />
-          <FieldEntry
-            name="datePlanned"
-            label="Fecha esperada"
-            type="date"
-            min={todayDate()}
-            readonly={["done", "cancel"].includes(getValues().state)}
-            invisible={
-              getValues().doneDate !== null && getValues().state !== "draft"
-            }
-          />
-          <FieldEntry
-            name="doneDate"
-            label="Última entrega"
-            type="datetime-local"
-            readonly
-            invisible={getValues().doneDate == null}
-          />
-        </FormViewGroup>
-        <Notebook defaultActiveKey="orderLine">
-          <Page eventKey="orderLine" title="Productos">
-            <PageSheet
-              name="purchaseOrderLine"
-              readonly={getValues().state !== "draft"}
-            >
-              <Col md="12" className="p-0 m-0 overflow-auto">
-                <SimpleTable
-                  data={lines}
-                  resizable
-                  headers={[
-                    {
-                      string: "Producto",
-                      name: "productId",
-                      width: 270,
-                      minWidth: 170,
-                    },
-                    {
-                      string: "Cantidad",
-                      name: "quantity",
-                      width: 30,
-                      minWidth: 30,
-                    },
-                    { string: "UdM", name: "uomId", width: 50, minWidth: 50 },
-                    {
-                      string: "Precio U.",
-                      name: "priceUnit",
-                      width: 30,
-                      minWidth: 30,
-                    },
-                    {
-                      string: "Subtotal",
-                      name: "subtotal",
-                      width: 50,
-                      minWidth: 50,
-                    },
-                    { string: "IVA", name: "taxRate", width: 30, minWidth: 30 },
-                    { string: "Total", name: "total", width: 50, minWidth: 50 },
-                    {
-                      string: <i className="bi bi-trash"></i>,
-                      className: "text-center",
-                      width: 25,
-                      minWidth: 25,
-                      name: "lineDelete",
-                    },
-                  ]}
-                  renderRow={(row, index) => (
-                    <tr key={row.id} className="border-bottom">
-                      <SimpleTD colIdx={index} name="lineProductId">
-                        <FieldRelation
-                          inline
-                          name={`OrderLines.${index}.productId`}
-                          model="productTemplate"
-                          domain={[
-                            ["displayType", "=", "PRODUCT"],
-                            ["purchases", "=", true],
-                          ]}
-                          searchColumns={[
-                            { field: "name", label: "Nombre" },
-                            {
-                              field: "purchases",
-                              label: "Compra",
-                              type: "boolean",
-                            },
-                          ]}
-                          ponChange={(value, record) =>
-                            computeProductLine({
-                              value,
-                              record: record as ProductTemplate,
-                              line: index,
-                            })
-                          }
-                          readonly={getValues().state !== "draft"}
-                        />
-                      </SimpleTD>
-                      <SimpleTD colIdx={index} name="lineQuantity">
-                        <FieldEntry
-                          inline
-                          name={`OrderLines.${index}.quantity`}
-                          type="number"
-                          decimals={3}
-                          onChange={(value) =>
-                            computeQuantityLine({
-                              value: Number(value),
-                              line: index,
-                            })
-                          }
-                          readonly={getValues().state !== "draft"}
-                        />
-                      </SimpleTD>
-                      <SimpleTD colIdx={index} name="lineUomId">
-                        <FieldRelation
-                          inline
-                          model="uomCategory"
-                          name={`OrderLines.${index}.uomId`}
-                          readonly
-                        />
-                      </SimpleTD>
-                      <SimpleTD colIdx={index} name="linePriceUnit">
-                        <FieldEntry
-                          inline
-                          name={`OrderLines.${index}.priceUnit`}
-                          type="number"
-                          decimals={2}
-                          onChange={(value) =>
-                            computePriceUnit({
-                              value: Number(value),
-                              line: index,
-                            })
-                          }
-                          readonly={getValues().state !== "draft"}
-                        />
-                      </SimpleTD>
-                      <SimpleTD colIdx={index} name="lineSubtotal">
-                        <FieldEntry
-                          inline
-                          name={`OrderLines.${index}.subtotal`}
-                          type="number"
-                          decimals={2}
-                          readonly
-                        />
-                      </SimpleTD>
-                      <SimpleTD colIdx={index} name="lineTaxRate">
-                        <FieldEntry
-                          inline
-                          name={`OrderLines.${index}.taxRate`}
-                          type="number"
-                          decimals={2}
-                          readonly
-                          invisible
-                        />
-                        <FieldEntry
-                          inline
-                          name={`OrderLines.${index}.taxAmount`}
-                          type="number"
-                          decimals={2}
-                          readonly
-                        />
-                      </SimpleTD>
-                      <SimpleTD colIdx={index} name="lineTotal">
-                        <FieldEntry
-                          inline
-                          name={`OrderLines.${index}.total`}
-                          type="number"
-                          decimals={2}
-                          readonly
-                        />
-                      </SimpleTD>
-                      <SimpleTD
-                        contentPosition="text-center"
-                        name="lineDelete"
-                        colIdx={index}
-                      >
-                        <BtnDeleteLine
-                          action={() => remove(index)}
-                          disabled={getValues().state !== "draft"}
-                        />
-                      </SimpleTD>
-                    </tr>
-                  )}
-                  action={() => {
-                    if (getValues().state !== "draft") return;
-                    return append({
-                      id: null,
-                      productId: { id: "", name: "" },
-                      uomId: { id: "", name: "" },
-                      quantity: 1.0,
-                      priceUnit: 0.0,
-                      taxRate: 0.0,
-                      taxAmount: 0.0,
-                      subtotal: 0.0,
-                      total: 0.0,
-                      receivedQty: 0.0,
-                      pendingQty: 0.0,
-                      ready: false,
-                      state: "pending",
-                    });
-                  }}
-                />
-                <div className="text-end pe-2">
-                  <p className="m-1">
-                    <strong>Subtotal: </strong>
-                    <span>{formatCurrency({ value: totals.subtotal })}</span>
-                  </p>
-                  <p className="m-1">
-                    <strong>IVA: </strong>
-                    <span>{formatCurrency({ value: totals.taxes })}</span>
-                  </p>
-                  <p className="fs-5 m-1">
-                    <strong>Total: </strong>
-                    <span className="fw-semibold">
-                      {formatCurrency({ value: totals.total })}
-                    </span>
-                  </p>
-                </div>
-              </Col>
-            </PageSheet>
-          </Page>
-          <Page eventKey="otherInfo" title="Otra información">
-            <PageSheet name="otherInfoPage">
-              <FormViewGroup>
-                <FieldRelation
-                  model="users"
-                  name="userId"
-                  label="Comprador"
-                  readonly
-                />
-              </FormViewGroup>
-            </PageSheet>
-          </Page>
-        </Notebook>
-      </FormView>
-      <PurchaseOperationsModal
-        methods={methods}
-        show={modalOperation}
-        onHide={() => setModalOperation(!modalOperation)}
-        reverse={handleReverse}
-      />
-    </>
+        </FormViewStack>
+        <FormViewStack>
+          <FieldRelation model="invoicingPaymentTerm" name="paymentTermId" label="Término de pago" readonly={["done", "cancel"].includes(getValues().state)} />
+          <FieldRelation model="invoicingCurrency" name="currencyId" label="Moneda" readonly={getValues().state !== "draft"} />
+        </FormViewStack>
+      </FormViewGroup>
+      <FormViewGroup>
+        <FieldEntry name="date" label="Creación" type="date" readonly />
+        <FieldEntry name="dateOrder" label="Confirmar el" min={todayDate()} type="date" readonly={getValues().state !== "draft"} invisible={getValues().confirmedDate !== null} />
+        <FieldEntry name="confirmedDate" label="Orden confirmada" min={todayDate()} type="datetime-local" readonly invisible={getValues().confirmedDate === null} />
+        <FieldEntry
+          name="datePlanned"
+          label="Fecha esperada"
+          type="date"
+          min={todayDate()}
+          readonly={["done", "cancel"].includes(getValues().state)}
+          invisible={getValues().doneDate !== null && getValues().state !== "draft"}
+        />
+        <FieldEntry name="doneDate" label="Última entrega" type="datetime-local" readonly invisible={getValues().doneDate == null} />
+      </FormViewGroup>
+      <Notebook defaultActiveKey="orderLine">
+        <Page eventKey="orderLine" title="Productos">
+          <PageSheet name="purchaseOrderLine" readonly={getValues().state !== "draft"}>
+            <Col md="12" className="p-0 m-0 overflow-auto">
+              <SimpleTable
+                data={lines}
+                resizable
+                headers={[
+                  {
+                    string: "Producto",
+                    name: "productId",
+                    width: 270,
+                    minWidth: 170,
+                  },
+                  {
+                    string: "Cantidad",
+                    name: "quantity",
+                    width: 30,
+                    minWidth: 30,
+                  },
+                  { string: "UdM", name: "uomId", width: 50, minWidth: 50 },
+                  {
+                    string: "Precio U.",
+                    name: "priceUnit",
+                    width: 30,
+                    minWidth: 30,
+                  },
+                  {
+                    string: "Subtotal",
+                    name: "subtotal",
+                    width: 50,
+                    minWidth: 50,
+                  },
+                  { string: "IVA", name: "taxRate", width: 30, minWidth: 30 },
+                  { string: "Total", name: "total", width: 50, minWidth: 50 },
+                  {
+                    string: <i className="bi bi-trash"></i>,
+                    className: "text-center",
+                    width: 25,
+                    minWidth: 25,
+                    name: "lineDelete",
+                  },
+                ]}
+                renderRow={(row, index) => (
+                  <tr key={row.id} className="border-bottom">
+                    <SimpleTD colIdx={index} name="lineProductId">
+                      <FieldRelation
+                        inline
+                        name={`OrderLines.${index}.productId`}
+                        model="productTemplate"
+                        domain={[
+                          ["displayType", "=", "PRODUCT"],
+                          ["purchases", "=", true],
+                        ]}
+                        searchColumns={[
+                          { field: "name", label: "Nombre" },
+                          {
+                            field: "purchases",
+                            label: "Compra",
+                            type: "boolean",
+                          },
+                        ]}
+                        ponChange={(value, record) =>
+                          computeProductLine({
+                            value,
+                            record: record as ProductTemplate,
+                            line: index,
+                          })
+                        }
+                        readonly={getValues().state !== "draft"}
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineQuantity">
+                      <FieldEntry
+                        inline
+                        name={`OrderLines.${index}.quantity`}
+                        type="number"
+                        decimals={3}
+                        onChange={(value) =>
+                          computeQuantityLine({
+                            value: Number(value),
+                            line: index,
+                          })
+                        }
+                        readonly={getValues().state !== "draft"}
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineUomId">
+                      <FieldRelation inline model="uomCategory" name={`OrderLines.${index}.uomId`} readonly />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="linePriceUnit">
+                      <FieldEntry
+                        inline
+                        name={`OrderLines.${index}.priceUnit`}
+                        type="number"
+                        decimals={2}
+                        onChange={(value) =>
+                          computePriceUnit({
+                            value: Number(value),
+                            line: index,
+                          })
+                        }
+                        readonly={getValues().state !== "draft"}
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineSubtotal">
+                      <FieldEntry inline name={`OrderLines.${index}.subtotal`} type="number" decimals={2} readonly />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineTaxRate">
+                      <FieldEntry inline name={`OrderLines.${index}.taxRate`} type="number" decimals={2} readonly invisible />
+                      <FieldEntry inline name={`OrderLines.${index}.taxAmount`} type="number" decimals={2} readonly />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineTotal">
+                      <FieldEntry inline name={`OrderLines.${index}.total`} type="number" decimals={2} readonly />
+                    </SimpleTD>
+                    <SimpleTD contentPosition="text-center" name="lineDelete" colIdx={index}>
+                      <BtnDeleteLine action={() => remove(index)} disabled={getValues().state !== "draft"} />
+                    </SimpleTD>
+                  </tr>
+                )}
+                action={() => {
+                  if (getValues().state !== "draft") return;
+                  return append({
+                    id: null,
+                    productId: { id: "", name: "" },
+                    uomId: { id: "", name: "" },
+                    quantity: 1.0,
+                    priceUnit: 0.0,
+                    taxRate: 0.0,
+                    taxAmount: 0.0,
+                    subtotal: 0.0,
+                    total: 0.0,
+                    receivedQty: 0.0,
+                    pendingQty: 0.0,
+                    ready: false,
+                    state: "pending",
+                  });
+                }}
+              />
+              <div className="text-end pe-2">
+                <p className="m-1">
+                  <strong>Subtotal: </strong>
+                  <span>{formatCurrency({ value: totals.subtotal })}</span>
+                </p>
+                <p className="m-1">
+                  <strong>IVA: </strong>
+                  <span>{formatCurrency({ value: totals.taxes })}</span>
+                </p>
+                <p className="fs-5 m-1">
+                  <strong>Total: </strong>
+                  <span className="fw-semibold">{formatCurrency({ value: totals.total })}</span>
+                </p>
+              </div>
+            </Col>
+          </PageSheet>
+        </Page>
+        <Page eventKey="otherInfo" title="Otra información">
+          <PageSheet name="otherInfoPage">
+            <FormViewGroup>
+              <FieldRelation model="users" name="userId" label="Comprador" readonly />
+            </FormViewGroup>
+          </PageSheet>
+        </Page>
+      </Notebook>
+    </FormView>
   );
 }
 

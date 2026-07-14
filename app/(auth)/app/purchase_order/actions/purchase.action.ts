@@ -122,6 +122,7 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
         paymentTermId: data.paymentTermId.id,
         confirmedDate: data.confirmedDate,
         currencyId: data.currencyId.id,
+        warehouseAffectedId: data.warehouseAffectedId?.id ? data.warehouseAffectedId.id : null,
         subtotal: round(
           data.OrderLines.reduce((acc, line) => acc + line.subtotal, 0),
           2,
