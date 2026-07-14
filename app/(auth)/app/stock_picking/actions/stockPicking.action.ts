@@ -471,7 +471,7 @@ export async function actionStockPickingDone({
 
       // SI LA OPERACIÓN VIENE DE UNA ORDE COMPRA
       if (data.purchaseId?.id) {
-        console.log("VIENE CON ORDEN DE COMPRA", data.purchaseId.name);
+        
       }
     }
 
