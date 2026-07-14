@@ -26,7 +26,9 @@ export async function affectStockWarehouse({
   data: StockWarehouseActionProps;
 }): Promise<ActionResponse<boolean>> {
   try {
-    const { uid } = await sessionStore();
+    const { uid, company } = await sessionStore();
+
+    const sameCompany = data.warehouseId.companyOringId === company.id;
 
     await prisma.$transaction(async (tx) => {
       // ENTRADA
@@ -82,21 +84,23 @@ export async function affectStockWarehouse({
         },
       });
 
-      const stockMoveOut = await tx.stockMove.create({
-        data: {
-          moveType: "outgoing",
-          reference: data.ref,
-          name: data.name,
-          productId: data.productId,
-          userId: uid!,
-          companyId: data.warehouseId.companyOringId,
-          warehouseDestId: data.warehouseDestId.whDestId,
-          warehouseId: data.warehouseId.whId,
-          quantity: data.deliveredQty,
-        },
-      });
+      if (!sameCompany) {
+        await tx.stockMove.create({
+          data: {
+            moveType: "outgoing",
+            reference: data.ref,
+            name: data.name,
+            productId: data.productId,
+            userId: uid!,
+            companyId: data.warehouseId.companyOringId,
+            warehouseDestId: data.warehouseDestId.whDestId,
+            warehouseId: data.warehouseId.whId,
+            quantity: data.deliveredQty,
+          },
+        });
+      }
 
-      return { stocKIn, stockMoveIn, stockOut, stockMoveOut };
+      return { stocKIn, stockMoveIn, stockOut };
     });
 
     return {

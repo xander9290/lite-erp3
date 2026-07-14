@@ -132,8 +132,6 @@ export async function actionStockPicking({
       );
     }
 
-    console.log(data.confirmedDate);
-
     const picking = await prisma.stockPicking.upsert({
       where: {
         name: data.name,
@@ -470,6 +468,11 @@ export async function actionStockPickingDone({
           },
         },
       });
+
+      // SI LA OPERACIÓN VIENE DE UNA ORDE COMPRA
+      if (data.purchaseId?.id) {
+        console.log("VIENE CON ORDEN DE COMPRA", data.purchaseId.name);
+      }
     }
 
     return {
