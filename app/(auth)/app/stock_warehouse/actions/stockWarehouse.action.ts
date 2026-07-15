@@ -20,11 +20,7 @@ export interface StockWarehouseActionProps {
   name: string;
 }
 
-export async function affectStockWarehouse({
-  data,
-}: {
-  data: StockWarehouseActionProps;
-}): Promise<ActionResponse<boolean>> {
+export async function affectStockWarehouse({ data }: { data: StockWarehouseActionProps }): Promise<ActionResponse<boolean>> {
   try {
     const { uid, company } = await sessionStore();
 
@@ -84,6 +80,7 @@ export async function affectStockWarehouse({
         },
       });
 
+      // SI ES LA MISMA COMPAÑÍA DE SALIDA QUE LA DE ENTRADA, NO SE CREA LA SALIDA
       if (!sameCompany) {
         await tx.stockMove.create({
           data: {
@@ -116,11 +113,7 @@ export async function affectStockWarehouse({
   }
 }
 
-export async function stockWarehouseReserve({
-  data,
-}: {
-  data: { productId: { id: string; name: string }; qty: number; whId: string };
-}): Promise<ActionResponse<boolean>> {
+export async function stockWarehouseReserve({ data }: { data: { productId: { id: string; name: string }; qty: number; whId: string } }): Promise<ActionResponse<boolean>> {
   try {
     await prisma.stockWarehouse.update({
       where: {
@@ -147,11 +140,7 @@ export async function stockWarehouseReserve({
   }
 }
 
-export async function stockWarehouseReserveCancel({
-  data,
-}: {
-  data: { productId: string; whId: string; qty: number };
-}): Promise<ActionResponse<boolean>> {
+export async function stockWarehouseReserveCancel({ data }: { data: { productId: string; whId: string; qty: number } }): Promise<ActionResponse<boolean>> {
   try {
     await prisma.stockWarehouse.update({
       where: {

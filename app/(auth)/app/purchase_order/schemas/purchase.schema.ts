@@ -58,6 +58,12 @@ export const purchaseOrderSchema = z.object({
       state: z.enum(PurchaseLineStates),
     }),
   ),
+  StockPicking: z
+    .object({
+      id: z.string().optional(),
+      name: z.string().optional(),
+    })
+    .nullable(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
 });
@@ -91,6 +97,7 @@ export const purchaseOrderSchemaDefault: PurchaseOrderSchemaType = {
     id: "",
     name: "",
   },
+  StockPicking: { id: "", name: "" },
   currencyId: { id: "", name: "" },
   OrderLines: [],
   createdAt: null,

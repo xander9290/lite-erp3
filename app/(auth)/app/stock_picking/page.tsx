@@ -8,14 +8,14 @@ const StockPickingListView = lazy(() => import("./views/StockPickingListView"));
 const StockPickingFormView = lazy(() => import("./views/StockPickingFormView"));
 
 async function page({ searchParams }: { searchParams: Promise<{ [key: string]: string }> }) {
-  const { view_type: viewType, id } = await searchParams;
+  const { view_type: viewType, id, po_id, so_id } = await searchParams;
 
   const picking = id && id !== "null" ? await getStockPickingById({ id }) : null;
 
   if (viewType === "list") {
     return (
       <Suspense fallback={<LoadingPage />}>
-        <StockPickingListView />
+        <StockPickingListView poId={po_id} soId={so_id} />
       </Suspense>
     );
   } else if (viewType === "form") {

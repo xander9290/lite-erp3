@@ -1,9 +1,6 @@
 "use server";
 
-import type {
-  PurchaseLineStates,
-  PurchaseOrder,
-} from "@/generated/prisma/client";
+import type { PurchaseLineStates, PurchaseOrder } from "@/generated/prisma/client";
 import { PurchaseOrderSchemaType } from "../schemas/purchase.schema";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
@@ -51,16 +48,9 @@ export interface PurchaseOrderWithProps extends PurchaseOrder {
   StockPicking: { id: string; name: string } | null;
 }
 
-export type PurchaseOrderActionProps = Omit<
-  PurchaseOrderSchemaType,
-  "createdAt" | "updatedAt"
->;
+export type PurchaseOrderActionProps = Omit<PurchaseOrderSchemaType, "createdAt" | "updatedAt">;
 
-export async function getPurchaseById({
-  id,
-}: {
-  id: string | null;
-}): Promise<PurchaseOrderWithProps | null> {
+export async function getPurchaseById({ id }: { id: string | null }): Promise<PurchaseOrderWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
     const purchase = await prisma.purchaseOrder.findUnique({
@@ -119,18 +109,11 @@ export async function getPurchaseById({
   }
 }
 
-export async function createPurchaseOrder({
-  data,
-}: {
-  data: PurchaseOrderActionProps;
-}): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
-    const name = await getNextValue(
-      `P/${company.code}/`,
-      `${company.code}-purchase`,
-    );
+    const name = await getNextValue(`P/${company.code}/`, `${company.code}-purchase`);
     const newPurchase = await prisma.purchaseOrder.create({
       data: {
         name,
@@ -143,9 +126,7 @@ export async function createPurchaseOrder({
         paymentTermId: data.paymentTermId.id,
         confirmedDate: data.confirmedDate,
         currencyId: data.currencyId.id,
-        warehouseAffectedId: data.warehouseAffectedId?.id
-          ? data.warehouseAffectedId.id
-          : null,
+        warehouseAffectedId: data.warehouseAffectedId?.id ? data.warehouseAffectedId.id : null,
         subtotal: round(
           data.OrderLines.reduce((acc, line) => acc + line.subtotal, 0),
           2,
@@ -243,13 +224,7 @@ export async function createPurchaseOrder({
   }
 }
 
-export async function updatePurchaseOrder({
-  id,
-  data,
-}: {
-  id: string | null;
-  data: PurchaseOrderActionProps;
-}): Promise<ActionResponse<PurchaseOrderWithProps>> {
+export async function updatePurchaseOrder({ id, data }: { id: string | null; data: PurchaseOrderActionProps }): Promise<ActionResponse<PurchaseOrderWithProps>> {
   try {
     if (!id) throw new Error("ID not define");
 
@@ -263,9 +238,7 @@ export async function updatePurchaseOrder({
         state: data.state,
         supplierId: data.supplierId.id,
         warehouseDestId: data.warehouseDestId.id,
-        warehouseAffectedId: data.warehouseAffectedId?.id
-          ? data.warehouseAffectedId.id
-          : null,
+        warehouseAffectedId: data.warehouseAffectedId?.id ? data.warehouseAffectedId.id : null,
         paymentTermId: data.paymentTermId.id,
         confirmedDate: data.confirmedDate ? new Date(data.confirmedDate) : null,
         currencyId: data.currencyId.id,
@@ -387,11 +360,7 @@ export async function updatePurchaseOrder({
   }
 }
 
-export async function confirmStockWarehousePurchase({
-  data,
-}: {
-  data: PurchaseOrderActionProps & { id: string | null };
-}): Promise<ActionResponse<true>> {
+export async function confirmStockWarehousePurchase({ data }: { data: PurchaseOrderActionProps & { id: string | null } }): Promise<ActionResponse<true>> {
   try {
     const { uid } = await sessionStore();
 
@@ -409,11 +378,15 @@ export async function confirmStockWarehousePurchase({
           qty: {
             increment: line.quantity,
           },
+          reservedQty: {
+            increment: line.quantity,
+          },
         },
         create: {
           productId: line.productId.id,
           warehouseId: data.warehouseDestId.id,
           qty: line.quantity,
+          reservedQty: line.quantity,
           createdUid: uid!,
         },
       });
@@ -469,13 +442,7 @@ export async function confirmStockWarehousePurchase({
   }
 }
 
-export async function cancelStockWarehousePurchase({
-  orderId,
-  data,
-}: {
-  orderId: string | null;
-  data: PurchaseOrderActionProps;
-}): Promise<ActionResponse<boolean>> {
+export async function cancelStockWarehousePurchase({ orderId, data }: { orderId: string | null; data: PurchaseOrderActionProps }): Promise<ActionResponse<boolean>> {
   try {
     if (!orderId) throw new Error("ID not defined");
 
@@ -518,14 +485,9 @@ export async function cancelStockWarehousePurchase({
   }
 }
 
-export async function createAffectStock({
-  data,
-}: {
-  data: PurchaseOrderActionProps;
-}): Promise<ActionResponse<boolean>> {
+export async function createAffectStock({ data }: { data: PurchaseOrderActionProps }): Promise<ActionResponse<boolean>> {
   try {
-    if (data.warehouseAffectedId?.id === undefined)
-      throw new Error("Almacén Destino para afectar existencias no definido");
+    if (data.warehouseAffectedId?.id === undefined) throw new Error("Almacén Destino para afectar existencias no definido");
     const { uid, company } = await sessionStore();
 
     await prisma.$transaction(async (tx) => {
@@ -562,10 +524,7 @@ export async function createAffectStock({
         // 2. CALCULAR NUEVO COSTO PROMEDIO UNA SOLA VEZ
         // ============================================
         // Sumar cantidades de TODOS los almacenes
-        const totalCurrentQty = currentStock.reduce(
-          (sum, curr) => sum + (curr.qty || 0),
-          0,
-        );
+        const totalCurrentQty = currentStock.reduce((sum, curr) => sum + (curr.qty || 0), 0);
 
         // Obtener el precio promedio actual del producto
         const currentProductTemplate = await tx.productTemplate.findUnique({
@@ -639,9 +598,7 @@ export async function createAffectStock({
         // ============================================
         // 6. MOVIMIENTO DE ALMACÉN (ENTRADA)
         // ============================================
-        console.log(
-          `-Creando líneas de movimiento de almacén: ${data.warehouseAffectedId?.name} - ${line.Product.name} - ${line.receivedQty}`,
-        );
+        console.log(`-Creando líneas de movimiento de almacén: ${data.warehouseAffectedId?.name} - ${line.Product.name} - ${line.receivedQty}`);
         await tx.stockMove.create({
           data: {
             moveType: "incoming",
@@ -686,9 +643,7 @@ export async function createAffectStock({
         },
       });
 
-      const isCompleted = orderLines.every(
-        (line) => line.state === "done" && line.ready === true,
-      );
+      const isCompleted = orderLines.every((line) => line.state === "done" && line.ready === true);
 
       if (isCompleted) {
         await tx.purchaseOrder.update({
@@ -714,22 +669,15 @@ export async function createAffectStock({
 }
 
 // AQUI TAMBIÉN SE COLOCAN CONSTRAINS
-const validateMultiplo = async (
-  lines: PurchaseOrderActionProps["OrderLines"],
-) => {
+const validateMultiplo = async (lines: PurchaseOrderActionProps["OrderLines"]) => {
   for (const line of lines) {
-    if (line.receivedQty > line.quantity)
-      throw new Error(
-        `La cantidad recbida del product ${line.productId.name} no debe ser mayor a la ordenada.`,
-      );
+    if (line.receivedQty > line.quantity) throw new Error(`La cantidad recbida del product ${line.productId.name} no debe ser mayor a la ordenada.`);
     const productId = await getProductById({ id: line.productId.id });
     if (productId) {
       const allowedQty = productId.uomIncomingAllowed;
       const qty = line.quantity;
       if (!esMultiplo(qty, allowedQty)) {
-        throw new Error(
-          `El producto ${productId.name} se compra por múltiplo de ${allowedQty} ${productId.Uom?.code}`,
-        );
+        throw new Error(`El producto ${productId.name} se compra por múltiplo de ${allowedQty} ${productId.Uom?.code}`);
       }
     }
   }
