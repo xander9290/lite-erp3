@@ -113,7 +113,7 @@ export async function createPurchaseOrder({ data }: { data: PurchaseOrderActionP
   try {
     const { uid, company } = await sessionStore();
 
-    const name = await getNextValue(`P/${company.code}/`, `${company.code}-purchase`);
+    const name = await getNextValue(`${company.code}/PUR/`, `${company.code}-purchase`);
     const newPurchase = await prisma.purchaseOrder.create({
       data: {
         name,
@@ -342,6 +342,19 @@ export async function updatePurchaseOrder({ id, data }: { id: string | null; dat
       },
     });
 
+    if (newPurchase && newPurchase.StockPicking) {
+      await prisma.stockPicking.update({
+        where: {
+          id: newPurchase.StockPicking.id,
+        },
+        data: {
+          ...(newPurchase.datePlanned && {
+            datePlanned: new Date(newPurchase.datePlanned),
+          }),
+        },
+      });
+    }
+
     await createAuditlog({
       action: "update",
       entityId: newPurchase.id,
@@ -459,6 +472,9 @@ export async function cancelStockWarehousePurchase({ orderId, data }: { orderId:
             qty: {
               decrement: line.quantity,
             },
+            reservedQty: {
+              decrement: line.quantity,
+            },
           },
         });
       }
@@ -470,7 +486,19 @@ export async function cancelStockWarehousePurchase({ orderId, data }: { orderId:
           state: "cancel",
         },
       });
+
+      await tx.stockPicking.update({
+        where: {
+          purchaseId: orderId,
+        },
+        data: {
+          state: "cancel",
+          cancelDate: new Date().toISOString(),
+        },
+      });
     });
+
+    await updatePurchaseOrder({ data, id: orderId });
 
     return {
       success: true,

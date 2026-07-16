@@ -1,6 +1,6 @@
 "use client";
 
-import { cancelStockWarehousePurchase, confirmStockWarehousePurchase, createAffectStock, createPurchaseOrder, PurchaseOrderWithProps, updatePurchaseOrder } from "../actions/purchase.action";
+import { cancelStockWarehousePurchase, confirmStockWarehousePurchase, createPurchaseOrder, PurchaseOrderWithProps, updatePurchaseOrder } from "../actions/purchase.action";
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { purchaseOrderSchema, purchaseOrderSchemaDefault, PurchaseOrderSchemaType } from "../schemas/purchase.schema";
@@ -18,10 +18,8 @@ import type { ProductTemplate } from "@/generated/prisma/client";
 import { getProductById } from "../../product_template/products/actions/productTemplate.action";
 import { formatCurrency } from "@/app/libs/helpers";
 import { getCompanyById } from "../../companies/actions/companies-actions";
-import PurchaseOperationsModal from "./PurchaseOperationsModal";
 import { toDateOnly, toDateTimeLocal, todayDate } from "@/app/libs/validatorDate";
 import { PartnerWithProps } from "../../partners/actions/partner-actions";
-import { getParsedType } from "zod/v3";
 import { getIPaymentTermById } from "../../invoicing_settings/payment_term/actions/ipaymentTerm.action";
 
 function PurchaseFormView({ id, purchase }: { id: string | null; purchase: PurchaseOrderWithProps | null }) {
@@ -57,7 +55,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
   };
   const router = useRouter();
 
-  const { modalError } = useModals();
+  const { modalError, modalConfirm } = useModals();
 
   const onSubmit: SubmitHandler<PurchaseOrderSchemaType> = async (data) => {
     if (id && id === "null") {
@@ -77,8 +75,6 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
 
   const computeProductLine = async ({ value, record, line }: { value: string | null; record: ProductTemplate | null; line: number }) => {
     if (record) {
-      if (id && id !== "null") return;
-
       const productId = await getProductById({ id: value });
       if (productId) {
         const unitPrice = productId.lastCost; // ✅ ya viene sin IVA
@@ -124,8 +120,6 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
   };
 
   const computePriceUnit = ({ value, line }: { value: number; line: number }) => {
-    if (id && id !== "null") return;
-
     const priceUnit = value; // ✅ precio sin IVA
     const qty = getValues().OrderLines[line].quantity;
     const taxRate = getValues().OrderLines[line].taxRate ?? 0.0;
@@ -181,7 +175,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
       state: purchase.state,
       date: toDateOnly(purchase.date),
       dateOrder: toDateOnly(purchase.dateOrder),
-      datePlanned: toDateOnly(purchase.datePlanned),
+      datePlanned: purchase.datePlanned ? toDateOnly(purchase.datePlanned) : null,
       confirmedDate: toDateTimeLocal(purchase.confirmedDate),
       doneDate: toDateTimeLocal(purchase.doneDate),
       subtotal: purchase.subtotal,
@@ -302,9 +296,8 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
         orderId: id,
       });
       if (!res.success) return modalError(res.message);
+      router.refresh();
     }
-
-    await onSubmit(newData);
   });
 
   const handleActionCancel = () => {
@@ -312,7 +305,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
   };
 
   const actionStockPicking = () => {
-    return router.push(`/app/stock_picking?view_type=form&id=${getValues().StockPicking?.id}`);
+    return router.push(`/app/stock_picking?view_type=list&po_id=${id}`);
   };
 
   return (
@@ -337,7 +330,7 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
         },
         {
           name: "pending",
-          label: "Pendiente",
+          label: "Parcial",
           decoration: "warning",
         },
         {
@@ -361,8 +354,8 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
         {
           action: actionStockPicking,
           fieldName: "actionStockPicking",
-          string: "Operación",
-          invisible: getValues().StockPicking?.id === "",
+          string: "Operaciones",
+          invisible: getValues().state !== "purchase",
         },
         {
           action: handleActionCancel,
@@ -411,18 +404,13 @@ function PurchaseFormView({ id, purchase }: { id: string | null; purchase: Purch
         </FormViewStack>
       </FormViewGroup>
       <FormViewGroup>
-        <FieldEntry name="date" label="Creación" type="date" readonly />
-        <FieldEntry name="dateOrder" label="Confirmar el" min={todayDate()} type="date" readonly={getValues().state !== "draft"} invisible={getValues().confirmedDate !== null} />
-        <FieldEntry name="confirmedDate" label="Orden confirmada" min={todayDate()} type="datetime-local" readonly invisible={getValues().confirmedDate === null} />
-        <FieldEntry
-          name="datePlanned"
-          label="Fecha esperada"
-          type="date"
-          min={todayDate()}
-          readonly={["done", "cancel"].includes(getValues().state)}
-          invisible={getValues().doneDate !== null && getValues().state !== "draft"}
-        />
-        <FieldEntry name="doneDate" label="Última entrega" type="datetime-local" readonly invisible={getValues().doneDate == null} />
+        <FormViewStack>
+          <FieldEntry name="datePlanned" label="Fecha esperada" type="date" min={todayDate()} readonly={["done", "cancel"].includes(getValues().state)} />
+          <FieldEntry name="date" label="Creación" type="date" readonly />
+          <FieldEntry name="dateOrder" label="Confirmar el" min={todayDate()} type="date" readonly={getValues().state !== "draft"} />
+          <FieldEntry name="confirmedDate" label="Orden confirmada" min={todayDate()} type="datetime-local" readonly />
+          <FieldEntry name="doneDate" label="Última entrega" type="datetime-local" readonly invisible />
+        </FormViewStack>
       </FormViewGroup>
       <Notebook defaultActiveKey="orderLine">
         <Page eventKey="orderLine" title="Productos">

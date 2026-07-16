@@ -37,7 +37,7 @@ function StockPickingListView({ poId, soId }: { poId: string | null; soId: strin
     <ListView model="stockPicking">
       <ListView.Header title={`Operaciones ${company?.name}`} formView="/app/stock_picking?view_type=form&id=null" />
       <ListView.Body>
-        <TableTemplateLite pageSize={100} onRowClick={(row) => router.push(`/app/stock_picking?view_type=form&id=${row.id}`)} defaultOrder="createdAt desc" model="stockPicking" baseDomain={domain}>
+        <TableTemplateLite pageSize={100} onRowClick={(row) => router.push(`/app/stock_picking?view_type=form&id=${row.id}`)} defaultOrder="confirmedDate asc" model="stockPicking" baseDomain={domain}>
           <Column field="name" label="Folio" render={(field) => <span className="fw-semibold">{field}</span>} />
           <Column field="date" label="Fecha" type="date" render={(field) => <WidgetDisplayDate date={field} />} />
           <Column

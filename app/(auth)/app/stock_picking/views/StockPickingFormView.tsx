@@ -53,10 +53,11 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
   };
   const router = useRouter();
 
-  const { modalError } = useModals();
+  const { modalError, modalConfirm } = useModals();
+
+  const hasOrigins = getValues().purchaseId !== null || getValues().saleId !== null;
 
   const onSubmit: SubmitHandler<StockPickingSchemaType> = async (data) => {
-    console.log(data);
     for (const line of data.PickingLine) {
       if (line.delivered > line.quantity) {
         modalError(`La cantidad entregada del product ${line.productId.name} no debe ser mayor a la demandada`);
@@ -114,6 +115,10 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
   });
 
   const actionCancel = handleSubmit(async () => {
+    if (hasOrigins) {
+      return modalError("No es posible cancelar el documento en este momento");
+    }
+
     const newData: StockPickingSchemaType = {
       ...getValues(),
       state: "cancel",
@@ -201,6 +206,10 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
     console.log(errors);
   }, [errors]);
 
+  const handleActionCancel = () => {
+    return modalConfirm("Confirma que quieres cancelar el documento", () => actionCancel());
+  };
+
   if (!companyId) {
     return <Alert variant="warning">Elige una empresa para continuar</Alert>;
   }
@@ -264,7 +273,7 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
           invisible: getValues().state !== "ready",
         },
         {
-          action: actionCancel,
+          action: handleActionCancel,
           fieldName: "actionCancel",
           string: "Cancelar",
           variant: "danger",
@@ -301,7 +310,13 @@ function StockPickingFormView({ id, picking }: { id: string | null; picking: Sto
       <FormViewGroup>
         <FormViewStack>
           <FieldEntry name="date" type="date" label="Fecha" readonly />
-          <FieldEntry name="datePlanned" type="date" label="Programar entrega" min={todayDate()} readonly={getValues().companyId !== companyId || ["done", "cancel"].includes(getValues().state)} />
+          <FieldEntry
+            name="datePlanned"
+            type="date"
+            label="Programar entrega"
+            min={todayDate()}
+            readonly={getValues().companyId !== companyId || ["done", "cancel"].includes(getValues().state) || hasOrigins}
+          />
         </FormViewStack>
         <FieldRelation model="partner" name="operatorId" label="Operador" domain={[["Tags.name", "some", "WAREHOUSE"]]} readonly={getValues().state !== "confirmed"} />
       </FormViewGroup>
