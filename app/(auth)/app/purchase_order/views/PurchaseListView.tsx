@@ -5,12 +5,21 @@ import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
 import { useRouter } from "next/navigation";
 import { PurchaseOrderSchemaType } from "../schemas/purchase.schema";
-import { WidgetAvatar, WidgetBadgeStatus, WidgetCurrency, WidgetDeadline, WidgetDisplayDate } from "@/components/widgets";
+import {
+  WidgetAvatar,
+  WidgetBadgeStatus,
+  WidgetCurrency,
+  WidgetDeadline,
+  WidgetDisplayDate,
+} from "@/components/widgets";
 import { useAuth } from "@/hooks/sessionStore";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-export const purchaseOrderStateDisplay: Record<PurchaseOrderSchemaType["state"], string> = {
+export const purchaseOrderStateDisplay: Record<
+  PurchaseOrderSchemaType["state"],
+  string
+> = {
   draft: "Cotización",
   purchase: "Compra",
   pending: "Parcial",
@@ -32,26 +41,45 @@ function PurchaseListView({ state }: { state: string | null }) {
 
   return (
     <ListView model="purchaseOrder">
-      <ListView.Header title={`${state === "draft" ? "Compras cotizaciones" : "Órdenes de compra"}`} formView="/app/purchase_order?view_type=form&id=null" />
+      <ListView.Header
+        title={`${state === "draft" ? "Compras cotizaciones" : "Órdenes de compra"}`}
+        formView="/app/purchase_order?view_type=form&id=null"
+      />
       <ListView.Body>
         <TableTemplateLite
           model="purchaseOrder"
-          defaultOrder="name desc"
+          defaultOrder="confirmedDate asc"
           pageSize={100}
           baseDomain={domain}
-          onRowClick={(row) => router.push(`/app/purchase_order?view_type=form&id=${row.id}`)}
+          onRowClick={(row) =>
+            router.push(`/app/purchase_order?view_type=form&id=${row.id}`)
+          }
           showTotals={true}
           totalColumns={["total"]}
         >
-          <Column field="name" label="Folio" render={(name) => <div className="fw-bold">{name}</div>} />
-          <Column field="date" label="Creación" type="date" render={(name) => <WidgetDisplayDate date={name} />} />
+          <Column
+            field="name"
+            label="Folio"
+            render={(name) => <div className="fw-bold">{name}</div>}
+          />
+          <Column
+            field="date"
+            label="Creación"
+            type="date"
+            render={(name) => <WidgetDisplayDate date={name} />}
+          />
           <Column
             field="Supplier.name"
             label="Proveedor"
             include={{
               Supplier: { select: { name: true, id: true, imageUrl: true } },
             }}
-            render={(_, field) => <WidgetAvatar imageUrl={field.Supplier.imageUrl} displayName={field.Supplier.name} />}
+            render={(_, field) => (
+              <WidgetAvatar
+                imageUrl={field.Supplier.imageUrl}
+                displayName={field.Supplier.name}
+              />
+            )}
           />
           <Column
             field="PaymentTerm.name"
@@ -128,9 +156,20 @@ function PurchaseListView({ state }: { state: string | null }) {
                 },
               },
             }}
-            render={(_, field) => <WidgetAvatar imageUrl={field.User.Partner.imageUrl} displayName={field.User.name} />}
+            render={(_, field) => (
+              <WidgetAvatar
+                imageUrl={field.User.Partner.imageUrl}
+                displayName={field.User.name}
+              />
+            )}
           />
-          <Column field="total" label="Total" type="number" render={(field) => <WidgetCurrency number={field} />} format="currency" />
+          <Column
+            field="total"
+            label="Total"
+            type="number"
+            render={(field) => <WidgetCurrency number={field} />}
+            format="currency"
+          />
           <Column
             field="state"
             label="Estado"
