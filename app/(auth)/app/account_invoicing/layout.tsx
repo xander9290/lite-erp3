@@ -1,46 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Card, Col, Nav, Row } from "react-bootstrap";
 
 const menu = [
   {
-    label: "Términos de pago",
-    href: "/app/invoicing_settings/payment_term?view_type=list&id=null",
-    icon: "bi-credit-card",
+    label: "Facturas",
+    href: "/app/invoicing_customer/account_move?view_type=list&id=null",
+    icon: "bi bi-receipt",
   },
   {
-    label: "Impuestos",
-    href: "/app/invoicing_settings/invoicing_tax?view_type=list&id=null",
-    icon: "bi-percent",
+    label: "Pagos",
+    href: "/app/invoicing_customer/account_payment?view_type=list&id=null",
+    icon: "bi bi-cash-stack",
   },
   {
-    label: "Monedas",
-    href: "/app/invoicing_settings/invoicing_currency?view_type=list&id=null",
-    icon: "bi-currency-exchange",
-  },
-  {
-    label: "Diarios",
-    href: "/app/invoicing_settings/invoicing_journal?view_type=list&id=null",
-    icon: "bi bi-journal-bookmark",
+    label: "Notas de crédito",
+    href: "/app/invoicing_customer/account_refund?view_type=list&id=null",
+    icon: "bi bi-receipt-cutoff",
   },
 ];
 
-export default function Layout({
+function layout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   return (
     <Row className="g-3 h-100">
       <Col xs={12} md={4} lg={3} xl={2}>
         <Card className="shadow-sm h-100">
           <Card.Header className="fw-semibold">
-            <i className="bi bi-gear me-2" />
-            Facturación ajustes
+            <i className="bi bi-person-vcard-fill me-2" />
+            Facturación clientes
           </Card.Header>
 
           <Card.Body className="p-2">
@@ -68,3 +64,5 @@ export default function Layout({
     </Row>
   );
 }
+
+export default layout;

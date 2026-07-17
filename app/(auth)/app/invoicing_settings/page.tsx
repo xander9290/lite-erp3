@@ -1,7 +1,7 @@
 import { Metadata } from "next/types";
 
 export const metadata: Metadata = {
-  title: "Facturación",
+  title: "Facturación ajustes",
 };
 
 function InvoicingSettingsPage() {

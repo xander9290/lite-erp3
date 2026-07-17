@@ -76,11 +76,13 @@ const menus: MenuGroup[] = [
         key: "invoicingCustomersMenu",
         label: "Clientes",
         icon: "bi bi-person-vcard-fill",
+        href: "/app/account_invoicing?view_type=list&id=null&display_type=customer",
       },
       {
         key: "invoicingSuppliersMenu",
         label: "Proveedores",
         icon: "bi bi-building",
+        href: "/app/account_invoicing?view_type=list&id=null&display_type=supplier",
       },
       {
         key: "invoicingSettings",
