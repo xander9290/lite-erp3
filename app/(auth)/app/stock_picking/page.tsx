@@ -11,11 +11,24 @@ export const metadata: Metadata = {
 
 const StockPickingListView = lazy(() => import("./views/StockPickingListView"));
 const StockPickingFormView = lazy(() => import("./views/StockPickingFormView"));
+const StockPickingLineView = lazy(() => import("./views/StockPickingLineView"));
 
-async function page({ searchParams }: { searchParams: Promise<{ [key: string]: string }> }) {
-  const { view_type: viewType, id, po_id, so_id } = await searchParams;
+async function page({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string }>;
+}) {
+  const {
+    view_type: viewType,
+    id,
+    po_id,
+    so_id,
+    move_type: moveType,
+    product_id: productId,
+  } = await searchParams;
 
-  const picking = id && id !== "null" ? await getStockPickingById({ id }) : null;
+  const picking =
+    id && id !== "null" ? await getStockPickingById({ id }) : null;
 
   if (viewType === "list") {
     return (
@@ -27,6 +40,12 @@ async function page({ searchParams }: { searchParams: Promise<{ [key: string]: s
     return (
       <Suspense fallback={<LoadingPage />}>
         <StockPickingFormView id={id} picking={picking} />
+      </Suspense>
+    );
+  } else if (viewType === "line") {
+    return (
+      <Suspense fallback={<LoadingPage />}>
+        <StockPickingLineView productId={productId} moveType={moveType} />
       </Suspense>
     );
   } else {

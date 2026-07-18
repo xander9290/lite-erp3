@@ -595,3 +595,59 @@ export async function updateProduct({
     };
   }
 }
+
+export async function getProductForecasted({
+  productId,
+  companyId,
+}: {
+  productId: string | null;
+  companyId: string | null;
+}): Promise<{ incomming: number; outgoing: number }> {
+  try {
+    if (!productId || !companyId)
+      throw new Error("ID producto not defined (getProductForecasted)");
+
+    const pickingIncommingMovements = await prisma.stockPickingLine.findMany({
+      where: {
+        Picking: {
+          WarehouseDest: {
+            companyId: companyId,
+          },
+          state: {
+            notIn: ["done", "cancel"],
+          },
+        },
+        productId,
+      },
+    });
+
+    const pickingOutgoingMovements = await prisma.stockPickingLine.findMany({
+      where: {
+        Picking: {
+          Warehouse: {
+            companyId: companyId,
+          },
+          state: {
+            notIn: ["done", "cancel"],
+          },
+          purchaseId: null,
+        },
+        productId,
+      },
+    });
+
+    return {
+      incomming: pickingIncommingMovements.reduce(
+        (acc, line) => line.delivered + acc,
+        0,
+      ),
+      outgoing: pickingOutgoingMovements.reduce(
+        (acc, line) => line.delivered + acc,
+        0,
+      ),
+    };
+  } catch (error: any) {
+    console.log(error);
+    return { incomming: 0.0, outgoing: 0.0 };
+  }
+}

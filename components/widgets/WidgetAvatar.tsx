@@ -19,7 +19,18 @@ export function WidgetAvatar({
   return (
     <Zoom>
       <div className={displayName ? "d-flex align-items-center gap-1" : ""}>
-        {imageUrl && <Image title={name} unoptimized src={imageUrl} width={width} height={height} alt="imageAvatar" className="img-fluid rounded" onClick={(e) => e.stopPropagation()} />}
+        {imageUrl && (
+          <Image
+            title={name}
+            unoptimized
+            src={imageUrl}
+            width={width}
+            height={height}
+            alt="imageAvatar"
+            className="img-fluid rounded"
+            onClick={(e) => e.stopPropagation()}
+          />
+        )}
         {displayName && <span>{displayName}</span>}
       </div>
     </Zoom>
