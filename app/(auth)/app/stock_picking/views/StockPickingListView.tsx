@@ -4,13 +4,26 @@ import { FieldText } from "@/components/templates/fields";
 import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
-import { WidgetAvatar, WidgetBadgeStatus, WidgetDeadline, WidgetDisplayDate, WidgetLiveRemaining } from "@/components/widgets";
+import {
+  WidgetAvatar,
+  WidgetBadgeStatus,
+  WidgetDeadline,
+  WidgetDisplayDate,
+  WidgetLiveRemaining,
+} from "@/components/widgets";
 import { useAuth } from "@/hooks/sessionStore";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useRouter } from "next/navigation";
+import { Alert, Container } from "react-bootstrap";
 
-function StockPickingListView({ poId, soId }: { poId: string | null; soId: string | null }) {
+function StockPickingListView({
+  poId,
+  soId,
+}: {
+  poId: string | null;
+  soId: string | null;
+}) {
   const { company } = useAuth();
 
   const domain = [];
@@ -31,15 +44,33 @@ function StockPickingListView({ poId, soId }: { poId: string | null; soId: strin
 
   const router = useRouter();
 
-  console.log(domain);
-
   return (
     <ListView model="stockPicking">
-      <ListView.Header title={`Operaciones ${company?.name}`} formView="/app/stock_picking?view_type=form&id=null" />
+      <ListView.Header
+        title={`Operaciones ${company?.name}`}
+        formView="/app/stock_picking?view_type=form&id=null"
+      />
       <ListView.Body>
-        <TableTemplateLite pageSize={100} onRowClick={(row) => router.push(`/app/stock_picking?view_type=form&id=${row.id}`)} defaultOrder="confirmedDate asc" model="stockPicking" baseDomain={domain}>
-          <Column field="name" label="Folio" render={(field) => <span className="fw-semibold">{field}</span>} />
-          <Column field="date" label="Fecha" type="date" render={(field) => <WidgetDisplayDate date={field} />} />
+        <TableTemplateLite
+          pageSize={100}
+          onRowClick={(row) =>
+            router.push(`/app/stock_picking?view_type=form&id=${row.id}`)
+          }
+          defaultOrder="confirmedDate asc"
+          model="stockPicking"
+          baseDomain={domain}
+        >
+          <Column
+            field="name"
+            label="Folio"
+            render={(field) => <span className="fw-semibold">{field}</span>}
+          />
+          <Column
+            field="date"
+            label="Fecha"
+            type="date"
+            render={(field) => <WidgetDisplayDate date={field} />}
+          />
           <Column
             field="operationType"
             label="Tipo"
@@ -67,9 +98,20 @@ function StockPickingListView({ poId, soId }: { poId: string | null; soId: strin
                 },
               },
             }}
-            render={(_, field) => <WidgetAvatar imageUrl={field.Partner.imageUrl} displayName={field.Partner.name} />}
+            render={(_, field) => (
+              <WidgetAvatar
+                imageUrl={field.Partner.imageUrl}
+                displayName={field.Partner.name}
+              />
+            )}
           />
-          <Column field="reference" label="Referencia" render={(field) => <FieldText name="stockPickingReference" output={field} />} />
+          <Column
+            field="reference"
+            label="Referencia"
+            render={(field) => (
+              <FieldText name="stockPickingReference" output={field} />
+            )}
+          />
           <Column
             field="Warehouse.description"
             label="Origen"
@@ -82,7 +124,9 @@ function StockPickingListView({ poId, soId }: { poId: string | null; soId: strin
                 },
               },
             }}
-            render={(field) => <FieldText name="stockPickingOrigin" output={field} />}
+            render={(field) => (
+              <FieldText name="stockPickingOrigin" output={field} />
+            )}
           />
           <Column
             field="WarehouseDest.description"
@@ -95,7 +139,9 @@ function StockPickingListView({ poId, soId }: { poId: string | null; soId: strin
                 },
               },
             }}
-            render={(field) => <FieldText name="stockPickingDest" output={field} />}
+            render={(field) => (
+              <FieldText name="stockPickingDest" output={field} />
+            )}
           />
           <Column
             field="Operator.name"
@@ -103,14 +149,32 @@ function StockPickingListView({ poId, soId }: { poId: string | null; soId: strin
             include={{
               Operator: { select: { id: true, name: true, imageUrl: true } },
             }}
-            render={(_, field) => <WidgetAvatar imageUrl={field.Operador?.imageUrl} displayName={field.Operator?.name} />}
+            render={(name, field) => (
+              <WidgetAvatar
+                imageUrl={field.Operador?.imageUrl}
+                displayName={name}
+              />
+            )}
           />
-          <Column field="datePlanned" label="Fecha de entrega" type="date" render={(field) => <WidgetDeadline date={field} warnAfter={1} />} />
+          <Column
+            field="datePlanned"
+            label="Fecha de entrega"
+            type="date"
+            render={(field) => <WidgetDeadline date={field} warnAfter={1} />}
+          />
           <Column
             field="confirmedDate"
             label="Confirmado"
             type="datetime"
-            render={(field, row) => (row.state === "done" ? <span>{format(field, "dd MMM yyy HH:mm:ss", { locale: es })}</span> : <WidgetLiveRemaining date={field} />)}
+            render={(field, row) =>
+              row.state === "done" ? (
+                <span>
+                  {format(field, "dd MMM yyy HH:mm:ss", { locale: es })}
+                </span>
+              ) : (
+                <WidgetLiveRemaining date={field} />
+              )
+            }
           />
           <Column
             field="state"

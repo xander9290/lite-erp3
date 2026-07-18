@@ -196,7 +196,6 @@ function PurchaseFormView({
   };
 
   const onChangeSupplier = async (record: PartnerWithProps | null) => {
-    if (id && id !== "null") return;
     const paymentTermId = record?.paymentTermId || null;
     if (paymentTermId) {
       const getPaymentTerm = await getIPaymentTermById({ id: paymentTermId });
