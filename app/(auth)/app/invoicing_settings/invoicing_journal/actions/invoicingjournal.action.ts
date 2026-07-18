@@ -10,11 +10,7 @@ export interface InvoicingJournalWithProps extends InvoicingJournal {
   Currency: { id: string; name: string } | null;
 }
 
-export async function getJournalById({
-  id,
-}: {
-  id: string | null;
-}): Promise<InvoicingJournalWithProps | null> {
+export async function getJournalById({ id }: { id: string | null }): Promise<InvoicingJournalWithProps | null> {
   try {
     if (!id) throw new Error("ID journal not defined");
 
@@ -39,17 +35,14 @@ export async function getJournalById({
   }
 }
 
-export async function createInvoicingJournal({
-  data,
-}: {
-  data: InvoicingJournalSchemaType;
-}): Promise<ActionResponse<InvoicingJournalWithProps>> {
+export async function createInvoicingJournal({ data }: { data: InvoicingJournalSchemaType }): Promise<ActionResponse<InvoicingJournalWithProps>> {
   try {
     const newJournal = await prisma.invoicingJournal.create({
       data: {
         code: data.code,
         name: data.name,
         companyId: data.companyId.id,
+        type: data.type,
         currencyId: data.currencyId?.id ? data.currencyId.id : null,
       },
       include: {
@@ -76,13 +69,7 @@ export async function createInvoicingJournal({
   }
 }
 
-export async function updateInvoicingJournal({
-  data,
-  id,
-}: {
-  data: InvoicingJournalSchemaType;
-  id: string | null;
-}): Promise<ActionResponse<InvoicingJournalWithProps>> {
+export async function updateInvoicingJournal({ data, id }: { data: InvoicingJournalSchemaType; id: string | null }): Promise<ActionResponse<InvoicingJournalWithProps>> {
   try {
     if (!id) throw new Error("ID journal not defined");
 
@@ -93,6 +80,7 @@ export async function updateInvoicingJournal({
       data: {
         code: data.code,
         name: data.name,
+        type: data.type,
         companyId: data.companyId.id,
         currencyId: data.currencyId?.id ? data.currencyId.id : null,
       },

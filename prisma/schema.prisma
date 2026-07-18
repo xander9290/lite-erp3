@@ -703,9 +703,44 @@ model InvoicingJournal {
   currencyId String?
   Currency   InvoicingCurrency? @relation(fields: [currencyId], references: [id], onDelete: Restrict)
 
+  JournalEntries InvoicingJournalEntry[]
+
   AccountInvoices InvoicingInvoice[]
 
   @@map("invoicing_journal")
+}
+
+model InvoicingJournalEntry {
+  id        String   @id @default(cuid())
+  reference String?
+  date      DateTime @default(now()) @db.Date
+
+  journalId String
+  Journal   InvoicingJournal @relation(fields: [journalId], references: [id], onDelete: Restrict)
+
+  invoiceId String?
+  Invoice   InvoicingInvoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  reatedAt  DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model InvoicingJournalLine {
+  id      String             @id @default(cuid())
+  concept JournalLineConcept
+  debit   Decimal            @db.Decimal(16, 2)
+  credit  Decimal            @db.Decimal(16, 2)
+}
+
+enum JournalLineConcept {
+  customer
+  supplier
+  sale
+  purchase
+  vat
+  payment
+  discount
+  shipping
 }
 
 enum JournalType {
@@ -745,6 +780,8 @@ model InvoicingInvoice {
 
   journalId String
   Journal   InvoicingJournal @relation(fields: [journalId], references: [id], onDelete: Restrict)
+
+  JournalEntries InvoicingJournalEntry[]
 
   createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")
