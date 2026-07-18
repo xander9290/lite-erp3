@@ -115,17 +115,23 @@ export async function affectStockWarehouse({ data }: { data: StockWarehouseActio
 
 export async function stockWarehouseReserve({ data }: { data: { productId: { id: string; name: string }; qty: number; whId: string } }): Promise<ActionResponse<boolean>> {
   try {
-    await prisma.stockWarehouse.update({
+    await prisma.stockWarehouse.upsert({
       where: {
         productId_warehouseId: {
           productId: data.productId.id,
           warehouseId: data.whId,
         },
       },
-      data: {
+      update: {
         reservedQty: {
           increment: data.qty,
         },
+      },
+      create: {
+        reservedQty: data.qty,
+        productId: data.productId.id,
+        warehouseId: data.whId,
+        createdUid: "",
       },
     });
 

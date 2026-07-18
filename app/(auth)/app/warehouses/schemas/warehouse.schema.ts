@@ -6,6 +6,8 @@ export const warehouseSchema = z.object({
   code: z.string().min(1, "Código es requerido"),
   description: z.string().min(1, "Descripción es requerido"),
   type: z.enum(WarehouseType),
+  reserveQtyWs: z.boolean(),
+  saleQtyWs: z.boolean(),
   active: z.boolean(),
   companyId: z.object({
     id: z.string().min(1, "Empresa es requerido"),
@@ -28,6 +30,8 @@ export const warehouseSchemaDefault: WarehouseSchemaType = {
   name: "",
   code: "",
   description: "",
+  reserveQtyWs: false,
+  saleQtyWs: false,
   active: true,
   type: "SALES",
   companyId: {

@@ -276,33 +276,46 @@ export async function actionStockPickingConfirm({ data }: { data: StockPickingSc
       throw new Error(`${data.whDestId.name} no acepta operaciones internas por parte de ${data.whId.name}`);
     }
 
-    for (const line of data.PickingLine) {
-      const stock = await prisma.stockWarehouse.findUnique({
-        where: {
-          productId_warehouseId: {
-            productId: line.productId.id,
-            warehouseId: data.whId.id,
-          },
-        },
-        include: {
-          Product: {
-            select: {
-              id: true,
-              name: true,
-              Uom: { select: { id: true, code: true } },
+    // VERIFICA SI EL ALMACÉN PERMITE RESERVAS SIN STOCK
+
+    const wh = await prisma.warehouse.findFirst({
+      where: {
+        id: data.whId.id,
+      },
+    });
+
+    if (wh && !wh.reserveQtyWs) {
+      for (const line of data.PickingLine) {
+        const stock = await prisma.stockWarehouse.findUnique({
+          where: {
+            productId_warehouseId: {
+              productId: line.productId.id,
+              warehouseId: data.whId.id,
             },
           },
-        },
-      });
+          include: {
+            Product: {
+              select: {
+                id: true,
+                name: true,
+                Uom: { select: { id: true, code: true } },
+              },
+            },
+            Warehouse: {
+              select: { reserveQtyWs: true },
+            },
+          },
+        });
 
-      if (!stock) {
-        throw new Error(`${line.productId.name} no cuenta con existencia en el almacén de origen`);
-      }
+        if (!stock) {
+          throw new Error(`${line.productId.name} no cuenta con existencia en el almacén de origen`);
+        }
 
-      const qyAvailable = round(stock.qty - stock.reservedQty, 3);
+        const qyAvailable = round(stock.qty - stock.reservedQty, 3);
 
-      if (qyAvailable < line.quantity) {
-        throw new Error(`${line.productId.name} no cuenta con cantidad disponible para complementar la demanda solicitada.\n Disponible: ${qyAvailable} ${stock.Product.Uom?.code}`);
+        if (qyAvailable < line.quantity) {
+          throw new Error(`${line.productId.name} no cuenta con cantidad disponible para complementar la demanda solicitada.\n Disponible: ${qyAvailable} ${stock.Product.Uom?.code}`);
+        }
       }
     }
 
@@ -399,9 +412,40 @@ export async function actionStockPickingDone({ data }: { data: StockPickingSchem
     }
 
     const today = todayDate();
-    const datePlanned = data.datePlanned === today;
+    const datePlanned = data.datePlanned === today || data.datePlanned < today;
     if (!datePlanned) {
       throw new Error(`Fecha de validación precipitada; programado para\n${data.datePlanned}`.toString());
+    }
+
+    for (const line of data.PickingLine) {
+      const stock = await prisma.stockWarehouse.findUnique({
+        where: {
+          productId_warehouseId: {
+            productId: line.productId.id,
+            warehouseId: data.whId.id,
+          },
+        },
+        include: {
+          Product: {
+            select: {
+              id: true,
+              name: true,
+              Uom: { select: { id: true, code: true } },
+            },
+          },
+          Warehouse: {
+            select: { reserveQtyWs: true },
+          },
+        },
+      });
+
+      if (!stock) {
+        throw new Error(`${line.productId.name} no cuenta con existencia en el almacén de origen`);
+      }
+
+      if (stock.qty < 0.1) {
+        throw new Error(`${line.productId.name} no cuenta con cantidad disponible para complementar la demanda solicitada.\n Disponible: ${stock.qty} ${stock.Product.Uom?.code}`);
+      }
     }
 
     const res = await actionStockPicking({ data });
@@ -447,6 +491,7 @@ export async function actionStockPickingDone({ data }: { data: StockPickingSchem
             },
             data: {
               state: "done",
+              doneDate: new Date().toISOString(),
             },
           });
         }

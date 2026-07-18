@@ -699,7 +699,6 @@ export async function createAffectStock({ data }: { data: PurchaseOrderActionPro
 // AQUI TAMBIÉN SE COLOCAN CONSTRAINS
 const validateMultiplo = async (lines: PurchaseOrderActionProps["OrderLines"]) => {
   for (const line of lines) {
-    if (line.receivedQty > line.quantity) throw new Error(`La cantidad recbida del product ${line.productId.name} no debe ser mayor a la ordenada.`);
     const productId = await getProductById({ id: line.productId.id });
     if (productId) {
       const allowedQty = productId.uomIncomingAllowed;

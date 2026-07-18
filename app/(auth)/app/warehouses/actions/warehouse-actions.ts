@@ -64,6 +64,8 @@ export async function createWarehouse({ data }: { data: WarehouseActionProps }):
         name: `[${data.code}] ${data.description}`,
         description: data.description,
         code: data.code,
+        reserveQtyWs: data.reserveQtyWs,
+        saleQtyWs: data.saleQtyWs,
         active: data.active,
         type: data.type,
         Company: {
@@ -125,6 +127,8 @@ export async function updateWarehouse({ id, data }: { id: string | null; data: W
         name: `[${data.code}] ${data.description}`,
         description: data.description,
         code: data.code,
+        reserveQtyWs: data.reserveQtyWs,
+        saleQtyWs: data.saleQtyWs,
         active: data.active,
         type: data.type,
         Company: {

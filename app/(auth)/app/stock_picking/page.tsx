@@ -3,6 +3,11 @@ import { lazy, Suspense } from "react";
 import LoadingPage from "@/app/loading-page";
 import NotFound from "@/app/not-found";
 import { getStockPickingById } from "./actions/stockPicking.action";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Operaciones",
+};
 
 const StockPickingListView = lazy(() => import("./views/StockPickingListView"));
 const StockPickingFormView = lazy(() => import("./views/StockPickingFormView"));

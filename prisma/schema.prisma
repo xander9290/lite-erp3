@@ -197,12 +197,14 @@ model Company {
 }
 
 model Warehouse {
-  id          String        @id @default(cuid())
-  name        String        @unique
-  code        String        @unique
-  description String        @unique
-  type        WarehouseType @default(SALES)
-  active      Boolean       @default(true)
+  id           String        @id @default(cuid())
+  name         String        @unique
+  code         String        @unique
+  description  String        @unique
+  type         WarehouseType @default(SALES)
+  reserveQtyWs Boolean       @default(false) @map("reserve_qty_ws")
+  saleQtyWs    Boolean       @default(false) @map("sale_qty_ws")
+  active       Boolean       @default(true)
 
   companyId String  @map("company_id")
   Company   Company @relation("WarehouseCompanyRel", fields: [companyId], references: [id], onDelete: Cascade)
