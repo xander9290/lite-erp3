@@ -50,6 +50,8 @@ model Partner {
   PickingOperators StockPicking[] @relation("PickingOperator")
   PickingPartners  StockPicking[] @relation("PickingPartner")
 
+  AccountInvoices InvoicingInvoice[]
+
   @@index([name])
   @@map("partners")
 }
@@ -172,26 +174,27 @@ model Tag {
 }
 
 model Company {
-  id             String          @id @default(cuid())
-  name           String          @unique
-  code           String          @unique
-  active         Boolean         @default(true)
-  managerId      String?         @map("manager_id")
-  partnerId      String          @unique @map("partner_id")
-  parentId       String?         @map("parent_id")
-  createdUid     String          @map("created_uid")
-  createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @updatedAt @map("updated_at")
-  Manager        User?           @relation("UserManageCompanyRel", fields: [managerId], references: [id], onDelete: Cascade)
-  Company        Company?        @relation("ParentChildrenCompany", fields: [parentId], references: [id], onDelete: Cascade)
-  Children       Company[]       @relation("ParentChildrenCompany")
-  Partner        Partner         @relation("PartnerCompanyRel", fields: [partnerId], references: [id], onDelete: Cascade)
-  Manufacturings Manufacturing[]
-  stockMoves     StockMove[]
-  Warehouses     Warehouse[]     @relation("WarehouseCompanyRel")
-  Users          User[]          @relation("UserCompanyRel")
-  SaleOrders     SaleOrder[]
-  StockPickings  StockPicking[]
+  id              String             @id @default(cuid())
+  name            String             @unique
+  code            String             @unique
+  active          Boolean            @default(true)
+  managerId       String?            @map("manager_id")
+  partnerId       String             @unique @map("partner_id")
+  parentId        String?            @map("parent_id")
+  createdUid      String             @map("created_uid")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  Manager         User?              @relation("UserManageCompanyRel", fields: [managerId], references: [id], onDelete: Cascade)
+  Company         Company?           @relation("ParentChildrenCompany", fields: [parentId], references: [id], onDelete: Cascade)
+  Children        Company[]          @relation("ParentChildrenCompany")
+  Partner         Partner            @relation("PartnerCompanyRel", fields: [partnerId], references: [id], onDelete: Cascade)
+  Manufacturings  Manufacturing[]
+  stockMoves      StockMove[]
+  Warehouses      Warehouse[]        @relation("WarehouseCompanyRel")
+  Users           User[]             @relation("UserCompanyRel")
+  SaleOrders      SaleOrder[]
+  StockPickings   StockPicking[]
+  AccountJournals InvoicingJournal[]
 
   @@map("companies")
 }
@@ -640,9 +643,10 @@ model InvoicingPaymentTerm {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  PurchaseOrders PurchaseOrder[]
-  Partners       Partner[]
-  saleOrders     SaleOrder[]
+  PurchaseOrders  PurchaseOrder[]
+  Partners        Partner[]
+  saleOrders      SaleOrder[]
+  AccountInvoices InvoicingInvoice[]
 
   @@map("invoicing_payment_term")
 }
@@ -679,22 +683,100 @@ model InvoicingCurrency {
 
   PurchaseOrders PurchaseOrder[]
 
+  AccountInvoices InvoicingInvoice[]
+
+  AccountJournals InvoicingJournal[]
+
   @@map("invoicing_currency")
 }
 
-// INVOCES
-model AccountInvoice {
-  id             String   @id @default(cuid())
-  name           String   @unique
-  ref            String
-  date           DateTime @db.Date //fecha de recepción
-  invoiceDate    DateTime @map("invoice_date") @db.Date // fecha de proveedor
-  invoiceDateDue DateTime @map("invoice_date_due") @db.Date // a partir de fecha proveedor
+model InvoicingJournal {
+  id     String      @id @default(cuid())
+  name   String      @unique
+  code   String
+  type   JournalType @default(sale)
+  active Boolean     @default(true)
 
+  companyId String
+  Company   Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  currencyId String?
+  Currency   InvoicingCurrency? @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+
+  AccountInvoices InvoicingInvoice[]
+
+  @@map("invoicing_journal")
+}
+
+enum JournalType {
+  sale
+  purchase
+  cash
+  bank
+  general
+}
+
+// INVOCES
+model InvoicingInvoice {
+  id             String               @id @default(cuid())
+  name           String               @unique
+  ref            String
+  date           DateTime             @db.Date //fecha de recepción
+  invoiceDate    DateTime             @map("invoice_date") @db.Date // fecha de proveedor
+  invoiceDateDue DateTime             @map("invoice_date_due") @db.Date // a partir de fecha proveedor
+  displayType    InvoiceDisplayType   @map("display_type")
+  invoiceType    InvoiceType          @map("invoice_type")
+  state          InvoiceState         @default(draft)
+  uuidcfdi       String               @map("uuid_cfdi")
+  subtotal       Decimal              @db.Decimal(10, 2)
+  taxAmount      Decimal              @map("tax_amount") @db.Decimal(10, 2)
+  total          Decimal              @db.Decimal(10, 2)
+  paymentMethod  InvoicePaymentMethod @map("payment_term")
+  paymentForm    String               @map("payment_form")
+
+  paymentTermId String
+  PaymentTerm   InvoicingPaymentTerm @relation(fields: [paymentTermId], references: [id], onDelete: Restrict)
+
+  partnerId String  @map("partner_id")
+  Partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+
+  currencyId String
+  Currency   InvoicingCurrency @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+
+  journalId String
+  Journal   InvoicingJournal @relation(fields: [journalId], references: [id], onDelete: Restrict)
+
+  createUid String   @map("create_uid")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("account_invoice")
+  @@map("invoicing_invoice")
+}
+
+enum InvoiceDisplayType {
+  customer
+  supplier
+}
+
+enum InvoiceType {
+  sale_invoice
+  purchase_invoice
+  credit_note
+  debit_note
+}
+
+enum InvoiceState {
+  draft
+  confirmed
+  sent
+  partial
+  paid
+  cancelled
+}
+
+enum InvoicePaymentMethod {
+  PUE
+  PPD
 }
 
 // SALES
