@@ -115,7 +115,7 @@ export const productTemplateSchemaDefault: ProductTemplateSchemaType = {
   manufacturing: false,
   yield: 0.0,
   displayType: "PRODUCT",
-  state: "AVAILABLE",
+  state: "NOT_AVAILABLE",
   imageUrl: null,
   lastCost: 0.0,
   standardPrice: 0.0,

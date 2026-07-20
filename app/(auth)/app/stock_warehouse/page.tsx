@@ -11,12 +11,12 @@ const StockWarehouseListView = lazy(() => import("./views/StockWarehouseListView
 const StockWarehouseFormView = lazy(() => import("./views/StockWarehouseFormView"));
 
 async function StockWarehousePage({ searchParams }: { searchParams: Promise<{ [key: string]: string }> }) {
-  const { view_type: viewType, id, product_id: productId, wh_id: whId } = await searchParams;
+  const { view_type: viewType, id, product_id: productId, wh_id: whId, company_id: companyId } = await searchParams;
 
   if (viewType === "list") {
     return (
       <Suspense fallback={<LoadingPage />}>
-        <StockWarehouseListView productId={productId} whId={whId} />
+        <StockWarehouseListView productId={productId} whId={whId} companyId={companyId} />
       </Suspense>
     );
   } else if (viewType === "form") {

@@ -52,6 +52,7 @@ function ProductTemplateListView({ categoryId, brandId, uomId }: { categoryId: s
           <Column field="ProductCategory.name" label="Categoría" include={{ ProductCategory: { select: { id: true, name: true } } }} />
           <Column field="price1" label="Precio" type="number" />
           <Column field="active" label="Activo" type="boolean" />
+          <Column field="state" label="Estado" />
           <Column
             field="ProductBrand.name"
             label="Marca"
