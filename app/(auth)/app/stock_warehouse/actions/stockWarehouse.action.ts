@@ -17,10 +17,15 @@ export interface StockWarehouseActionProps {
   qty: number;
   deliveredQty: number;
   ref: string;
+  docLink?: string;
   name: string;
 }
 
-export async function affectStockWarehouse({ data }: { data: StockWarehouseActionProps }): Promise<ActionResponse<boolean>> {
+export async function affectStockWarehouse({
+  data,
+}: {
+  data: StockWarehouseActionProps;
+}): Promise<ActionResponse<boolean>> {
   try {
     const { uid, company } = await sessionStore();
 
@@ -52,6 +57,7 @@ export async function affectStockWarehouse({ data }: { data: StockWarehouseActio
         data: {
           moveType: "incoming",
           reference: data.ref,
+          docLink: data.docLink,
           name: data.name,
           productId: data.productId,
           userId: uid!,
@@ -86,6 +92,7 @@ export async function affectStockWarehouse({ data }: { data: StockWarehouseActio
           data: {
             moveType: "outgoing",
             reference: data.ref,
+            docLink: data.docLink,
             name: data.name,
             productId: data.productId,
             userId: uid!,
@@ -113,7 +120,11 @@ export async function affectStockWarehouse({ data }: { data: StockWarehouseActio
   }
 }
 
-export async function stockWarehouseReserve({ data }: { data: { productId: { id: string; name: string }; qty: number; whId: string } }): Promise<ActionResponse<boolean>> {
+export async function stockWarehouseReserve({
+  data,
+}: {
+  data: { productId: { id: string; name: string }; qty: number; whId: string };
+}): Promise<ActionResponse<boolean>> {
   try {
     await prisma.stockWarehouse.upsert({
       where: {
@@ -146,7 +157,11 @@ export async function stockWarehouseReserve({ data }: { data: { productId: { id:
   }
 }
 
-export async function stockWarehouseReserveCancel({ data }: { data: { productId: string; whId: string; qty: number } }): Promise<ActionResponse<boolean>> {
+export async function stockWarehouseReserveCancel({
+  data,
+}: {
+  data: { productId: string; whId: string; qty: number };
+}): Promise<ActionResponse<boolean>> {
   try {
     await prisma.stockWarehouse.update({
       where: {

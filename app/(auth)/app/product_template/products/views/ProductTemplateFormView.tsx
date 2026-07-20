@@ -1,17 +1,41 @@
 "use client";
 
-import { createProduct, getProductForecasted, ProductTemplateWithProps, updateProduct } from "../actions/productTemplate.action";
+import {
+  createProduct,
+  getProductForecasted,
+  ProductTemplateWithProps,
+  updateProduct,
+} from "../actions/productTemplate.action";
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { productTemplateSchema, productTemplateSchemaDefault, ProductTemplateSchemaType } from "../schemas/productTemplate.schema";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  productTemplateSchema,
+  productTemplateSchemaDefault,
+  ProductTemplateSchemaType,
+} from "../schemas/productTemplate.schema";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
-import { FieldBoolean, FieldEntry, FieldImage, FieldRelation, FieldSelect, FieldTags, FieldText } from "@/components/templates/fields";
+import {
+  FormView,
+  FormViewGroup,
+  FormViewStack,
+} from "@/components/templates/FormView";
+import {
+  FieldBoolean,
+  FieldEntry,
+  FieldImage,
+  FieldRelation,
+  FieldSelect,
+  FieldTags,
+} from "@/components/templates/fields";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
-import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
+import {
+  BtnDeleteLine,
+  SimpleTable,
+  SimpleTD,
+} from "@/components/templates/simpletemplates";
 import { Col } from "react-bootstrap";
 import { getUomById } from "../../uom_category/actions/uom.action";
 import type { WarehouseType } from "@/generated/prisma/enums";
@@ -19,16 +43,29 @@ import { useAuth } from "@/hooks/sessionStore";
 import { formatNumberForDisplay } from "@/app/libs/helpers";
 import Link from "next/link";
 
-export const computeStocks = ({ product, whType = ["SALES", "PRODUCTION"] }: { product: ProductTemplateWithProps | null; whType?: WarehouseType[] }) => {
+export const computeStocks = ({
+  product,
+  whType = ["SALES", "PRODUCTION"],
+}: {
+  product: ProductTemplateWithProps | null;
+  whType?: WarehouseType[];
+}) => {
   let qtyAvailable = 0.0;
-  const saleWarehouses = product?.Stocks.filter((s) => whType.includes(s.Warehouse.type)) || [];
+  const saleWarehouses =
+    product?.Stocks.filter((s) => whType.includes(s.Warehouse.type)) || [];
   for (const sale of saleWarehouses) {
     qtyAvailable += sale.qty - sale.reservedQty;
   }
   return formatNumberForDisplay(qtyAvailable, 3);
 };
 
-function ProductTemplateFormView({ id, product }: { id: string | null; product: ProductTemplateWithProps | null }) {
+function ProductTemplateFormView({
+  id,
+  product,
+}: {
+  id: string | null;
+  product: ProductTemplateWithProps | null;
+}) {
   const { companyId } = useAuth();
 
   const methods = useForm<ProductTemplateSchemaType>({
@@ -76,7 +113,9 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
       const res = await createProduct({ data });
       if (!res.success) return modalError(res.message);
 
-      router.replace(`/app/product_template/products?view_type=form&id=${res.data?.id}`);
+      router.replace(
+        `/app/product_template/products?view_type=form&id=${res.data?.id}`,
+      );
       toast.success(res.message);
     } else {
       const res = await updateProduct({ data, id });
@@ -102,11 +141,15 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
   });
 
   const actionViewStocks = () => {
-    return router.push(`/app/stock_warehouse?view_type=list&id=null&product_id=${id}`);
+    return router.push(
+      `/app/stock_warehouse?view_type=list&id=null&product_id=${id}`,
+    );
   };
 
   const actionViewStockMoves = () => {
-    return router.push(`/app/stock_move?view_type=list&id=null&product_id=${id}`);
+    return router.push(
+      `/app/stock_move?view_type=list&id=null&product_id=${id}`,
+    );
   };
 
   useEffect(() => {
@@ -204,7 +247,9 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
   }, [companyId]);
 
   const stockMovesCount = () => {
-    const getMoves = product?.StockMoves.filter((s) => s.Company.id === companyId);
+    const getMoves = product?.StockMoves.filter(
+      (s) => s.Company.id === companyId,
+    );
     return getMoves?.length ?? 0;
   };
 
@@ -294,10 +339,16 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
         />
         <FieldTags name="Tags" label="Etiquetas" />
         <FormViewStack>
-          <Link href={`/app/stock_picking?view_type=line&id=null&move_type=incomming&product_id=${id}`} className="btn btn-outline-success">
+          <Link
+            href={`/app/stock_picking?view_type=line&id=null&move_type=incomming&product_id=${id}`}
+            className="btn btn-outline-success"
+          >
             <strong>Entrantes: {`+${forecasted.incomming}`}</strong>
           </Link>
-          <Link href={`/app/stock_picking?view_type=line&id=null&move_type=outgoing&product_id=${id}`} className="btn btn-outline-danger">
+          <Link
+            href={`/app/stock_picking?view_type=line&id=null&move_type=outgoing&product_id=${id}`}
+            className="btn btn-outline-danger"
+          >
             <strong>Salientes: {`-${forecasted.outgoing}`}</strong>
           </Link>
         </FormViewStack>
@@ -308,13 +359,36 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
             <FormViewGroup>
               <FieldBoolean name="purchases" label="Se puede comprar" />
               <FormViewStack>
-                <FieldEntry name="lastCost" type="number" label="Último Costo" />
-                <FieldEntry name="standardPrice" type="number" label="Costo Promedio" readonly />
-                <FieldEntry name="uomIncomingAllowed" type="number" label="MdC" decimals={3} />
+                <FieldEntry
+                  name="lastCost"
+                  type="number"
+                  label="Último Costo"
+                />
+                <FieldEntry
+                  name="standardPrice"
+                  type="number"
+                  label="Costo Promedio"
+                  readonly
+                />
+                <FieldEntry
+                  name="uomIncomingAllowed"
+                  type="number"
+                  label="MdC"
+                  decimals={3}
+                />
               </FormViewStack>
-              <FieldRelation model="invoicingTax" name="taxPurchaseId" label="Impuestos compra" />
+              <FieldRelation
+                model="invoicingTax"
+                name="taxPurchaseId"
+                label="Impuestos compra"
+              />
               <FieldRelation model="user" name="userId" label="Comprador" />
-              <FieldRelation model="partner" name="supplierId" label="Proveedor" domain={[["displayType", "=", "SUPPLIER"]]} />
+              <FieldRelation
+                model="partner"
+                name="supplierId"
+                label="Proveedor"
+                domain={[["displayType", "=", "SUPPLIER"]]}
+              />
             </FormViewGroup>
           </PageSheet>
         </Page>
@@ -331,9 +405,18 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                 <FieldEntry type="number" name="price3" label="Precio 3" />
                 <FieldEntry type="number" name="price4" label="Precio 4" />
                 <FieldEntry type="number" name="price5" label="Precio 5" />
-                <FieldEntry name="uomOutgoingAllowed" type="number" label="Múltiplo de venta" decimals={3} />
+                <FieldEntry
+                  name="uomOutgoingAllowed"
+                  type="number"
+                  label="Múltiplo de venta"
+                  decimals={3}
+                />
               </FormViewStack>
-              <FieldRelation model="invoicingTax" name="taxSaleId" label="Impuestos venta" />
+              <FieldRelation
+                model="invoicingTax"
+                name="taxSaleId"
+                label="Impuestos venta"
+              />
             </FormViewGroup>
           </PageSheet>
         </Page>
@@ -369,15 +452,32 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                 renderRow={(row, index) => (
                   <tr key={row.id} className="border-bottom">
                     <SimpleTD name="linePackagingName" colIdx={index}>
-                      <FieldRelation inline model="productPackaging" name={`ProductPackagingLines.${index}.packagingId`} />
+                      <FieldRelation
+                        inline
+                        model="productPackaging"
+                        name={`ProductPackagingLines.${index}.packagingId`}
+                      />
                     </SimpleTD>
                     <SimpleTD name="linePackagingQty" colIdx={index}>
-                      <FieldEntry className="text-end" inline name={`ProductPackagingLines.${index}.qty`} type="number" />
+                      <FieldEntry
+                        className="text-end"
+                        inline
+                        name={`ProductPackagingLines.${index}.qty`}
+                        type="number"
+                      />
                     </SimpleTD>
                     <SimpleTD name="lineUomId" colIdx={index}>
-                      <FieldRelation model="uomCategory" name={`ProductPackagingLines.${index}.uomId`} inline />
+                      <FieldRelation
+                        model="uomCategory"
+                        name={`ProductPackagingLines.${index}.uomId`}
+                        inline
+                      />
                     </SimpleTD>
-                    <SimpleTD name="lineDelete" colIdx={index} contentPosition="text-center">
+                    <SimpleTD
+                      name="lineDelete"
+                      colIdx={index}
+                      contentPosition="text-center"
+                    >
                       <BtnDeleteLine action={() => remove(index)} />
                     </SimpleTD>
                   </tr>
@@ -464,15 +564,36 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineReceiptQty">
-                      <FieldEntry inline type="number" decimals={3} name={`ReceiptLines.${index}.qty`} />
+                      <FieldEntry
+                        inline
+                        type="number"
+                        decimals={3}
+                        name={`ReceiptLines.${index}.qty`}
+                      />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineReceiptUomId">
-                      <FieldRelation inline model="uomCategory" readonly name={`ReceiptLines.${index}.uomId`} />
+                      <FieldRelation
+                        inline
+                        model="uomCategory"
+                        readonly
+                        name={`ReceiptLines.${index}.uomId`}
+                      />
                     </SimpleTD>
-                    <SimpleTD colIdx={index} name="lineReceiptActive" contentPosition="text-center">
-                      <FieldBoolean inline name={`ReceiptLines.${index}.active`} />
+                    <SimpleTD
+                      colIdx={index}
+                      name="lineReceiptActive"
+                      contentPosition="text-center"
+                    >
+                      <FieldBoolean
+                        inline
+                        name={`ReceiptLines.${index}.active`}
+                      />
                     </SimpleTD>
-                    <SimpleTD name="lineReceiptDelete" colIdx={index} contentPosition="text-center">
+                    <SimpleTD
+                      name="lineReceiptDelete"
+                      colIdx={index}
+                      contentPosition="text-center"
+                    >
                       <BtnDeleteLine action={() => removeReceipt(index)} />
                     </SimpleTD>
                   </tr>
@@ -494,7 +615,12 @@ function ProductTemplateFormView({ id, product }: { id: string | null; product: 
           <PageSheet name="manufacturingPage">
             <FormViewGroup>
               <FieldBoolean name="manufacturing" label="Se puede fabricar" />
-              <FieldEntry name="yield" label="Rendimiento" type="number" decimals={3} />
+              <FieldEntry
+                name="yield"
+                label="Rendimiento"
+                type="number"
+                decimals={3}
+              />
             </FormViewGroup>
           </PageSheet>
         </Page>

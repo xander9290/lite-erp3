@@ -6,7 +6,7 @@ import { ColumnConfig } from "@/app/libs/definitions";
 export function Column(props: ColumnConfig) {
   // Siempre retorna null - es un componente "fantasma"
   // que solo existe para proporcionar configuración al padre
-  props;
+  console.log(props);
   return null;
 }
 

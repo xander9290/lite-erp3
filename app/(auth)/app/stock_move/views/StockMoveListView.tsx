@@ -4,6 +4,7 @@ import { formatNumberForDisplay } from "@/app/libs/helpers";
 import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
+import { WidgetLink } from "@/components/widgets";
 import { useAuth } from "@/hooks/sessionStore";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -31,7 +32,17 @@ function StockMoveListView({ productId }: { productId: string | null }) {
             }
           />
           <Column field="name" label="Nombre" />
-          <Column field="reference" label="Referencia" />
+          <Column
+            field="reference"
+            label="Referencia"
+            render={(name, field) => (
+              <WidgetLink
+                link={field.docLink}
+                string={name}
+                name="docLinkPicking"
+              />
+            )}
+          />
           <Column
             field="User.Partner.name"
             label="Usuario"
@@ -47,6 +58,13 @@ function StockMoveListView({ productId }: { productId: string | null }) {
                 select: { name: true, Uom: { select: { code: true } } },
               },
             }}
+            render={(name, field) => (
+              <WidgetLink
+                link={`/app/product_template/products?view_type=form&id=${field.productId}`}
+                string={name}
+                name="docLinkProduct"
+              />
+            )}
           />
           <Column
             field="WarehouseOrigin.description"

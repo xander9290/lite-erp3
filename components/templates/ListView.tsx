@@ -40,7 +40,7 @@ function Header({ children, formView, title, actions }: HeaderProps) {
   const modelName = formView?.split("?")[0].split("/").at(2);
   const modelAccess = access.find((acc) => acc.fieldName === modelName);
   return (
-    <Card.Header className="bg-body border-bottom py-3">
+    <Card.Header className="bg-body py-3">
       <Row className="align-items-center g-3">
         <Col md={6}>
           <div className="d-flex align-items-center gap-2 flex-wrap">
@@ -132,7 +132,7 @@ function ListView({ children, model }: ListViewProps) {
     );
   }
 
-  return <Card className="shadow-sm border-0 h-100">{children}</Card>;
+  return <Card className="border-0 h-100">{children}</Card>;
 }
 
 ListView.Header = Header;

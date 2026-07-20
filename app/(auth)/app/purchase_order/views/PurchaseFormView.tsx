@@ -745,6 +745,3 @@ function PurchaseFormView({
 }
 
 export default PurchaseFormView;
-function modalConfirm(arg0: string, arg1: () => Promise<void>) {
-  throw new Error("Function not implemented.");
-}

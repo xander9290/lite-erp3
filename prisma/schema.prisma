@@ -271,6 +271,7 @@ model StockMove {
   User            User            @relation(fields: [userId], references: [id])
   WarehouseDest   Warehouse       @relation("DestWarehouseMove", fields: [warehouseDestId], references: [id])
   WarehouseOrigin Warehouse       @relation("OriginWarehouseMove", fields: [warehouseId], references: [id])
+  docLink         String?         @map("doc_link")
 
   @@map("stock_move")
 }
