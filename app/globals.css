@@ -113,3 +113,35 @@ input[type="number"]::-webkit-inner-spin-button {
   color: inherit;
 }
 
+
+
+.application-grid-item {
+  min-height: 150px;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.application-grid-item:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--bs-box-shadow) !important;
+  background-color: var(--bs-tertiary-bg);
+}
+
+.application-grid-icon {
+  width: 64px;
+  height: 64px;
+}
+
+@media (max-width: 575.98px) {
+  .application-grid-item {
+    min-height: 125px;
+  }
+
+  .application-grid-icon {
+    width: 52px;
+    height: 52px;
+  }
+}

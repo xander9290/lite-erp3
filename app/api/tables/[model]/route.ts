@@ -620,7 +620,6 @@ function buildWhereClause(
         return buildCondition(field, operator, convertedValue, type);
       }
 
-      console.warn("Filtro no reconocido:", filter);
       return null;
     })
     .filter((cond) => cond !== null && Object.keys(cond).length > 0);
