@@ -1,8 +1,36 @@
-"use client";
-
-import Link from "next/link";
+import {
+  SidebarMenuItem,
+  SidebarTemplate,
+} from "@/components/templates/saidebarTemplate/SidebarTemplate";
 import React from "react";
-import { Col, Nav, Row } from "react-bootstrap";
+
+const menu: SidebarMenuItem[] = [
+  {
+    href: "/app/product_template/products?view_type=list&id=null",
+    label: "Productos",
+    icon: "bi bi-boxes",
+  },
+  {
+    href: "/app/product_template/categories?view_type=list&id=null",
+    label: "Categorías",
+    icon: "bi bi-diagram-3",
+  },
+  {
+    href: "/app/product_template/brands?view_type=list&id=null",
+    label: "Marcas",
+    icon: "bi bi-bookmarks",
+  },
+  {
+    href: "/app/product_template/uom_category?view_type=list&id=null",
+    label: "Unidades de medida",
+    icon: "bi bi-flask-florence",
+  },
+  {
+    href: "/app/product_template/product_packaging?view_type=list&id=null",
+    label: "Embalajes",
+    icon: "bi bi-box-seam",
+  },
+];
 
 function layout({
   children,
@@ -10,30 +38,9 @@ function layout({
   children: React.ReactNode;
 }>) {
   return (
-    <Row className="h-100 overflow-hidden">
-      <Col xs="3" sm="3" md="2" xl="1" xxl="1">
-        <Nav className="flex-column" defaultActiveKey="/app/product_template/products">
-          <Nav.Link as={Link} href="/app/product_template/products?view_type=list&id=null" className="border-bottom py-2">
-            Productos
-          </Nav.Link>
-          <Nav.Link as={Link} href="/app/product_template/categories?view_type=list&id=null" className="border-bottom py-2">
-            Categorías
-          </Nav.Link>
-          <Nav.Link as={Link} href="/app/product_template/brands?view_type=list&id=null" className="border-bottom py-2">
-            Marcas
-          </Nav.Link>
-          <Nav.Link as={Link} href="/app/product_template/uom_category?view_type=list&id=null" className="border-bottom py-2">
-            UdM
-          </Nav.Link>
-          <Nav.Link as={Link} href="/app/product_template/product_packaging?view_type=list&id=null" className="border-bottom py-2">
-            Embalajes
-          </Nav.Link>
-        </Nav>
-      </Col>
-      <Col xs="9" sm="9" md="10" xl="11" xxl="11">
-        {children}
-      </Col>
-    </Row>
+    <SidebarTemplate menu={menu} title="Menú productos">
+      {children}
+    </SidebarTemplate>
   );
 }
 
