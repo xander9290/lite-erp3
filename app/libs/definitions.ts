@@ -38,8 +38,8 @@ export interface FilterValue {
   value: any; // YA NO ES STRING - tipado según el tipo de campo
 }
 
-export interface TableData {
-  rows: any[];
+export interface TableData<T> {
+  rows: T[];
   total: number;
   page: number;
   pageSize: number;

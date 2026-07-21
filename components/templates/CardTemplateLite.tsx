@@ -1,19 +1,235 @@
+// // components/templates/card/CardTemplateLite.tsx
+// "use client";
+
+// import React, { useState } from "react";
+// import { Row, Col, Container } from "react-bootstrap";
+// import { useRouter } from "next/navigation";
+// import useSWR from "swr";
+// import { ColumnConfig, FilterValue, TableData } from "@/app/libs/definitions";
+// import { FilterBuilder } from "./table/FilterBuilder";
+// import { Pagination } from "./table/Pagination";
+
+// interface CardTemplateProps {
+//   model: string;
+//   children: React.ReactNode;
+//   renderCard: (row: any) => React.ReactNode;
+//   onCardClick?: (row: any) => void;
+//   viewForm?: string;
+//   pageSize?: number;
+//   defaultOrder?: string;
+//   baseDomain?: any[];
+//   emptyMessage?: string;
+//   columnsGrid?: 1 | 2 | 3 | 4;
+// }
+
+// function buildSortForApi(field: string, dir: "asc" | "desc"): any {
+//   if (!field.includes(".")) {
+//     return { [field]: dir };
+//   }
+//   const [relation, ...path] = field.split(".");
+//   return { [relation]: { [path.join(".")]: dir } };
+// }
+
+// export function CardTemplateLite({
+//   model,
+//   children,
+//   renderCard,
+//   onCardClick,
+//   viewForm,
+//   pageSize = 100,
+//   defaultOrder,
+//   baseDomain = [],
+//   emptyMessage = "No hay elementos para mostrar",
+//   columnsGrid = 4,
+// }: CardTemplateProps) {
+//   const router = useRouter();
+
+//   // Extraer columnas de los children
+//   const columns: ColumnConfig[] = React.Children.toArray(children)
+//     .filter((child) => React.isValidElement(child))
+//     .map((child) => child.props as ColumnConfig);
+
+//   // Estado
+//   const [sort] = useState<{ field: string; dir: "asc" | "desc" }>(() => {
+//     if (defaultOrder) {
+//       const [field, dir] = defaultOrder.split(" ");
+//       return {
+//         field,
+//         dir: dir?.toLowerCase() === "desc" ? "desc" : "asc",
+//       };
+//     }
+//     return { field: "id", dir: "asc" };
+//   });
+
+//   const [filters, setFilters] = useState<FilterValue[]>([]);
+//   const [page, setPage] = useState(1);
+
+//   // Construir includes desde las columnas
+//   const includes = columns.reduce((acc, col) => {
+//     if (col.include) Object.assign(acc, col.include);
+//     return acc;
+//   }, {});
+
+//   // Construir URL
+//   const sortForApi = buildSortForApi(sort.field, sort.dir);
+
+//   const params = new URLSearchParams({
+//     page: String(page),
+//     pageSize: String(pageSize),
+//     sort: JSON.stringify(sortForApi),
+//     filters: JSON.stringify(filters),
+//     domain: JSON.stringify(baseDomain),
+//     columnTypes: JSON.stringify(
+//       Object.fromEntries(
+//         columns.map((col) => [col.field, col.type || "string"]),
+//       ),
+//     ),
+//     includes: JSON.stringify(includes),
+//   });
+
+//   const apiUrl = `/api/tables/${model}?${params}`;
+
+//   // SWR
+//   const { data, error, isLoading } = useSWR<TableData>(apiUrl, fetcher);
+
+//   const rows = data?.rows ?? [];
+//   const total = data?.total ?? 0;
+
+//   // Handlers
+//   const handleFilter = (newFilters: FilterValue[]) => {
+//     setFilters(newFilters);
+//     setPage(1);
+//   };
+
+//   const handleCardClick = (row: any) => {
+//     if (onCardClick) {
+//       onCardClick(row);
+//       return;
+//     }
+//     if (viewForm) {
+//       router.push(`${viewForm}&id=${row.id}`);
+//     }
+//   };
+
+//   // Grid responsive
+//   const getColProps = () => {
+//     switch (columnsGrid) {
+//       case 1:
+//         return { xs: 12 };
+//       case 2:
+//         return { xs: 12, md: 6 };
+//       case 3:
+//         return { xs: 12, sm: 6, lg: 4, xxl: 4 };
+//       case 4:
+//         return {
+//           xs: 12,
+//           sm: 6,
+//           md: 6,
+//           lg: 6,
+//           xl: 3,
+//           xxl: 3,
+//         };
+//       default:
+//         return { xs: 12, sm: 6, lg: 4 };
+//     }
+//   };
+
+//   return (
+//     <div
+//       className="position-relative"
+//       style={{
+//         height: "calc(100vh - 125px)",
+//         overflowY: "auto",
+//       }}
+//     >
+//       {/* Toolbar */}
+//       <div className="d-flex justify-content-between align-items-center mb-3">
+//         <FilterBuilder
+//           columns={columns}
+//           filters={filters}
+//           onChange={handleFilter}
+//         />
+//       </div>
+
+//       {/* Cards Grid */}
+//       {rows.length === 0 && !isLoading ? (
+//         <div className="text-center p-5 text-muted">{emptyMessage}</div>
+//       ) : (
+//         <>
+//           <Container fluid>
+//             <Row className="g-1">
+//               {rows.map((row: any) => (
+//                 <Col
+//                   key={row.id}
+//                   onClick={() => handleCardClick(row)}
+//                   style={{
+//                     cursor: onCardClick || viewForm ? "pointer" : "default",
+//                   }}
+//                   {...getColProps()}
+//                 >
+//                   {renderCard(row)}
+//                 </Col>
+//               ))}
+//             </Row>
+//           </Container>
+
+//           {/* Pagination */}
+//           {total > pageSize && (
+//             <div className="mt-4 d-flex justify-content-between align-items-center">
+//               <small className="text-muted">
+//                 {total.toLocaleString()} registros
+//               </small>
+//               <Pagination
+//                 currentPage={page}
+//                 totalPages={Math.ceil(total / pageSize)}
+//                 onPageChange={setPage}
+//                 isLoading={isLoading}
+//               />
+//             </div>
+//           )}
+//         </>
+//       )}
+
+//       {/* Error */}
+//       {error && (
+//         <div className="alert alert-danger">
+//           <i className="bi bi-exclamation-triangle me-2" />
+//           {error.message || "Error al cargar datos"}
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
+// async function fetcher(url: string): Promise<TableData> {
+//   const res = await fetch(url);
+//   if (!res.ok) {
+//     const error = await res.json().catch(() => ({ error: "Unknown error" }));
+//     throw new Error(error.error || `HTTP ${res.status}`);
+//   }
+//   return res.json();
+// }
+
 // components/templates/card/CardTemplateLite.tsx
 "use client";
 
-import React, { useState } from "react";
-import { Row, Col, Container } from "react-bootstrap";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Row, Col, Container, Spinner, Button } from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
+
 import { ColumnConfig, FilterValue, TableData } from "@/app/libs/definitions";
+
 import { FilterBuilder } from "./table/FilterBuilder";
 import { Pagination } from "./table/Pagination";
 
-interface CardTemplateProps {
+const EMPTY_DOMAIN: any[] = [];
+
+interface CardTemplateProps<T extends { id: string }> {
   model: string;
   children: React.ReactNode;
-  renderCard: (row: any) => React.ReactNode;
-  onCardClick?: (row: any) => void;
+  renderCard: (row: T) => React.ReactNode;
+  onCardClick?: (row: T) => void;
   viewForm?: string;
   pageSize?: number;
   defaultOrder?: string;
@@ -22,15 +238,43 @@ interface CardTemplateProps {
   columnsGrid?: 1 | 2 | 3 | 4;
 }
 
-function buildSortForApi(field: string, dir: "asc" | "desc"): any {
-  if (!field.includes(".")) {
-    return { [field]: dir };
-  }
-  const [relation, ...path] = field.split(".");
-  return { [relation]: { [path.join(".")]: dir } };
+function buildNestedObject(
+  path: string[],
+  value: unknown,
+): Record<string, any> {
+  return path.reduceRight<Record<string, any>>(
+    (acc, key) => ({ [key]: acc }),
+    value as any,
+  );
 }
 
-export function CardTemplateLite({
+function buildSortForApi(
+  field: string,
+  dir: "asc" | "desc",
+): Record<string, any> {
+  return buildNestedObject(field.split("."), dir);
+}
+
+function parseDefaultOrder(defaultOrder?: string): {
+  field: string;
+  dir: "asc" | "desc";
+} {
+  if (!defaultOrder?.trim()) {
+    return {
+      field: "id",
+      dir: "asc",
+    };
+  }
+
+  const [field, direction] = defaultOrder.trim().split(/\s+/);
+
+  return {
+    field: field || "id",
+    dir: direction?.toLowerCase() === "desc" ? "desc" : "asc",
+  };
+}
+
+export function CardTemplateLite<T extends { id: string }>({
   model,
   children,
   renderCard,
@@ -38,174 +282,243 @@ export function CardTemplateLite({
   viewForm,
   pageSize = 100,
   defaultOrder,
-  baseDomain = [],
+  baseDomain = EMPTY_DOMAIN,
   emptyMessage = "No hay elementos para mostrar",
   columnsGrid = 4,
-}: CardTemplateProps) {
+}: CardTemplateProps<T>) {
   const router = useRouter();
 
-  // Extraer columnas de los children
-  const columns: ColumnConfig[] = React.Children.toArray(children)
-    .filter((child) => React.isValidElement(child))
-    .map((child) => child.props as ColumnConfig);
+  const columns = useMemo<ColumnConfig[]>(() => {
+    return React.Children.toArray(children)
+      .filter(React.isValidElement)
+      .map((child) => child.props as ColumnConfig);
+  }, [children]);
 
-  // Estado
-  const [sort] = useState<{ field: string; dir: "asc" | "desc" }>(() => {
-    if (defaultOrder) {
-      const [field, dir] = defaultOrder.split(" ");
-      return {
-        field,
-        dir: dir?.toLowerCase() === "desc" ? "desc" : "asc",
-      };
-    }
-    return { field: "id", dir: "asc" };
-  });
-
+  const [sort] = useState(() => parseDefaultOrder(defaultOrder));
   const [filters, setFilters] = useState<FilterValue[]>([]);
   const [page, setPage] = useState(1);
 
-  // Construir includes desde las columnas
-  const includes = columns.reduce((acc, col) => {
-    if (col.include) Object.assign(acc, col.include);
-    return acc;
-  }, {});
+  const includes = useMemo<Record<string, any>>(() => {
+    return columns.reduce<Record<string, any>>((acc, column) => {
+      if (column.include) {
+        Object.assign(acc, column.include);
+      }
 
-  // Construir URL
-  const sortForApi = buildSortForApi(sort.field, sort.dir);
+      return acc;
+    }, {});
+  }, [columns]);
 
-  const params = new URLSearchParams({
-    page: String(page),
-    pageSize: String(pageSize),
-    sort: JSON.stringify(sortForApi),
-    filters: JSON.stringify(filters),
-    domain: JSON.stringify(baseDomain),
-    columnTypes: JSON.stringify(
-      Object.fromEntries(
-        columns.map((col) => [col.field, col.type || "string"]),
-      ),
-    ),
-    includes: JSON.stringify(includes),
-  });
+  const columnTypes = useMemo(() => {
+    return Object.fromEntries(
+      columns.map((column) => [column.field, column.type ?? "string"]),
+    );
+  }, [columns]);
 
-  const apiUrl = `/api/tables/${model}?${params}`;
+  const domainKey = useMemo(() => JSON.stringify(baseDomain), [baseDomain]);
 
-  // SWR
-  const { data, error, isLoading } = useSWR<TableData>(apiUrl, fetcher);
+  const apiUrl = useMemo(() => {
+    const params = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize),
+      sort: JSON.stringify(buildSortForApi(sort.field, sort.dir)),
+      filters: JSON.stringify(filters),
+      domain: domainKey,
+      columnTypes: JSON.stringify(columnTypes),
+      includes: JSON.stringify(includes),
+    });
+
+    return `/api/tables/${model}?${params.toString()}`;
+  }, [model, page, pageSize, sort, filters, domainKey, columnTypes, includes]);
+
+  const { data, error, isLoading, isValidating, mutate } = useSWR<TableData<T>>(
+    apiUrl,
+    fetcher,
+    {
+      keepPreviousData: true,
+      revalidateOnFocus: false,
+    },
+  );
 
   const rows = data?.rows ?? [];
   const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const clickable = Boolean(onCardClick || viewForm);
 
-  // Handlers
-  const handleFilter = (newFilters: FilterValue[]) => {
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [model, pageSize, domainKey]);
+
+  const handleFilter = useCallback((newFilters: FilterValue[]) => {
     setFilters(newFilters);
     setPage(1);
-  };
+  }, []);
 
-  const handleCardClick = (row: any) => {
-    if (onCardClick) {
-      onCardClick(row);
-      return;
-    }
-    if (viewForm) {
-      router.push(`${viewForm}&id=${row.id}`);
-    }
-  };
+  const handleCardClick = useCallback(
+    (row: T) => {
+      if (onCardClick) {
+        onCardClick(row);
+        return;
+      }
 
-  // Grid responsive
-  const getColProps = () => {
+      if (viewForm) {
+        const separator = viewForm.includes("?") ? "&" : "?";
+        router.push(`${viewForm}${separator}id=${row.id}`);
+      }
+    },
+    [onCardClick, router, viewForm],
+  );
+
+  const colProps = useMemo(() => {
     switch (columnsGrid) {
       case 1:
         return { xs: 12 };
+
       case 2:
-        return { xs: 12, md: 6 };
+        return {
+          xs: 12,
+          md: 6,
+        };
+
       case 3:
-        return { xs: 12, sm: 6, lg: 4, xxl: 4 };
+        return {
+          xs: 12,
+          sm: 6,
+          lg: 4,
+        };
+
       case 4:
         return {
           xs: 12,
           sm: 6,
-          md: 6,
-          lg: 6,
+          lg: 4,
           xl: 3,
-          xxl: 3,
         };
+
       default:
-        return { xs: 12, sm: 6, lg: 4 };
+        return {
+          xs: 12,
+          sm: 6,
+          lg: 4,
+        };
     }
-  };
+  }, [columnsGrid]);
 
   return (
     <div
-      className="position-relative"
+      className="position-relative d-flex flex-column"
       style={{
         height: "calc(100vh - 125px)",
-        overflowY: "auto",
+        minHeight: 0,
       }}
     >
-      {/* Toolbar */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <FilterBuilder
           columns={columns}
           filters={filters}
           onChange={handleFilter}
         />
+
+        {isValidating && data && (
+          <Spinner
+            animation="border"
+            size="sm"
+            aria-label="Actualizando registros"
+          />
+        )}
       </div>
 
-      {/* Cards Grid */}
-      {rows.length === 0 && !isLoading ? (
-        <div className="text-center p-5 text-muted">{emptyMessage}</div>
-      ) : (
-        <>
-          <Container fluid>
-            <Row className="g-1">
-              {rows.map((row: any) => (
+      {error && (
+        <div className="alert alert-danger d-flex align-items-center justify-content-between">
+          <span>
+            <i className="bi bi-exclamation-triangle me-2" />
+            {error.message || "Error al cargar datos"}
+          </span>
+
+          <Button
+            type="button"
+            variant="outline-danger"
+            size="sm"
+            onClick={() => mutate()}
+          >
+            Reintentar
+          </Button>
+        </div>
+      )}
+
+      <div className="flex-grow-1 overflow-y-auto" style={{ minHeight: 0 }}>
+        {isLoading && !data ? (
+          <div className="d-flex justify-content-center align-items-center py-5">
+            <Spinner animation="border" size="sm" className="me-2" />
+            <span>Cargando registros...</span>
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="text-center p-5 text-muted">{emptyMessage}</div>
+        ) : (
+          <Container fluid className="px-0">
+            <Row className="g-2">
+              {rows.map((row) => (
                 <Col
                   key={row.id}
-                  onClick={() => handleCardClick(row)}
+                  {...colProps}
+                  role={clickable ? "button" : undefined}
+                  tabIndex={clickable ? 0 : undefined}
+                  onClick={clickable ? () => handleCardClick(row) : undefined}
+                  onKeyDown={
+                    clickable
+                      ? (event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            handleCardClick(row);
+                          }
+                        }
+                      : undefined
+                  }
                   style={{
-                    cursor: onCardClick || viewForm ? "pointer" : "default",
+                    cursor: clickable ? "pointer" : "default",
                   }}
-                  {...getColProps()}
                 >
                   {renderCard(row)}
                 </Col>
               ))}
             </Row>
           </Container>
+        )}
+      </div>
 
-          {/* Pagination */}
-          {total > pageSize && (
-            <div className="mt-4 d-flex justify-content-between align-items-center">
-              <small className="text-muted">
-                {total.toLocaleString()} registros
-              </small>
-              <Pagination
-                currentPage={page}
-                totalPages={Math.ceil(total / pageSize)}
-                onPageChange={setPage}
-                isLoading={isLoading}
-              />
-            </div>
-          )}
-        </>
-      )}
+      {total > pageSize && (
+        <div className="pt-3 d-flex justify-content-between align-items-center">
+          <small className="text-muted">
+            {total.toLocaleString()} registros
+          </small>
 
-      {/* Error */}
-      {error && (
-        <div className="alert alert-danger">
-          <i className="bi bi-exclamation-triangle me-2" />
-          {error.message || "Error al cargar datos"}
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            isLoading={isLoading || isValidating}
+          />
         </div>
       )}
     </div>
   );
 }
 
-async function fetcher(url: string): Promise<TableData> {
-  const res = await fetch(url);
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: "Unknown error" }));
-    throw new Error(error.error || `HTTP ${res.status}`);
+async function fetcher<T>(url: string): Promise<TableData<T>> {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const payload = await response
+      .json()
+      .catch(() => ({ error: "Error desconocido" }));
+
+    throw new Error(payload.error || `Error HTTP ${response.status}`);
   }
-  return res.json();
+
+  return response.json();
 }
