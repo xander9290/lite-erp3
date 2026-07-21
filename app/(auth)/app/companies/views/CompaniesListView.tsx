@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CardTemplateLite } from "@/components/templates/CardTemplateLite";
 import CardCompany from "./CardCompany";
 import { Column } from "@/components/templates/table/Column";
+import { CompanieWithProps } from "../actions/companies-actions";
 
 function CompaniesListView() {
   const [active, setActive] = useState(true);
@@ -24,7 +25,7 @@ function CompaniesListView() {
       />
       <ListView.Body>
         <CardTemplateLite
-          renderCard={(c) => <CardCompany comapny={c} />}
+          renderCard={(c) => <CardCompany comapny={c as CompanieWithProps} />}
           viewForm="/app/companies?view_type=form"
           baseDomain={[["active", "=", active]]}
           defaultOrder="createdAt asc"

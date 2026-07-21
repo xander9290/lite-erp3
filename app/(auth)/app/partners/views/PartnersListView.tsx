@@ -6,6 +6,7 @@ import { Column } from "@/components/templates/table/Column";
 import ListView from "@/components/templates/ListView";
 import CardPartner from "./CardPartner";
 import { useState } from "react";
+import { PartnerWithProps } from "../actions/partner-actions";
 
 type partnersDisplayTypes = Record<PartnerDisplayType, string>;
 
@@ -44,7 +45,7 @@ function PartnersListView({ display }: { display: string }) {
             ["displayType", "=", display],
             ["active", "=", active],
           ]}
-          renderCard={(row) => <CardPartner p={row} />}
+          renderCard={(row) => <CardPartner p={row as PartnerWithProps} />}
         >
           <Column field="name" label="Nombre" />
           <Column

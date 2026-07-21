@@ -6,6 +6,7 @@ import CardProduct from "./CardProduct";
 import { useState } from "react";
 import { Column } from "@/components/templates/table/Column";
 import type { ProductDisplayType } from "@/generated/prisma/browser";
+import { ProductTemplateWithProps } from "../actions/productTemplate.action";
 
 type ProductDisplayOutput = Record<ProductDisplayType, string>;
 export const productDisplayOutput: ProductDisplayOutput = {
@@ -15,7 +16,15 @@ export const productDisplayOutput: ProductDisplayOutput = {
   BOM: "elaborado",
 };
 
-function ProductTemplateListView({ categoryId, brandId, uomId }: { categoryId: string | null; brandId: string | null; uomId: string | null }) {
+function ProductTemplateListView({
+  categoryId,
+  brandId,
+  uomId,
+}: {
+  categoryId: string | null;
+  brandId: string | null;
+  uomId: string | null;
+}) {
   const [active, setActive] = useState(true);
 
   const domain = [["active", "=", active]];
@@ -37,7 +46,15 @@ function ProductTemplateListView({ categoryId, brandId, uomId }: { categoryId: s
         ]}
       />
       <ListView.Body>
-        <CardTemplateLite model="productTemplate" viewForm="/app/product_template/products?view_type=form" baseDomain={domain} renderCard={(p) => <CardProduct product={p} />} defaultOrder="name asc">
+        <CardTemplateLite
+          model="productTemplate"
+          viewForm="/app/product_template/products?view_type=form"
+          baseDomain={domain}
+          renderCard={(p) => (
+            <CardProduct product={p as ProductTemplateWithProps} />
+          )}
+          defaultOrder="name asc"
+        >
           <Column field="name" label="Nombre" />
           <Column field="description" label="Descripción" />
           <Column field="defaultCode" label="Código interno" />
@@ -49,7 +66,11 @@ function ProductTemplateListView({ categoryId, brandId, uomId }: { categoryId: s
               Tags: { select: { id: true, name: true } },
             }}
           />
-          <Column field="ProductCategory.name" label="Categoría" include={{ ProductCategory: { select: { id: true, name: true } } }} />
+          <Column
+            field="ProductCategory.name"
+            label="Categoría"
+            include={{ ProductCategory: { select: { id: true, name: true } } }}
+          />
           <Column field="price1" label="Precio" type="number" />
           <Column field="active" label="Activo" type="boolean" />
           <Column field="state" label="Estado" />
@@ -60,7 +81,13 @@ function ProductTemplateListView({ categoryId, brandId, uomId }: { categoryId: s
               ProductBrand: {
                 select: { id: true, name: true, description: true },
               },
-              Stocks: { select: { qty: true, reservedQty: true, Warehouse: { select: { type: true } } } },
+              Stocks: {
+                select: {
+                  qty: true,
+                  reservedQty: true,
+                  Warehouse: { select: { type: true } },
+                },
+              },
               Uom: { select: { code: true } },
             }}
           />

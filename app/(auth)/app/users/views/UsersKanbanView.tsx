@@ -6,6 +6,7 @@ import CardUser from "./CardUser";
 import Link from "next/link";
 import { CardTemplateLite } from "@/components/templates/CardTemplateLite";
 import { Column } from "@/components/templates/table/Column";
+import { UserWithProps } from "../actions/user-actions";
 
 function UsersKanbanView() {
   const [active, setActive] = useState(true);
@@ -34,7 +35,7 @@ function UsersKanbanView() {
       <ListView.Body>
         <CardTemplateLite
           model="user"
-          renderCard={(user) => <CardUser user={user} />}
+          renderCard={(user) => <CardUser user={user as UserWithProps} />}
           baseDomain={[
             ["active", "=", active],
             ["name", "!=", "bot"],

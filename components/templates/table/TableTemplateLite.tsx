@@ -104,7 +104,7 @@ export function TableTemplateLite({
 
   const apiUrl = `/api/tables/${model}?${params}`;
 
-  const { data, error, isLoading } = useSWR<TableData>(apiUrl, fetcher);
+  const { data, error, isLoading } = useSWR<TableData<any>>(apiUrl, fetcher);
 
   const groupedData: Record<string, any[]> | null = (() => {
     if (!groupBy || !data?.rows) return null;
@@ -502,7 +502,7 @@ function formatGroupKey(value: any, type?: string): string {
   return String(value);
 }
 
-async function fetcher(url: string): Promise<TableData> {
+async function fetcher(url: string): Promise<TableData<any>> {
   const res = await fetch(url);
 
   if (!res.ok) {
