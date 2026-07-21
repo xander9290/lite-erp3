@@ -8,19 +8,51 @@ export const metadata: Metadata = {
   title: "Productos",
 };
 
-const ProductTemplateListView = lazy(() => import("./views/ProductTemplateListView"));
+const ProductTemplateKanbanView = lazy(
+  () => import("./views/ProductTemplateKanbanView"),
+);
 
-const ProductTemplateFormView = lazy(() => import("./views/ProductTemplateFormView"));
+const ProductTemplateFormView = lazy(
+  () => import("./views/ProductTemplateFormView"),
+);
 
-async function PageProductTemplate({ searchParams }: { searchParams: Promise<{ [key: string]: string }> }) {
-  const { view_type: viewType, id, categoryId, brandId, uomId } = await searchParams;
+const ProductTemplateListView = lazy(
+  () => import("./views/ProductTemplateListView"),
+);
+
+async function PageProductTemplate({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string }>;
+}) {
+  const {
+    view_type: viewType,
+    id,
+    categoryId,
+    brandId,
+    uomId,
+  } = await searchParams;
 
   const product = id && id !== "null" ? await getProductById({ id }) : null;
 
-  if (viewType === "list") {
+  if (viewType === "kanban") {
     return (
       <Suspense fallback={<LoadingPage />}>
-        <ProductTemplateListView categoryId={categoryId} brandId={brandId} uomId={uomId} />
+        <ProductTemplateKanbanView
+          categoryId={categoryId}
+          brandId={brandId}
+          uomId={uomId}
+        />
+      </Suspense>
+    );
+  } else if (viewType === "list") {
+    return (
+      <Suspense fallback={<LoadingPage />}>
+        <ProductTemplateListView
+          categoryId={categoryId}
+          brandId={brandId}
+          uomId={uomId}
+        />
       </Suspense>
     );
   } else if (viewType === "form") {

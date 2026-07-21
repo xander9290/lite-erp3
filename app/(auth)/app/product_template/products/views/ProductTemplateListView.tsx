@@ -1,20 +1,18 @@
 "use client";
 
-import { CardTemplateLite } from "@/components/templates/CardTemplateLite";
 import ListView from "@/components/templates/ListView";
-import CardProduct from "./CardProduct";
-import { useState } from "react";
+import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
-import type { ProductDisplayType } from "@/generated/prisma/browser";
-import { ProductTemplateWithProps } from "../actions/productTemplate.action";
-
-type ProductDisplayOutput = Record<ProductDisplayType, string>;
-export const productDisplayOutput: ProductDisplayOutput = {
-  CONSU: "consumible",
-  PRODUCT: "producto",
-  SERVICE: "servicio",
-  BOM: "elaborado",
-};
+import {
+  WidgetAvatar,
+  WidgetBadgeStatus,
+  WidgetCurrency,
+} from "@/components/widgets";
+import { Tag } from "@/generated/prisma/browser";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Badge } from "react-bootstrap";
 
 function ProductTemplateListView({
   categoryId,
@@ -32,6 +30,8 @@ function ProductTemplateListView({
   if (brandId) domain.push(["productBrandId", "=", brandId]);
   if (uomId) domain.push(["uomId", "=", uomId]);
 
+  const router = useRouter();
+
   return (
     <ListView model="product_template">
       <ListView.Header
@@ -44,20 +44,38 @@ function ProductTemplateListView({
             string: `${active ? "Inactivos" : "Activos"}`,
           },
         ]}
-      />
-      <ListView.Body>
-        <CardTemplateLite
-          model="productTemplate"
-          viewForm="/app/product_template/products?view_type=form"
-          baseDomain={domain}
-          renderCard={(p) => (
-            <CardProduct product={p as ProductTemplateWithProps} />
-          )}
-          defaultOrder="name asc"
+      >
+        <Link
+          href="/app/product_template/products?view_type=kanban&id=null"
+          className="btn btn-info"
         >
-          <Column field="name" label="Nombre" />
-          <Column field="description" label="Descripción" />
-          <Column field="defaultCode" label="Código interno" />
+          <i className="bi bi-table"></i>
+        </Link>
+      </ListView.Header>
+      <ListView.Body>
+        <TableTemplateLite
+          model="productTemplate"
+          baseDomain={domain}
+          onRowClick={(row) =>
+            router.push(
+              `/app/product_template/products?view_type=form&id=${row.id}`,
+            )
+          }
+          defaultOrder="createdAt desc"
+        >
+          <Column
+            field="name"
+            label="Nombre"
+            render={(name, field) => (
+              <WidgetAvatar imageUrl={field?.imageUrl} displayName={name} />
+            )}
+          />
+          <Column
+            field="price1"
+            label="Precio"
+            type="number"
+            render={(name) => <WidgetCurrency number={name} />}
+          />
           <Column
             field="Tags"
             label="Etiquetas"
@@ -65,15 +83,16 @@ function ProductTemplateListView({
             include={{
               Tags: { select: { id: true, name: true } },
             }}
+            render={(_, field) => (
+              <div className="d-flex flew-row justify-content-center gap-1">
+                {field.Tags.map((t: Tag) => (
+                  <Badge pill key={t.id}>
+                    {t.name}
+                  </Badge>
+                ))}
+              </div>
+            )}
           />
-          <Column
-            field="ProductCategory.name"
-            label="Categoría"
-            include={{ ProductCategory: { select: { id: true, name: true } } }}
-          />
-          <Column field="price1" label="Precio" type="number" />
-          <Column field="active" label="Activo" type="boolean" />
-          <Column field="state" label="Estado" />
           <Column
             field="ProductBrand.name"
             label="Marca"
@@ -91,7 +110,25 @@ function ProductTemplateListView({
               Uom: { select: { code: true } },
             }}
           />
-        </CardTemplateLite>
+          <Column
+            field="ProductCategory.name"
+            label="Categoría"
+            include={{ ProductCategory: { select: { id: true, name: true } } }}
+          />
+          <Column field="active" label="Activo" type="boolean" />
+          <Column
+            field="state"
+            label="Estado"
+            render={(name) => (
+              <WidgetBadgeStatus
+                value={name}
+                options={{
+                  AVAILABLE: { label: "DISPONIBLE", color: "success" },
+                }}
+              />
+            )}
+          />
+        </TableTemplateLite>
       </ListView.Body>
     </ListView>
   );

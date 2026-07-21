@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 const apps: ApplicationMenuItem[] = [
   {
-    href: "/app/product_template/products?view_type=list&id=null",
+    href: "/app/product_template/products?view_type=kanban&id=null",
     label: "Lista de productos",
     icon: "bi bi-boxes",
   },

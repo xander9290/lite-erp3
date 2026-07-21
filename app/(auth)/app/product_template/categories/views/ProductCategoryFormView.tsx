@@ -67,7 +67,7 @@ function ProductCategoryFormView({
 
   const actionViewProducts = () =>
     router.push(
-      `/app/product_template/products?view_type=list&id=null&categoryId=${id}`,
+      `/app/product_template/products?view_type=kanban&id=null&categoryId=${id}`,
     );
 
   useEffect(() => {

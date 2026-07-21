@@ -86,7 +86,7 @@ function UomFormView({
 
   const actionViewProducts = () =>
     router.push(
-      `/app/product_template/products?view_type=list&id=null&uomId=${id}`,
+      `/app/product_template/products?view_type=list&id=kanban&uomId=${id}`,
     );
 
   return (

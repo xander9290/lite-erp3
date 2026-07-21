@@ -19,7 +19,7 @@ export function WidgetAvatar({
   return (
     <Zoom>
       <div className={displayName ? "d-flex align-items-center gap-1" : ""}>
-        {imageUrl && (
+        {imageUrl ? (
           <Image
             title={name}
             unoptimized
@@ -29,6 +29,12 @@ export function WidgetAvatar({
             alt="imageAvatar"
             className="img-fluid rounded"
             onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <img
+            src="/images/avatar_default.svg"
+            width={32}
+            className="opacity-25"
           />
         )}
         {displayName && <span>{displayName}</span>}
