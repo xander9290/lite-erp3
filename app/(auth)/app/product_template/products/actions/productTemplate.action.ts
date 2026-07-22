@@ -36,6 +36,7 @@ export interface ProductTemplateWithProps extends ProductTemplate {
       id: string;
       name: string;
       type: WarehouseType;
+      companyId: string;
     };
   }[];
   StockMoves: {
@@ -136,7 +137,7 @@ export async function getProductById({ id }: { id: string | null }): Promise<Pro
             reservedQty: true,
             locationName: true,
             Warehouse: {
-              select: { id: true, name: true, type: true },
+              select: { id: true, name: true, type: true, companyId: true },
             },
           },
         },
@@ -311,7 +312,7 @@ export async function createProduct({ data }: { data: ProductTemplateActionProps
             reservedQty: true,
             locationName: true,
             Warehouse: {
-              select: { id: true, name: true, type: true },
+              select: { id: true, name: true, type: true, companyId: true },
             },
           },
         },
@@ -515,7 +516,7 @@ export async function updateProduct({ id, data }: { id: string | null; data: Pro
             reservedQty: true,
             locationName: true,
             Warehouse: {
-              select: { id: true, name: true, type: true },
+              select: { id: true, name: true, type: true, companyId: true },
             },
           },
         },

@@ -17,15 +17,7 @@ export const productDisplayOutput: ProductDisplayOutput = {
   BOM: "elaborado",
 };
 
-function ProductTemplatKanbanView({
-  categoryId,
-  brandId,
-  uomId,
-}: {
-  categoryId: string | null;
-  brandId: string | null;
-  uomId: string | null;
-}) {
+function ProductTemplatKanbanView({ categoryId, brandId, uomId }: { categoryId: string | null; brandId: string | null; uomId: string | null }) {
   const [active, setActive] = useState(true);
 
   const domain = [["active", "=", active]];
@@ -46,11 +38,7 @@ function ProductTemplatKanbanView({
           },
         ]}
       >
-        <Link
-          href="/app/product_template/products?view_type=list&id=null"
-          className="btn btn-info"
-          title="Vista lista"
-        >
+        <Link href="/app/product_template/products?view_type=list&id=null" className="btn btn-info" title="Vista lista">
           <i className="bi bi-list"></i>
         </Link>
       </ListView.Header>
@@ -59,9 +47,7 @@ function ProductTemplatKanbanView({
           model="productTemplate"
           viewForm="/app/product_template/products?view_type=form"
           baseDomain={domain}
-          renderCard={(p) => (
-            <CardProduct product={p as ProductTemplateWithProps} />
-          )}
+          renderCard={(p) => <CardProduct product={p as ProductTemplateWithProps} />}
           defaultOrder="name asc"
         >
           <Column field="name" label="Nombre" />
@@ -75,11 +61,7 @@ function ProductTemplatKanbanView({
               Tags: { select: { id: true, name: true } },
             }}
           />
-          <Column
-            field="ProductCategory.name"
-            label="Categoría"
-            include={{ ProductCategory: { select: { id: true, name: true } } }}
-          />
+          <Column field="ProductCategory.name" label="Categoría" include={{ ProductCategory: { select: { id: true, name: true } } }} />
           <Column field="price1" label="Precio" type="number" />
           <Column field="active" label="Activo" type="boolean" />
           <Column field="state" label="Estado" />
@@ -94,7 +76,7 @@ function ProductTemplatKanbanView({
                 select: {
                   qty: true,
                   reservedQty: true,
-                  Warehouse: { select: { type: true } },
+                  Warehouse: { select: { type: true, companyId: true } },
                 },
               },
               Uom: { select: { code: true } },

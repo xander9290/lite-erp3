@@ -5,10 +5,11 @@ import ListView from "@/components/templates/ListView";
 import { TableTemplateLite } from "@/components/templates/table";
 import { Column } from "@/components/templates/table/Column";
 
-function StockWarehouseListView({ productId, whId }: { productId: string | null; whId: string | null; companyId: string | null }) {
+function StockWarehouseListView({ productId, whId, companyId }: { productId: string | null; whId: string | null; companyId: string | null }) {
   const domain = [["Warehouse.type", "in", ["SALES", "PRODUCTION"]]];
   if (productId) domain.push(["productId", "=", productId]);
   if (whId) domain.push(["warehouseId", "=", whId]);
+  if (companyId) domain.push(["Warehouse.companyId"]);
 
   return (
     <ListView model="stock_warehouse">
