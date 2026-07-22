@@ -749,6 +749,7 @@ enum JournalType {
   purchase
   cash
   bank
+  inventory
   general
 }
 
