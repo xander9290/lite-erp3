@@ -253,25 +253,26 @@ model StockWarehouse {
 }
 
 model StockMove {
-  id              String          @id @default(cuid())
+  id              String                  @id @default(cuid())
   name            String
   reference       String
-  quantity        Float           @default(0.0)
-  date            DateTime        @default(now()) @db.Date
-  productId       String          @map("product_id")
-  warehouseId     String          @map("warehouse_id")
-  warehouseDestId String          @map("warehouse_dest_id")
-  userId          String          @map("user_id")
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @updatedAt @map("updated_at")
-  moveType        StockMoveType   @map("move_type")
-  companyId       String          @map("company_id")
-  Company         Company         @relation(fields: [companyId], references: [id])
-  Product         ProductTemplate @relation(fields: [productId], references: [id])
-  User            User            @relation(fields: [userId], references: [id])
-  WarehouseDest   Warehouse       @relation("DestWarehouseMove", fields: [warehouseDestId], references: [id])
-  WarehouseOrigin Warehouse       @relation("OriginWarehouseMove", fields: [warehouseId], references: [id])
-  docLink         String?         @map("doc_link")
+  quantity        Float                   @default(0.0)
+  date            DateTime                @default(now()) @db.Date
+  productId       String                  @map("product_id")
+  warehouseId     String                  @map("warehouse_id")
+  warehouseDestId String                  @map("warehouse_dest_id")
+  userId          String                  @map("user_id")
+  createdAt       DateTime                @default(now()) @map("created_at")
+  updatedAt       DateTime                @updatedAt @map("updated_at")
+  moveType        StockMoveType           @map("move_type")
+  companyId       String                  @map("company_id")
+  Company         Company                 @relation(fields: [companyId], references: [id])
+  Product         ProductTemplate         @relation(fields: [productId], references: [id])
+  User            User                    @relation(fields: [userId], references: [id])
+  WarehouseDest   Warehouse               @relation("DestWarehouseMove", fields: [warehouseDestId], references: [id])
+  WarehouseOrigin Warehouse               @relation("OriginWarehouseMove", fields: [warehouseId], references: [id])
+  docLink         String?                 @map("doc_link")
+  JournalEntries  InvoicingJournalEntry[]
 
   @@map("stock_move")
 }
@@ -722,8 +723,15 @@ model InvoicingJournalEntry {
   invoiceId String?
   Invoice   InvoicingInvoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
-  reatedAt  DateTime @default(now()) @map("created_at")
+  stockMoveId String?    @map("stock_move_id")
+  StockMove   StockMove? @relation(fields: [stockMoveId], references: [id], onDelete: Cascade)
+
+  JournalLines InvoicingJournalLine[]
+
+  createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("invoicing_journal_entry")
 }
 
 model InvoicingJournalLine {
@@ -731,6 +739,14 @@ model InvoicingJournalLine {
   concept JournalLineConcept
   debit   Decimal            @db.Decimal(16, 2)
   credit  Decimal            @db.Decimal(16, 2)
+
+  entryId String                @map("entry_id")
+  Journal InvoicingJournalEntry @relation(fields: [entryId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("invoicing_journal_entry_line")
 }
 
 enum JournalLineConcept {
