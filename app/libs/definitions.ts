@@ -13,13 +13,7 @@ export interface ModalBasicProps {
 }
 
 // types/table.ts
-export type FieldType =
-  | "string"
-  | "number"
-  | "boolean"
-  | "date"
-  | "datetime"
-  | "relation";
+export type FieldType = "string" | "number" | "boolean" | "date" | "datetime" | "relation";
 
 export interface ColumnConfig {
   field: string; // "price" | "category.name"
@@ -43,4 +37,8 @@ export interface TableData<T> {
   total: number;
   page: number;
   pageSize: number;
+}
+
+export interface IPageProps {
+  searchParams: Promise<{ [key: string]: string }>;
 }
