@@ -1,7 +1,7 @@
 model InvoicingInvoice {
     id             String               @id @default(cuid())
     name           String               @unique
-    ref            String
+    reference      String
     date           DateTime             @db.Date //fecha de recepción
     invoiceDate    DateTime             @map("invoice_date") @db.Date // fecha de proveedor
     invoiceDateDue DateTime             @map("invoice_date_due") @db.Date // a partir de fecha proveedor
@@ -13,7 +13,7 @@ model InvoicingInvoice {
     taxAmount      Decimal              @map("tax_amount") @db.Decimal(10, 2)
     total          Decimal              @db.Decimal(10, 2)
     paymentPolicy  InvoicePaymentPolicy @map("payment_policy")
-    paymentForm    String               @map("payment_form")
+    paymentForm    InvoicePaymentForm   @map("payment_form")
 
     paymentTermId String               @map("payment_term_id")
     PaymentTerm   InvoicingPaymentTerm @relation(fields: [paymentTermId], references: [id], onDelete: Restrict)
@@ -21,13 +21,16 @@ model InvoicingInvoice {
     partnerId String  @map("partner_id")
     Partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Restrict)
 
+    partnerShippingId String?  @map("partner_shipping_id")
+    PartnerShipping   Partner? @relation("InvoicePartnerShipping", fields: [partnerShippingId], references: [id], onDelete: Cascade)
+
     currencyId String            @map("currency_id")
     Currency   InvoicingCurrency @relation(fields: [currencyId], references: [id], onDelete: Restrict)
 
     journalId String           @map("journal_id")
     Journal   InvoicingJournal @relation(fields: [journalId], references: [id], onDelete: Restrict)
 
-    JournalEntries InvoicingJournalEntry[]
+    JournalEntry InvoicingJournalEntry?
 
     createUid String   @map("create_uid")
     createdAt DateTime @default(now()) @map("created_at")
@@ -117,7 +120,7 @@ model InvoicingJournalEntry {
     journalId String
     Journal   InvoicingJournal @relation(fields: [journalId], references: [id], onDelete: Restrict)
 
-    invoiceId String?
+    invoiceId String?           @unique
     Invoice   InvoicingInvoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
     stockMoveId String?    @map("stock_move_id")

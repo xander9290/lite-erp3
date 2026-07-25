@@ -1,6 +1,10 @@
 "use server";
 
-import { ProductPricelistItem, SaleOrder, SaleShippingWayType } from "@/generated/prisma/client";
+import {
+  ProductPricelistItem,
+  SaleOrder,
+  SaleShippingWayType,
+} from "@/generated/prisma/client";
 import { SaleOrderSchemaType } from "../schemas/saleOrder.schema";
 import prisma from "@/app/libs/prisma";
 import { ActionResponse } from "@/app/libs/definitions";
@@ -35,7 +39,11 @@ export interface SaleOrderWithProps extends SaleOrder {
   }[];
 }
 
-export async function getSaleOrderById({ id }: { id: string | null }): Promise<SaleOrderWithProps | null> {
+export async function getSaleOrderById({
+  id,
+}: {
+  id: string | null;
+}): Promise<SaleOrderWithProps | null> {
   try {
     if (!id) throw new Error("ID not defined");
 
@@ -96,13 +104,20 @@ export async function getSaleOrderById({ id }: { id: string | null }): Promise<S
   }
 }
 
-export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): Promise<ActionResponse<SaleOrderWithProps>> {
+export async function actionSaleOrder({
+  data,
+}: {
+  data: SaleOrderSchemaType;
+}): Promise<ActionResponse<SaleOrderWithProps>> {
   try {
     const { uid, company } = await sessionStore();
 
     let newName = "";
-    if (!data.name) {
-      newName = await getNextValue(`S/${company.code}/`, `${company.code}-saleOrder`);
+    if (data.name === "new") {
+      newName = await getNextValue(
+        `S/${company.code}/`,
+        `${company.code}-saleOrder`,
+      );
     }
 
     const saleOrder = await prisma.saleOrder.upsert({
@@ -115,7 +130,9 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
         state: data.state,
         saleUserId: data.saleUserId.id,
         partnerId: data.partnerId.id,
-        partnerShippingId: data.partnerShippingId.id ? data.partnerShippingId.id : null,
+        partnerShippingId: data.partnerShippingId.id
+          ? data.partnerShippingId.id
+          : null,
         shippingWayId: data.shippingWayId.id,
         paymentTermId: data.paymentTermId.id,
         subtotal: round(
@@ -133,7 +150,9 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
         SaleOrderLines: {
           deleteMany: {
             id: {
-              notIn: data.SaleOrderLines.filter((line) => line.id).map((l) => l.id!),
+              notIn: data.SaleOrderLines.filter((line) => line.id).map(
+                (l) => l.id!,
+              ),
             },
           },
           update: data.SaleOrderLines.filter((line) => line.id).map((line) => ({
@@ -153,18 +172,20 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
             },
           })),
           createMany: {
-            data: data.SaleOrderLines.filter((line) => line.id === null).map((line) => ({
-              productId: line.productId.id,
-              quantity: line.quantity,
-              uomId: line.uomId.id,
-              pricelist: line.pricelist,
-              priceUnit: line.priceUnit,
-              subtotal: round(line.subtotal, 2),
-              total: round(line.total, 2),
-              taxRate: round(line.taxRate, 2),
-              taxAmount: round(line.taxAmount, 2),
-              createUid: uid!,
-            })),
+            data: data.SaleOrderLines.filter((line) => line.id === null).map(
+              (line) => ({
+                productId: line.productId.id,
+                quantity: line.quantity,
+                uomId: line.uomId.id,
+                pricelist: line.pricelist,
+                priceUnit: line.priceUnit,
+                subtotal: round(line.subtotal, 2),
+                total: round(line.total, 2),
+                taxRate: round(line.taxRate, 2),
+                taxAmount: round(line.taxAmount, 2),
+                createUid: uid!,
+              }),
+            ),
           },
         },
       },
@@ -179,7 +200,9 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
         saleUserId: data.saleUserId.id,
         partnerId: data.partnerId.id,
         companyId: company.id,
-        partnerShippingId: data.partnerShippingId.id ? data.partnerShippingId.id : null,
+        partnerShippingId: data.partnerShippingId.id
+          ? data.partnerShippingId.id
+          : null,
         warehouseId: data.warehouseId.id,
         shippingWayId: data.shippingWayId.id,
         paymentTermId: data.paymentTermId.id,
@@ -264,19 +287,19 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
       },
     });
 
-    if (data.name) {
-      await createAuditlog({
-        action: "update",
-        entityId: saleOrder.id,
-        entityType: "saleOder",
-        log: "Ha editado el registro",
-      });
-    } else {
+    if (data.name === "new") {
       await createAuditlog({
         action: "create",
         entityId: saleOrder.id,
         entityType: "saleOder",
         log: "Ha creado el registro",
+      });
+    } else {
+      await createAuditlog({
+        action: "update",
+        entityId: saleOrder.id,
+        entityType: "saleOder",
+        log: "Ha editado el registro",
       });
     }
 
@@ -294,7 +317,11 @@ export async function actionSaleOrder({ data }: { data: SaleOrderSchemaType }): 
   }
 }
 
-export async function actionSaleConfirm({ data }: { data: SaleOrderSchemaType }): Promise<ActionResponse<boolean>> {
+export async function actionSaleConfirm({
+  data,
+}: {
+  data: SaleOrderSchemaType;
+}): Promise<ActionResponse<boolean>> {
   try {
     console.log(":::Action Sale Confirm:::");
     for (const line of data.SaleOrderLines) {
@@ -320,19 +347,28 @@ export async function actionSaleConfirm({ data }: { data: SaleOrderSchemaType })
         },
       });
 
-      if (!productId) throw new Error("Producto no encontrado:" + line.productId.name);
+      if (!productId)
+        throw new Error("Producto no encontrado:" + line.productId.name);
 
-      const stock = productId.Stocks.find((stock) => stock.warehouseId === data.warehouseId.id);
+      const stock = productId.Stocks.find(
+        (stock) => stock.warehouseId === data.warehouseId.id,
+      );
 
       // si el tipo de produdcto es producto, se reserva cantidades
       if (productId.displayType === "PRODUCT") {
         console.log("-Validando existencias");
-        if (!stock) throw new Error(`El producto ${line.productId.name} no cuenta con existencia`);
+        if (!stock)
+          throw new Error(
+            `El producto ${line.productId.name} no cuenta con existencia`,
+          );
 
         console.log("-Calculando cantidad disponible: ", line.productId.name);
         const qtyAvailable = round(stock.qty - stock.reservedQty, 3);
 
-        if (qtyAvailable < line.quantity) throw new Error(`El producto ${line.productId.name} no tiene suficiente existencia para cubrir la demanda ${round(line.quantity, 3)} ${line.uomId.name}`);
+        if (qtyAvailable < line.quantity)
+          throw new Error(
+            `El producto ${line.productId.name} no tiene suficiente existencia para cubrir la demanda ${round(line.quantity, 3)} ${line.uomId.name}`,
+          );
 
         console.log("-Reservando proucto para venta:", line.productId.name);
         await prisma.stockWarehouse.update({
@@ -353,17 +389,34 @@ export async function actionSaleConfirm({ data }: { data: SaleOrderSchemaType })
         console.log("-Validando producto elaborado");
 
         for (const receipt of productId.ReceiptLines) {
-          const stock = receipt.Product.Stocks.find((stock) => stock.warehouseId === data.warehouseId.id);
-          if (!stock) throw new Error(`El producto ${receipt.Product.name} no cuenta con (existencia actual) para cubrir la elaboración de ${productId.name}`);
+          const stock = receipt.Product.Stocks.find(
+            (stock) => stock.warehouseId === data.warehouseId.id,
+          );
+          if (!stock)
+            throw new Error(
+              `El producto ${receipt.Product.name} no cuenta con (existencia actual) para cubrir la elaboración de ${productId.name}`,
+            );
 
-          console.log("-Calculado cantidad disponible del componente:", receipt.Product.name);
+          console.log(
+            "-Calculado cantidad disponible del componente:",
+            receipt.Product.name,
+          );
           const demanda = round(receipt.qty * line.quantity, 3);
           const qtyAvailable = round(stock.qty - stock.reservedQty, 3);
 
-          console.log("-Validando demanda del componente:", receipt.Product.name);
-          if (qtyAvailable < demanda) throw new Error(`El producto ${receipt.Product.name} no cuenta con (existencia suficiente) para cubrir la elaboración de ${productId.name}`);
+          console.log(
+            "-Validando demanda del componente:",
+            receipt.Product.name,
+          );
+          if (qtyAvailable < demanda)
+            throw new Error(
+              `El producto ${receipt.Product.name} no cuenta con (existencia suficiente) para cubrir la elaboración de ${productId.name}`,
+            );
 
-          console.log("-Reservando cantidad del componente: ", receipt.Product.name);
+          console.log(
+            "-Reservando cantidad del componente: ",
+            receipt.Product.name,
+          );
           await prisma.stockWarehouse.update({
             where: {
               productId_warehouseId: {
@@ -405,7 +458,11 @@ export async function actionSaleConfirm({ data }: { data: SaleOrderSchemaType })
   }
 }
 
-export async function actionSaleCancel({ data }: { data: SaleOrderSchemaType }): Promise<ActionResponse<boolean>> {
+export async function actionSaleCancel({
+  data,
+}: {
+  data: SaleOrderSchemaType;
+}): Promise<ActionResponse<boolean>> {
   try {
     console.log(":::Action Sale Cancel:::");
     console.log("-Obteniendo líneas de la orden");

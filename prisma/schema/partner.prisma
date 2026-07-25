@@ -42,6 +42,7 @@ model Partner {
     PickingPartners  StockPicking[] @relation("PickingPartner")
 
     AccountInvoices InvoicingInvoice[]
+    InvoiceShipping InvoicingInvoice[] @relation("InvoicePartnerShipping")
 
     @@index([name])
     @@map("partners")

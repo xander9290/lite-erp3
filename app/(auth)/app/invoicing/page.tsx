@@ -1,15 +1,12 @@
-import { IPageProps } from "@/app/libs/definitions";
-import ApplicationGridTemplate, { ApplicationMenuItem } from "@/components/templates/applicationGridItem/ApplicationGridItemProps";
-import { InvoiceDisplayType } from "@/generated/prisma/enums";
+import { invoiceDisplayType, IPageProps } from "@/app/libs/definitions";
+import ApplicationGridTemplate, {
+  ApplicationMenuItem,
+} from "@/components/templates/applicationGridItem/ApplicationGridItemProps";
+import { InvoiceDisplayType } from "@/generated/prisma/client";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Facturación menú",
-};
-
-export const invoiceDisplayType: Record<InvoiceDisplayType, string> = {
-  customer: "Clientes",
-  supplier: "Proveedores",
 };
 
 async function page({ searchParams }: IPageProps) {
@@ -35,7 +32,10 @@ async function page({ searchParams }: IPageProps) {
       icon: "bi bi-receipt-cutoff",
     },
   ];
-  return <ApplicationGridTemplate applications={apps} title="Facturación menú" />;
+
+  return (
+    <ApplicationGridTemplate applications={apps} title="Facturación menú" />
+  );
 }
 
 export default page;

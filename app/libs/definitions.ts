@@ -1,3 +1,5 @@
+import { InvoiceDisplayType } from "@/generated/prisma/browser";
+
 export interface ActionResponse<T> {
   success: boolean;
   message: string;
@@ -13,7 +15,13 @@ export interface ModalBasicProps {
 }
 
 // types/table.ts
-export type FieldType = "string" | "number" | "boolean" | "date" | "datetime" | "relation";
+export type FieldType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "date"
+  | "datetime"
+  | "relation";
 
 export interface ColumnConfig {
   field: string; // "price" | "category.name"
@@ -42,3 +50,8 @@ export interface TableData<T> {
 export interface IPageProps {
   searchParams: Promise<{ [key: string]: string }>;
 }
+
+export const invoiceDisplayType: Record<InvoiceDisplayType, string> = {
+  customer: "Clientes",
+  supplier: "Proveedores",
+};
