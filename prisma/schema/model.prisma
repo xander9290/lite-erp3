@@ -1,0 +1,41 @@
+model Model {
+    id          String       @id @default(cuid())
+    name        String       @unique
+    label       String       @unique
+    description String
+    active      Boolean      @default(false)
+    createdUid  String       @map("created_uid")
+    createdAt   DateTime     @default(now()) @map("created_at")
+    updatedAt   DateTime     @updatedAt @map("updated_at")
+    ModelFields ModelField[] @relation("ModelFieldRel")
+
+    @@map("models")
+}
+
+model ModelField {
+    id          String    @id @default(cuid())
+    name        String
+    label       String
+    description String
+    fieldType   FieldType @map("field_type")
+    active      Boolean   @default(false)
+    modelId     String    @map("model_id")
+    createdUid  String    @map("created_uid")
+    createdAt   DateTime  @default(now()) @map("created_at")
+    updatedAt   DateTime  @updatedAt @map("updated_at")
+    Model       Model     @relation("ModelFieldRel", fields: [modelId], references: [id], onDelete: Cascade)
+
+    @@index([name])
+    @@map("model_fields")
+}
+
+enum FieldType {
+    string
+    number
+    relation
+    action
+    link
+    boolean
+    date
+    datetime
+}

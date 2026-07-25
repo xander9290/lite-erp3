@@ -1,0 +1,45 @@
+model Warehouse {
+    id           String        @id @default(cuid())
+    name         String        @unique
+    code         String        @unique
+    description  String        @unique
+    type         WarehouseType @default(SALES)
+    reserveQtyWs Boolean       @default(false) @map("reserve_qty_ws")
+    saleQtyWs    Boolean       @default(false) @map("sale_qty_ws")
+    active       Boolean       @default(true)
+
+    companyId String  @map("company_id")
+    Company   Company @relation("WarehouseCompanyRel", fields: [companyId], references: [id], onDelete: Cascade)
+
+    InternalsFrom Warehouse[] @relation("InternalsWarehouseRel")
+    InternalsTo   Warehouse[] @relation("InternalsWarehouseRel")
+
+    OriginStockMoves StockMove[] @relation("OriginWarehouseMove")
+    DestStockMoves   StockMove[] @relation("DestWarehouseMove")
+
+    Stocks StockWarehouse[]
+
+    ManufacturingsOrgin Manufacturing[] @relation("ManufacturingWhOrigin")
+    ManufacturingsDest  Manufacturing[] @relation("ManufacturingWhDes")
+
+    createdUid             String          @map("created_uid")
+    createdAt              DateTime        @default(now()) @map("created_at")
+    updatedAt              DateTime        @updatedAt @map("updated_at")
+    purchaseOrders         PurchaseOrder[]
+    purchaseOrdersSupplier PurchaseOrder[] @relation("WarehousePurchaseAffected")
+    SaleOrders             SaleOrder[]
+    PickingWarehouses      StockPicking[]  @relation("PickingWarehouse")
+    PickingWarehouseDests  StockPicking[]  @relation("PickingWHDest")
+
+    @@map("warehouses")
+}
+
+enum WarehouseType {
+    SALES
+    SUPPLY
+    PRODUCTION
+    QUARANTINE
+    ADJUSTMENT
+    TRANSIT
+    OUTGOING
+}

@@ -1,0 +1,25 @@
+model User {
+    id               String            @id @default(cuid())
+    name             String
+    login            String            @unique
+    password         String
+    lastLogin        DateTime?         @map("last_login")
+    active           Boolean           @default(true)
+    partnerId        String?           @unique @map("partner_id")
+    groupId          String?           @map("group_id")
+    createdUid       String            @map("created_uid")
+    createdAt        DateTime          @default(now()) @map("created_at")
+    updatedAt        DateTime          @updatedAt @map("updated_at")
+    Auditlogs        Auditlog[]        @relation("UserAuditlogRel")
+    ManagedCompanies Company[]         @relation("UserManageCompanyRel")
+    PartnerManager   Partner[]         @relation("PartnerManagerRel")
+    Products         ProductTemplate[] @relation("ProductUserRel")
+    PurchaseOrders   PurchaseOrder[]
+    StockMoves       StockMove[]
+    Group            Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+    Partner          Partner?          @relation("PartnerUserRelated", fields: [partnerId], references: [id], onDelete: Cascade)
+    Companies        Company[]         @relation("UserCompanyRel")
+    SaleOrders       SaleOrder[]
+
+    @@map("users")
+}

@@ -1,0 +1,50 @@
+model Manufacturing {
+    id                 String              @id @default(cuid())
+    name               String              @unique
+    state              ManufacturingState  @default(draft)
+    quantity           Float               @default(0.0)
+    productId          String              @map("product_id")
+    companyId          String              @map("company_id")
+    whOriginId         String              @map("wh_origin_id")
+    whDestId           String              @map("wh_dest_id")
+    createUid          String              @map("create_uid")
+    createdAt          DateTime            @default(now()) @map("created_at")
+    updatedAt          DateTime            @updatedAt @map("updated_at")
+    date               DateTime            @default(now()) @db.Date
+    uomId              String              @map("uom_id")
+    yield              Float               @default(0.0)
+    priceUnit          Float               @default(0.0) @map("price_unit")
+    Company            Company             @relation(fields: [companyId], references: [id])
+    Product            ProductTemplate     @relation(fields: [productId], references: [id])
+    Uom                UomCategory         @relation(fields: [uomId], references: [id])
+    WhDest             Warehouse           @relation("ManufacturingWhDes", fields: [whDestId], references: [id])
+    WhOrigin           Warehouse           @relation("ManufacturingWhOrigin", fields: [whOriginId], references: [id])
+    ManufacturingLines ManufacturingLine[]
+
+    @@map("manufacturing")
+}
+
+model ManufacturingLine {
+    id                  String          @id @default(cuid())
+    outQty              Float           @default(0.0) @map("out_qty")
+    manufacturingId     String          @map("manufacturing_id")
+    productIngredientId String          @map("product_ingredient_id")
+    createUid           String          @map("create_uid")
+    createdAt           DateTime        @default(now()) @map("created_at")
+    updatedAt           DateTime        @updatedAt @map("updated_at")
+    uomId               String          @map("uom_id")
+    priceUnit           Float           @default(0.0) @map("price_unit")
+    Manufacturing       Manufacturing   @relation(fields: [manufacturingId], references: [id], onDelete: Cascade)
+    Product             ProductTemplate @relation(fields: [productIngredientId], references: [id])
+    Uom                 UomCategory     @relation(fields: [uomId], references: [id])
+
+    @@map("manufacturing_line")
+}
+
+enum ManufacturingState {
+    draft
+    in_process
+    finished
+    affected
+    cancel
+}

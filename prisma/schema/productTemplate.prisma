@@ -1,0 +1,178 @@
+model ProductTemplate {
+    id                    String                 @id @default(cuid())
+    name                  String                 @unique
+    description           String                 @unique
+    defaultCode           String                 @unique @map("default_code")
+    active                Boolean                @default(true)
+    sales                 Boolean                @default(true)
+    purchases             Boolean                @default(true)
+    imageUrl              String?                @default("/image/avatar_default.svg") @map("image_url")
+    price1                Float                  @default(0.00) @map("price_1")
+    price2                Float                  @default(0.00) @map("price_2")
+    price3                Float                  @default(0.00) @map("price_3")
+    price4                Float                  @default(0.00) @map("price_4")
+    price5                Float                  @default(0.00) @map("price_5")
+    lastCost              Float                  @default(0.00) @map("last_cost")
+    standarPrice          Float                  @default(0.0) @map("standard_price")
+    weight                Float                  @default(0.00)
+    volume                Float                  @default(0.00)
+    ancho                 Float                  @default(0.00)
+    alto                  Float                  @default(0.00)
+    largo                 Float                  @default(0.00)
+    uomIncomingAllowed    Float                  @default(1.0) @map("uom_incoming_allowed")
+    uomOutgoingAllowed    Float                  @default(1.0) @map("uom_outgoing_allowed")
+    supplierId            String?                @map("supplier_id")
+    userId                String?                @map("user_id")
+    createUid             String                 @map("create_uid")
+    createdAt             DateTime               @default(now()) @map("created_at")
+    updatedAt             DateTime               @updatedAt @map("updated_at")
+    displayType           ProductDisplayType     @default(PRODUCT) @map("display_type")
+    state                 ProductStateType       @default(AVAILABLE)
+    productCategoryId     String?                @map("product_category_id")
+    productBrandId        String?                @map("product_brand_id")
+    uomId                 String?                @map("uom_id")
+    manufacturing         Boolean                @default(false)
+    yield                 Float                  @default(0.00)
+    Manufacturings        Manufacturing[]
+    ManufacturingLines    ManufacturingLine[]
+    ProductPackagingLines ProductPackagingLine[]
+    ReceiptLines          ProductReceiptLine[]   @relation("ParentProductReceipt")
+    ProductReceiptLines   ProductReceiptLine[]   @relation("ProductReceipt")
+    ProductBrand          ProductBrand?          @relation(fields: [productBrandId], references: [id])
+    ProductCategory       ProductCategory?       @relation(fields: [productCategoryId], references: [id])
+    Supplier              Partner?               @relation("ProductSupplierRel", fields: [supplierId], references: [id])
+    Uom                   UomCategory?           @relation(fields: [uomId], references: [id])
+    User                  User?                  @relation("ProductUserRel", fields: [userId], references: [id])
+    StockMoves            StockMove[]
+    Stocks                StockWarehouse[]
+    Tags                  Tag[]                  @relation("ProductTemplateToTag")
+    purchaseOrderLines    PurchaseOrderLine[]
+    taxSaleId             String?                @map("tax_sale_id")
+    TaxSale               InvoicingTax?          @relation("PTSaleTax", fields: [taxSaleId], references: [id], onDelete: Restrict)
+    taxPurchaseId         String?                @map("tax_purchase_id")
+    TaxPurchase           InvoicingTax?          @relation("PTPurchaseTax", fields: [taxPurchaseId], references: [id], onDelete: Restrict)
+    SaleOrderLines        SaleOrderLine[]
+    allowPartialQty       Boolean                @default(false) @map("allow_partial_qty")
+    stockPickingLines     StockPickingLine[]
+
+    @@map("product_template")
+}
+
+enum ProductDisplayType {
+    CONSU
+    SERVICE
+    PRODUCT
+    BOM
+}
+
+enum ProductStateType {
+    AVAILABLE
+    NOT_AVAILABLE
+}
+
+enum ProductPricelistItem {
+    price1
+    price2
+    price3
+    price4
+    price5
+}
+
+model ProductCategory {
+    id          String            @id @default(cuid())
+    name        String            @unique
+    createUid   String            @map("create_uid")
+    createdAt   DateTime          @default(now()) @map("created_at")
+    updatedAt   DateTime          @updatedAt @map("updated_at")
+    parentId    String?           @map("parent_id")
+    description String
+    active      Boolean           @default(true)
+    Parent      ProductCategory?  @relation("ParentProductCategoryRel", fields: [parentId], references: [id], onDelete: Cascade)
+    Children    ProductCategory[] @relation("ParentProductCategoryRel")
+    Products    ProductTemplate[]
+
+    @@map("product_category")
+}
+
+model ProductBrand {
+    id          String            @id @default(cuid())
+    name        String            @unique
+    description String            @unique
+    code        String            @unique
+    active      Boolean           @default(true)
+    createUid   String            @map("create_uid")
+    createdAt   DateTime          @default(now()) @map("created_at")
+    updatedAt   DateTime          @updatedAt @map("updated_at")
+    Products    ProductTemplate[]
+
+    @@map("product_brand")
+}
+
+model UomCategory {
+    id                    String                 @id @default(cuid())
+    name                  String                 @unique
+    description           String                 @unique
+    code                  String                 @unique
+    ratio                 Float                  @default(0.0)
+    isBaseUnit            Boolean                @default(false) @map("is_base_unit")
+    active                Boolean                @default(true)
+    createUid             String                 @map("create_uid")
+    createdAt             DateTime               @default(now()) @map("created_at")
+    updatedAt             DateTime               @updatedAt @map("updated_at")
+    Manufacturings        Manufacturing[]
+    ManufacturingLines    ManufacturingLine[]
+    productPackagingLines ProductPackagingLine[]
+    ProductReceiptLines   ProductReceiptLine[]
+    Products              ProductTemplate[]
+    purchaseOrderLines    PurchaseOrderLine[]
+    SaleOrderLines        SaleOrderLine[]
+    stockPickingLines     StockPickingLine[]
+
+    @@map("product_uom_category")
+}
+
+model ProductPackaging {
+    id                    String                 @id @default(cuid())
+    name                  String                 @unique
+    active                Boolean                @default(true)
+    createUid             String                 @map("create_uid")
+    createdAt             DateTime               @default(now()) @map("created_at")
+    updatedAt             DateTime               @updatedAt @map("updated_at")
+    ProductPackagingLines ProductPackagingLine[]
+
+    @@map("product_packaging")
+}
+
+model ProductPackagingLine {
+    id               String           @id @default(cuid())
+    qty              Float            @default(0.0)
+    packagingId      String           @map("packagin_id")
+    productId        String           @map("product_id")
+    createUid        String           @map("create_uid")
+    createdAt        DateTime         @default(now()) @map("created_at")
+    updatedAt        DateTime         @updatedAt @map("updated_at")
+    uomId            String           @map("uom_id")
+    ProductPackaging ProductPackaging @relation(fields: [packagingId], references: [id])
+    Product          ProductTemplate  @relation(fields: [productId], references: [id], onDelete: Cascade)
+    Uom              UomCategory      @relation(fields: [uomId], references: [id])
+
+    @@map("product_packaging_line")
+}
+
+model ProductReceiptLine {
+    id        String          @id @default(cuid())
+    qty       Float           @default(0.0)
+    productId String          @map("product_id")
+    uomId     String          @map("uom_id")
+    createUid String          @map("create_uid")
+    createdAt DateTime        @default(now()) @map("created_at")
+    updatedAt DateTime        @updatedAt @map("updated_at")
+    active    Boolean         @default(true)
+    parentId  String          @map("parent_id")
+    Parent    ProductTemplate @relation("ParentProductReceipt", fields: [parentId], references: [id])
+    Product   ProductTemplate @relation("ProductReceipt", fields: [productId], references: [id])
+    Uom       UomCategory     @relation(fields: [uomId], references: [id])
+
+    @@unique([productId, parentId], name: "productId_parentId")
+    @@map("product_receipt_line")
+}

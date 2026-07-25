@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Auditlog {
+  id         String          @id @default(cuid())
+  action     AuditlogActions
+  entityType String          @map("entity_type")
+  entityId   String          @map("entity_id")
+  log        String
+  userId     String          @map("user_id")
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+  User       User            @relation("UserAuditlogRel", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([userId])
+  @@map("auditlogs")
+}
+
+model Tag {
+  id              String            @id @default(cuid())
+  name            String
+  entityName      String            @map("entity_name")
+  ProductTemplate ProductTemplate[] @relation("ProductTemplateToTag")
+  Partner         Partner[]         @relation("PartnerTagsRelation")
+
+  @@index([name, entityName])
+  @@map("tags")
+}
+
+model Counter {
+  id    String @id
+  value Int
+
+  @@map("counters")
+}
+
+enum AuditlogActions {
+  create
+  update
+  read
+  delete
+}

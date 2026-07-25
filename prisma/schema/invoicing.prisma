@@ -1,0 +1,207 @@
+model InvoicingInvoice {
+    id             String               @id @default(cuid())
+    name           String               @unique
+    ref            String
+    date           DateTime             @db.Date //fecha de recepción
+    invoiceDate    DateTime             @map("invoice_date") @db.Date // fecha de proveedor
+    invoiceDateDue DateTime             @map("invoice_date_due") @db.Date // a partir de fecha proveedor
+    displayType    InvoiceDisplayType   @map("display_type")
+    invoiceType    InvoiceType          @map("invoice_type")
+    state          InvoiceState         @default(draft)
+    uuidcfdi       String               @map("uuid_cfdi")
+    subtotal       Decimal              @db.Decimal(10, 2)
+    taxAmount      Decimal              @map("tax_amount") @db.Decimal(10, 2)
+    total          Decimal              @db.Decimal(10, 2)
+    paymentPolicy  InvoicePaymentPolicy @map("payment_policy")
+    paymentForm    String               @map("payment_form")
+
+    paymentTermId String               @map("payment_term_id")
+    PaymentTerm   InvoicingPaymentTerm @relation(fields: [paymentTermId], references: [id], onDelete: Restrict)
+
+    partnerId String  @map("partner_id")
+    Partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+
+    currencyId String            @map("currency_id")
+    Currency   InvoicingCurrency @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+
+    journalId String           @map("journal_id")
+    Journal   InvoicingJournal @relation(fields: [journalId], references: [id], onDelete: Restrict)
+
+    JournalEntries InvoicingJournalEntry[]
+
+    createUid String   @map("create_uid")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("invoicing_invoice")
+}
+
+model InvoicingPaymentTerm {
+    id     String  @id @default(cuid())
+    name   String  @unique
+    amount Float   @default(1000)
+    days   Int     @default(0)
+    active Boolean @default(true)
+
+    createUid String   @map("create_uid")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    PurchaseOrders  PurchaseOrder[]
+    Partners        Partner[]
+    saleOrders      SaleOrder[]
+    AccountInvoices InvoicingInvoice[]
+
+    @@map("invoicing_payment_term")
+}
+
+model InvoicingTax {
+    id          String     @id @default(cuid())
+    name        String     @unique
+    description String
+    amount      Float      @default(0.0)
+    active      Boolean    @default(true)
+    typeUse     TaxTypeUse @default(sale) @map("type_use")
+
+    createUid  String            @map("create_uid")
+    createdAt  DateTime          @default(now()) @map("created_at")
+    updatedAt  DateTime          @updatedAt @map("updated_at")
+    PTSale     ProductTemplate[] @relation("PTSaleTax")
+    PTPurchase ProductTemplate[] @relation("PTPurchaseTax")
+
+    @@map("invoicing_tax")
+}
+
+model InvoicingCurrency {
+    id          String  @id @default(cuid())
+    name        String  @unique
+    description String
+    label       String
+    symbol      String
+    active      Boolean @default(true)
+
+    PurchaseOrders PurchaseOrder[]
+
+    AccountInvoices InvoicingInvoice[]
+
+    AccountJournals InvoicingJournal[]
+
+    @@map("invoicing_currency")
+}
+
+model InvoicingJournal {
+    id     String      @id @default(cuid())
+    name   String      @unique
+    code   String
+    type   JournalType @default(sale)
+    active Boolean     @default(true)
+
+    companyId String
+    Company   Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+    currencyId String?
+    Currency   InvoicingCurrency? @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+
+    JournalEntries InvoicingJournalEntry[]
+
+    AccountInvoices InvoicingInvoice[]
+
+    @@map("invoicing_journal")
+}
+
+model InvoicingJournalEntry {
+    id        String   @id @default(cuid())
+    reference String?
+    date      DateTime @default(now()) @db.Date
+
+    journalId String
+    Journal   InvoicingJournal @relation(fields: [journalId], references: [id], onDelete: Restrict)
+
+    invoiceId String?
+    Invoice   InvoicingInvoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+    stockMoveId String?    @map("stock_move_id")
+    StockMove   StockMove? @relation(fields: [stockMoveId], references: [id], onDelete: Cascade)
+
+    JournalLines InvoicingJournalLine[]
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("invoicing_journal_entry")
+}
+
+model InvoicingJournalLine {
+    id      String             @id @default(cuid())
+    concept JournalLineConcept
+    debit   Decimal            @db.Decimal(16, 2)
+    credit  Decimal            @db.Decimal(16, 2)
+
+    entryId String                @map("entry_id")
+    Journal InvoicingJournalEntry @relation(fields: [entryId], references: [id], onDelete: Restrict)
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("invoicing_journal_entry_line")
+}
+
+enum JournalLineConcept {
+    customer
+    supplier
+    sale
+    purchase
+    vat
+    payment
+    discount
+    shipping
+}
+
+enum JournalType {
+    sale
+    purchase
+    cash
+    bank
+    inventory
+    general
+}
+
+enum InvoiceDisplayType {
+    customer
+    supplier
+}
+
+enum InvoiceType {
+    sale_invoice
+    purchase_invoice
+    credit_note
+    debit_note
+}
+
+enum InvoiceState {
+    draft
+    confirmed
+    sent
+    partial
+    paid
+    cancelled
+}
+
+enum InvoicePaymentPolicy {
+    PUE
+    PPD
+}
+
+enum InvoicePaymentForm {
+    cash         @map("01")
+    check        @map("02")
+    bankTransfer @map("03")
+    creditCard   @map("04")
+    debitCard    @map("28")
+    undefined    @map("99")
+}
+
+enum TaxTypeUse {
+    sale
+    purchase
+}

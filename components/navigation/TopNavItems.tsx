@@ -76,13 +76,13 @@ const menus: MenuGroup[] = [
         key: "invoicingCustomersMenu",
         label: "Clientes",
         icon: "bi bi-person-vcard-fill",
-        href: "/app/account_invoicing?view_type=list&id=null&display_type=customer",
+        href: "/app/invoicing?view_type=list&id=null&display_type=customer",
       },
       {
         key: "invoicingSuppliersMenu",
         label: "Proveedores",
         icon: "bi bi-building",
-        href: "/app/account_invoicing?view_type=list&id=null&display_type=supplier",
+        href: "/app/invoicing?view_type=list&id=null&display_type=supplier",
       },
       {
         key: "invoicingSettings",
@@ -205,11 +205,7 @@ function TopNavItems() {
   const { access } = useAuth();
 
   const accessMap = useMemo(() => {
-    return new Map(
-      access
-        .filter((acc) => acc.entityType === "app")
-        .map((acc) => [acc.fieldName, acc]),
-    );
+    return new Map(access.filter((acc) => acc.entityType === "app").map((acc) => [acc.fieldName, acc]));
   }, [access]);
 
   const isInvisible = (fieldName: string) => {
@@ -249,12 +245,7 @@ function TopNavItems() {
               {item.dividerBefore && <NavDropdown.Divider />}
 
               {item.href ? (
-                <NavDropdown.Item
-                  as={Link}
-                  href={item.href}
-                  title={item.key}
-                  className={styles.dropdownItem}
-                >
+                <NavDropdown.Item as={Link} href={item.href} title={item.key} className={styles.dropdownItem}>
                   {item.icon && (
                     <span className={styles.itemIcon}>
                       <i className={item.icon} />
@@ -264,11 +255,7 @@ function TopNavItems() {
                   <span className={styles.itemLabel}>{item.label}</span>
                 </NavDropdown.Item>
               ) : (
-                <NavDropdown.Item
-                  title={item.key}
-                  disabled
-                  className={styles.dropdownItem}
-                >
+                <NavDropdown.Item title={item.key} disabled className={styles.dropdownItem}>
                   {item.icon && (
                     <span className={styles.itemIcon}>
                       <i className={item.icon} />

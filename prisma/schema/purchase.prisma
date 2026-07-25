@@ -1,0 +1,78 @@
+model PurchaseOrder {
+    id                  String               @id @default(cuid())
+    name                String               @unique
+    supplierId          String               @map("supplier_id")
+    userId              String               @map("user_id")
+    warehouseDestId     String               @map("wh_dest_id")
+    createdAt           DateTime             @default(now()) @map("created_at")
+    updatedAt           DateTime             @updatedAt @map("updated_at")
+    state               PurchaseOrderState   @default(draft)
+    subtotal            Float                @default(0.0)
+    amountTax           Float                @default(0.0) @map("amount_tax")
+    total               Float                @default(0.0)
+    date                DateTime             @db.Date
+    dateOrder           DateTime             @map("date_order") @db.Date
+    datePlanned         DateTime?            @map("date_planned") @db.Date
+    confirmedDate       DateTime?            @map("confirmed_date")
+    doneDate            DateTime?            @map("done_date")
+    Supplier            Partner              @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+    User                User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+    WarehouseDest       Warehouse            @relation(fields: [warehouseDestId], references: [id], onDelete: Restrict)
+    paymentTermId       String               @map("payment_term_id")
+    PaymentTerm         InvoicingPaymentTerm @relation(fields: [paymentTermId], references: [id], onDelete: Restrict)
+    OrderLines          PurchaseOrderLine[]
+    warehouseAffectedId String?              @map("warehouse_affected_id")
+    WarehouseAffected   Warehouse?           @relation("WarehousePurchaseAffected", fields: [warehouseAffectedId], references: [id], onDelete: Restrict)
+    currencyId          String               @map("currency_id")
+    Currency            InvoicingCurrency    @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+    StockPicking        StockPicking?
+
+    @@map("purchase_order")
+}
+
+model PurchaseOrderLine {
+    id        String @id @default(cuid())
+    priceUnit Float  @default(0.0) @map("price_unit")
+    quantity  Float  @default(0.0)
+    subtotal  Float  @default(0.0)
+    total     Float  @default(0.0)
+    taxRate   Float  @map("tax_rate")
+    taxAmount Float  @map("tax_amount")
+
+    receivedQty Float              @default(0.0) @map("received_qty")
+    pendingQty  Float              @default(0.0) @map("pending_qty")
+    invoicedQty Float              @default(0.0) @map("invoiced_qty")
+    state       PurchaseLineStates @default(pending)
+
+    ready Boolean @default(false)
+
+    orderId      String        @map("order_id")
+    PurcaseOrder PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+    productId String          @map("product_id")
+    Product   ProductTemplate @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+    uomId String      @map("uom_id")
+    Uom   UomCategory @relation(fields: [uomId], references: [id], onDelete: Restrict)
+
+    createUid String   @map("create_uid")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("purchase_order_line")
+}
+
+enum PurchaseLineStates {
+    pending
+    done
+    invoiced
+    cancel
+}
+
+enum PurchaseOrderState {
+    draft
+    purchase
+    pending
+    done
+    cancel
+}

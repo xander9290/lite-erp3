@@ -1,0 +1,16 @@
+model StockWarehouse {
+    id           String          @id @default(cuid())
+    qty          Float           @default(0.0)
+    reservedQty  Float           @default(0.0) @map("reserved_qty")
+    locationName String?
+    productId    String          @map("product_id")
+    warehouseId  String          @map("warehouse_id")
+    createdUid   String          @map("created_uid")
+    createdAt    DateTime        @default(now()) @map("created_at")
+    updatedAt    DateTime        @updatedAt @map("updated_at")
+    Product      ProductTemplate @relation(fields: [productId], references: [id])
+    Warehouse    Warehouse       @relation(fields: [warehouseId], references: [id])
+
+    @@unique([productId, warehouseId], name: "productId_warehouseId")
+    @@map("stock_warehouse")
+}

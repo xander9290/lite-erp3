@@ -1,0 +1,103 @@
+model SaleOrder {
+    id            String         @id @default(cuid())
+    name          String         @unique
+    orderDate     DateTime       @map("order_date") @db.Date
+    confirmedDate DateTime?      @map("confirmed_date")
+    obs           String?
+    purchaseRef   String?        @map("purchase_ref")
+    reference     String?
+    state         SaleOrderState @default(draft)
+    amountTax     Float          @default(0.0) @map("amount_tax")
+    subtotal      Float          @default(0.0)
+    total         Float          @default(0.0)
+
+    saleUserId String @map("sale_user_id")
+    SaleUser   User   @relation(fields: [saleUserId], references: [id], onDelete: Restrict)
+
+    partnerId String  @map("partner_id")
+    Partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+
+    partnerShippingId String?  @map("partner_shipping_id")
+    PartnerShipping   Partner? @relation("PartnerShipping", fields: [partnerShippingId], references: [id], onDelete: Restrict)
+
+    warehouseId String    @map("warehouse_id")
+    Warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+
+    companyId String  @map("company_id")
+    Company   Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+    shippingWayId String          @map("shipping_way_id")
+    ShippingWay   SaleShippingWay @relation(fields: [shippingWayId], references: [id], onDelete: Restrict)
+
+    paymentTermId String               @map("payment_term_id")
+    PaymentTerm   InvoicingPaymentTerm @relation(fields: [paymentTermId], references: [id], onDelete: Restrict)
+
+    createUid String   @map("create_uid")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    SaleOrderLines SaleOrderLine[]
+    StockPickings  StockPicking[]
+
+    @@map("sale_order")
+}
+
+model SaleOrderLine {
+    id String @id @default(cuid())
+
+    orderId   String    @map("order_id")
+    SaleOrder SaleOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+    productId String          @map("product_id")
+    Product   ProductTemplate @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+    quantity Float
+
+    uomId String      @map("uom_id")
+    Uom   UomCategory @relation(fields: [uomId], references: [id], onDelete: Restrict)
+
+    pricelist ProductPricelistItem @default(price1)
+    priceUnit Float                @map("price_unit")
+    subtotal  Float
+    total     Float
+    taxRate   Float                @map("tax_rate")
+    taxAmount Float                @map("tax_amount")
+    state     SaleOrderLineState   @default(pending)
+
+    createUid String   @map("create_uid")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("sale_order_line")
+}
+
+enum SaleOrderState {
+    draft
+    sale
+    done
+    cancel
+}
+
+enum SaleOrderLineState {
+    pending
+    reserved
+    delivered
+    cancel
+}
+
+model SaleShippingWay {
+    id     String              @id @default(cuid())
+    name   String              @unique
+    type   SaleShippingWayType @default(counter)
+    active Boolean             @default(true)
+
+    SaleOrders SaleOrder[]
+
+    @@map("sale_shipping_way")
+}
+
+enum SaleShippingWayType {
+    counter // mostrador
+    delivery // local
+    courier // mensajería
+}

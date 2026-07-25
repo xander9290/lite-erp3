@@ -1,0 +1,80 @@
+model StockPicking {
+    id            String               @id @default(cuid())
+    name          String               @unique
+    date          DateTime             @default(now()) @db.Date
+    datePlanned   DateTime             @map("date_planned") @db.Date
+    confirmedDate DateTime?            @map("confirmed_date")
+    readyDate     DateTime?            @map("ready_date")
+    doneDate      DateTime?            @map("done_date")
+    cancelDate    DateTime?            @map("cancel_date")
+    reference     String?
+    state         StockPickingState    @default(draft)
+    operationType PickingOperationType @default(internal) @map("operation_type")
+
+    whId      String    @map("wh_id")
+    Warehouse Warehouse @relation("PickingWarehouse", fields: [whId], references: [id], onDelete: Restrict)
+
+    whDestId      String    @map("wh_dest_id")
+    WarehouseDest Warehouse @relation("PickingWHDest", fields: [whDestId], references: [id], onDelete: Restrict)
+
+    partnerId String  @map("partner_id")
+    Partner   Partner @relation("PickingPartner", fields: [partnerId], references: [id], onDelete: Restrict)
+
+    opeartorId String?  @map("operator_id")
+    Operator   Partner? @relation("PickingOperator", fields: [opeartorId], references: [id], onDelete: Restrict)
+
+    companyId String  @map("company_id")
+    Company   Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+    saleId    String?    @map("sale_id")
+    SaleOrder SaleOrder? @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+    purchaseId    String?        @unique @map("purchase_id")
+    PurchaseOrder PurchaseOrder? @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+    companyOriginId String @map("company_origin_id")
+    companyDestId   String @map("company_dest_id")
+
+    PickingLine StockPickingLine[]
+
+    createUid String   @map("create_uid")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("stock_picking")
+}
+
+enum StockPickingState {
+    draft
+    confirmed
+    ready
+    done
+    cancel
+}
+
+enum PickingOperationType {
+    outgoing
+    incoming
+    internal
+}
+
+model StockPickingLine {
+    id        String @id @default(cuid())
+    quantity  Float
+    delivered Float
+
+    uomId String      @map("uom_id")
+    Uom   UomCategory @relation(fields: [uomId], references: [id], onDelete: Restrict)
+
+    productId String          @map("product_id")
+    Product   ProductTemplate @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+    pickingId String       @map("picking_id")
+    Picking   StockPicking @relation(fields: [pickingId], references: [id], onDelete: Cascade)
+
+    createUid String   @map("create_uid")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("stock_picking_line")
+}
