@@ -1,22 +1,48 @@
 "use client";
 
 import { SubmitHandler, useForm } from "react-hook-form";
-import { invoiceMoveSchema, invoiceMoveSchemaDefault, InvoiceMoveSchemaType } from "../schemas/invoiceMove.schema";
+import {
+  invoiceMoveSchema,
+  invoiceMoveSchemaDefault,
+  InvoiceMoveSchemaType,
+} from "../schemas/invoiceMove.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import { actionInvoiceMove, InvoiceMoveWithProps } from "../actions/invoiceMode.action";
+import {
+  actionInvoiceMove,
+  InvoiceMoveWithProps,
+} from "../actions/invoiceMode.action";
 import { toDateOnly, todayDate } from "@/app/libs/validatorDate";
-import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
-import { FieldEntry, FieldRelation, FieldSelect } from "@/components/templates/fields";
+import {
+  FormView,
+  FormViewGroup,
+  FormViewStack,
+} from "@/components/templates/FormView";
+import {
+  FieldEntry,
+  FieldRelation,
+  FieldSelect,
+} from "@/components/templates/fields";
 import { useSearchParams } from "next/navigation";
-import { InvoiceDisplayType, InvoicingPaymentTerm, Partner } from "@/generated/prisma/browser";
+import {
+  InvoiceDisplayType,
+  InvoicingPaymentTerm,
+  Partner,
+} from "@/generated/prisma/browser";
 import { getIPaymentTermById } from "../../../invoicing_settings/payment_term/actions/ipaymentTerm.action";
 import { addDays } from "date-fns";
 import toast from "react-hot-toast";
+import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 
-function InvoiginMoveFormView({ invoiceMove, id }: { invoiceMove: InvoiceMoveWithProps | null; id: string | null }) {
+function InvoiginMoveFormView({
+  invoiceMove,
+  id,
+}: {
+  invoiceMove: InvoiceMoveWithProps | null;
+  id: string | null;
+}) {
   const searchParams = useSearchParams();
   const displayType = searchParams.get("display_type") as InvoiceDisplayType;
 
@@ -43,7 +69,9 @@ function InvoiginMoveFormView({ invoiceMove, id }: { invoiceMove: InvoiceMoveWit
     const res = await actionInvoiceMove({ data: { ...data, displayType } });
     if (id && id === "null") {
       if (!res.success) modalError(res.message);
-      router.replace(`/app/invoicing/moves?view_type=form&id=${res.data?.id}&display_type=${res.data?.displayType}`);
+      router.replace(
+        `/app/invoicing/moves?view_type=form&id=${res.data?.id}&display_type=${res.data?.displayType}`,
+      );
       toast.success(res.message);
     } else {
       router.refresh();
@@ -56,10 +84,18 @@ function InvoiginMoveFormView({ invoiceMove, id }: { invoiceMove: InvoiceMoveWit
       setPartnerId(record.id);
 
       if (record.paymentTermId) {
-        const paymentTermId = await getIPaymentTermById({ id: record.paymentTermId });
+        const paymentTermId = await getIPaymentTermById({
+          id: record.paymentTermId,
+        });
         if (paymentTermId) {
-          setValue("paymentTermId", { id: paymentTermId.id, name: paymentTermId.name });
-          setValue("invoiceDateDue", toDateOnly(addDays(todayDate(), paymentTermId.days)));
+          setValue("paymentTermId", {
+            id: paymentTermId.id,
+            name: paymentTermId.name,
+          });
+          setValue(
+            "invoiceDateDue",
+            toDateOnly(addDays(todayDate(), paymentTermId.days)),
+          );
         }
       }
     } else {
@@ -72,9 +108,30 @@ function InvoiginMoveFormView({ invoiceMove, id }: { invoiceMove: InvoiceMoveWit
 
   const onchagePaymentTermId = (value: InvoicingPaymentTerm | null) => {
     if (value) {
-      setValue("invoiceDateDue", toDateOnly(addDays(todayDate(), value.days)));
+      // si es pago inmediato, las fechas se colocan a la fecha actual
+      if (value.days === 0) {
+        setValue("invoiceDate", todayDate());
+        setValue("invoiceDateDue", todayDate());
+      } else {
+        const invoiceDate = getValues().invoiceDate;
+        setValue(
+          "invoiceDateDue",
+          toDateOnly(addDays(invoiceDate, value.days)),
+        );
+      }
     } else {
       setValue("invoiceDateDue", "");
+    }
+  };
+
+  const onchangeInvoiceDate = async (value: string) => {
+    const paymentTerm = getValues().paymentTermId;
+    const paymentTermId = await getIPaymentTermById({ id: paymentTerm.id });
+    if (paymentTermId) {
+      const days = paymentTermId.days;
+      setValue("invoiceDateDue", toDateOnly(addDays(value, days)));
+    } else {
+      setValue("invoiceDateDue", toDateOnly(addDays(todayDate(), 0)));
     }
   };
 
@@ -204,10 +261,27 @@ function InvoiginMoveFormView({ invoiceMove, id }: { invoiceMove: InvoiceMoveWit
       </FormViewGroup>
       <FormViewGroup>
         <FormViewStack>
-          <FieldEntry type="date" name="invoiceDate" label="Fecha de factura" />
+          <FieldEntry
+            type="date"
+            name="invoiceDate"
+            label="Fecha de factura"
+            onChange={(value) => onchangeInvoiceDate(value)}
+          />
           <FieldEntry type="date" name="date" label="Fecha" readonly />
-          <FieldRelation name="paymentTermId" model="invoicingPaymentTerm" label="Términos de pago" ponChange={(_, value) => onchagePaymentTermId(value as InvoicingPaymentTerm | null)} />
-          <FieldEntry type="date" name="invoiceDateDue" label="Fecha de vencimiento" />
+          <FieldRelation
+            name="paymentTermId"
+            model="invoicingPaymentTerm"
+            label="Términos de pago"
+            ponChange={(_, value) =>
+              onchagePaymentTermId(value as InvoicingPaymentTerm | null)
+            }
+          />
+          <FieldEntry
+            type="date"
+            name="invoiceDateDue"
+            label="Fecha de vencimiento"
+            readonly
+          />
           <FieldRelation
             model="invoicingJournal"
             name="journalId"
@@ -217,10 +291,28 @@ function InvoiginMoveFormView({ invoiceMove, id }: { invoiceMove: InvoiceMoveWit
               ["type", "in", ["sale", "purchase"]],
             ]}
           />
-          <FieldRelation model="invoicingCurrency" name="currencyId" label="Moneda" />
+          <FieldRelation
+            model="invoicingCurrency"
+            name="currencyId"
+            label="Moneda"
+          />
         </FormViewStack>
         <FieldEntry name="reference" label="Referencia" />
       </FormViewGroup>
+      <Notebook defaultActiveKey="invoiceLine">
+        <Page eventKey="invoiceLine" title="Líneas">
+          <PageSheet name="invoiceLine">
+            <h3>Líneas de la factura</h3>
+          </PageSheet>
+        </Page>
+        <Page eventKey="otherInfo" title="Otra información">
+          <PageSheet name="otherInfo">
+            <FormViewGroup>
+              <FieldEntry name="uuidcfdi" label="Folio fiscal" readonly />
+            </FormViewGroup>
+          </PageSheet>
+        </Page>
+      </Notebook>
     </FormView>
   );
 }
