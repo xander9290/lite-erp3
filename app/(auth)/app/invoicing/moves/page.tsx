@@ -6,32 +6,20 @@ import { lazy, Suspense } from "react";
 import { getInvoiceMoveById } from "./actions/invoiceMode.action";
 
 export const metadata: Metadata = {
-  title: "Facturas clientes",
+  title: "Facturas",
 };
 
-const InvoicingMoveListView = lazy(
-  () => import("./views/InvoicingMoveListView"),
-);
+const InvoicingMoveListView = lazy(() => import("./views/InvoicingMoveListView"));
 const InvoiginMoveFormView = lazy(() => import("./views/InvoiginMoveFormView"));
 
 async function page({ searchParams }: IPageProps) {
-  const {
-    view_type: viewType,
-    display_type: displayType,
-    id,
-  } = await searchParams;
+  const { view_type: viewType, display_type: displayType, id } = await searchParams;
 
-  if (
-    !displayType ||
-    displayType === undefined ||
-    displayType === "" ||
-    displayType === null
-  ) {
+  if (!displayType || displayType === undefined || displayType === "" || displayType === null) {
     return <NotFound />;
   }
 
-  const invoiceMove =
-    id && id !== "null" ? await getInvoiceMoveById({ id }) : null;
+  const invoiceMove = id && id !== "null" ? await getInvoiceMoveById({ id }) : null;
 
   if (viewType === "list") {
     return (

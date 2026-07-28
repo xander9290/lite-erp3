@@ -33,12 +33,7 @@ export function round(value: number, decimals: number) {
 
 type CompareOperator = ">" | ">=" | "<" | "<=" | "==" | "===" | "!=" | "!==";
 
-export function compareDates(
-  date1: Date | string,
-  operator: CompareOperator,
-  date2: Date | string,
-  compareTime: boolean = true,
-): boolean {
+export function compareDates(date1: Date | string, operator: CompareOperator, date2: Date | string, compareTime: boolean = true): boolean {
   let d1 = new Date(date1);
   let d2 = new Date(date2);
 
@@ -79,13 +74,7 @@ export function esMultiplo(cant: number, uom: number) {
   return Math.abs(cant % uom) < precision;
 }
 
-export const formatCurrency = ({
-  value,
-  currency = "MXN",
-}: {
-  value: number;
-  currency?: string;
-}) => {
+export const formatCurrency = ({ value, currency = "MXN" }: { value: number; currency?: string }) => {
   return new Intl.NumberFormat("es-MX", {
     style: "currency",
     currency: currency,
@@ -152,15 +141,7 @@ export function roundToDecimals(value: number, decimals: number = 2): number {
   return Number(Math.round(Number(value + "e" + decimals)) + "e-" + decimals);
 }
 
-export const serverLog = ({
-  action,
-  model,
-  data,
-}: {
-  action: "Fetching" | "Creating" | "Updating" | "Deleting";
-  model: string;
-  data: object | null;
-}) => {
+export const serverLog = ({ action, model, data }: { action: "Fetching" | "Creating" | "Updating" | "Deleting"; model: string; data: object | null }) => {
   const output = `${action} ${model}: ${JSON.stringify(data)}`;
   return console.log(output);
 };

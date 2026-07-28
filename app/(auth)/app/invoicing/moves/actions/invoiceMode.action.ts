@@ -18,11 +18,7 @@ export interface InvoiceMoveWithProps extends InvoicingInvoice {
   JournalEntry: { id: string; reference: string | null } | null;
 }
 
-export async function getInvoiceMoveById({
-  id,
-}: {
-  id: string | null;
-}): Promise<InvoiceMoveWithProps | null> {
+export async function getInvoiceMoveById({ id }: { id: string | null }): Promise<InvoiceMoveWithProps | null> {
   try {
     if (!id) throw new Error("ID move not defined");
 
@@ -47,11 +43,7 @@ export async function getInvoiceMoveById({
   }
 }
 
-export async function actionInvoiceMove({
-  data,
-}: {
-  data: InvoiceMoveSchemaType;
-}): Promise<ActionResponse<InvoiceMoveWithProps>> {
+export async function actionInvoiceMove({ data }: { data: InvoiceMoveSchemaType }): Promise<ActionResponse<InvoiceMoveWithProps>> {
   try {
     const { uid } = await sessionStore();
 
@@ -64,10 +56,7 @@ export async function actionInvoiceMove({
 
       let newName = "";
       if (data.name === "new") {
-        newName = await getNextValue(
-          `${journal.code}/${format(new Date(), "yyyy")}/`,
-          `${journal.name}-invoicing`,
-        );
+        newName = await getNextValue(`${journal.code}/${format(new Date(), "yyyy")}/`, `${journal.name}-invoicing`);
       }
 
       const invoiceMove = await tx.invoicingInvoice.upsert({
@@ -78,11 +67,13 @@ export async function actionInvoiceMove({
           currencyId: data.currencyId.id,
           journalId: data.journalId.id,
           partnerId: data.partnerId.id,
+          partnerShippingId: data.partnerShippingId?.id ? data.partnerShippingId.id : null,
           displayType: data.displayType,
           invoiceDate: new Date(data.invoiceDate),
           invoiceDateDue: new Date(data.invoiceDateDue),
           paymentForm: data.paymentForm,
           paymentPolicy: data.paymentPolicy,
+          cfdiUse: data.cfdiUse,
           reference: data.reference,
           subtotal: data.subtotal,
           taxAmount: data.taxAmount,
@@ -100,6 +91,7 @@ export async function actionInvoiceMove({
           name: newName,
           paymentForm: data.paymentForm,
           paymentPolicy: data.paymentPolicy,
+          cfdiUse: data.cfdiUse,
           reference: data.reference,
           subtotal: data.subtotal,
           taxAmount: data.taxAmount,
@@ -108,6 +100,7 @@ export async function actionInvoiceMove({
           currencyId: data.currencyId.id,
           journalId: data.journalId.id,
           partnerId: data.partnerId.id,
+          partnerShippingId: data.partnerShippingId?.id ? data.partnerShippingId.id : null,
           paymentTermId: data.paymentTermId.id,
         },
 

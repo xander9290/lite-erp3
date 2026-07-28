@@ -2,9 +2,7 @@
 
 import { format, parseISO } from "date-fns";
 
-export function toDateTimeLocal(
-  value: Date | string | null | undefined,
-): string {
+export function toDateTimeLocal(value: Date | string | null | undefined): string {
   if (!value) return "";
 
   const date = value instanceof Date ? value : new Date(value);

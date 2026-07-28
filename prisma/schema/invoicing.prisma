@@ -9,11 +9,12 @@ model InvoicingInvoice {
     invoiceType    InvoiceType          @map("invoice_type")
     state          InvoiceState         @default(draft)
     uuidcfdi       String               @map("uuid_cfdi")
-    subtotal       Decimal              @db.Decimal(10, 2)
-    taxAmount      Decimal              @map("tax_amount") @db.Decimal(10, 2)
-    total          Decimal              @db.Decimal(10, 2)
+    subtotal       Float
+    taxAmount      Float                @map("tax_amount")
+    total          Float
     paymentPolicy  InvoicePaymentPolicy @map("payment_policy")
     paymentForm    InvoicePaymentForm   @map("payment_form")
+    cfdiUse        CfdiUse              @map("cfdi_use")
 
     paymentTermId String               @map("payment_term_id")
     PaymentTerm   InvoicingPaymentTerm @relation(fields: [paymentTermId], references: [id], onDelete: Restrict)
@@ -202,6 +203,13 @@ enum InvoicePaymentForm {
     creditCard   @map("04")
     debitCard    @map("28")
     undefined    @map("99")
+}
+
+enum CfdiUse {
+    acquisition     @map("G01")
+    generalExpenses @map("G03")
+    noTaxEffects    @map("S01")
+    payments        @map("CP01")
 }
 
 enum TaxTypeUse {
