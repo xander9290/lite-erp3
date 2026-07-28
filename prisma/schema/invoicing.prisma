@@ -6,7 +6,6 @@ model InvoicingInvoice {
     invoiceDate    DateTime             @map("invoice_date") @db.Date // fecha de proveedor
     invoiceDateDue DateTime             @map("invoice_date_due") @db.Date // a partir de fecha proveedor
     displayType    InvoiceDisplayType   @map("display_type")
-    invoiceType    InvoiceType          @map("invoice_type")
     state          InvoiceState         @default(draft)
     uuidcfdi       String               @map("uuid_cfdi")
     subtotal       Float
@@ -173,13 +172,6 @@ enum JournalType {
 enum InvoiceDisplayType {
     customer
     supplier
-}
-
-enum InvoiceType {
-    sale_invoice
-    purchase_invoice
-    credit_note
-    debit_note
 }
 
 enum InvoiceState {

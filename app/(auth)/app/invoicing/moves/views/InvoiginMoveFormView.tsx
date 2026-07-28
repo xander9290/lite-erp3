@@ -151,7 +151,6 @@ function InvoiginMoveFormView({
       displayType: invoiceMove.displayType,
       invoiceDate: toDateOnly(invoiceMove.invoiceDate),
       invoiceDateDue: toDateOnly(invoiceMove.invoiceDateDue),
-      invoiceType: invoiceMove.invoiceType,
       journalId: {
         id: invoiceMove.Journal.id,
         name: invoiceMove.Journal.name,
