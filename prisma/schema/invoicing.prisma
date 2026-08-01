@@ -32,11 +32,51 @@ model InvoicingInvoice {
 
     JournalEntry InvoicingJournalEntry?
 
+    InvoiceLines InvoicingInvoiceLine[]
+
+    purchaseId String?
+    Purchase   PurchaseOrder? @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+
+    saleId String?
+    Sale   SaleOrder? @relation(fields: [saleId], references: [id], onDelete: Restrict)
+
     createUid String   @map("create_uid")
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
+    @@index([partnerId])
     @@map("invoicing_invoice")
+}
+
+model InvoicingInvoiceLine {
+    id              String   @id @default(cuid())
+    quantity        Float
+    priceUnit       Float    @map("price_unit")
+    discountPercent Float    @map("discount_percent")
+    discountAmount  Float    @map("discount_amount")
+    amountUntaxed   Float    @map("amount_untaxed")
+    amountTax       Float    @map("amount_tax")
+    amountTotal     Float    @map("amount_total")
+    productLastCost Float    @map("product_last_cost")
+    date            DateTime @default(now()) @db.Date
+    defaultCode     String?  @map("default_code")
+    description     String
+
+    invoiceId String           @map("invoice_id")
+    Invoice   InvoicingInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+    productId String          @map("product_id")
+    Product   ProductTemplate @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+    uomId String      @map("uom_id")
+    Uom   UomCategory @relation(fields: [uomId], references: [id], onDelete: Restrict)
+
+    createUid String   @map("create_uid")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@index([invoiceId])
+    @@map("invoicing_invoice_line")
 }
 
 model InvoicingPaymentTerm {

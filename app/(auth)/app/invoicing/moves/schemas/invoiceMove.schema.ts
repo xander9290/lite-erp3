@@ -7,6 +7,7 @@ import {
   InvoiceState,
 } from "@/generated/prisma/enums";
 import { z } from "zod";
+import { invoiceMoveLineSchema } from "./invoiceMoveLineSchema";
 
 export const invoiceMoveSchema = z.object({
   name: z.string(),
@@ -45,6 +46,7 @@ export const invoiceMoveSchema = z.object({
     id: z.string(),
     name: z.string(),
   }),
+  InvoiceLines: z.array(invoiceMoveLineSchema),
 });
 
 export type InvoiceMoveSchemaType = z.infer<typeof invoiceMoveSchema>;
@@ -69,4 +71,5 @@ export const invoiceMoveSchemaDefault: InvoiceMoveSchemaType = {
   taxAmount: 0.0,
   total: 0.0,
   uuidcfdi: "",
+  InvoiceLines: [],
 };

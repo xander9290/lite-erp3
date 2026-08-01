@@ -54,6 +54,7 @@ model ProductTemplate {
     SaleOrderLines        SaleOrderLine[]
     allowPartialQty       Boolean                @default(false) @map("allow_partial_qty")
     stockPickingLines     StockPickingLine[]
+    InvoiceLine           InvoicingInvoiceLine[]
 
     @@map("product_template")
 }
@@ -127,6 +128,7 @@ model UomCategory {
     purchaseOrderLines    PurchaseOrderLine[]
     SaleOrderLines        SaleOrderLine[]
     stockPickingLines     StockPickingLine[]
+    InvoiceLines          InvoicingInvoiceLine[]
 
     @@map("product_uom_category")
 }

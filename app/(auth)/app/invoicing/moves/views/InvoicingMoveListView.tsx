@@ -76,6 +76,7 @@ function InvoicingMoveListView({ displayType }: { displayType: string }) {
             field="PaymentTerm.name"
             label="Términos de pago"
             include={{ PaymentTerm: { select: { id: true, name: true } } }}
+            render={(name) => <div className="text-center">{name}</div>}
           />
           <Column
             field="invoiceDateDue"

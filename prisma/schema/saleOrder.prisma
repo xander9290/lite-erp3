@@ -36,8 +36,9 @@ model SaleOrder {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    SaleOrderLines SaleOrderLine[]
-    StockPickings  StockPicking[]
+    SaleOrderLines    SaleOrderLine[]
+    StockPickings     StockPicking[]
+    invoicingInvoices InvoicingInvoice[]
 
     @@map("sale_order")
 }

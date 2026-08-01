@@ -1,6 +1,6 @@
 "use client";
 
-import { SubmitHandler, useForm } from "react-hook-form";
+import { SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import {
   invoiceMoveSchema,
   invoiceMoveSchemaDefault,
@@ -30,11 +30,20 @@ import {
   InvoiceDisplayType,
   InvoicingPaymentTerm,
   Partner,
+  ProductTemplate,
 } from "@/generated/prisma/browser";
 import { getIPaymentTermById } from "../../../invoicing_settings/payment_term/actions/ipaymentTerm.action";
 import { addDays } from "date-fns";
 import toast from "react-hot-toast";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
+import { Col } from "react-bootstrap";
+import {
+  BtnDeleteLine,
+  SimpleTable,
+  SimpleTD,
+} from "@/components/templates/simpletemplates";
+import { invoiceMoveLineSchemaDefault } from "../schemas/invoiceMoveLineSchema";
+import { getProductById } from "../../../product_template/products/actions/productTemplate.action";
 
 function InvoiginMoveFormView({
   invoiceMove,
@@ -51,7 +60,12 @@ function InvoiginMoveFormView({
     defaultValues: invoiceMoveSchemaDefault,
   });
 
-  const { reset, getValues, setValue } = methods;
+  const { reset, getValues, setValue, control } = methods;
+
+  const { append, fields, remove } = useFieldArray({
+    control,
+    name: "InvoiceLines",
+  });
 
   const originalValuesRef = useRef<InvoiceMoveSchemaType | null>(null);
   const handleReverse = () => {
@@ -135,6 +149,32 @@ function InvoiginMoveFormView({
     }
   };
 
+  const onchangeProduct = async ({
+    value,
+    line,
+  }: {
+    value: string | null;
+    line: number;
+  }) => {
+    const productId = await getProductById({ id: value });
+    const quantity = getValues().InvoiceLines[line].quantity;
+    if (productId) {
+      const taxRate =
+        displayType === "customer"
+          ? productId.taxSaleId
+          : productId.TaxPurchase;
+      const priceUnit = productId.price1;
+      const subtotal = quantity * priceUnit;
+
+      setValue(`InvoiceLines.${line}.priceUnit`, priceUnit);
+      setValue(`InvoiceLines.${}`)
+      setValue(`InvoiceLines.${line}.uomId`, {
+        id: productId?.Uom?.id || "",
+        name: productId?.Uom?.code || "",
+      });
+    }
+  };
+
   useEffect(() => {
     if (!invoiceMove) {
       reset(invoiceMoveSchemaDefault);
@@ -173,10 +213,24 @@ function InvoiginMoveFormView({
       },
       reference: invoiceMove.reference,
       state: invoiceMove.state,
-      subtotal: Number(invoiceMove.subtotal),
-      taxAmount: Number(invoiceMove.taxAmount),
-      total: Number(invoiceMove.total),
+      subtotal: invoiceMove.subtotal,
+      taxAmount: invoiceMove.taxAmount,
+      total: invoiceMove.total,
       uuidcfdi: invoiceMove.uuidcfdi,
+      InvoiceLines: invoiceMove.InvoiceLines.map((line) => ({
+        amountTax: line.amountTax,
+        amountTotal: line.amountTotal,
+        amountUntaxed: line.amountUntaxed,
+        defaultCode: line.defaultCode || "",
+        description: line.description,
+        discountAmount: line.discountAmount,
+        discountPercent: line.discountPercent,
+        priceUnit: line.priceUnit,
+        productId: { id: line.Product.id, name: line.Product.name },
+        productLastCost: line.productLastCost,
+        quantity: line.quantity,
+        uomId: { id: line.Uom.id, name: line.Uom.code },
+      })),
     };
 
     reset(values);
@@ -301,7 +355,149 @@ function InvoiginMoveFormView({
       <Notebook defaultActiveKey="invoiceLine">
         <Page eventKey="invoiceLine" title="Líneas">
           <PageSheet name="invoiceLine">
-            <h3>Líneas de la factura</h3>
+            <Col md="12" className="p-0 m-0 overflow-auto">
+              <SimpleTable
+                data={fields}
+                headers={[
+                  {
+                    string: "Producto",
+                    name: "productId",
+                    width: 270,
+                    minWidth: 170,
+                  },
+                  {
+                    string: "Cantidad",
+                    name: "quantity",
+                    width: 30,
+                    minWidth: 30,
+                  },
+                  { string: "UdM", name: "uomId", width: 35, minWidth: 20 },
+                  {
+                    string: "Precio",
+                    name: "priceUnit",
+                    width: 30,
+                    minWidth: 30,
+                  },
+                  {
+                    string: "Subtotal",
+                    name: "amountUntaxed",
+                    width: 50,
+                    minWidth: 50,
+                  },
+                  {
+                    string: "Impuestos",
+                    name: "amountTax",
+                    width: 30,
+                    minWidth: 30,
+                  },
+                  {
+                    string: "Total",
+                    name: "amountTotal",
+                    width: 50,
+                    minWidth: 50,
+                  },
+                  {
+                    string: <i className="bi bi-trash"></i>,
+                    className: "text-center",
+                    width: 25,
+                    minWidth: 25,
+                    name: "lineDelete",
+                  },
+                ]}
+                resizable
+                renderRow={(field, index) => (
+                  <tr key={field.id}>
+                    <SimpleTD colIdx={index} name="lineProductId">
+                      <FieldRelation
+                        inline
+                        model="productTemplate"
+                        name={`InvoiceLines.${index}.productId`}
+                        domain={[["active", "=", true]]}
+                        searchColumns={[
+                          { field: "defaultCode", label: "Referencia" },
+                          { field: "description", label: "Nombre" },
+                          { field: "active", label: "Activo", type: "boolean" },
+                        ]}
+                        readonly={getValues().state !== "draft"}
+                        ponChange={(value) =>
+                          onchangeProduct({
+                            value,
+                            line: index,
+                          })
+                        }
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineQuantity">
+                      <FieldEntry
+                        inline
+                        name={`InvoiceLines.${index}.quantity`}
+                        type="number"
+                        decimals={3}
+                        readonly={getValues().state !== "draft"}
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineUomId">
+                      <FieldRelation
+                        inline
+                        model="uomCategory"
+                        name={`InvoiceLines.${index}.uomId`}
+                        readonly
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="linePriceUnit">
+                      <FieldEntry
+                        inline
+                        name={`InvoiceLines.${index}.priceUnit`}
+                        type="number"
+                        decimals={2}
+                        readonly={getValues().state !== "draft"}
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineAmountUntaxed">
+                      <FieldEntry
+                        inline
+                        name={`InvoiceLines.${index}.amountUntaxed`}
+                        type="number"
+                        decimals={2}
+                        readonly
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineAmountUntax">
+                      <FieldEntry
+                        inline
+                        name={`InvoiceLines.${index}.amountTax`}
+                        type="number"
+                        decimals={2}
+                        readonly
+                      />
+                    </SimpleTD>
+                    <SimpleTD colIdx={index} name="lineAmountTotal">
+                      <FieldEntry
+                        inline
+                        name={`InvoiceLines.${index}.amountTotal`}
+                        type="number"
+                        decimals={2}
+                        readonly
+                      />
+                    </SimpleTD>
+                    <SimpleTD
+                      contentPosition="text-center"
+                      name="lineDelete"
+                      colIdx={index}
+                    >
+                      <BtnDeleteLine
+                        action={() => remove(index)}
+                        disabled={getValues().state !== "draft"}
+                      />
+                    </SimpleTD>
+                  </tr>
+                )}
+                action={() => {
+                  if (getValues().state !== "draft") return;
+                  return append(invoiceMoveLineSchemaDefault);
+                }}
+              />
+            </Col>
           </PageSheet>
         </Page>
         <Page eventKey="otherInfo" title="Otra información">
@@ -317,3 +513,13 @@ function InvoiginMoveFormView({
 }
 
 export default InvoiginMoveFormView;
+
+// grossAmount = quantity * priceUnit;
+
+// discountAmount = grossAmount * (discountPercent / 100);
+
+// amountUntaxed = grossAmount - discountAmount;
+
+// amountTax = amountUntaxed * taxRate;
+
+// amountTotal = amountUntaxed + amountTax;

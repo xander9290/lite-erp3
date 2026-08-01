@@ -26,6 +26,7 @@ model PurchaseOrder {
     currencyId          String               @map("currency_id")
     Currency            InvoicingCurrency    @relation(fields: [currencyId], references: [id], onDelete: Restrict)
     StockPicking        StockPicking?
+    invoicingInvoices   InvoicingInvoice[]
 
     @@map("purchase_order")
 }

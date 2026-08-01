@@ -16,6 +16,21 @@ export interface InvoiceMoveWithProps extends InvoicingInvoice {
   Currency: { id: string; name: string };
   Journal: { id: string; name: string };
   JournalEntry: { id: string; reference: string | null } | null;
+  InvoiceLines: {
+    id: string;
+    amountTax: number;
+    amountTotal: number;
+    amountUntaxed: number;
+    defaultCode: string | null;
+    description: string;
+    discountAmount: number;
+    discountPercent: number;
+    priceUnit: number;
+    Product: { id: string; name: string };
+    productLastCost: number;
+    quantity: number;
+    Uom: { id: string; code: string };
+  }[];
 }
 
 export async function getInvoiceMoveById({
@@ -37,6 +52,23 @@ export async function getInvoiceMoveById({
         Partner: { select: { id: true, name: true } },
         PartnerShipping: { select: { id: true, name: true } },
         PaymentTerm: { select: { id: true, name: true } },
+        InvoiceLines: {
+          select: {
+            id: true,
+            amountTax: true,
+            amountTotal: true,
+            amountUntaxed: true,
+            defaultCode: true,
+            description: true,
+            discountAmount: true,
+            discountPercent: true,
+            priceUnit: true,
+            Product: { select: { id: true, name: true } },
+            productLastCost: true,
+            quantity: true,
+            Uom: { select: { id: true, code: true } },
+          },
+        },
       },
     });
 
@@ -125,6 +157,23 @@ export async function actionInvoiceMove({
           Partner: { select: { id: true, name: true } },
           PartnerShipping: { select: { id: true, name: true } },
           PaymentTerm: { select: { id: true, name: true } },
+          InvoiceLines: {
+            select: {
+              id: true,
+              amountTax: true,
+              amountTotal: true,
+              amountUntaxed: true,
+              defaultCode: true,
+              description: true,
+              discountAmount: true,
+              discountPercent: true,
+              priceUnit: true,
+              Product: { select: { id: true, name: true } },
+              productLastCost: true,
+              quantity: true,
+              Uom: { select: { id: true, code: true } },
+            },
+          },
         },
       });
 
