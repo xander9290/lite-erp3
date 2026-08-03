@@ -57,6 +57,7 @@ model InvoicingInvoiceLine {
     amountUntaxed   Float    @map("amount_untaxed")
     amountTax       Float    @map("amount_tax")
     amountTotal     Float    @map("amount_total")
+    taxRate         Float    @map("tax_rate")
     productLastCost Float    @map("product_last_cost")
     date            DateTime @default(now()) @db.Date
     defaultCode     String?  @map("default_code")
@@ -218,9 +219,12 @@ enum InvoiceState {
     draft
     confirmed
     sent
+    cancelled
+}
+
+enum InvoicePaymentState {
     partial
     paid
-    cancelled
 }
 
 enum InvoicePaymentPolicy {

@@ -1,57 +1,28 @@
 "use client";
 
 import { SubmitHandler, useFieldArray, useForm } from "react-hook-form";
-import {
-  invoiceMoveSchema,
-  invoiceMoveSchemaDefault,
-  InvoiceMoveSchemaType,
-} from "../schemas/invoiceMove.schema";
+import { invoiceMoveSchema, invoiceMoveSchemaDefault, InvoiceMoveSchemaType } from "../schemas/invoiceMove.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useModals } from "@/contexts/ModalContext";
-import {
-  actionInvoiceMove,
-  InvoiceMoveWithProps,
-} from "../actions/invoiceMode.action";
+import { actionInvoiceConfirm, actionInvoiceMove, InvoiceMoveWithProps } from "../actions/invoiceMode.action";
 import { toDateOnly, todayDate } from "@/app/libs/validatorDate";
-import {
-  FormView,
-  FormViewGroup,
-  FormViewStack,
-} from "@/components/templates/FormView";
-import {
-  FieldEntry,
-  FieldRelation,
-  FieldSelect,
-} from "@/components/templates/fields";
+import { FormView, FormViewGroup, FormViewStack } from "@/components/templates/FormView";
+import { FieldEntry, FieldRelation, FieldSelect } from "@/components/templates/fields";
 import { useSearchParams } from "next/navigation";
-import {
-  InvoiceDisplayType,
-  InvoicingPaymentTerm,
-  Partner,
-  ProductTemplate,
-} from "@/generated/prisma/browser";
+import { InvoiceDisplayType, InvoicingPaymentTerm, Partner } from "@/generated/prisma/browser";
 import { getIPaymentTermById } from "../../../invoicing_settings/payment_term/actions/ipaymentTerm.action";
 import { addDays } from "date-fns";
 import toast from "react-hot-toast";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import { Col } from "react-bootstrap";
-import {
-  BtnDeleteLine,
-  SimpleTable,
-  SimpleTD,
-} from "@/components/templates/simpletemplates";
+import { BtnDeleteLine, SimpleTable, SimpleTD } from "@/components/templates/simpletemplates";
 import { invoiceMoveLineSchemaDefault } from "../schemas/invoiceMoveLineSchema";
 import { getProductById } from "../../../product_template/products/actions/productTemplate.action";
+import { formatCurrency } from "@/app/libs/helpers";
 
-function InvoiginMoveFormView({
-  invoiceMove,
-  id,
-}: {
-  invoiceMove: InvoiceMoveWithProps | null;
-  id: string | null;
-}) {
+function InvoiginMoveFormView({ invoiceMove, id }: { invoiceMove: InvoiceMoveWithProps | null; id: string | null }) {
   const searchParams = useSearchParams();
   const displayType = searchParams.get("display_type") as InvoiceDisplayType;
 
@@ -60,7 +31,7 @@ function InvoiginMoveFormView({
     defaultValues: invoiceMoveSchemaDefault,
   });
 
-  const { reset, getValues, setValue, control } = methods;
+  const { reset, getValues, setValue, control, handleSubmit } = methods;
 
   const { append, fields, remove } = useFieldArray({
     control,
@@ -78,19 +49,35 @@ function InvoiginMoveFormView({
   const { modalError, modalConfirm } = useModals();
 
   const [partnerId, setPartnerId] = useState<string | null>(null);
+  const [totals, setTotals] = useState({
+    subtotal: 0.0,
+    taxes: 0.0,
+    total: 0.0,
+  });
 
   const onSubmit: SubmitHandler<InvoiceMoveSchemaType> = async (data) => {
     const res = await actionInvoiceMove({ data: { ...data, displayType } });
     if (id && id === "null") {
       if (!res.success) modalError(res.message);
-      router.replace(
-        `/app/invoicing/moves?view_type=form&id=${res.data?.id}&display_type=${res.data?.displayType}`,
-      );
+      router.replace(`/app/invoicing/moves?view_type=form&id=${res.data?.id}&display_type=${res.data?.displayType}`);
       toast.success(res.message);
     } else {
       router.refresh();
       toast.success(res.message);
     }
+  };
+
+  const computeTotals = () => {
+    const { InvoiceLines } = getValues();
+    let subtotal = 0.0;
+    let taxes = 0.0;
+    let total = 0.0;
+    for (const line of InvoiceLines) {
+      subtotal += line.amountUntaxed;
+      taxes += line.amountTax;
+      total += line.amountTotal;
+    }
+    setTotals({ subtotal, taxes, total });
   };
 
   const onchagePartnerId = async (record: Partner | null) => {
@@ -106,10 +93,7 @@ function InvoiginMoveFormView({
             id: paymentTermId.id,
             name: paymentTermId.name,
           });
-          setValue(
-            "invoiceDateDue",
-            toDateOnly(addDays(todayDate(), paymentTermId.days)),
-          );
+          setValue("invoiceDateDue", toDateOnly(addDays(todayDate(), paymentTermId.days)));
         }
       }
     } else {
@@ -128,10 +112,7 @@ function InvoiginMoveFormView({
         setValue("invoiceDateDue", todayDate());
       } else {
         const invoiceDate = getValues().invoiceDate;
-        setValue(
-          "invoiceDateDue",
-          toDateOnly(addDays(invoiceDate, value.days)),
-        );
+        setValue("invoiceDateDue", toDateOnly(addDays(invoiceDate, value.days)));
       }
     } else {
       setValue("invoiceDateDue", "");
@@ -149,30 +130,54 @@ function InvoiginMoveFormView({
     }
   };
 
-  const onchangeProduct = async ({
-    value,
-    line,
-  }: {
-    value: string | null;
-    line: number;
-  }) => {
+  const onchangeProduct = async ({ value, line }: { value: string | null; line: number }) => {
     const productId = await getProductById({ id: value });
     const quantity = getValues().InvoiceLines[line].quantity;
     if (productId) {
-      const taxRate =
-        displayType === "customer"
-          ? productId.taxSaleId
-          : productId.TaxPurchase;
+      const taxRate = displayType === "customer" ? productId.TaxSale?.amount || 0.0 : productId.TaxPurchase?.amount || 0.0;
       const priceUnit = productId.price1;
       const subtotal = quantity * priceUnit;
 
-      setValue(`InvoiceLines.${line}.priceUnit`, priceUnit);
-      setValue(`InvoiceLines.${}`)
+      const amountTotal = subtotal * (1 + taxRate);
+      const amountTax = subtotal * taxRate;
+
       setValue(`InvoiceLines.${line}.uomId`, {
         id: productId?.Uom?.id || "",
         name: productId?.Uom?.code || "",
       });
+      setValue(`InvoiceLines.${line}.priceUnit`, priceUnit);
+      setValue(`InvoiceLines.${line}.amountUntaxed`, subtotal);
+      setValue(`InvoiceLines.${line}.amountTotal`, amountTotal);
+      setValue(`InvoiceLines.${line}.amountTax`, amountTax);
+      setValue(`InvoiceLines.${line}.taxRate`, taxRate);
+      setValue(`InvoiceLines.${line}.description`, productId.description);
+      setValue(`InvoiceLines.${line}.defaultCode`, productId.defaultCode);
+
+      computeTotals();
     }
+  };
+
+  const onchangeQuantity = ({ line, value = 0.0 }: { line: number; value: number }) => {
+    const priceUnit = getValues().InvoiceLines[line].priceUnit ?? 0.0;
+    const taxRate = getValues().InvoiceLines[line].taxRate;
+    const qty = value;
+
+    const subtotal = qty * priceUnit;
+    const amountTotal = subtotal * (1 + taxRate);
+    const amountTax = subtotal * taxRate;
+
+    setValue(`InvoiceLines.${line}.amountUntaxed`, subtotal);
+    setValue(`InvoiceLines.${line}.amountTotal`, amountTotal);
+    setValue(`InvoiceLines.${line}.amountTax`, amountTax);
+
+    computeTotals();
+  };
+
+  const onchangePriceUnit = ({ line }: { line: number }) => {
+    const qty = getValues().InvoiceLines[line].quantity;
+    onchangeQuantity({ value: qty, line });
+
+    computeTotals();
   };
 
   useEffect(() => {
@@ -224,6 +229,7 @@ function InvoiginMoveFormView({
         defaultCode: line.defaultCode || "",
         description: line.description,
         discountAmount: line.discountAmount,
+        taxRate: line.taxRate,
         discountPercent: line.discountPercent,
         priceUnit: line.priceUnit,
         productId: { id: line.Product.id, name: line.Product.name },
@@ -235,7 +241,22 @@ function InvoiginMoveFormView({
 
     reset(values);
     originalValuesRef.current = values;
+    computeTotals();
   }, [invoiceMove, reset, originalValuesRef]);
+
+  useEffect(() => computeTotals(), [fields]);
+
+  // FORM ACTIONS
+
+  const actionConfirm = handleSubmit(async () => {
+    const newData: InvoiceMoveSchemaType = {
+      ...getValues(),
+    };
+
+    const res = await actionInvoiceConfirm({ data: newData });
+    if (!res.success) return modalError(res.message);
+    router.refresh();
+  });
 
   return (
     <FormView
@@ -245,6 +266,14 @@ function InvoiginMoveFormView({
       onSubmit={onSubmit}
       reverse={handleReverse}
       auditLog="invoicingInvoice"
+      state={getValues().state}
+      formStates={[
+        { name: "draft", label: "Borrador", decoration: "secondary" },
+        { name: "confirmed", label: "Confirmado", decoration: "primary" },
+        { name: "sent", label: "Publicado", decoration: "success" },
+        { name: "cancelled", label: "Cancelado", decoration: "danger" },
+      ]}
+      actions={[{ action: actionConfirm, fieldName: "actionConfirm", string: "Confirmar", variant: "primary", invisible: id === "null" || getValues().state !== "draft" }]}
     >
       <FormViewGroup>
         <FieldRelation
@@ -314,27 +343,10 @@ function InvoiginMoveFormView({
       </FormViewGroup>
       <FormViewGroup>
         <FormViewStack>
-          <FieldEntry
-            type="date"
-            name="invoiceDate"
-            label="Fecha de factura"
-            onChange={(value) => onchangeInvoiceDate(value)}
-          />
+          <FieldEntry type="date" name="invoiceDate" label="Fecha de factura" onChange={(value) => onchangeInvoiceDate(value)} />
           <FieldEntry type="date" name="date" label="Fecha" readonly />
-          <FieldRelation
-            name="paymentTermId"
-            model="invoicingPaymentTerm"
-            label="Términos de pago"
-            ponChange={(_, value) =>
-              onchagePaymentTermId(value as InvoicingPaymentTerm | null)
-            }
-          />
-          <FieldEntry
-            type="date"
-            name="invoiceDateDue"
-            label="Fecha de vencimiento"
-            readonly
-          />
+          <FieldRelation name="paymentTermId" model="invoicingPaymentTerm" label="Términos de pago" ponChange={(_, value) => onchagePaymentTermId(value as InvoicingPaymentTerm | null)} />
+          <FieldEntry type="date" name="invoiceDateDue" label="Fecha de vencimiento" readonly />
           <FieldRelation
             model="invoicingJournal"
             name="journalId"
@@ -344,11 +356,7 @@ function InvoiginMoveFormView({
               ["type", "in", ["sale", "purchase"]],
             ]}
           />
-          <FieldRelation
-            model="invoicingCurrency"
-            name="currencyId"
-            label="Moneda"
-          />
+          <FieldRelation model="invoicingCurrency" name="currencyId" label="Moneda" />
         </FormViewStack>
         <FieldEntry name="reference" label="Referencia" />
       </FormViewGroup>
@@ -359,11 +367,12 @@ function InvoiginMoveFormView({
               <SimpleTable
                 data={fields}
                 headers={[
+                  ...(getValues().state !== "draft" ? [{ string: "Código", width: 25, minWidth: 20 }] : []),
                   {
-                    string: "Producto",
+                    string: getValues().state !== "draft" ? "Descripción" : "Producto",
                     name: "productId",
-                    width: 270,
-                    minWidth: 170,
+                    width: 300,
+                    minWidth: 300,
                   },
                   {
                     string: "Cantidad",
@@ -381,8 +390,8 @@ function InvoiginMoveFormView({
                   {
                     string: "Subtotal",
                     name: "amountUntaxed",
-                    width: 50,
-                    minWidth: 50,
+                    width: 45,
+                    minWidth: 40,
                   },
                   {
                     string: "Impuestos",
@@ -407,25 +416,35 @@ function InvoiginMoveFormView({
                 resizable
                 renderRow={(field, index) => (
                   <tr key={field.id}>
+                    {getValues().state !== "draft" && (
+                      <SimpleTD colIdx={index} name="lineDefaultCode">
+                        <FieldEntry inline name={`InvoiceLines.${index}.defaultCode`} readonly />
+                      </SimpleTD>
+                    )}
                     <SimpleTD colIdx={index} name="lineProductId">
-                      <FieldRelation
-                        inline
-                        model="productTemplate"
-                        name={`InvoiceLines.${index}.productId`}
-                        domain={[["active", "=", true]]}
-                        searchColumns={[
-                          { field: "defaultCode", label: "Referencia" },
-                          { field: "description", label: "Nombre" },
-                          { field: "active", label: "Activo", type: "boolean" },
-                        ]}
-                        readonly={getValues().state !== "draft"}
-                        ponChange={(value) =>
-                          onchangeProduct({
-                            value,
-                            line: index,
-                          })
-                        }
-                      />
+                      {getValues().state === "draft" ? (
+                        <FieldRelation
+                          inline
+                          model="productTemplate"
+                          name={`InvoiceLines.${index}.productId`}
+                          domain={[["active", "=", true]]}
+                          searchColumns={[
+                            { field: "defaultCode", label: "Referencia" },
+                            { field: "description", label: "Nombre" },
+                            { field: "active", label: "Activo", type: "boolean" },
+                          ]}
+                          readonly={getValues().state !== "draft"}
+                          ponChange={(value) =>
+                            onchangeProduct({
+                              value,
+                              line: index,
+                            })
+                          }
+                        />
+                      ) : (
+                        <FieldEntry inline name={`InvoiceLines.${index}.description`} as="textarea" readonly />
+                      )}
+                      <FieldEntry inline name={`InvoiceLines.${index}.defaultCode`} readonly invisible />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineQuantity">
                       <FieldEntry
@@ -434,15 +453,11 @@ function InvoiginMoveFormView({
                         type="number"
                         decimals={3}
                         readonly={getValues().state !== "draft"}
+                        onChange={(value) => onchangeQuantity({ value: Number(value), line: index })}
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineUomId">
-                      <FieldRelation
-                        inline
-                        model="uomCategory"
-                        name={`InvoiceLines.${index}.uomId`}
-                        readonly
-                      />
+                      <FieldRelation inline model="uomCategory" name={`InvoiceLines.${index}.uomId`} readonly />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="linePriceUnit">
                       <FieldEntry
@@ -451,44 +466,21 @@ function InvoiginMoveFormView({
                         type="number"
                         decimals={2}
                         readonly={getValues().state !== "draft"}
+                        onChange={() => onchangePriceUnit({ line: index })}
                       />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineAmountUntaxed">
-                      <FieldEntry
-                        inline
-                        name={`InvoiceLines.${index}.amountUntaxed`}
-                        type="number"
-                        decimals={2}
-                        readonly
-                      />
+                      <FieldEntry inline name={`InvoiceLines.${index}.amountUntaxed`} type="number" decimals={2} readonly />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineAmountUntax">
-                      <FieldEntry
-                        inline
-                        name={`InvoiceLines.${index}.amountTax`}
-                        type="number"
-                        decimals={2}
-                        readonly
-                      />
+                      <FieldEntry inline name={`InvoiceLines.${index}.taxRate`} type="number" decimals={2} readonly invisible />
+                      <FieldEntry inline name={`InvoiceLines.${index}.amountTax`} type="number" decimals={2} readonly />
                     </SimpleTD>
                     <SimpleTD colIdx={index} name="lineAmountTotal">
-                      <FieldEntry
-                        inline
-                        name={`InvoiceLines.${index}.amountTotal`}
-                        type="number"
-                        decimals={2}
-                        readonly
-                      />
+                      <FieldEntry inline name={`InvoiceLines.${index}.amountTotal`} type="number" decimals={2} readonly />
                     </SimpleTD>
-                    <SimpleTD
-                      contentPosition="text-center"
-                      name="lineDelete"
-                      colIdx={index}
-                    >
-                      <BtnDeleteLine
-                        action={() => remove(index)}
-                        disabled={getValues().state !== "draft"}
-                      />
+                    <SimpleTD contentPosition="text-center" name="lineDelete" colIdx={index}>
+                      <BtnDeleteLine action={() => remove(index)} disabled={getValues().state !== "draft"} />
                     </SimpleTD>
                   </tr>
                 )}
@@ -497,6 +489,20 @@ function InvoiginMoveFormView({
                   return append(invoiceMoveLineSchemaDefault);
                 }}
               />
+              <div className="text-end pe-2">
+                <p className="m-1">
+                  <strong>Subtotal: </strong>
+                  <span>{formatCurrency({ value: totals.subtotal })}</span>
+                </p>
+                <p className="m-1">
+                  <strong>Impuestos: </strong>
+                  <span>{formatCurrency({ value: totals.taxes })}</span>
+                </p>
+                <p className="fs-5 m-1">
+                  <strong>Total: </strong>
+                  <span className="fw-semibold">{formatCurrency({ value: totals.total })}</span>
+                </p>
+              </div>
             </Col>
           </PageSheet>
         </Page>

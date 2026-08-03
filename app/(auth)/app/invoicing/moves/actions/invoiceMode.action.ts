@@ -8,6 +8,7 @@ import { getNextValue } from "@/app/libs/sequence";
 import { sessionStore } from "@/app/libs/sessionStore";
 import { format } from "date-fns";
 import { createAuditlog } from "../../../actions/auditlog-actions";
+import { round } from "@/app/libs/helpers";
 
 export interface InvoiceMoveWithProps extends InvoicingInvoice {
   Partner: { id: string; name: string };
@@ -24,6 +25,7 @@ export interface InvoiceMoveWithProps extends InvoicingInvoice {
     defaultCode: string | null;
     description: string;
     discountAmount: number;
+    taxRate: number;
     discountPercent: number;
     priceUnit: number;
     Product: { id: string; name: string };
@@ -33,11 +35,7 @@ export interface InvoiceMoveWithProps extends InvoicingInvoice {
   }[];
 }
 
-export async function getInvoiceMoveById({
-  id,
-}: {
-  id: string | null;
-}): Promise<InvoiceMoveWithProps | null> {
+export async function getInvoiceMoveById({ id }: { id: string | null }): Promise<InvoiceMoveWithProps | null> {
   try {
     if (!id) throw new Error("ID move not defined");
 
@@ -61,6 +59,7 @@ export async function getInvoiceMoveById({
             defaultCode: true,
             description: true,
             discountAmount: true,
+            taxRate: true,
             discountPercent: true,
             priceUnit: true,
             Product: { select: { id: true, name: true } },
@@ -79,11 +78,7 @@ export async function getInvoiceMoveById({
   }
 }
 
-export async function actionInvoiceMove({
-  data,
-}: {
-  data: InvoiceMoveSchemaType;
-}): Promise<ActionResponse<InvoiceMoveWithProps>> {
+export async function actionInvoiceMove({ data }: { data: InvoiceMoveSchemaType }): Promise<ActionResponse<InvoiceMoveWithProps>> {
   try {
     const { uid } = await sessionStore();
 
@@ -96,10 +91,7 @@ export async function actionInvoiceMove({
 
       let newName = "";
       if (data.name === "new") {
-        newName = await getNextValue(
-          `${journal.code}/${format(new Date(), "yyyy")}/`,
-          `${journal.name}-invoicing`,
-        );
+        newName = await getNextValue(`${journal.code}/${format(new Date(), "yyyy")}/`, `${journal.name}-invoicing`);
       }
 
       const invoiceMove = await tx.invoicingInvoice.upsert({
@@ -107,12 +99,11 @@ export async function actionInvoiceMove({
           name: data.name,
         },
         update: {
+          state: data.state,
           currencyId: data.currencyId.id,
           journalId: data.journalId.id,
           partnerId: data.partnerId.id,
-          partnerShippingId: data.partnerShippingId?.id
-            ? data.partnerShippingId.id
-            : null,
+          partnerShippingId: data.partnerShippingId?.id ? data.partnerShippingId.id : null,
           displayType: data.displayType,
           invoiceDate: new Date(data.invoiceDate),
           invoiceDateDue: new Date(data.invoiceDateDue),
@@ -120,11 +111,65 @@ export async function actionInvoiceMove({
           paymentPolicy: data.paymentPolicy,
           cfdiUse: data.cfdiUse,
           reference: data.reference,
-          subtotal: data.subtotal,
-          taxAmount: data.taxAmount,
-          total: data.total,
+          subtotal: round(
+            data.InvoiceLines.reduce((acc, line) => acc + line.amountUntaxed, 0),
+            2,
+          ),
+          taxAmount: round(
+            data.InvoiceLines.reduce((acc, line) => acc + line.amountTax, 0),
+            2,
+          ),
+          total: round(
+            data.InvoiceLines.reduce((acc, line) => acc + line.amountTotal, 0),
+            2,
+          ),
           paymentTermId: data.paymentTermId.id,
           uuidcfdi: data.uuidcfdi,
+          InvoiceLines: {
+            deleteMany: {
+              id: {
+                notIn: data.InvoiceLines.filter((line) => line.id).map((line) => line.id!),
+              },
+            },
+            update: data.InvoiceLines.filter((line) => line.id).map((line) => ({
+              where: {
+                id: line.id!,
+              },
+              data: {
+                amountTax: round(line.amountTax, 2),
+                amountTotal: round(line.amountTotal, 2),
+                amountUntaxed: round(line.amountUntaxed, 2),
+                defaultCode: line.defaultCode,
+                description: line.description,
+                discountAmount: line.discountAmount,
+                discountPercent: line.discountPercent,
+                productId: line.productId.id,
+                priceUnit: line.priceUnit,
+                productLastCost: line.productLastCost,
+                taxRate: line.taxRate,
+                quantity: line.quantity,
+                uomId: line.uomId.id,
+              },
+            })),
+            createMany: {
+              data: data.InvoiceLines.filter((line) => line.id === undefined).map((line) => ({
+                amountTax: round(line.amountTax, 2),
+                amountTotal: round(line.amountTotal, 2),
+                amountUntaxed: round(line.amountUntaxed, 2),
+                createUid: uid!,
+                description: line.description,
+                discountAmount: line.discountAmount,
+                discountPercent: line.discountPercent,
+                priceUnit: line.priceUnit,
+                productId: line.productId.id,
+                productLastCost: line.productLastCost,
+                quantity: line.quantity,
+                taxRate: line.taxRate,
+                uomId: line.uomId.id,
+                defaultCode: line.defaultCode,
+              })),
+            },
+          },
         },
         create: {
           createUid: uid!,
@@ -137,17 +182,44 @@ export async function actionInvoiceMove({
           paymentPolicy: data.paymentPolicy,
           cfdiUse: data.cfdiUse,
           reference: data.reference,
-          subtotal: data.subtotal,
-          taxAmount: data.taxAmount,
-          total: data.total,
+          subtotal: round(
+            data.InvoiceLines.reduce((acc, line) => acc + line.amountUntaxed, 0),
+            2,
+          ),
+          taxAmount: round(
+            data.InvoiceLines.reduce((acc, line) => acc + line.amountTax, 0),
+            2,
+          ),
+          total: round(
+            data.InvoiceLines.reduce((acc, line) => acc + line.amountTotal, 0),
+            2,
+          ),
           uuidcfdi: data.uuidcfdi,
           currencyId: data.currencyId.id,
           journalId: data.journalId.id,
           partnerId: data.partnerId.id,
-          partnerShippingId: data.partnerShippingId?.id
-            ? data.partnerShippingId.id
-            : null,
+          partnerShippingId: data.partnerShippingId?.id ? data.partnerShippingId.id : null,
           paymentTermId: data.paymentTermId.id,
+          InvoiceLines: {
+            createMany: {
+              data: data.InvoiceLines.map((line) => ({
+                amountTax: round(line.amountTax, 2),
+                amountTotal: round(line.amountTotal, 2),
+                amountUntaxed: round(line.amountUntaxed, 2),
+                createUid: uid!,
+                description: line.description,
+                discountAmount: line.discountAmount,
+                discountPercent: line.discountPercent,
+                priceUnit: line.priceUnit,
+                productId: line.productId.id,
+                productLastCost: line.productLastCost,
+                quantity: line.quantity,
+                taxRate: line.taxRate,
+                uomId: line.uomId.id,
+                defaultCode: line.defaultCode,
+              })),
+            },
+          },
         },
 
         include: {
@@ -166,6 +238,7 @@ export async function actionInvoiceMove({
               defaultCode: true,
               description: true,
               discountAmount: true,
+              taxRate: true,
               discountPercent: true,
               priceUnit: true,
               Product: { select: { id: true, name: true } },
@@ -209,5 +282,22 @@ export async function actionInvoiceMove({
       success: false,
       message: error.message,
     };
+  }
+}
+
+// FORM ACTIONS
+
+export async function actionInvoiceConfirm({ data }: { data: InvoiceMoveSchemaType }): Promise<ActionResponse<InvoiceMoveWithProps>> {
+  try {
+    const invoiceRes = await actionInvoiceMove({ data: { ...data, state: "confirmed" } });
+
+    return {
+      message: "Acción completada",
+      success: true,
+      data: invoiceRes.data,
+    };
+  } catch (error: any) {
+    console.log(error);
+    return { success: false, message: error.message };
   }
 }

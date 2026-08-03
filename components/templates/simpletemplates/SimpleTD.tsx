@@ -27,7 +27,7 @@ export function SimpleTD({
   return (
     <td
       title={name}
-      valign="middle"
+      valign="top"
       className={`p-0 text-truncate ${contentPosition}`}
       style={{
         whiteSpace: "nowrap",
@@ -36,11 +36,7 @@ export function SimpleTD({
       }}
       data-column-index={colIdx}
     >
-      <fieldset
-        disabled={fieldRow && fieldRow.readonly === true ? true : false}
-      >
-        {children}
-      </fieldset>
+      <fieldset disabled={fieldRow && fieldRow.readonly === true ? true : false}>{children}</fieldset>
     </td>
   );
 }
