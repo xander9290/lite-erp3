@@ -22,7 +22,9 @@ import Link from "next/link";
 export const computeStocks = ({ product, whType = ["SALES", "PRODUCTION"], companyId }: { product: ProductTemplateWithProps | null; whType?: WarehouseType[]; companyId?: string | null }) => {
   let qtyAvailable = 0.0;
   if (companyId) {
-    const saleWarehouses = product?.Stocks.filter((s) => whType.includes(s.Warehouse.type) && s.Warehouse.companyId === companyId) || [];
+    const warehouses = product?.Stocks.filter((s) => s.Warehouse.companyId === companyId) || [];
+    const saleWarehouses = warehouses.filter((wh) => whType.includes(wh.Warehouse.type));
+    console.log("ALMACENES DE EXISTENCIA", saleWarehouses);
     for (const sale of saleWarehouses) {
       qtyAvailable += sale.qty - sale.reservedQty;
     }

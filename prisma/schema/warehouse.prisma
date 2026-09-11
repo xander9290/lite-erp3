@@ -22,6 +22,9 @@ model Warehouse {
     ManufacturingsOrgin Manufacturing[] @relation("ManufacturingWhOrigin")
     ManufacturingsDest  Manufacturing[] @relation("ManufacturingWhDes")
 
+    journalId String?           @map("journal_id")
+    Journal   InvoicingJournal? @relation(fields: [journalId], references: [id])
+
     createdUid             String          @map("created_uid")
     createdAt              DateTime        @default(now()) @map("created_at")
     updatedAt              DateTime        @updatedAt @map("updated_at")

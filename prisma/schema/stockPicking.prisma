@@ -37,6 +37,8 @@ model StockPicking {
 
     PickingLine StockPickingLine[]
 
+    JournalEntries InvoicingJournalEntry[]
+
     createUid String   @map("create_uid")
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")

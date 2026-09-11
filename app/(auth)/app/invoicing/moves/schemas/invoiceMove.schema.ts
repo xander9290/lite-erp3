@@ -1,11 +1,5 @@
 import { todayDate } from "@/app/libs/validatorDate";
-import {
-  CfdiUse,
-  InvoiceDisplayType,
-  InvoicePaymentForm,
-  InvoicePaymentPolicy,
-  InvoiceState,
-} from "@/generated/prisma/enums";
+import { CfdiUse, InvoiceDisplayType, InvoicePaymentForm, InvoicePaymentPolicy, InvoicePaymentState, InvoiceState } from "@/generated/prisma/enums";
 import { z } from "zod";
 import { invoiceMoveLineSchema } from "./invoiceMoveLineSchema";
 
@@ -17,6 +11,7 @@ export const invoiceMoveSchema = z.object({
   invoiceDateDue: z.iso.date(),
   displayType: z.enum(InvoiceDisplayType),
   state: z.enum(InvoiceState),
+  paymentState: z.enum(InvoicePaymentState),
   uuidcfdi: z.string(),
   subtotal: z.number(),
   taxAmount: z.number(),
@@ -63,6 +58,7 @@ export const invoiceMoveSchemaDefault: InvoiceMoveSchemaType = {
   partnerShippingId: { id: "", name: "" },
   paymentForm: "undefined",
   paymentPolicy: "PPD",
+  paymentState: "notPaid",
   cfdiUse: "noTaxEffects",
   paymentTermId: { id: "", name: "" },
   reference: "",

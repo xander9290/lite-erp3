@@ -26,11 +26,7 @@ function InvoicingJournalListView() {
       />
       <ListView.Body>
         <TableTemplateLite
-          onRowClick={(row) =>
-            router.push(
-              `/app/invoicing_settings/invoicing_journal?view_type=form&id=${row.id}`,
-            )
-          }
+          onRowClick={(row) => router.push(`/app/invoicing_settings/invoicing_journal?view_type=form&id=${row.id}`)}
           defaultOrder="name asc"
           baseDomain={["active", "=", active]}
           model="invoicingJournal"
@@ -49,6 +45,7 @@ function InvoicingJournalListView() {
                   cash: { label: "Efectivo", color: "none" },
                   general: { label: "Varios", color: "none" },
                   purchase: { label: "Compras", color: "none" },
+                  inventory: { label: "Inventario", color: "none" },
                 }}
               />
             )}

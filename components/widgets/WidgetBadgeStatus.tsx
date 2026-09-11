@@ -16,8 +16,16 @@ export function WidgetBadgeStatus({ value, options, defaultValue = { label: valu
   const option = options[value] || defaultValue;
 
   if (option.color === "none") {
-    return <span>{option.label}</span>;
+    return (
+      <div className="text-center">
+        <span>{option.label}</span>
+      </div>
+    );
   } else {
-    return <span className={clsx(`badge rounded-pill fw-bold`, option.color && `bg-${option.color}`, option.className)}>{option.label}</span>;
+    return (
+      <div className="text-center">
+        <span className={clsx(`badge rounded-pill fw-bold`, option.color && `bg-${option.color}`, option.className)}>{option.label}</span>
+      </div>
+    );
   }
 }

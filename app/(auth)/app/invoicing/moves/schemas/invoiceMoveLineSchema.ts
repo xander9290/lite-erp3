@@ -22,6 +22,7 @@ export const invoiceMoveLineSchema = z.object({
     id: z.string(),
     name: z.string(),
   }),
+  itemNumber: z.number(),
 });
 
 export type InvoiceMoveLineSchemaType = z.infer<typeof invoiceMoveLineSchema>;
@@ -40,4 +41,5 @@ export const invoiceMoveLineSchemaDefault: InvoiceMoveLineSchemaType = {
   productLastCost: 0.0,
   quantity: 1.0,
   uomId: { id: "", name: "" },
+  itemNumber: 0,
 };

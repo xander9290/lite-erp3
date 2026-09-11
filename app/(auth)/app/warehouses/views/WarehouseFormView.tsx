@@ -13,8 +13,11 @@ import { FieldBoolean, FieldEntry, FieldRelation, FieldRelationTags } from "@/co
 import { FieldOption } from "@/components/templates/fields/FielOption";
 import { Notebook, Page, PageSheet } from "@/components/templates/Notebook";
 import toast from "react-hot-toast";
+import { useAuth } from "@/hooks/sessionStore";
 
 function WarehouseFormView({ id, warehouse }: { id: string | null; warehouse: WarehouseWithProps | null }) {
+  const { companyId } = useAuth();
+
   const methods = useForm<WarehouseSchemaType>({
     resolver: zodResolver(warehouseSchema),
     defaultValues: warehouseSchemaDefault,
@@ -73,6 +76,10 @@ function WarehouseFormView({ id, warehouse }: { id: string | null; warehouse: Wa
           id: i.id,
           name: i.name,
         })) || [],
+      journalId: {
+        id: warehouse.Journal?.id,
+        name: warehouse.Journal?.name,
+      },
       createdUid: warehouse.createdUid,
       createdAt: warehouse.createdAt,
       updatedAt: warehouse.updatedAt,
@@ -132,6 +139,17 @@ function WarehouseFormView({ id, warehouse }: { id: string | null; warehouse: Wa
             <FormViewGroup title="Operaciones">
               <FieldBoolean name="reserveQtyWs" label="Reservar internos sin existencias" />
               <FieldBoolean name="saleQtyWs" label="Reservar ventas sin existencias" />
+            </FormViewGroup>
+            <FormViewGroup title="Contabilidad">
+              <FieldRelation
+                domain={[
+                  ["type", "=", "inventory"],
+                  ["companyId", "=", companyId],
+                ]}
+                name="journalId"
+                model="invoicingJournal"
+                label="Diario de valoración"
+              />
             </FormViewGroup>
           </PageSheet>
         </Page>

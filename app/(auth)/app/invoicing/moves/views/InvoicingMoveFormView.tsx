@@ -152,7 +152,7 @@ function InvoiginMoveFormView({ invoiceMove, id }: { invoiceMove: InvoiceMoveWit
       setValue(`InvoiceLines.${line}.taxRate`, taxRate);
       setValue(`InvoiceLines.${line}.description`, productId.description);
       setValue(`InvoiceLines.${line}.defaultCode`, productId.defaultCode);
-
+      setValue(`InvoiceLines.${line}.itemNumber`, line + 1);
       computeTotals();
     }
   };
@@ -193,6 +193,7 @@ function InvoiginMoveFormView({ invoiceMove, id }: { invoiceMove: InvoiceMoveWit
         name: invoiceMove.Currency.name,
       },
       date: toDateOnly(invoiceMove.date),
+      paymentState: invoiceMove.paymentState,
       displayType: invoiceMove.displayType,
       invoiceDate: toDateOnly(invoiceMove.invoiceDate),
       invoiceDateDue: toDateOnly(invoiceMove.invoiceDateDue),
@@ -236,6 +237,7 @@ function InvoiginMoveFormView({ invoiceMove, id }: { invoiceMove: InvoiceMoveWit
         productLastCost: line.productLastCost,
         quantity: line.quantity,
         uomId: { id: line.Uom.id, name: line.Uom.code },
+        itemNumber: line.itemNumber,
       })),
     };
 
@@ -367,6 +369,13 @@ function InvoiginMoveFormView({ invoiceMove, id }: { invoiceMove: InvoiceMoveWit
               <SimpleTable
                 data={fields}
                 headers={[
+                  {
+                    string: "#",
+                    name: "itemNumber",
+                    width: 10,
+                    minWidth: 10,
+                    className: "text-center",
+                  },
                   ...(getValues().state !== "draft" ? [{ string: "Código", width: 25, minWidth: 20 }] : []),
                   {
                     string: getValues().state !== "draft" ? "Descripción" : "Producto",
@@ -416,6 +425,9 @@ function InvoiginMoveFormView({ invoiceMove, id }: { invoiceMove: InvoiceMoveWit
                 resizable
                 renderRow={(field, index) => (
                   <tr key={field.id}>
+                    <SimpleTD colIdx={index} name="lineItemNumber" contentPosition="text-center">
+                      <FieldEntry name={`InvoiceLines.${index}.itemNumber`} decimals={0} type="number" label="#" inline />
+                    </SimpleTD>
                     {getValues().state !== "draft" && (
                       <SimpleTD colIdx={index} name="lineDefaultCode">
                         <FieldEntry inline name={`InvoiceLines.${index}.defaultCode`} readonly />

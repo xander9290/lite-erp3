@@ -41,6 +41,20 @@ function InvoicingMoveListView({ displayType }: { displayType: string }) {
           <Column field="taxAmount" label="Impuestos" type="number" render={(name) => <WidgetCurrency number={name} />} />
           <Column field="total" label="Total" type="number" render={(name) => <WidgetCurrency number={name} />} />
           <Column
+            field="paymentState"
+            label="Estado de pago"
+            render={(name) => (
+              <WidgetBadgeStatus
+                value={name}
+                options={{
+                  notPaid: { label: "Sin pagar", color: "danger" },
+                  partial: { label: "Pagado parcial", color: "warning" },
+                  paid: { label: "Pagado", color: "success" },
+                }}
+              />
+            )}
+          />
+          <Column
             field="state"
             label="Estado"
             render={(name) => (

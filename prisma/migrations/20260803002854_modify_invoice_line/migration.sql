@@ -5,7 +5,7 @@
 
 */
 -- CreateEnum
-CREATE TYPE "InvoicePaymentState" AS ENUM ('partial', 'paid');
+CREATE TYPE "InvoicePaymentState" AS ENUM ('partial', 'paid','notPaid');
 
 -- AlterEnum
 BEGIN;

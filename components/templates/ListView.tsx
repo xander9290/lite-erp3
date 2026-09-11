@@ -2,17 +2,7 @@
 
 import Link from "next/link";
 import React, { ReactElement } from "react";
-import {
-  Alert,
-  Button,
-  ButtonGroup,
-  Card,
-  Col,
-  Container,
-  Dropdown,
-  DropdownButton,
-  Row,
-} from "react-bootstrap";
+import { Alert, Button, ButtonGroup, Card, Col, Container, Dropdown, DropdownButton, Row } from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/sessionStore";
 
@@ -54,12 +44,7 @@ function Header({ children, formView, title, actions }: HeaderProps) {
             <h5 className="mb-0 fw-semibold flex-grow-1">{title}</h5>
 
             {actions && actions.length > 0 && (
-              <DropdownButton
-                as={ButtonGroup}
-                variant="outline-secondary"
-                size="sm"
-                title={<i className="bi bi-three-dots"></i>}
-              >
+              <DropdownButton as={ButtonGroup} variant="outline-secondary" size="sm" title={<i className="bi bi-three-dots"></i>}>
                 {actions.map((action, index) => (
                   <Dropdown.Item key={index} onClick={action.action}>
                     {action.string}
@@ -99,16 +84,12 @@ export type ListViewSubComponents = {
 };
 
 type ListViewProps = {
-  children:
-    | ReactElement<HeaderProps, typeof Header>
-    | ReactElement<BodyProps, typeof Body>
-    | ReactElement<FooterProps, typeof Footer>
-    | ReactElement<any>[];
+  children: ReactElement<HeaderProps, typeof Header> | ReactElement<BodyProps, typeof Body> | ReactElement<FooterProps, typeof Footer> | ReactElement<any>[];
   model: string;
 };
 
 function ListView({ children, model }: ListViewProps) {
-  const { company } = useAuth();
+  const { company, user } = useAuth();
 
   const { access } = useAuth();
   const modelAccess = access.find((acc) => acc.fieldName === model + "Model");
@@ -124,7 +105,7 @@ function ListView({ children, model }: ListViewProps) {
       </Row>
     );
 
-  if (company?.id === undefined) {
+  if (company?.id === undefined && user?.name !== "bot") {
     return (
       <Container className="mt-5">
         <Alert variant="info">Selecciona una empresa para continuar</Alert>

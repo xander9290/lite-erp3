@@ -18,6 +18,7 @@ export interface WarehouseWithProps extends Warehouse {
     name: string;
   }[];
   Stocks: { qty: number; reservedQty: number; locationName: string | null }[];
+  Journal: { id: string; name: string } | null;
 }
 
 export async function getWarehouseById({ id }: { id: string | null }): Promise<WarehouseWithProps | null> {
@@ -42,6 +43,9 @@ export async function getWarehouseById({ id }: { id: string | null }): Promise<W
         },
         Stocks: {
           select: { qty: true, reservedQty: true, locationName: true },
+        },
+        Journal: {
+          select: { id: true, name: true },
         },
       },
     });
@@ -74,6 +78,9 @@ export async function createWarehouse({ data }: { data: WarehouseActionProps }):
         InternalsFrom: {
           connect: data.internalIds.map((i) => ({ id: i.id })),
         },
+        Journal: {
+          connect: { id: data.journalId?.id },
+        },
         createdUid: uid || "",
       },
       include: {
@@ -92,6 +99,9 @@ export async function createWarehouse({ data }: { data: WarehouseActionProps }):
         },
         Stocks: {
           select: { qty: true, reservedQty: true, locationName: true },
+        },
+        Journal: {
+          select: { id: true, name: true },
         },
       },
     });
@@ -134,6 +144,13 @@ export async function updateWarehouse({ id, data }: { id: string | null; data: W
         Company: {
           connect: { id: data.companyId.id },
         },
+        ...(data.journalId?.id
+          ? {
+              Journal: {
+                connect: { id: data.journalId.id },
+              },
+            }
+          : { Journal: { disconnect: true } }),
         InternalsFrom: {
           set: data.internalIds.map((i) => ({ id: i.id })),
         },
@@ -154,6 +171,9 @@ export async function updateWarehouse({ id, data }: { id: string | null; data: W
         },
         Stocks: {
           select: { qty: true, reservedQty: true, locationName: true },
+        },
+        Journal: {
+          select: { id: true, name: true },
         },
       },
     });

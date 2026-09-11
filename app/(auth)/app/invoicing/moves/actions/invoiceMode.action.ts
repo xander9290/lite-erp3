@@ -15,7 +15,7 @@ export interface InvoiceMoveWithProps extends InvoicingInvoice {
   PartnerShipping: { id: string; name: string } | null;
   PaymentTerm: { id: string; name: string };
   Currency: { id: string; name: string };
-  Journal: { id: string; name: string };
+  Journal: { id: string; name: string; type: string };
   JournalEntry: { id: string; reference: string | null } | null;
   InvoiceLines: {
     id: string;
@@ -32,6 +32,7 @@ export interface InvoiceMoveWithProps extends InvoicingInvoice {
     productLastCost: number;
     quantity: number;
     Uom: { id: string; code: string };
+    itemNumber: number;
   }[];
 }
 
@@ -45,7 +46,7 @@ export async function getInvoiceMoveById({ id }: { id: string | null }): Promise
       },
       include: {
         Currency: { select: { id: true, name: true } },
-        Journal: { select: { id: true, name: true } },
+        Journal: { select: { id: true, name: true, type: true } },
         JournalEntry: { select: { id: true, reference: true } },
         Partner: { select: { id: true, name: true } },
         PartnerShipping: { select: { id: true, name: true } },
@@ -66,6 +67,7 @@ export async function getInvoiceMoveById({ id }: { id: string | null }): Promise
             productLastCost: true,
             quantity: true,
             Uom: { select: { id: true, code: true } },
+            itemNumber: true,
           },
         },
       },
@@ -109,6 +111,7 @@ export async function actionInvoiceMove({ data }: { data: InvoiceMoveSchemaType 
           invoiceDateDue: new Date(data.invoiceDateDue),
           paymentForm: data.paymentForm,
           paymentPolicy: data.paymentPolicy,
+          paymentState: data.paymentState,
           cfdiUse: data.cfdiUse,
           reference: data.reference,
           subtotal: round(
@@ -149,6 +152,7 @@ export async function actionInvoiceMove({ data }: { data: InvoiceMoveSchemaType 
                 taxRate: line.taxRate,
                 quantity: line.quantity,
                 uomId: line.uomId.id,
+                itemNumber: line.itemNumber,
               },
             })),
             createMany: {
@@ -167,6 +171,7 @@ export async function actionInvoiceMove({ data }: { data: InvoiceMoveSchemaType 
                 taxRate: line.taxRate,
                 uomId: line.uomId.id,
                 defaultCode: line.defaultCode,
+                itemNumber: line.itemNumber,
               })),
             },
           },
@@ -180,6 +185,7 @@ export async function actionInvoiceMove({ data }: { data: InvoiceMoveSchemaType 
           name: newName,
           paymentForm: data.paymentForm,
           paymentPolicy: data.paymentPolicy,
+          paymentState: data.paymentState,
           cfdiUse: data.cfdiUse,
           reference: data.reference,
           subtotal: round(
@@ -217,6 +223,7 @@ export async function actionInvoiceMove({ data }: { data: InvoiceMoveSchemaType 
                 taxRate: line.taxRate,
                 uomId: line.uomId.id,
                 defaultCode: line.defaultCode,
+                itemNumber: line.itemNumber,
               })),
             },
           },
@@ -224,7 +231,7 @@ export async function actionInvoiceMove({ data }: { data: InvoiceMoveSchemaType 
 
         include: {
           Currency: { select: { id: true, name: true } },
-          Journal: { select: { id: true, name: true } },
+          Journal: { select: { id: true, name: true, type: true } },
           JournalEntry: { select: { id: true, reference: true } },
           Partner: { select: { id: true, name: true } },
           PartnerShipping: { select: { id: true, name: true } },
@@ -245,6 +252,7 @@ export async function actionInvoiceMove({ data }: { data: InvoiceMoveSchemaType 
               productLastCost: true,
               quantity: true,
               Uom: { select: { id: true, code: true } },
+              itemNumber: true,
             },
           },
         },
@@ -289,15 +297,90 @@ export async function actionInvoiceMove({ data }: { data: InvoiceMoveSchemaType 
 
 export async function actionInvoiceConfirm({ data }: { data: InvoiceMoveSchemaType }): Promise<ActionResponse<InvoiceMoveWithProps>> {
   try {
-    const invoiceRes = await actionInvoiceMove({ data: { ...data, state: "confirmed" } });
+    const result = await prisma.$transaction(async (tx) => {
+      const invoiceRes = await actionInvoiceMove({
+        data: { ...data, state: "confirmed" },
+      });
+
+      if (!invoiceRes.success || !invoiceRes.data) {
+        throw new Error("Error al confirmar la factura");
+      }
+
+      const invoice = invoiceRes.data;
+
+      const existingEntry = await tx.invoicingJournalEntry.findUnique({
+        where: {
+          invoiceId: invoice.id,
+        },
+      });
+
+      if (existingEntry) {
+        throw new Error("La factura ya tiene un asiento contable");
+      }
+
+      const lines =
+        invoice.Journal.type === "sale"
+          ? [
+              {
+                concept: "customer" as const,
+                debit: invoice.total,
+                credit: 0,
+              },
+              {
+                concept: "sale" as const,
+                debit: 0,
+                credit: invoice.subtotal,
+              },
+              {
+                concept: "vat" as const,
+                debit: 0,
+                credit: invoice.taxAmount,
+              },
+            ]
+          : [
+              {
+                concept: "supplier" as const,
+                debit: 0,
+                credit: invoice.total,
+              },
+              {
+                concept: "purchase" as const,
+                debit: invoice.subtotal,
+                credit: 0,
+              },
+              {
+                concept: "vat" as const,
+                debit: invoice.taxAmount,
+                credit: 0,
+              },
+            ];
+
+      await tx.invoicingJournalEntry.create({
+        data: {
+          journalId: invoice.journalId,
+          invoiceId: invoice.id,
+          reference: invoice.name,
+
+          JournalLines: {
+            create: lines,
+          },
+        },
+      });
+
+      return invoice;
+    });
 
     return {
-      message: "Acción completada",
       success: true,
-      data: invoiceRes.data,
+      message: "Factura confirmada",
+      data: result,
     };
   } catch (error: any) {
     console.log(error);
-    return { success: false, message: error.message };
+
+    return {
+      success: false,
+      message: error.message,
+    };
   }
 }

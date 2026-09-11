@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 const InvoicingMoveListView = lazy(() => import("./views/InvoicingMoveListView"));
-const InvoiginMoveFormView = lazy(() => import("./views/InvoiginMoveFormView"));
+const InvoicingMoveFormView = lazy(() => import("./views/InvoicingMoveFormView"));
 
 async function page({ searchParams }: IPageProps) {
   const { view_type: viewType, display_type: displayType, id } = await searchParams;
@@ -30,7 +30,7 @@ async function page({ searchParams }: IPageProps) {
   } else if (viewType === "form") {
     return (
       <Suspense fallback={<LoadingPage />}>
-        <InvoiginMoveFormView id={id} invoiceMove={invoiceMove} />
+        <InvoicingMoveFormView id={id} invoiceMove={invoiceMove} />
       </Suspense>
     );
   } else {

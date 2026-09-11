@@ -25,7 +25,7 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
               <FieldText name="defaultCode" output={`[${product.defaultCode}]`} />
               <FieldText name="productBrand" output={product.ProductBrand?.description} />
             </Card.Text>
-            <Card.Text className="d-flex justify-content-between m-0 my-1">
+            <div className="d-flex justify-content-between m-0 my-1">
               <FieldText name="price1" output={formatCurrency({ value: product.price1 })} />
               <WidgetBadgeStatus
                 value={product.state}
@@ -34,7 +34,7 @@ function CardProduct({ product }: { product: ProductTemplateWithProps }) {
                   NOT_AVAILABLE: { label: "Agotado", color: "danger" },
                 }}
               />
-            </Card.Text>
+            </div>
             <Card.Text className="m-0">
               <strong>Disponible: </strong>
               {computeStocks({ product, companyId })}

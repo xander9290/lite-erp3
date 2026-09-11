@@ -19,6 +19,12 @@ export const warehouseSchema = z.object({
       name: z.string(),
     }),
   ),
+  journalId: z
+    .object({
+      id: z.string().optional(),
+      name: z.string().optional(),
+    })
+    .nullable(),
   createdUid: z.string().nullable(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
@@ -38,6 +44,7 @@ export const warehouseSchemaDefault: WarehouseSchemaType = {
     id: "",
     name: "",
   },
+  journalId: { id: "", name: "" },
   internalIds: [],
   createdUid: null,
   createdAt: null,

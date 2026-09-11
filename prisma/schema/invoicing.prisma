@@ -7,6 +7,7 @@ model InvoicingInvoice {
     invoiceDateDue DateTime             @map("invoice_date_due") @db.Date // a partir de fecha proveedor
     displayType    InvoiceDisplayType   @map("display_type")
     state          InvoiceState         @default(draft)
+    paymentState   InvoicePaymentState  @default(notPaid) @map("payment_state")
     uuidcfdi       String               @map("uuid_cfdi")
     subtotal       Float
     taxAmount      Float                @map("tax_amount")
@@ -62,6 +63,7 @@ model InvoicingInvoiceLine {
     date            DateTime @default(now()) @db.Date
     defaultCode     String?  @map("default_code")
     description     String
+    itemNumber      Int      @map("item_number")
 
     invoiceId String           @map("invoice_id")
     Invoice   InvoicingInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
@@ -150,6 +152,8 @@ model InvoicingJournal {
 
     AccountInvoices InvoicingInvoice[]
 
+    Warehouses Warehouse[]
+
     @@map("invoicing_journal")
 }
 
@@ -166,6 +170,9 @@ model InvoicingJournalEntry {
 
     stockMoveId String?    @map("stock_move_id")
     StockMove   StockMove? @relation(fields: [stockMoveId], references: [id], onDelete: Cascade)
+
+    stockpickingId String?       @map("stock_picking_id")
+    StockPicking   StockPicking? @relation(fields: [stockpickingId], references: [id], onDelete: Cascade)
 
     JournalLines InvoicingJournalLine[]
 
@@ -199,6 +206,11 @@ enum JournalLineConcept {
     payment
     discount
     shipping
+
+    inventory
+    stockReceived
+    costOfSales
+    stockAdjustment
 }
 
 enum JournalType {
@@ -223,6 +235,7 @@ enum InvoiceState {
 }
 
 enum InvoicePaymentState {
+    notPaid
     partial
     paid
 }

@@ -228,7 +228,7 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
       modalError("La orden no tiene líneas");
       return null;
     }
-    const res = await actionSaleConfirm({ data: newData });
+    const res = await actionSaleConfirm({ data: { id, ...newData } });
 
     if (!res.success) return modalError(res.message);
 
@@ -320,6 +320,10 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
     onChangeQuantity({ value: qty, line });
   };
 
+  const actionStockPicking = () => {
+    return router.push(`/app/stock_picking?view_type=list&so_id=${id}`);
+  };
+
   return (
     <FormView
       methods={methods}
@@ -341,6 +345,12 @@ function SaleOrderViewForm({ saleOrder, id }: { saleOrder: SaleOrderWithProps | 
           fieldName: "actionConfirm",
           string: "Confirmar",
           invisible: getValues().state !== "draft" || id === "null",
+        },
+        {
+          action: actionStockPicking,
+          fieldName: "actionStockPicking",
+          string: "Operaciones",
+          invisible: getValues().state === "draft",
         },
         {
           action: handleActionCancel,
